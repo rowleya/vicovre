@@ -1,13 +1,10 @@
-#summary One-sentence summary of this page.
+#summary Project Documents.
 
 = Introduction =
 
-Add your content here.
+This page contains the documents for the project.
 
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+  * [http://vico-vre.googlecode.com/svn/wiki/docs/ProjectProposal.pdf Project Proposal]
