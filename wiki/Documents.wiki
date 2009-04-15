@@ -7,4 +7,4 @@ This page contains the documents for the project.
 
 = Details =
 
-  * [http://vico-vre.googlecode.com/svn/wiki/docs/ProjectProposal.pdf Project Proposal]
+  * [http://vicovre.googlecode.com/svn/wiki/docs/ProjectProposal.pdf Project Proposal]
