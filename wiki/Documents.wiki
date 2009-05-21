@@ -9,3 +9,4 @@ This page contains the documents for the project.
 = Details =
 
   * [http://vicovre.googlecode.com/svn/wiki/docs/ProjectProposal.pdf Project Proposal]
+  * [http://vicovre.googlecode.com/svn/wiki/docs/ProjectPlan.pdf Project Plan]
