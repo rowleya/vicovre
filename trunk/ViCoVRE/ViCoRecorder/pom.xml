@@ -24,96 +24,6 @@
 
     <build>
         <finalName>ViCoRecorder</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <excludeArtifactIds>
-                                CrewLiveAnnotations
-                            </excludeArtifactIds>
-                            <outputDirectory>
-                                ${project.build.directory}/lib
-                            </outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-wars</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <stripVersion>true</stripVersion>
-                            <includeArtifactIds>
-                                CrewLiveAnnotations
-                            </includeArtifactIds>
-                            <outputDirectory>
-                                ${project.build.directory}/classes/webapps
-                            </outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>
-                                ${project.build.directory}
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/native</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                 <artifactId>maven-jar-plugin</artifactId>
-                 <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>net.crew_vre.recorder.Recorder</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.dstovall</groupId>
-                <artifactId>onejar-maven-plugin</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
-                <executions>
-                    <execution>
-                        <configuration>
-                            <onejarVersion>0.97-SNAPSHOT</onejarVersion>
-                        </configuration>
-                        <goals>
-                            <goal>one-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
     <dependencies>
 
@@ -153,26 +63,6 @@
             <groupId>tablelayout</groupId>
             <artifactId>TableLayout</artifactId>
             <version>20050920</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derby</artifactId>
-            <version>10.3.2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hp.hpl.jena</groupId>
-            <artifactId>jena</artifactId>
-            <version>${project.jena.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hp.hpl.jena</groupId>
-            <artifactId>arq</artifactId>
-            <version>${project.arq.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hp.hpl.jena</groupId>
-            <artifactId>arq-extra</artifactId>
-            <version>${project.arq.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.xmlrpc</groupId>
