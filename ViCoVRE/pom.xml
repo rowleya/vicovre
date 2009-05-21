@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.googlecode.vicovre</groupId>
+    <artifactId>ViCoVRE</artifactId>
+    <packaging>pom</packaging>
+    <version>0.1-SNAPSHOT</version>
+    <name>ViCoVRE</name>
+    <url>http://maven.apache.org</url>
+
+    <!-- modules -->
+    <modules>
+        <module>ViCoCodecs</module>
+        <module>ViCoMedia</module>
+        <module>ViCoWeb</module>
+    </modules>
+
+    <!-- properties -->
+    <properties>
+    </properties>
+
+    <!-- common build elements -->
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- repositories -->
+    <repositories>
+        <repository>
+            <id>manchester.repo</id>
+            <url>http://memetic.ag.manchester.ac.uk:8081/nexus/content/repositories/manchester.repo/</url>
+        </repository>
+        <repository>
+            <id>manchester.dev.repo</id>
+            <url>http://memetic.ag.manchester.ac.uk:8081/nexus/content/repositories/manchester.dev.repo/</url>
+        </repository>
+    </repositories>
+
+    <!-- common dependencies -->
+    <dependencies>
+    </dependencies>
+
+
+    <!-- developers -->
+    <developers>
+        <developer>
+            <name>Andrew Rowley</name>
+            <email>Andrew.Rowley@manchester.ac.uk</email>
+            <organization>RCS (University of Manchester)</organization>
+            <organizationUrl>http://www.rcs.manchester.ac.uk</organizationUrl>
+        </developer>
+    </developers>
+
+</project>
