@@ -1,4 +1,4 @@
-#include "net_crew_0005fvre_codec_ffmpeg_FFMPEGCodec.h"
+#include "com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec.h"
 extern "C" {
 #include <avcodec.h>
 #include <avutil.h>

@@ -77,7 +77,7 @@ static FFMpegJ *getFFMpegJ(JNIEnv *env, jobject obj) {
     return (FFMpegJ *) jlong2ptr(ffmpegj);
 }
 
-JNIEXPORT jlong JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_openCodec
+JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_openCodec
         (JNIEnv *env, jobject obj, jboolean isEncoding, jint codecId) {
     FFMpegJ *ffmpegj = new FFMpegJ(env, obj);
     if (ffmpegj) {
@@ -86,7 +86,7 @@ JNIEXPORT jlong JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_openCodec
     return true;
 }
 
-JNIEXPORT jint JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_init
+JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_init
         (JNIEnv *env, jobject obj, jint pixFmt, jint width, jint height,
         jint convertToPixFmt, jint convertToWidth, jint convertToHeight,
         jboolean flipped) {
@@ -96,19 +96,19 @@ JNIEXPORT jint JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_init
     return ffmpegj->getOutputSize();
 }
 
-JNIEXPORT jint JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_decodeNative
+JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_decodeNative
         (JNIEnv *env, jobject obj, jobject input, jobject output) {
     FFMpegJ *ffmpegj = getFFMpegJ(env, obj);
     return ffmpegj->decode(env, input, output);
 }
 
-JNIEXPORT jint JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_encodeNative
+JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_encodeNative
         (JNIEnv *env, jobject obj, jobject input, jobject output) {
     FFMpegJ *ffmpegj = getFFMpegJ(env, obj);
     return ffmpegj->encode(env, input, output);
 }
 
-JNIEXPORT jboolean JNICALL Java_net_crew_1vre_codec_ffmpeg_FFMPEGCodec_closeCodec
+JNIEXPORT jboolean JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_closeCodec
         (JNIEnv *env, jobject obj) {
     FFMpegJ *ffmpegj = getFFMpegJ(env, obj);
     ffmpegj->closeCodec();

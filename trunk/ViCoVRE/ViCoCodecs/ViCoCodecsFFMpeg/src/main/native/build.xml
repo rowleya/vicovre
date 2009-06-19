@@ -2,7 +2,7 @@
     <property name="java.sdk" location="C:\\Program Files\\Java\\jdk1.5.0_11"/>
 
     <target name="windows32">
-        <exec dir="src" executable="g++" failonerror="true" >
+        <exec dir="src" executable="g++-3" failonerror="true" >
             <arg line='"-I..\include\windows\ffmpeg"' />
             <arg line='"-I..\include\windows\lame"' />
             <arg line='"-I..\include\windows\"' />
