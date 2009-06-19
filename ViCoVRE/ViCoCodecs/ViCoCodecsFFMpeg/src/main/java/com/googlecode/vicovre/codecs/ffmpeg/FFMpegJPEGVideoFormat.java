@@ -62,7 +62,8 @@ public class FFMpegJPEGVideoFormat extends JPEGFormat
 
     /**
      *
-     * @see ffmpeg.FFMpegBasicVideoFormat#getCodecContext()
+     * @see com.googlecode.vicovre.codecs.ffmpeg.FFMpegBasicVideoFormat#
+     *     getCodecContext()
      */
     public long getCodecContext() {
         return codecContext;

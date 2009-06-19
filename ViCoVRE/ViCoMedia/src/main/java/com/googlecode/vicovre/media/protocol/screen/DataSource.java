@@ -43,7 +43,7 @@ import javax.media.protocol.PushBufferStream;
  * This DataSource captures live frames from the screen. You can specify the
  * location, size and frame rate in the URL string as follows:
  * screen://x,y,width,height/framespersecond screen://fullscreen:
- * <screen>/framespersecond Eg: screen://20,40,160,120/12.5
+ * &lt;screen&gt;/framespersecond Eg: screen://20,40,160,120/12.5
  * screen://fullscreen:0
  *
  * @author Andrew G D Rowley

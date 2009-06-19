@@ -36,7 +36,6 @@
 package com.googlecode.vicovre.media.processor;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -132,7 +131,6 @@ public class SimpleProcessor {
         Format[] formats = multiplexer.getSupportedInputFormats();
         boolean inited = false;
         for (int i = 0; (i < formats.length) && !inited; i++) {
-            System.err.println("Trying format " + formats[i]);
             if (formats[i].getClass().isInstance(inputFormat)) {
                 try {
                     init(inputFormat, formats[i]);
@@ -157,11 +155,9 @@ public class SimpleProcessor {
         boolean inited = false;
         for (int i = 0; (formats != null) && (i < formats.length)
                 && !inited; i++) {
-            System.err.println("Checking format " + formats[i] + " for input = " + inputFormat);
             if (formats[i].matches(inputFormat)
                     && inputFormat.matches(formats[i])) {
                 try {
-                    System.err.println("Trying direct format " + formats[i]);
                     init(inputFormat, formats[i]);
                     Format f = renderer.setInputFormat(
                             outputFormats[codecs.length - 1]);
@@ -225,8 +221,6 @@ public class SimpleProcessor {
             codecs[pos] = codec.next();
             inputFormats[pos] = iFormat.next();
             outputFormats[pos] = oFormat.next();
-            System.err.println(
-                    inputFormats[pos] + " -> " +  codecs[pos] + " -> " + outputFormats[pos]);
             outputBuffers[pos] = new Buffer();
             outputBuffers[pos].setFormat(outputFormats[pos]);
             outputBuffers[pos].setOffset(0);
@@ -337,7 +331,8 @@ public class SimpleProcessor {
                 outputBuffers[codec].setLength(0);
             }
             outputBuffers[codec].setFlags(0);
-            status = codecs[codec].process(localInputBuffer, outputBuffers[codec]);
+            status = codecs[codec].process(localInputBuffer,
+                    outputBuffers[codec]);
             if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
                 return status;
             }
@@ -363,17 +358,17 @@ public class SimpleProcessor {
                         }
                     } else if (render && (renderer != null)
                             && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
                         if (render() == PlugIn.BUFFER_PROCESSED_FAILED) {
                             return PlugIn.BUFFER_PROCESSED_FAILED;
                         }
                     } else if (render && (multiplexer != null)
                             && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
                         return multiplex();
                     } else if (render && (thread != null)
                             && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
                         thread.finishedProcessing();
                     }
                 }
@@ -386,6 +381,10 @@ public class SimpleProcessor {
 
     private class Codecs {
 
+        private Codecs() {
+            // Does Nothing
+        };
+
         private LinkedList<Codec> codecList = new LinkedList<Codec>();
 
         private LinkedList<Format> inputFormatList = new LinkedList<Format>();
@@ -395,8 +394,6 @@ public class SimpleProcessor {
 
     private Codecs search(Format input, Format output,
             HashMap<String, Boolean> searched, boolean forward) {
-        System.err.println(
-                "Finding codec from " + input + " to " + output + " forward = " + forward);
         if (input.matches(output)) {
             Codecs searchCodecs = new Codecs();
             searchCodecs.codecList.addFirst(new CopyCodec());
@@ -407,11 +404,9 @@ public class SimpleProcessor {
         Vector< ? > codecsFromHere = PlugInManager.getPlugInList(
                 input, output, PlugInManager.CODEC);
         if (!codecsFromHere.isEmpty()) {
-            System.err.println("Final codec found...");
             Codecs searchCodecs = new Codecs();
             for (int i = 0; i < codecsFromHere.size(); i++) {
                 String codecClassName = (String) codecsFromHere.get(i);
-                System.err.println("Trying to initialize " + codecClassName);
                 try {
                     Codec codec = Misc.loadCodec(codecClassName);
                     int matched = -1;
@@ -420,7 +415,8 @@ public class SimpleProcessor {
                     if (forward) {
                         in = codec.setInputFormat(input);
                         Format[] outs = codec.getSupportedOutputFormats(in);
-                        for (int j = 0; (j < outs.length) && (matched == -1); j++) {
+                        for (int j = 0; (j < outs.length)
+                                && (matched == -1); j++) {
                             if (output.matches(outs[j])) {
                                 out = codec.setOutputFormat(output.intersects(
                                         outs[j]));
@@ -430,13 +426,16 @@ public class SimpleProcessor {
                     } else {
                         out = codec.setOutputFormat(output);
                         Format[] ins = codec.getSupportedInputFormats();
-                        for (int j = 0; (j < ins.length) && (matched == -1); j++) {
+                        for (int j = 0; (j < ins.length)
+                                && (matched == -1); j++) {
                             if (input.matches(ins[j])) {
                                 Format inF = codec.setInputFormat(input);
                                 if (inF != null) {
-                                    Format[] outs = codec.getSupportedOutputFormats(inF);
+                                    Format[] outs =
+                                        codec.getSupportedOutputFormats(inF);
                                     boolean ok = false;
-                                    for (int k = 0; (k < outs.length) && !ok; k++) {
+                                    for (int k = 0; (k < outs.length)
+                                            && !ok; k++) {
                                         if (out.matches(outs[k])) {
                                             ok = true;
                                         }
@@ -455,31 +454,23 @@ public class SimpleProcessor {
                         searchCodecs.codecList.addFirst(codec);
                         searchCodecs.inputFormatList.addFirst(in);
                         searchCodecs.outputFormatList.addFirst(out);
-                        System.err.println(
-                                "Final codec initialized!  In = " + in + " Out = " + out);
                         return searchCodecs;
                     }
-                    System.err.println(
-                        "Could not find matching output format to " + output);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
         if (forward) {
-            codecsFromHere = PlugInManager.getPlugInList(input, null, PlugInManager.CODEC);
+            codecsFromHere = PlugInManager.getPlugInList(input, null,
+                    PlugInManager.CODEC);
         } else {
-            codecsFromHere = PlugInManager.getPlugInList(null, output, PlugInManager.CODEC);
+            codecsFromHere = PlugInManager.getPlugInList(null, output,
+                    PlugInManager.CODEC);
         }
-        System.err.println("Trying codecs " + codecsFromHere);
         for (int i = 0; i < codecsFromHere.size(); i++) {
             String codecClassName = (String) codecsFromHere.get(i);
             if (!searched.containsKey(codecClassName)) {
-                if (forward) {
-                    System.err.println("Trying codec " + codecClassName + " with input " + input);
-                } else {
-                    System.err.println("Trying codec " + codecClassName + " with output " + output);
-                }
                 searched.put(codecClassName, true);
                 try {
                     Codec codec = Misc.loadCodec(codecClassName);
@@ -492,9 +483,8 @@ public class SimpleProcessor {
                         Vector<Format> fmts = new Vector<Format>();
                         formats = codec.getSupportedInputFormats();
                         for (int j = 0; j < formats.length; j++) {
-                            Format[] outs = codec.getSupportedOutputFormats(formats[j]);
-                            System.err.println("Trying input format "
-                                    + formats[j] + " -> " + Arrays.toString(outs));
+                            Format[] outs = codec.getSupportedOutputFormats(
+                                    formats[j]);
                             boolean ok = false;
                             for (int k = 0; (k < outs.length) && !ok; k++) {
                                 if (output.matches(outs[k])) {
@@ -504,7 +494,6 @@ public class SimpleProcessor {
                             }
                         }
                         formats = fmts.toArray(new Format[0]);
-                        System.err.println("    formats = " + fmts);
                     }
                     for (int j = 0; j < formats.length; j++) {
                         Format fmt = null;
@@ -513,12 +502,13 @@ public class SimpleProcessor {
                         } else {
                             fmt = codec.setInputFormat(formats[j]);
                         }
-                        System.err.println("Trying next level with " + fmt);
                         Codecs searchCodecs = null;
                             if (forward) {
-                                searchCodecs = search(fmt, output, searched, forward);
+                                searchCodecs = search(fmt, output, searched,
+                                        forward);
                             } else {
-                                searchCodecs = search(input, fmt, searched, forward);
+                                searchCodecs = search(input, fmt, searched,
+                                        forward);
                             }
                         if (searchCodecs != null) {
                             codec.open();
@@ -540,7 +530,6 @@ public class SimpleProcessor {
             }
         }
 
-        System.err.println("Backtracking from " + input);
         return null;
     }
 

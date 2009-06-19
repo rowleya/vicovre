@@ -34,216 +34,59 @@ package com.googlecode.vicovre.codecs.h261;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 
 import javax.media.Buffer;
-import javax.media.Codec;
 import javax.media.Format;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
+
 import com.googlecode.vicovre.codecs.controls.FrameFillControl;
-
-import sun.misc.Unsafe;
-
 import com.googlecode.vicovre.codecs.utils.BitInputStream;
-import com.googlecode.vicovre.codecs.utils.DCT;
+import com.googlecode.vicovre.codecs.utils.QuickArray;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
+import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
 
 /**
  * A decoder for H261AS
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class H261ASDecoder implements Codec, FrameFillControl {
-
-    private static final int SYM_ILLEGAL = -2;
-
-    private static final int EOB = -1;
-
-    private static final int ESCAPE = 0;
-
-    private static final int MBA_STUFF = -2;
-
-    private static final int GOB_HEADER = -1;
-
-    private static final int MT_TCOEFF = 0x01;
-    private static final int MT_CBP    = 0x02;
-    private static final int MT_MVD    = 0x04;
-    private static final int MT_MQUANT = 0x08;
-    private static final int MT_FILTER = 0x10;
-    private static final int MT_INTRA  = 0x20;
+public class H261ASDecoder extends H261AbstractDecoder
+        implements FrameFillControl {
 
     private YUVFormat outputFormat = null;
 
     private long sequence = 0;
 
-    private long qtable = 0;
-
-    private Unsafe unsafe = null;
-
-    private long shortSize = 0;
-
-    private long intSize = 0;
-
-    private long mbaHuff = 0;
-
-    private int mbaHuffMaxLen = 0;
-
-    private long runLevelHuff = 0;
-
-    private int runLevelHuffMaxLen = 0;
-
-    private long mtypeHuff = 0;
-
-    private int mtypeHuffMaxLen = 10;
-
-    private long blockPos = 0;
+    private QuickArray blockPos = null;
 
     private byte[] frameData = null;
 
-    private long block = 0;
-
-    private long qt = 0;
-
     private byte[] outputObject = null;
 
-    private long byteArrayOffset = 0;
+    private QuickArrayWrapper out = null;
 
-    private long outputOffset = 0;
+    private int y1Offset = 0;
 
-    private DCT dct = new DCT();
+    private int y2Offset = 0;
 
-    private long y1Offset = 0;
+    private int y3Offset = 0;
 
-    private long y2Offset = 0;
+    private int y4Offset = 0;
 
-    private long y3Offset = 0;
+    private int crOffset = 0;
 
-    private long y4Offset = 0;
-
-    private long crOffset = 0;
-
-    private long cbOffset = 0;
+    private int cbOffset = 0;
 
     /**
      * Creates a new H261ASDecoder
+     * @throws QuickArrayException
      *
      */
-    public H261ASDecoder() {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            shortSize = unsafe.arrayIndexScale(short[].class);
-            intSize = unsafe.arrayIndexScale(int[].class);
-            outputOffset = unsafe.objectFieldOffset(
-                    H261ASDecoder.class.getDeclaredField("outputObject"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        qtable = unsafe.allocateMemory(32 * 256 * shortSize);
-
-        for (int mq = 0; mq < 32; mq++) {
-            long qt = qtable + ((mq << 8) * shortSize);
-            for (int v = 0; v < 256; v++) {
-                int s = (v << 24) >> 24;
-                int val = 0;
-                if (s > 0) {
-                    val = (((s << 1) + 1) * mq) - (~mq & 1);
-                } else {
-                    val = (((s << 1) - 1) * mq) + (~mq & 1);
-                }
-                unsafe.putShort(qt + (v * shortSize), (short) val);
-            }
-        }
-
-        mbaHuffMaxLen = 16;
-        mbaHuff = makeHuff(H261Constants.MBAHUFF, mbaHuffMaxLen);
-        addCode(0xf, 11,  MBA_STUFF, mbaHuff, mbaHuffMaxLen);
-        addCode(0x1, 16, GOB_HEADER, mbaHuff, mbaHuffMaxLen);
-        runLevelHuffMaxLen = getMaxLen(H261Constants.RUNLEVELHUFF);
-        runLevelHuff = makeHuff(H261Constants.RUNLEVELHUFF,
-                runLevelHuffMaxLen);
-        addCode(0x2, 2,    EOB, runLevelHuff, runLevelHuffMaxLen);
-        addCode(0x1, 6, ESCAPE, runLevelHuff, runLevelHuffMaxLen);
-
-        mtypeHuff = unsafe.allocateMemory((1 << mtypeHuffMaxLen) * shortSize);
-        addCode(0x1,  1, MT_CBP|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  2, MT_FILTER|MT_MVD|MT_CBP|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  3, MT_FILTER|MT_MVD,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  4, MT_INTRA|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  5, MT_MQUANT|MT_CBP|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  6, MT_MQUANT|MT_FILTER|MT_MVD|MT_CBP|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  7, MT_INTRA|MT_MQUANT|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  8, MT_MVD|MT_CBP|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1,  9, MT_MVD,
-                mtypeHuff, mtypeHuffMaxLen);
-        addCode(0x1, 10, MT_MQUANT|MT_CBP|MT_MVD|MT_TCOEFF,
-                mtypeHuff, mtypeHuffMaxLen);
-
-        block = unsafe.allocateMemory(64 * shortSize);
-
-    }
-
-    private int getMaxLen(int[] ht) {
-        int maxLen = 0;
-        for (int i = 0; i < ht.length; i += 2) {
-            int length = ht[i + 1];
-
-            if (length > maxLen) {
-                maxLen = length;
-            }
-        }
-        return maxLen;
-    }
-
-    public static String toBinaryString(int c, int len) {
-        String s = "";
-        for (int i = len - 1; i >= 0; i--) {
-            if ((c & (1 << i)) > 0) {
-                s += "1";
-            } else {
-                s += "0";
-            }
-        }
-        return s;
-    }
-
-    private void addCode(int code, int length, int val, long huff, int maxLen) {
-        int nbit = maxLen - length;
-        int map = (val << 5) | length;
-        code = (code & ((1 << maxLen) - 1)) << nbit;
-        for (int n = (1 << nbit) - 1; n >= 0; --n) {
-            int c = (code | n);
-            unsafe.putShort(huff + (c * shortSize), (short) map);
-        }
-    }
-
-    private long makeHuff(int[] ht, int maxLen) {
-        int huffSize = 1 << maxLen;
-        long huff = unsafe.allocateMemory(huffSize * shortSize);
-        for (int i = 0; i < huffSize; ++i) {
-            unsafe.putShort(huff + (i * shortSize),
-                    (short) ((SYM_ILLEGAL << 5) | maxLen));
-        }
-        for (int i = 0; i < ht.length; i += 2) {
-            int length = ht[i + 1];
-            int code = ht[i];
-            if (length != 0) {
-                addCode(code, length, i / 2, huff, maxLen);
-            }
-        }
-        return huff;
+    public H261ASDecoder() throws QuickArrayException {
+        super();
     }
 
     /**
@@ -276,96 +119,22 @@ public class H261ASDecoder implements Codec, FrameFillControl {
         return null;
     }
 
-    private boolean readBlock(BitInputStream in, long offset,
-            int stride) {
-        for (int i = 0; i < 64; i++) {
-            unsafe.putShort(block + (i * shortSize), (short) 0);
-        }
-        int dc = in.readBits(8);
-        if (dc == 255) {
-            dc = 128;
-        }
-        dc = dc << 3;
-        unsafe.putShort(block, (short) (dc & 0xffff));
-        int nc = 0;
-        int k = 1;
-        int m0 = 1;
-        boolean eob = false;
-        while (!eob) {
-            int runLevel = in.huffDecode(runLevelHuff, runLevelHuffMaxLen);
-            int run = 0;
-            int level = 0;
-            if (runLevel == EOB) {
-                eob = true;
-
-                /*DecimalFormat format = new DecimalFormat(" 0000;-0000");
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        System.err.print(format.format(unsafe.getShort(block + (((i * 8) + j) * shortSize))));
-                        System.err.print(" ");
-                    }
-                    System.err.println();
-                }
-                System.err.println(); */
-
-                if (nc == 0) {
-                    int dcFillVal = (dc + 4) >> 3;
-                    for (int i = 0; i < 8; i++) {
-                        long outPos = unsafe.getLong(this, outputOffset)
-                            + byteArrayOffset + offset + (i * stride);
-                        unsafe.putByte(outPos + 0, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 1, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 2, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 3, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 4, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 5, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 6, (byte) (dcFillVal & 0xFF));
-                        unsafe.putByte(outPos + 7, (byte) (dcFillVal & 0xFF));
-                    }
-                } else {
-                    dct.rdct(block, m0, outputObject, offset, stride);
-                }
-
-                return true;
-            } else if (runLevel == SYM_ILLEGAL) {
-                System.err.println("Illegal code");
-                return false;
-            } else if (runLevel == ESCAPE) {
-                run = in.readBits(6);
-                level = in.readBits(8);
-            } else {
-                level = (runLevel >> 6) & 0xFF;
-                run = runLevel & 0x1f;
-            }
-
-            if (!eob) {
-                k += run;
-                if (k >= 64) {
-                    System.err.println("Run overflow");
-                    return false;
-                }
-                int pos = H261Constants.COLZAG[k++];
-                short realLevel = unsafe.getShort(qt + (level * shortSize));
-                unsafe.putShort(block + (pos * shortSize), realLevel);
-                nc++;
-                m0 |= 1 << pos;
-            }
-        }
-
-        return true;
-    }
-
     /**
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
      */
     public int process(Buffer input, Buffer output) {
 
-        BitInputStream in = new BitInputStream((byte[]) input.getData(),
+        BitInputStream in = null;
+        try {
+            in = new BitInputStream((byte[]) input.getData(),
                 input.getOffset(), input.getLength());
+        } catch (QuickArrayException e) {
+            e.printStackTrace();
+            return BUFFER_PROCESSED_FAILED;
+        }
 
         // Read the H261AS header
         int ebit = in.readBits(3);
-        //ebit = in.readBits(3);
         int quant = in.readBits(5);
         int width = (in.readBits(12) + 1) << 4;
         int height = (in.readBits(12) + 1) << 4;
@@ -373,11 +142,17 @@ public class H261ASDecoder implements Codec, FrameFillControl {
         int csize = (width / 2) * (height / 2);
         int dataSize = ysize + (2 * csize);
 
-        qt = qtable + ((quant << 8) * shortSize);
+        int qt = quant << 8;
 
         int offset = output.getOffset();
         if (outputObject == null) {
             outputObject = new byte[dataSize];
+            try {
+                out = new QuickArrayWrapper(outputObject);
+            } catch (QuickArrayException e) {
+                e.printStackTrace();
+                return BUFFER_PROCESSED_FAILED;
+            }
             offset = 0;
             output.setOffset(offset);
             if (frameData != null) {
@@ -401,13 +176,18 @@ public class H261ASDecoder implements Codec, FrameFillControl {
             if ((nGobs * 33) < nBlocks) {
                 nGobs += 1;
             }
-            blockPos = unsafe.allocateMemory(nBlocks * intSize);
+            try {
+                blockPos = new QuickArray(int[].class, nBlocks);
+            } catch (QuickArrayException e) {
+                e.printStackTrace();
+                return BUFFER_PROCESSED_FAILED;
+            }
             for (int i = 0; i < nBlocks; i++) {
                 int blocky = i / nBlocksWidth;
                 int blockx = i % nBlocksWidth;
                 int x = blockx * 16;
                 int y = blocky * 16;
-                unsafe.putInt(blockPos + (i * intSize),
+                blockPos.setInt(i,
                         ((x & 0xffff) << 16) | (y & 0xffff));
             }
             y1Offset = 0;
@@ -421,24 +201,25 @@ public class H261ASDecoder implements Codec, FrameFillControl {
         int gob = 0;
         int mba = 0;
         while (in.bitsRemaining() > ebit) {
-            int mbadiff = in.huffDecode(mbaHuff, mbaHuffMaxLen);
+            int mbadiff = readMba(in);
             if (mbadiff == -1) {
 
                 // Read the rest of the GOB Header
                 gob = ((in.readBits(10) & 0x3FF)) << 10
                     | (in.readBits(10) & 0x3FF);
                 quant = in.readBits(5);
-                qt = qtable + ((quant << 8) * shortSize);
+                qt = quant << 8;
                 mba = 0;
 
             } else if (mbadiff >= 0) {
 
                 // Read the rest of the Macroblock
                 mba += mbadiff + 1;
-                int mtype = in.huffDecode(mtypeHuff, mtypeHuffMaxLen);
+                int mtype = readMtype(in);
+                System.err.println("Mtype = " + mtype);
                 if ((mtype & MT_MQUANT) > 0) {
                     quant = in.readBits(5);
-                    qt = qtable + ((quant << 8) * shortSize);
+                    qt = quant << 8;
                 }
                 if ((mtype & MT_CBP) > 0) {
                     System.err.println("CBP unsupported!");
@@ -446,25 +227,36 @@ public class H261ASDecoder implements Codec, FrameFillControl {
                 }
 
                 int blockNo = (gob * 33) + (mba - 1);
-                int x = unsafe.getInt(blockPos + (blockNo * intSize));
+                int x = blockPos.getInt(blockNo);
                 int y = x & 0xffff;
                 x = (x >> 16) & 0xffff;
-                long yOffset = y * width + x;
-                long cOffset = ((y / 2) * (width / 2)) + (x / 2);
+                int yOffset = y * width + x;
+                int cOffset = ((y / 2) * (width / 2)) + (x / 2);
 
                 if ((mtype & MT_TCOEFF) > 0) {
-                    readBlock(in,
-                            yOffset + y1Offset + output.getOffset(), width);
-                    readBlock(in,
-                            yOffset + y2Offset + output.getOffset(), width);
-                    readBlock(in,
-                            yOffset + y3Offset + output.getOffset(), width);
-                    readBlock(in,
-                            yOffset + y4Offset + output.getOffset(), width);
-                    readBlock(in,
-                            cOffset + crOffset + output.getOffset(), width / 2);
-                    readBlock(in,
-                            cOffset + cbOffset + output.getOffset(), width / 2);
+                    try {
+                        readBlock(in, out,
+                                yOffset + y1Offset + output.getOffset(), width,
+                                true, qt, ebit);
+                        readBlock(in, out,
+                                yOffset + y2Offset + output.getOffset(), width,
+                                true, qt, ebit);
+                        readBlock(in, out,
+                                yOffset + y3Offset + output.getOffset(), width,
+                                true, qt, ebit);
+                        readBlock(in, out,
+                                yOffset + y4Offset + output.getOffset(), width,
+                                true, qt, ebit);
+                        readBlock(in, out,
+                                cOffset + crOffset + output.getOffset(),
+                                width / 2, true, qt, ebit);
+                        readBlock(in, out,
+                                cOffset + cbOffset + output.getOffset(),
+                                width / 2, true, qt, ebit);
+                    } catch (QuickArrayException e) {
+                        e.printStackTrace();
+                        return BUFFER_PROCESSED_FAILED;
+                    }
                 }
             } else if (mbadiff != MBA_STUFF) {
 
@@ -514,16 +306,12 @@ public class H261ASDecoder implements Codec, FrameFillControl {
     }
 
     /**
-     * @see javax.media.PlugIn#close()
+     *
+     * @see com.googlecode.vicovre.codecs.h261.H261AbstractDecoder#close()
      */
     public void close() {
-        unsafe.freeMemory(qtable);
-        unsafe.freeMemory(mtypeHuff);
-        unsafe.freeMemory(block);
-        unsafe.freeMemory(blockPos);
-        unsafe.freeMemory(mbaHuff);
-        unsafe.freeMemory(runLevelHuff);
-        dct.close();
+        super.close();
+        blockPos.free();
     }
 
     /**
@@ -551,7 +339,7 @@ public class H261ASDecoder implements Codec, FrameFillControl {
      * @see javax.media.Controls#getControl(java.lang.String)
      */
     public Object getControl(String className) {
-        if (className.equals("controls.FrameFillControl")){
+        if (className.equals("controls.FrameFillControl")) {
             return this;
         }
         return null;
@@ -564,7 +352,12 @@ public class H261ASDecoder implements Codec, FrameFillControl {
         return new Object[]{this};
     }
 
-    public static void main(String[] args) {
+    /**
+     * Test method
+     * @param args Ignored
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
         H261ASEncoder encoder = new H261ASEncoder();
         H261ASDecoder decoder = new H261ASDecoder();
 
@@ -616,10 +409,19 @@ public class H261ASDecoder implements Codec, FrameFillControl {
         System.err.println();
     }
 
+    /**
+     *
+     * @see com.googlecode.vicovre.codecs.controls.FrameFillControl#fillFrame(
+     *     byte[])
+     */
     public void fillFrame(byte[] frameData) {
         this.frameData = frameData;
     }
 
+    /**
+     *
+     * @see javax.media.Control#getControlComponent()
+     */
     public Component getControlComponent() {
         return null;
     }

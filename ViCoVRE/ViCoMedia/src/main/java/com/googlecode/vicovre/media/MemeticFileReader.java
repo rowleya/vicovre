@@ -50,7 +50,6 @@ import javax.media.Format;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 
-import com.googlecode.vicovre.media.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.media.rtptype.RTPType;
 import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
@@ -71,7 +70,8 @@ public class MemeticFileReader {
     // The number of ms per second
     private static final int MS_PER_SEC = 1000;
 
-    private static final HashMap<Integer, Integer> PREFRAME_MAP = new HashMap<Integer, Integer>();
+    private static final HashMap<Integer, Integer> PREFRAME_MAP =
+        new HashMap<Integer, Integer>();
 
     private DataInputStream input = null;
 
@@ -156,7 +156,8 @@ public class MemeticFileReader {
                 maxTimestamp = 4294967296000000000L / 90000;
             } else if (format instanceof AudioFormat) {
                 AudioFormat audioFormat = (AudioFormat) format;
-                maxTimestamp = (long) (4294967296000000000L / audioFormat.getSampleRate());
+                maxTimestamp = (long) (4294967296000000000L
+                        / audioFormat.getSampleRate());
             }
         } else {
             maxTimestamp = 4294967296L;
@@ -174,10 +175,10 @@ public class MemeticFileReader {
         try {
             while (!read) {
                 length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
-                int type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+                int ptype = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
                 offset = input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT;
 
-                if ((type != RecordingConstants.RTP_PACKET)
+                if ((ptype != RecordingConstants.RTP_PACKET)
                         || (length < RTPHeader.SIZE)) {
                     channel.position(channel.position() + length);
                 } else {
@@ -195,7 +196,8 @@ public class MemeticFileReader {
                         lastSequence = sequence - 1;
                     }
                     if (sequence < lastSequence) {
-                        if (((lastSequence + 100) > 65535) && (sequence < 100)) {
+                        if (((lastSequence + 100) > 65535)
+                                && (sequence < 100)) {
                             lastSequence = 0 - (65536 - sequence);
                         }
                     }
@@ -206,8 +208,8 @@ public class MemeticFileReader {
                                 timestamp = (timestamp * 1000000000L) / 90000;
                             } else if (format instanceof AudioFormat) {
                                 AudioFormat audioFormat = (AudioFormat) format;
-                                timestamp = (long) ((timestamp * 1000000000L) / audioFormat
-                                        .getSampleRate());
+                                timestamp = (long) ((timestamp * 1000000000L)
+                                        / audioFormat.getSampleRate());
                             }
                         } else {
                             flags = Buffer.FLAG_RTP_TIME;
@@ -312,12 +314,12 @@ public class MemeticFileReader {
         try {
 
             // Open the index file
-            String filename = streamSpec + RecordingConstants.STREAM_INDEX;
-            if (!new File(filename).exists()) {
-                filename = streamSpec + RecordingConstants.STREAM_INDEX2;
+            String fname = streamSpec + RecordingConstants.STREAM_INDEX;
+            if (!new File(fname).exists()) {
+                fname = streamSpec + RecordingConstants.STREAM_INDEX2;
             }
             DataInputStream indexFile = new DataInputStream(
-                    new BufferedInputStream(new FileInputStream(filename)));
+                    new BufferedInputStream(new FileInputStream(fname)));
 
             try {
                 while (true) {

@@ -40,6 +40,10 @@ package com.googlecode.vicovre.codecs.utils;
  */
 public class Bits {
 
+    private Bits() {
+        // Does Nothing
+    }
+
     /**
      * Returns the bit shift for a given mask
      *
@@ -73,5 +77,23 @@ public class Bits {
             bits++;
         }
         return bits;
+    }
+
+    /**
+     * Converts a number to a string in binary
+     * @param c The number to convert
+     * @param len The length to display
+     * @return The string
+     */
+    public static String toBinaryString(int c, int len) {
+        String s = "";
+        for (int i = len - 1; i >= 0; i--) {
+            if ((c & (1 << i)) > 0) {
+                s += "1";
+            } else {
+                s += "0";
+            }
+        }
+        return s;
     }
 }

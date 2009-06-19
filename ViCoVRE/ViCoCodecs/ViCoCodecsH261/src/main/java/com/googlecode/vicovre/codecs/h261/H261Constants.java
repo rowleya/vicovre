@@ -368,12 +368,12 @@ public class H261Constants {
     /**
      * The x position vector for zigzag
      */
-    public static final int ZZX[] = new int[BLOCK_SIZE * BLOCK_SIZE];
+    public static final int[] ZZX = new int[BLOCK_SIZE * BLOCK_SIZE];
 
     /**
      * The y position vector for zigzag
      */
-    public static final int ZZY[] = new int[BLOCK_SIZE * BLOCK_SIZE];
+    public static final int[] ZZY = new int[BLOCK_SIZE * BLOCK_SIZE];
 
     /**
      * The maximum DC value
@@ -464,7 +464,7 @@ public class H261Constants {
      */
     public static final int[] RUNLEVELHUFF = new int[16384 * 2];
 
-    private static final void setCode(int run, int level, int code, int len) {
+    private static void setCode(int run, int level, int code, int len) {
         int runLevel = (((level + MAX_LEVEL) & 0xFF) << 6) | run;
         RUNLEVELHUFF[(runLevel * 2)] = code;
         RUNLEVELHUFF[(runLevel * 2) + 1] = len;
@@ -618,6 +618,9 @@ public class H261Constants {
         0,  0,  0,  0,  0,  0,  0,  0
     };
 
+    /**
+     * Huffman table for Coded Picture Block
+     */
     public static final int[] CPBHUFF = new int[]{
         11,  5,
         9,   5,
@@ -683,4 +686,8 @@ public class H261Constants {
         8,   5,
         12,  6
     };
+
+    private H261Constants() {
+        // Does Nothing
+    }
 }

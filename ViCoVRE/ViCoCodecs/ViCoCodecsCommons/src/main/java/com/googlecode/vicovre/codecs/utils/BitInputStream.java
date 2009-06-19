@@ -32,10 +32,6 @@
 
 package com.googlecode.vicovre.codecs.utils;
 
-import java.lang.reflect.Field;
-
-import sun.misc.Unsafe;
-
 /**
  * An input stream for reading things a bit at a time
  * @author Andrew G D Rowley
@@ -43,23 +39,27 @@ import sun.misc.Unsafe;
  */
 public class BitInputStream {
 
+    private static final int SHORT_SHIFT = 16;
+
+    private static final int BYTE_MASK = 0xFF;
+
+    private static final int BYTE_SHIFT = 8;
+
+    private static final int HUFF_SIZE_MASK = 0x1F;
+
+    private static final int HUFF_SIZE_SHIFT = 5;
+
+    private static final int TIMES_8_SHIFT = 3;
+
     private int bb = 0;
 
     private int nbb = 0;
 
-    private byte[] input = null;
+    private QuickArrayWrapper input = null;
 
-    private Unsafe unsafe = null;
+    private int currentOffset = 0;
 
-    private long inputOffset = 0;
-
-    private long byteArrayOffset = 0;
-
-    private long shortSize = 0;
-
-    private long currentOffset = 0;
-
-    private long endInput = 0;
+    private int endInput = 0;
 
     private int lastLen = 0;
 
@@ -70,31 +70,20 @@ public class BitInputStream {
      * @param input The data array to read bits from
      * @param offset The offset to start reading from
      * @param length The length of the data in input
+     * @throws QuickArrayException
      */
-    public BitInputStream(byte[] input, int offset, int length) {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            inputOffset = unsafe.objectFieldOffset(
-                BitInputStream.class.getDeclaredField("input"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-            shortSize = unsafe.arrayIndexScale(short[].class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public BitInputStream(byte[] input, int offset, int length)
+            throws QuickArrayException {
 
-        this.input = input;
-        currentOffset = byteArrayOffset + offset;
-        endInput = currentOffset + length;
+        this.input = new QuickArrayWrapper(input);
+        currentOffset = offset;
+        endInput = length;
     }
 
     private void huffRQ() {
-        bb <<= 16;
-        long currentInput = unsafe.getLong(this, inputOffset) + currentOffset;
-        bb |= (unsafe.getByte(currentInput++) & 0xFF) << 8;
-        bb |=  unsafe.getByte(currentInput++) & 0xFF;
-        currentOffset += 2;
+        bb <<= SHORT_SHIFT;
+        bb |= (input.getByte(currentOffset++) & BYTE_MASK) << BYTE_SHIFT;
+        bb |=  input.getByte(currentOffset++) & BYTE_MASK;
     }
 
     /**
@@ -114,7 +103,7 @@ public class BitInputStream {
         nbb -= n;
         if (nbb < 0) {
             huffRQ();
-            nbb += 16;
+            nbb += SHORT_SHIFT;
         }
         int val = (bb >> nbb) & ((1 << n) - 1);
         /*System.err.print("Reading " + n + " bits: ");
@@ -135,23 +124,24 @@ public class BitInputStream {
      * @param maxLen The maximum length of each code
      * @return The code found
      */
-    public int huffDecode(long ht, int maxLen) {
-        if (nbb < 16) {
+    public int huffDecode(QuickArray ht, int maxLen) {
+        if (nbb < SHORT_SHIFT) {
             huffRQ();
-            nbb += 16;
+            nbb += SHORT_SHIFT;
         }
         int s = maxLen;
         int v = (bb >> (nbb - s)) & ((1 << s) - 1);
-        s = unsafe.getShort(ht + (v * shortSize));
-        nbb -= (s & 0x1f);
+        s = ht.getShort(v);
+        nbb -= (s & HUFF_SIZE_MASK);
 
-        lastLen = (s & 0x1f);
+        lastLen = (s & HUFF_SIZE_MASK);
         lastCode = v >> (maxLen - lastLen);
 
         /*int len = (s & 0x1f);
         int code = v >> (maxLen - len);
         int val = (s >> 5);
-        System.err.print("Huffman decoded " + len + " bits from " + H261ASDecoder.toBinaryString(v, maxLen) + ": ");
+        System.err.print("Huffman decoded " + len + " bits from "
+            + H261ASDecoder.toBinaryString(v, maxLen) + ": ");
         for (int i = len - 1; i >= 0; i--) {
             if ((code & (1 << i)) > 0) {
                 System.err.print("1");
@@ -161,7 +151,7 @@ public class BitInputStream {
         }
         System.err.println(" : " + val); */
 
-        return (s >> 5);
+        return (s >> HUFF_SIZE_SHIFT);
     }
 
     /**
@@ -169,7 +159,7 @@ public class BitInputStream {
      * @return The number of bits left
      */
     public int bitsRemaining() {
-        return ((int) (endInput - currentOffset) << 3) + nbb;
+        return ((endInput - currentOffset) << TIMES_8_SHIFT) + nbb;
     }
 
     /**

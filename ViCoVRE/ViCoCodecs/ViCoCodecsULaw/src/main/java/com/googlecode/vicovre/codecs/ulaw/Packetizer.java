@@ -169,7 +169,6 @@ public class Packetizer implements Codec {
             input.setOffset(inOffset + bytesToCopy);
             input.setLength(inLength - bytesToCopy);
             input.setTimeStamp(input.getTimeStamp() + extraTime);
-            //System.err.println("Bytes copied = " + bytesToCopy + " New timestamp = " + input.getTimeStamp());
             return INPUT_BUFFER_NOT_CONSUMED;
         }
         // Exact match

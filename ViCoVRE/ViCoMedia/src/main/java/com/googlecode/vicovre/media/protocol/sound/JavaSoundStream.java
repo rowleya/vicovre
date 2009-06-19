@@ -145,11 +145,11 @@ public class JavaSoundStream implements PushBufferStream {
                 jsoundFormat.getSampleRate(),
                 jsoundFormat.getSampleSizeInBits(),
                 jsoundFormat.getChannels(),
-                jsoundFormat.isBigEndian()?
-                    javax.media.format.AudioFormat.BIG_ENDIAN :
-                    javax.media.format.AudioFormat.LITTLE_ENDIAN,
-                signed? javax.media.format.AudioFormat.SIGNED :
-                    javax.media.format.AudioFormat.UNSIGNED);
+                jsoundFormat.isBigEndian()
+                    ? javax.media.format.AudioFormat.BIG_ENDIAN
+                        : javax.media.format.AudioFormat.LITTLE_ENDIAN,
+                    signed ? javax.media.format.AudioFormat.SIGNED
+                        : javax.media.format.AudioFormat.UNSIGNED);
 
         bufferSize = (int) ((rate * bits * channels * BUFFER_DURATION) / 8000);
         while ((bufferSize % bits != 0)) {
