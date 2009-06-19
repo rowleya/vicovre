@@ -83,7 +83,7 @@ public class ByteArrayOutputStream extends OutputStream {
     public void write(byte[] bytes, int off, int len) throws IOException {
         if ((length < len) || ((offset + len) > array.length)) {
             throw new EOFException("End of byte array reached: "
-                    + length + ": " + len + ": " + offset + ": " + array.length);
+                + length + ": " + len + ": " + offset + ": " + array.length);
         }
         System.arraycopy(bytes, off, array, offset, len);
         offset += len;

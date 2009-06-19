@@ -169,7 +169,8 @@ public class JavaDepacketizer implements Codec {
                             } else if (sbit > 0) {
                                 for (int j = 0; j < 4; j++) {
                                     packet[i][j + 4] = (byte)
-                                        (((packet[i][j + 4] & SBIT_MASK[8 - sbit]) << sbit)
+                                        (((packet[i][j + 4]
+                                                & SBIT_MASK[8 - sbit]) << sbit)
                                         | ((packet[i][j + 5] >> (8 - sbit))
                                                 & SBIT_MASK[sbit]));
                                 }

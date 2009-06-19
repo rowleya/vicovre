@@ -11,7 +11,6 @@ import java.awt.image.ComponentColorModel;
 import java.awt.image.WritableRaster;
 import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
-import java.lang.reflect.Field;
 import java.util.Vector;
 
 import javax.media.Buffer;
@@ -19,11 +18,15 @@ import javax.media.Format;
 import javax.media.Renderer;
 import javax.media.format.RGBFormat;
 
-import sun.misc.Unsafe;
+import com.googlecode.vicovre.codecs.utils.QuickArray;
+import com.googlecode.vicovre.codecs.utils.QuickArrayAbstract;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
+import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
 
 /**
- * @author anja
  *
+ * @author Andrew G D Rowley
+ * @version 1.0
  */
 public class ChangeDetection implements Renderer {
 
@@ -75,31 +78,23 @@ public class ChangeDetection implements Renderer {
     // The lock status
     private boolean locked = false;
 
-    private int[] crvec_ = null;
+    private int[] crvec = null;
 
-    private long refbuf_ = 0;
+    private QuickArray refbuf = null;
 
-    private long devbuf_ = 0;
+    private QuickArray devbuf = null;
 
-    private int scan_ = 0;
+    private int scan = 0;
 
-    private int blkw_ = 0;
+    private int blkw = 0;
 
-    private int blkh_ = 0;
+    private int blkh = 0;
 
-    private int nblk_ = 0;
+    private int nblk = 0;
 
-    private int width_ = 0;
+    private int width = 0;
 
-    private int threshold_ = 400;
-
-    private Unsafe unsafe = null;
-
-    private long inObjectOffset = 0;
-
-    private long byteArrayOffset = 0;
-
-    private Object inObject = null;
+    private int threshold = 400;
 
     private long lastUpdateTime = -1;
 
@@ -120,16 +115,6 @@ public class ChangeDetection implements Renderer {
                     Format.NOT_SPECIFIED, Format.NOT_SPECIFIED,
                     3, Format.NOT_SPECIFIED, Format.FALSE, Format.NOT_SPECIFIED)
         };
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            inObjectOffset = unsafe.objectFieldOffset(
-                ChangeDetection.class.getDeclaredField("inObject"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -140,9 +125,9 @@ public class ChangeDetection implements Renderer {
     }
 
 
-    private void save(long lum, int pos, int stride) {
-        for (int i = 16; --i >= 0; ) {
-            unsafe.copyMemory(lum + pos, refbuf_ + pos, 16);
+    private void save(QuickArrayAbstract lum, int pos, int stride) {
+        for (int i = 16; --i >= 0;) {
+            lum.copy(refbuf, pos, pos, 16);
             pos += stride;
         }
     }
@@ -150,16 +135,16 @@ public class ChangeDetection implements Renderer {
     /*
      * Default save routine -- stuff new luma blocks into cache.
      */
-    private void saveblks(long lum) {
+    private void saveblks(QuickArrayAbstract lum) {
         int crv = 0;
         int pos = 0;
-        int stride = width_;
+        int stride = width;
         stride = (stride << 4) - stride;
-        for (int y = 0; y < blkh_; y++) {
-            for (int x = 0; x < blkw_; x++) {
-                if (crvec_[crv++] == 1) {
-                    convertBlock(lum, devbuf_, x, y);
-                    save(devbuf_, pos, width_);
+        for (int y = 0; y < blkh; y++) {
+            for (int x = 0; x < blkw; x++) {
+                if (crvec[crv++] == 1) {
+                    convertBlock(lum, devbuf, x, y);
+                    save(devbuf, pos, width);
                 }
                 pos += 16;
             }
@@ -167,30 +152,31 @@ public class ChangeDetection implements Renderer {
         }
     }
 
-    private void convertBlockLine(long inBuf, long devBuf, int line,
-            int blkx, int blky) {
+    private void convertBlockLine(QuickArrayAbstract inBuf,
+            QuickArrayAbstract devBuf, int line, int blkx, int blky) {
         int x = blkx * 16;
         int y = (blky * 16) + line;
-        long posOut = devBuf + (y * width_) + x;
-        long posIn = inBuf + (y * lineStride) + (x * pixelStride);
+        int posOut = (y * width) + x;
+        int posIn = (y * lineStride) + (x * pixelStride);
 
         for (int i = 0; i < 16; i++) {
-            int r = unsafe.getByte(posIn + redMask - 1) & BYTE_TO_INT_MASK;
-            int g = unsafe.getByte(posIn + greenMask - 1) & BYTE_TO_INT_MASK;
-            int b = unsafe.getByte(posIn + blueMask - 1) & BYTE_TO_INT_MASK;
+            int r = inBuf.getByte(posIn + redMask - 1) & BYTE_TO_INT_MASK;
+            int g = inBuf.getByte(posIn + greenMask - 1) & BYTE_TO_INT_MASK;
+            int b = inBuf.getByte(posIn + blueMask - 1) & BYTE_TO_INT_MASK;
 
             int yVal = (int) (CCITT_Y_RED_MULTIPLIER * r)
                   + (int) (CCITT_Y_GREEN_MULTIPLIER * g)
                   + (int) (CCITT_Y_BLUE_MULTIPLIER * b)
                   + CCITT_Y_CONSTANT;
-            unsafe.putByte(posOut, (byte) (yVal & BYTE_TO_INT_MASK));
+            devBuf.setByte(posOut, (byte) (yVal & BYTE_TO_INT_MASK));
 
             posOut += 1;
             posIn += pixelStride;
         }
     }
 
-    private void convertBlock(long inBuf, long devBuf, int blkx, int blky) {
+    private void convertBlock(QuickArrayAbstract inBuf,
+            QuickArrayAbstract devBuf, int blkx, int blky) {
         for (int i = 0; i < 16; i++) {
             convertBlockLine(inBuf, devBuf, i, blkx, blky);
         }
@@ -201,156 +187,166 @@ public class ChangeDetection implements Renderer {
      * @see javax.media.Renderer#process(javax.media.Buffer)
      */
     public int process(Buffer bufIn) {
-        if (nblk_ <= 0) {
+        if (nblk <= 0) {
             setInputFormat(bufIn.getFormat());
             Dimension size = format.getSize();
-            this.width_ = size.width;
-            blkw_ = size.width >> 4;
-            blkh_ = size.height >> 4;
-            nblk_ = blkw_ * blkh_;
-            refbuf_ = unsafe.allocateMemory(size.width * size.height);
-            devbuf_ = unsafe.allocateMemory(size.width * size.height);
-            unsafe.setMemory(refbuf_, size.width * size.height, (byte) 0);
-            unsafe.setMemory(devbuf_, size.width * size.height, (byte) 0);
-            crvec_ = new int[nblk_];
+            this.width = size.width;
+            blkw = size.width >> 4;
+            blkh = size.height >> 4;
+            nblk = blkw * blkh;
+            try {
+                refbuf = new QuickArray(byte[].class, size.width * size.height);
+                devbuf = new QuickArray(byte[].class, size.width * size.height);
+            } catch (QuickArrayException e) {
+                e.printStackTrace();
+                return BUFFER_PROCESSED_FAILED;
+            }
+            refbuf.clear();
+            devbuf.clear();
+            crvec = new int[nblk];
             lastBuffer = null;
         }
         lock();
 
-        for (int i = 0; i < nblk_; ++i) {
-            crvec_[i] = 0;
+        for (int i = 0; i < nblk; ++i) {
+            crvec[i] = 0;
         }
-        scan_ = (scan_ + 3) & 7;
-        inObject = bufIn.getData();
+        scan = (scan + 3) & 7;
+        Object inObject = bufIn.getData();
 
-        int _ds = width_;
-        int _rs = width_;
-        long inbufAddr = unsafe.getLong(this, inObjectOffset)
-            + byteArrayOffset;
-        long db = devbuf_ + scan_ * _ds;
-        long rb = refbuf_ + scan_ * _rs;
-        int w = blkw_;
+        int ds = width;
+        int rs = width;
+        QuickArrayWrapper in = null;
+        try {
+            in = new QuickArrayWrapper(inObject);
+        } catch (QuickArrayException e) {
+            e.printStackTrace();
+            return BUFFER_PROCESSED_FAILED;
+        }
+        int db = scan * ds;
+        int rb = scan * rs;
+        int w = blkw;
         int crv = 0;
-        for (int y = 0; y < blkh_; ++y) {
-            long ndb = db;
-            long nrb = rb;
+        for (int y = 0; y < blkh; ++y) {
+            int ndb = db;
+            int nrb = rb;
             int ncrv = crv;
-            for (int x = 0; x < blkw_; x++) {
-                convertBlockLine(inbufAddr, devbuf_, scan_, x, y);
+            for (int x = 0; x < blkw; x++) {
+                convertBlockLine(in, devbuf, scan, x, y);
                 int left = 0;
                 int right = 0;
                 int top = 0;
                 int bottom = 0;
-                left += (unsafe.getByte(db + 0) & 0xFF)
-                      - (unsafe.getByte(rb + 0) & 0xFF);
-                left += (unsafe.getByte(db + 1) & 0xFF)
-                      - (unsafe.getByte(rb + 1) & 0xFF);
-                left += (unsafe.getByte(db + 2) & 0xFF)
-                      - (unsafe.getByte(rb + 2) & 0xFF);
-                left += (unsafe.getByte(db + 3) & 0xFF)
-                      - (unsafe.getByte(rb + 3) & 0xFF);
-                top += (unsafe.getByte(db + 0 + 1*4) & 0xFF)
-                     - (unsafe.getByte(rb + 0 + 1*4) & 0xFF);
-                top += (unsafe.getByte(db + 1 + 1*4) & 0xFF)
-                     - (unsafe.getByte(rb + 1 + 1*4) & 0xFF);
-                top += (unsafe.getByte(db + 2 + 1*4) & 0xFF)
-                     - (unsafe.getByte(rb + 2 + 1*4) & 0xFF);
-                top += (unsafe.getByte(db + 3 + 1*4) & 0xFF)
-                     - (unsafe.getByte(rb + 3 + 1*4) & 0xFF);
-                top += (unsafe.getByte(db + 0 + 2*4) & 0xFF)
-                     - (unsafe.getByte(rb + 0 + 2*4) & 0xFF);
-                top += (unsafe.getByte(db + 1 + 2*4) & 0xFF)
-                     - (unsafe.getByte(rb + 1 + 2*4) & 0xFF);
-                top += (unsafe.getByte(db + 2 + 2*4) & 0xFF)
-                     - (unsafe.getByte(rb + 2 + 2*4) & 0xFF);
-                top += (unsafe.getByte(db + 3 + 2*4) & 0xFF)
-                     - (unsafe.getByte(rb + 3 + 2*4) & 0xFF);
-                right += (unsafe.getByte(db + 0 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 0 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 1 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 1 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 2 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 2 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 3 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 3 + 3*4) & 0xFF);
+                left += (devbuf.getByte(db + 0) & 0xFF)
+                      - (refbuf.getByte(rb + 0) & 0xFF);
+                left += (devbuf.getByte(db + 1) & 0xFF)
+                      - (refbuf.getByte(rb + 1) & 0xFF);
+                left += (devbuf.getByte(db + 2) & 0xFF)
+                      - (refbuf.getByte(rb + 2) & 0xFF);
+                left += (devbuf.getByte(db + 3) & 0xFF)
+                      - (refbuf.getByte(rb + 3) & 0xFF);
+                top += (devbuf.getByte(db + 0 + 1 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 0 + 1 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 1 + 1 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 1 + 1 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 2 + 1 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 2 + 1 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 3 + 1 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 3 + 1 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 0 + 2 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 0 + 2 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 1 + 2 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 1 + 2 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 2 + 2 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 2 + 2 * 4) & 0xFF);
+                top += (devbuf.getByte(db + 3 + 2 * 4) & 0xFF)
+                     - (refbuf.getByte(rb + 3 + 2 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 0 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 0 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 1 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 1 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 2 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 2 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 3 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 3 + 3 * 4) & 0xFF);
                 right = Math.abs(right);
                 left = Math.abs(left);
                 top = Math.abs(top);
-                db += _ds << 3;
-                rb += _rs << 3;
-                left += (unsafe.getByte(db + 0) & 0xFF)
-                      - (unsafe.getByte(rb + 0) & 0xFF);
-                left += (unsafe.getByte(db + 1) & 0xFF)
-                      - (unsafe.getByte(rb + 1) & 0xFF);
-                left += (unsafe.getByte(db + 2) & 0xFF)
-                      - (unsafe.getByte(rb + 2) & 0xFF);
-                left += (unsafe.getByte(db + 3) & 0xFF)
-                      - (unsafe.getByte(rb + 3) & 0xFF);
-                bottom += (unsafe.getByte(db + 0 + 1*4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 1*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 1 + 1*4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 1*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 2 + 1*4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 1*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 3 + 1*4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 1*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 0 + 2*4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 2*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 1 + 2*4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 2*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 2 + 2*4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 2*4) & 0xFF);
-                bottom += (unsafe.getByte(db + 3 + 2*4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 2*4) & 0xFF);
-                right += (unsafe.getByte(db + 0 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 0 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 1 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 1 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 2 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 2 + 3*4) & 0xFF);
-                right += (unsafe.getByte(db + 3 + 3*4) & 0xFF)
-                       - (unsafe.getByte(rb + 3 + 3*4) & 0xFF);
+                db += ds << 3;
+                rb += rs << 3;
+                left += (devbuf.getByte(db + 0) & 0xFF)
+                      - (refbuf.getByte(rb + 0) & 0xFF);
+                left += (devbuf.getByte(db + 1) & 0xFF)
+                      - (refbuf.getByte(rb + 1) & 0xFF);
+                left += (devbuf.getByte(db + 2) & 0xFF)
+                      - (refbuf.getByte(rb + 2) & 0xFF);
+                left += (devbuf.getByte(db + 3) & 0xFF)
+                      - (refbuf.getByte(rb + 3) & 0xFF);
+                bottom += (devbuf.getByte(db + 0 + 1 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 0 + 1 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 1 + 1 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 1 + 1 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 2 + 1 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 2 + 1 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 3 + 1 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 3 + 1 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 0 + 2 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 0 + 2 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 1 + 2 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 1 + 2 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 2 + 2 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 2 + 2 * 4) & 0xFF);
+                bottom += (devbuf.getByte(db + 3 + 2 * 4) & 0xFF)
+                        - (refbuf.getByte(rb + 3 + 2 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 0 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 0 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 1 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 1 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 2 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 2 + 3 * 4) & 0xFF);
+                right += (devbuf.getByte(db + 3 + 3 * 4) & 0xFF)
+                       - (refbuf.getByte(rb + 3 + 3 * 4) & 0xFF);
                 right = Math.abs(right);
                 left = Math.abs(left);
                 bottom = Math.abs(bottom);
-                db -= _ds << 3;
-                rb -= _rs << 3;
+                db -= ds << 3;
+                rb -= rs << 3;
 
                 int center = 0;
-                if (left >= threshold_ && x > 0) {
-                    crvec_[crv - 1] = 1;
+                if (left >= threshold && x > 0) {
+                    crvec[crv - 1] = 1;
                     center = 1;
                 }
-                if (right >= threshold_ && x < w - 1) {
-                    crvec_[crv + 1] = 1;
+                if (right >= threshold && x < w - 1) {
+                    crvec[crv + 1] = 1;
                     center = 1;
                 }
-                if (bottom >= threshold_ && y < blkh_ - 1) {
-                    crvec_[crv + w] = 1;
+                if (bottom >= threshold && y < blkh - 1) {
+                    crvec[crv + w] = 1;
                     center = 1;
                 }
-                if (top >= threshold_ && y > 0) {
-                    crvec_[crv - w] = 1;
+                if (top >= threshold && y > 0) {
+                    crvec[crv - w] = 1;
                     center = 1;
                 }
                 if (center > 0) {
-                    crvec_[crv + 0] = 1;
+                    crvec[crv + 0] = 1;
                 }
 
                 db += 16;
                 rb += 16;
                 ++crv;
             }
-            db = ndb + (_ds << 4);
-            rb = nrb + (_rs << 4);
+            db = ndb + (ds << 4);
+            rb = nrb + (rs << 4);
             crv = ncrv + w;
         }
-        saveblks(inbufAddr);
+        saveblks(in);
         int diffCount = 0;
-        for (int i = 0; i < nblk_; i++) {
-            diffCount += crvec_[i];
+        for (int i = 0; i < nblk; i++) {
+            diffCount += crvec[i];
         }
-        if (((diffCount * 100) / nblk_) > SCENE_CHANGE_PERCENT_THRESHOLD) {
+        if (((diffCount * 100) / nblk) > SCENE_CHANGE_PERCENT_THRESHOLD) {
             lastUpdateTime = bufIn.getTimeStamp();
         } else if ((diffCount == 0) && (lastUpdateTime != -1)) {
             lastBuffer = bufIn;
@@ -381,9 +377,9 @@ public class ChangeDetection implements Renderer {
      * @see javax.media.PlugIn#close()
      */
     public void close() {
-        nblk_ = -1;
-        unsafe.freeMemory(refbuf_);
-        unsafe.freeMemory(devbuf_);
+        nblk = -1;
+        refbuf.free();
+        devbuf.free();
     }
 
     /**

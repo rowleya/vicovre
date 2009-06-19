@@ -32,10 +32,7 @@
 
 package com.googlecode.vicovre.codecs.utils;
 
-import java.lang.reflect.Field;
 import java.text.DecimalFormat;
-
-import sun.misc.Unsafe;
 
 /**
  * This class is used to perform the forward and inverse discrete cosine
@@ -50,10 +47,8 @@ public class DCT {
 
     private static final double R2 = Math.sqrt(2);
 
-    private static final float _R2 = (float) R2;
-
     // these values are used in the IDCT
-    private static final double[] scaleFactor = {1.0, // 1.0
+    private static final double[] SCALE_FACTOR = {1.0, // 1.0
             Math.cos(1 * Math.PI / 16) * R2, // 1.3870398453221475
             Math.cos(2 * Math.PI / 16) * R2, // 1.3065629648763766
             Math.cos(3 * Math.PI / 16) * R2, // 1.1758756024193588
@@ -62,42 +57,29 @@ public class DCT {
             Math.cos(6 * Math.PI / 16) * R2, // 0.5411961001461971
             Math.cos(7 * Math.PI / 16) * R2 }; // 0.2758993792829431
 
-    private static final float[] _scaleFactor = { (float) scaleFactor[0],
-            (float) scaleFactor[1], (float) scaleFactor[2],
-            (float) scaleFactor[3], (float) scaleFactor[4],
-            (float) scaleFactor[5], (float) scaleFactor[6],
-            (float) scaleFactor[7] };
-
-    private static final double K2 = 2 * Math.cos(Math.PI / 8); // 1.8477590650225735
-
-    private static final double K6 = 2 * Math.sin(Math.PI / 8); // 0.7653668647301796
-
-    private static final double M26 = K2 - K6; // 1.0823922002923938
-
-    private static final double P26 = -(K2 + K6); // -2.613125929752753
-
-    private static final float _K2 = (float) K2;
-
-    private static final float _M26 = (float) M26;
-
-    private static final float _P26 = (float) P26;
+    private static final float[] SCALE_FACTOR_F = {
+            (float) SCALE_FACTOR[0],
+            (float) SCALE_FACTOR[1], (float) SCALE_FACTOR[2],
+            (float) SCALE_FACTOR[3], (float) SCALE_FACTOR[4],
+            (float) SCALE_FACTOR[5], (float) SCALE_FACTOR[6],
+            (float) SCALE_FACTOR[7] };
 
     // these values are used in the FDCT
-    private static final double F0 = 1.0 / R2; // 0.7071067811865475
+    private static final double F0 = 1.0 / R2;
 
-    private static final double F1 = Math.cos(1 * Math.PI / 16) / 2; // 0.4903926402016152
+    private static final double F1 = Math.cos(1 * Math.PI / 16) / 2;
 
-    private static final double F2 = Math.cos(2 * Math.PI / 16) / 2; // 0.46193976625564337
+    private static final double F2 = Math.cos(2 * Math.PI / 16) / 2;
 
-    private static final double F3 = Math.cos(3 * Math.PI / 16) / 2; // 0.4157348061512726
+    private static final double F3 = Math.cos(3 * Math.PI / 16) / 2;
 
-    private static final double F4 = Math.cos(4 * Math.PI / 16) / 2; // 0.3535533905932738
+    private static final double F4 = Math.cos(4 * Math.PI / 16) / 2;
 
-    private static final double F5 = Math.cos(5 * Math.PI / 16) / 2; // 0.27778511650980114
+    private static final double F5 = Math.cos(5 * Math.PI / 16) / 2;
 
-    private static final double F6 = Math.cos(6 * Math.PI / 16) / 2; // 0.19134171618254492
+    private static final double F6 = Math.cos(6 * Math.PI / 16) / 2;
 
-    private static final double F7 = Math.cos(7 * Math.PI / 16) / 2; // 0.09754516100806417
+    private static final double F7 = Math.cos(7 * Math.PI / 16) / 2;
 
     private static final double D71 = F7 - F1; // -0.39284747919355106
 
@@ -111,27 +93,27 @@ public class DCT {
 
     private static final double S62 = F6 + F2; // 0.6532814824381883
 
-    private static final float _F0 = (float) F0;
+    private static final float F0_F = (float) F0;
 
-    private static final float _F3 = (float) F3;
+    private static final float F3_F = (float) F3;
 
-    private static final float _F4 = (float) F4;
+    private static final float F4_F = (float) F4;
 
-    private static final float _F6 = (float) F6;
+    private static final float F6_F = (float) F6;
 
-    private static final float _F7 = (float) F7;
+    private static final float F7_F = (float) F7;
 
-    private static final float _D71 = (float) D71;
+    private static final float D71_F = (float) D71;
 
-    private static final float _D35 = (float) D35;
+    private static final float D35_F = (float) D35;
 
-    private static final float _D62 = (float) D62;
+    private static final float D62_F = (float) D62;
 
-    private static final float _S71 = (float) S71;
+    private static final float S71_F = (float) S71;
 
-    private static final float _S35 = (float) S35;
+    private static final float S35_F = (float) S35;
 
-    private static final float _S62 = (float) S62;
+    private static final float S62_F = (float) S62;
 
     private static final float B0 = 0.35355339059327376220f;
 
@@ -149,382 +131,264 @@ public class DCT {
 
     private static final float B7 = 1.28145772387075308943f;
 
-    private static final int FP_SCALE(float v) {
+    private static int fpScale(float v) {
         return (int) ((double) v * (double) (1 << 15) + 0.5);
     }
 
-    private int[] CROSS_STAGE = new int[] { FP_SCALE(B0 * B0),
-            FP_SCALE(B0 * B1), FP_SCALE(B0 * B2), FP_SCALE(B0 * B3),
-            FP_SCALE(B0 * B4), FP_SCALE(B0 * B5), FP_SCALE(B0 * B6),
-            FP_SCALE(B0 * B7),
+    private int[] crossStage = new int[] {
+            fpScale(B0 * B0), fpScale(B0 * B1), fpScale(B0 * B2),
+            fpScale(B0 * B3), fpScale(B0 * B4), fpScale(B0 * B5),
+            fpScale(B0 * B6), fpScale(B0 * B7),
 
-            FP_SCALE(B1 * B0), FP_SCALE(B1 * B1), FP_SCALE(B1 * B2),
-            FP_SCALE(B1 * B3), FP_SCALE(B1 * B4), FP_SCALE(B1 * B5),
-            FP_SCALE(B1 * B6), FP_SCALE(B1 * B7),
+            fpScale(B1 * B0), fpScale(B1 * B1), fpScale(B1 * B2),
+            fpScale(B1 * B3), fpScale(B1 * B4), fpScale(B1 * B5),
+            fpScale(B1 * B6), fpScale(B1 * B7),
 
-            FP_SCALE(B2 * B0), FP_SCALE(B2 * B1), FP_SCALE(B2 * B2),
-            FP_SCALE(B2 * B3), FP_SCALE(B2 * B4), FP_SCALE(B2 * B5),
-            FP_SCALE(B2 * B6), FP_SCALE(B2 * B7),
+            fpScale(B2 * B0), fpScale(B2 * B1), fpScale(B2 * B2),
+            fpScale(B2 * B3), fpScale(B2 * B4), fpScale(B2 * B5),
+            fpScale(B2 * B6), fpScale(B2 * B7),
 
-            FP_SCALE(B3 * B0), FP_SCALE(B3 * B1), FP_SCALE(B3 * B2),
-            FP_SCALE(B3 * B3), FP_SCALE(B3 * B4), FP_SCALE(B3 * B5),
-            FP_SCALE(B3 * B6), FP_SCALE(B3 * B7),
+            fpScale(B3 * B0), fpScale(B3 * B1), fpScale(B3 * B2),
+            fpScale(B3 * B3), fpScale(B3 * B4), fpScale(B3 * B5),
+            fpScale(B3 * B6), fpScale(B3 * B7),
 
-            FP_SCALE(B4 * B0), FP_SCALE(B4 * B1), FP_SCALE(B4 * B2),
-            FP_SCALE(B4 * B3), FP_SCALE(B4 * B4), FP_SCALE(B4 * B5),
-            FP_SCALE(B4 * B6), FP_SCALE(B4 * B7),
+            fpScale(B4 * B0), fpScale(B4 * B1), fpScale(B4 * B2),
+            fpScale(B4 * B3), fpScale(B4 * B4), fpScale(B4 * B5),
+            fpScale(B4 * B6), fpScale(B4 * B7),
 
-            FP_SCALE(B5 * B0), FP_SCALE(B5 * B1), FP_SCALE(B5 * B2),
-            FP_SCALE(B5 * B3), FP_SCALE(B5 * B4), FP_SCALE(B5 * B5),
-            FP_SCALE(B5 * B6), FP_SCALE(B5 * B7),
+            fpScale(B5 * B0), fpScale(B5 * B1), fpScale(B5 * B2),
+            fpScale(B5 * B3), fpScale(B5 * B4), fpScale(B5 * B5),
+            fpScale(B5 * B6), fpScale(B5 * B7),
 
-            FP_SCALE(B6 * B0), FP_SCALE(B6 * B1), FP_SCALE(B6 * B2),
-            FP_SCALE(B6 * B3), FP_SCALE(B6 * B4), FP_SCALE(B6 * B5),
-            FP_SCALE(B6 * B6), FP_SCALE(B6 * B7),
+            fpScale(B6 * B0), fpScale(B6 * B1), fpScale(B6 * B2),
+            fpScale(B6 * B3), fpScale(B6 * B4), fpScale(B6 * B5),
+            fpScale(B6 * B6), fpScale(B6 * B7),
 
-            FP_SCALE(B7 * B0), FP_SCALE(B7 * B1), FP_SCALE(B7 * B2),
-            FP_SCALE(B7 * B3), FP_SCALE(B7 * B4), FP_SCALE(B7 * B5),
-            FP_SCALE(B7 * B6), FP_SCALE(B7 * B7), };
+            fpScale(B7 * B0), fpScale(B7 * B1), fpScale(B7 * B2),
+            fpScale(B7 * B3), fpScale(B7 * B4), fpScale(B7 * B5),
+            fpScale(B7 * B6), fpScale(B7 * B7), };
 
-    private static final int A1 = FP_SCALE(0.7071068f);
+    private static final int A1 = fpScale(0.7071068f);
 
-    private static final int A2 = FP_SCALE(0.5411961f);
+    private static final int A2 = fpScale(0.5411961f);
 
     private static final int A3 = A1;
 
-    private static final int A4 = FP_SCALE(1.3065630f);
+    private static final int A4 = fpScale(1.3065630f);
 
-    private static final int A5 = FP_SCALE(0.3826834f);
+    private static final int A5 = fpScale(0.3826834f);
 
-    private static final int FP_MUL(int a, int b) {
+    private static int fpMultiply(int a, int b) {
         return ((((a) >> 5) * ((b) >> 5)) >> 5);
     }
 
-    private Unsafe unsafe = null;
+    private QuickArray tmp = null;
 
-    private long objectOffset = 0;
-
-    private long inObjectOffset = 0;
-
-    private long byteArrayOffset = 0;
-
-    private long intArrayOffset = 0;
-
-    private long intSize = 0;
-
-    private long shortSize = 0;
-
-    private Object object = null;
-
-    private Object inObject = null;
-
-    private long tmp = 0;
-
-    private long cross_stage = 0;
+    private QuickArray quickCrossStage = null;
 
     /**
      * Creates a new DCT object
+     * @throws QuickArrayException
      *
      */
-    public DCT() {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            objectOffset = unsafe.objectFieldOffset(DCT.class
-                    .getDeclaredField("object"));
-            inObjectOffset = unsafe.objectFieldOffset(DCT.class
-                    .getDeclaredField("inObject"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-            intArrayOffset = unsafe.arrayBaseOffset(int[].class);
-            intSize = unsafe.arrayIndexScale(int[].class);
-            shortSize = unsafe.arrayIndexScale(short[].class);
-            cross_stage = unsafe.allocateMemory(CROSS_STAGE.length * intSize);
-            for (int i = 0; i < CROSS_STAGE.length; i++) {
-                unsafe.putInt(cross_stage + (i * intSize), CROSS_STAGE[i]);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    public DCT() throws QuickArrayException {
+        quickCrossStage = new QuickArray(int[].class, crossStage.length);
+        for (int i = 0; i < crossStage.length; i++) {
+            quickCrossStage.setInt(i, crossStage[i]);
         }
-        tmp = unsafe.allocateMemory(64 * intSize);
-    }
-
-    public void FDCT(byte[] in, int[] out, int startoff, int xoff, int yoff,
-            int stride) {
-        object = out;
-        long outOffset = unsafe.getLong(this, objectOffset) + intArrayOffset;
-        FDCT(in, outOffset, startoff, xoff, yoff, stride);
+        tmp = new QuickArray(int[].class, 64);
     }
 
     /**
      * This method performs the forward discrete cosine transform (FDCT). The in
      * array is linearized.
+     * @param in The input array
+     * @param out The output array
+     * @param startoff The start offset in the input array
+     * @param xoff The x offset in the input array
+     * @param yoff The y offset in the input array
+     * @param stride The stride of the input array
+     * @throws QuickArrayException
      */
-    public void FDCT(byte[] in, long out, int startoff, int xoff, int yoff,
-            int stride) {
+    public void fdct(byte[] in, int[] out, int startoff, int xoff, int yoff,
+            int stride) throws QuickArrayException {
+        QuickArrayWrapper outWrapper = new QuickArrayWrapper(out);
+        QuickArrayWrapper inWrapper = new QuickArrayWrapper(in);
+        fdct(inWrapper, outWrapper, startoff, xoff, yoff, stride);
+    }
+
+    /**
+     * This method performs the forward discrete cosine transform (FDCT). The in
+     * array is linearized.
+     * @param in The input array
+     * @param out The output array
+     * @param startoff The start offset in the input array
+     * @param xoff The x offset in the input array
+     * @param yoff The y offset in the input array
+     * @param stride The stride of the input array
+     */
+    public void fdct(QuickArrayAbstract in, QuickArrayAbstract out,
+            int startoff, int xoff, int yoff, int stride) {
         float temp;
         float a0, a1, a2, a3, a4, a5, a6, a7;
         float b0, b1, b2, b3, b4, b5, b6, b7;
 
-        inObject = in;
-        long pin = unsafe.getLong(this, inObjectOffset) + byteArrayOffset
-                + (startoff + (yoff * stride) + xoff);
-        long pout = out;
+        int pin = startoff + (yoff * stride) + xoff;
+        int pout = 0;
 
         // Horizontal transform
         for (int i = 0; i < BLOCK_SIZE; i++) {
-            b0 = (unsafe.getByte(pin + 0) & 0xFF)
-                    + (unsafe.getByte(pin + 7) & 0xFF);
-            b7 = (unsafe.getByte(pin + 0) & 0xFF)
-                    - (unsafe.getByte(pin + 7) & 0xFF);
-            b1 = (unsafe.getByte(pin + 1) & 0xFF)
-                    + (unsafe.getByte(pin + 6) & 0xFF);
-            b6 = (unsafe.getByte(pin + 1) & 0xFF)
-                    - (unsafe.getByte(pin + 6) & 0xFF);
-            b2 = (unsafe.getByte(pin + 2) & 0xFF)
-                    + (unsafe.getByte(pin + 5) & 0xFF);
-            b5 = (unsafe.getByte(pin + 2) & 0xFF)
-                    - (unsafe.getByte(pin + 5) & 0xFF);
-            b3 = (unsafe.getByte(pin + 3) & 0xFF)
-                    + (unsafe.getByte(pin + 4) & 0xFF);
-            b4 = (unsafe.getByte(pin + 3) & 0xFF)
-                    - (unsafe.getByte(pin + 4) & 0xFF);
+            b0 = (in.getByte(pin + 0) & 0xFF)
+                    + (in.getByte(pin + 7) & 0xFF);
+            b7 = (in.getByte(pin + 0) & 0xFF)
+                    - (in.getByte(pin + 7) & 0xFF);
+            b1 = (in.getByte(pin + 1) & 0xFF)
+                    + (in.getByte(pin + 6) & 0xFF);
+            b6 = (in.getByte(pin + 1) & 0xFF)
+                    - (in.getByte(pin + 6) & 0xFF);
+            b2 = (in.getByte(pin + 2) & 0xFF)
+                    + (in.getByte(pin + 5) & 0xFF);
+            b5 = (in.getByte(pin + 2) & 0xFF)
+                    - (in.getByte(pin + 5) & 0xFF);
+            b3 = (in.getByte(pin + 3) & 0xFF)
+                    + (in.getByte(pin + 4) & 0xFF);
+            b4 = (in.getByte(pin + 3) & 0xFF)
+                    - (in.getByte(pin + 4) & 0xFF);
 
             a0 = b0 + b3;
             a1 = b1 + b2;
             a2 = b1 - b2;
             a3 = b0 - b3;
             a4 = b4;
-            a5 = (b6 - b5) * _F0;
-            a6 = (b6 + b5) * _F0;
+            a5 = (b6 - b5) * F0_F;
+            a6 = (b6 + b5) * F0_F;
             a7 = b7;
-            unsafe.putInt(pout + (0 * intSize), (int) ((a0 + a1) * _F4));
-            unsafe.putInt(pout + (4 * intSize), (int) ((a0 - a1) * _F4));
+            out.setInt(pout + 0, (int) ((a0 + a1) * F4_F));
+            out.setInt(pout + 4, (int) ((a0 - a1) * F4_F));
 
-            temp = (a3 + a2) * _F6;
-            unsafe.putInt(pout + (2 * intSize), (int) (temp - a3 * _D62));
-            unsafe.putInt(pout + (6 * intSize), (int) (temp - a2 * _S62));
+            temp = (a3 + a2) * F6_F;
+            out.setInt(pout + 2, (int) (temp - a3 * D62_F));
+            out.setInt(pout + 6, (int) (temp - a2 * S62_F));
 
             b4 = a4 + a5;
             b7 = a7 + a6;
             b5 = a4 - a5;
             b6 = a7 - a6;
 
-            temp = (b7 + b4) * _F7;
-            unsafe.putInt(pout + (1 * intSize), (int) (temp - b7 * _D71));
-            unsafe.putInt(pout + (7 * intSize), (int) (temp - b4 * _S71));
+            temp = (b7 + b4) * F7_F;
+            out.setInt(pout + 1, (int) (temp - b7 * D71_F));
+            out.setInt(pout + 7, (int) (temp - b4 * S71_F));
 
-            temp = (b6 + b5) * _F3;
-            unsafe.putInt(pout + (5 * intSize), (int) (temp - b6 * _D35));
-            unsafe.putInt(pout + (3 * intSize), (int) (temp - b5 * _S35));
+            temp = (b6 + b5) * F3_F;
+            out.setInt(pout + 5, (int) (temp - b6 * D35_F));
+            out.setInt(pout + 3, (int) (temp - b5 * S35_F));
 
             pin += stride;
-            pout += (BLOCK_SIZE * intSize);
+            pout += BLOCK_SIZE;
         }
 
         // Vertical transform
-        pout = out;
+        pout = 0;
         for (int i = 0; i < BLOCK_SIZE; i++) {
-            b0 = unsafe.getInt(pout + (0 * BLOCK_SIZE * intSize))
-                    + unsafe.getInt(pout + (7 * BLOCK_SIZE * intSize));
-            b7 = unsafe.getInt(pout + (0 * BLOCK_SIZE * intSize))
-                    - unsafe.getInt(pout + (7 * BLOCK_SIZE * intSize));
-            b1 = unsafe.getInt(pout + (1 * BLOCK_SIZE * intSize))
-                    + unsafe.getInt(pout + (6 * BLOCK_SIZE * intSize));
-            b6 = unsafe.getInt(pout + (1 * BLOCK_SIZE * intSize))
-                    - unsafe.getInt(pout + (6 * BLOCK_SIZE * intSize));
-            b2 = unsafe.getInt(pout + (2 * BLOCK_SIZE * intSize))
-                    + unsafe.getInt(pout + (5 * BLOCK_SIZE * intSize));
-            b5 = unsafe.getInt(pout + (2 * BLOCK_SIZE * intSize))
-                    - unsafe.getInt(pout + (5 * BLOCK_SIZE * intSize));
-            b3 = unsafe.getInt(pout + (3 * BLOCK_SIZE * intSize))
-                    + unsafe.getInt(pout + (4 * BLOCK_SIZE * intSize));
-            b4 = unsafe.getInt(pout + (3 * BLOCK_SIZE * intSize))
-                    - unsafe.getInt(pout + (4 * BLOCK_SIZE * intSize));
+            b0 = out.getInt(pout + (0 * BLOCK_SIZE))
+                    + out.getInt(pout + (7 * BLOCK_SIZE));
+            b7 = out.getInt(pout + (0 * BLOCK_SIZE))
+                    - out.getInt(pout + (7 * BLOCK_SIZE));
+            b1 = out.getInt(pout + (1 * BLOCK_SIZE))
+                    + out.getInt(pout + (6 * BLOCK_SIZE));
+            b6 = out.getInt(pout + (1 * BLOCK_SIZE))
+                    - out.getInt(pout + (6 * BLOCK_SIZE));
+            b2 = out.getInt(pout + (2 * BLOCK_SIZE))
+                    + out.getInt(pout + (5 * BLOCK_SIZE));
+            b5 = out.getInt(pout + (2 * BLOCK_SIZE))
+                    - out.getInt(pout + (5 * BLOCK_SIZE));
+            b3 = out.getInt(pout + (3 * BLOCK_SIZE))
+                    + out.getInt(pout + (4 * BLOCK_SIZE));
+            b4 = out.getInt(pout + (3 * BLOCK_SIZE))
+                    - out.getInt(pout + (4 * BLOCK_SIZE));
 
             a0 = b0 + b3;
             a1 = b1 + b2;
             a2 = b1 - b2;
             a3 = b0 - b3;
             a4 = b4;
-            a5 = (b6 - b5) * _F0;
-            a6 = (b6 + b5) * _F0;
+            a5 = (b6 - b5) * F0_F;
+            a6 = (b6 + b5) * F0_F;
             a7 = b7;
-            unsafe.putInt(pout + (0 * BLOCK_SIZE * intSize),
-                    (int) ((a0 + a1) * _F4));
-            unsafe.putInt(pout + (4 * BLOCK_SIZE * intSize),
-                    (int) ((a0 - a1) * _F4));
+            out.setInt(pout + (0 * BLOCK_SIZE),
+                    (int) ((a0 + a1) * F4_F));
+            out.setInt(pout + (4 * BLOCK_SIZE),
+                    (int) ((a0 - a1) * F4_F));
 
-            temp = (a3 + a2) * _F6;
-            unsafe.putInt(pout + (2 * BLOCK_SIZE * intSize), (int) (temp - a3
-                    * _D62));
-            unsafe.putInt(pout + (6 * BLOCK_SIZE * intSize), (int) (temp - a2
-                    * _S62));
+            temp = (a3 + a2) * F6_F;
+            out.setInt(pout + (2 * BLOCK_SIZE), (int) (temp - a3
+                    * D62_F));
+            out.setInt(pout + (6 * BLOCK_SIZE), (int) (temp - a2
+                    * S62_F));
 
             b4 = a4 + a5;
             b7 = a7 + a6;
             b5 = a4 - a5;
             b6 = a7 - a6;
 
-            temp = (b7 + b4) * _F7;
-            unsafe.putInt(pout + (1 * BLOCK_SIZE * intSize), (int) (temp - b7
-                    * _D71));
-            unsafe.putInt(pout + (7 * BLOCK_SIZE * intSize), (int) (temp - b4
-                    * _S71));
+            temp = (b7 + b4) * F7_F;
+            out.setInt(pout + (1 * BLOCK_SIZE), (int) (temp - b7
+                    * D71_F));
+            out.setInt(pout + (7 * BLOCK_SIZE), (int) (temp - b4
+                    * S71_F));
 
-            temp = (b6 + b5) * _F3;
-            unsafe.putInt(pout + (5 * BLOCK_SIZE * intSize), (int) (temp - b6
-                    * _D35));
-            unsafe.putInt(pout + (3 * BLOCK_SIZE * intSize), (int) (temp - b5
-                    * _S35));
-            pout += intSize;
+            temp = (b6 + b5) * F3_F;
+            out.setInt(pout + (5 * BLOCK_SIZE), (int) (temp - b6
+                    * D35_F));
+            out.setInt(pout + (3 * BLOCK_SIZE), (int) (temp - b5
+                    * S35_F));
+            pout += 1;
         }
     }
 
-    /**
-     * Inverse DCT
-     */
-    public void IDCT(long in, long out, int stride) {
-        float tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
-        float tmp7, tmp10, tmp11, tmp12, tmp13;
-        float z5, z10, z11, z12, z13;
-        float[][] tmpout = new float[BLOCK_SIZE][BLOCK_SIZE];
-
-        for (int i = 0; i < BLOCK_SIZE; i++) {
-            if (unsafe.getShort(in + (((1 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((2 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((3 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((4 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((5 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((6 * BLOCK_SIZE) + i) * shortSize)) == 0
-                    && unsafe.getShort(in
-                            + (((7 * BLOCK_SIZE) + i) * shortSize)) == 0) {
-                float dc = unsafe.getShort(in
-                        + (((0 * BLOCK_SIZE) + i) * shortSize));
-                System.err.println("dc = " + dc);
-                tmpout[0][i] = dc;
-                tmpout[1][i] = dc;
-                tmpout[2][i] = dc;
-                tmpout[3][i] = dc;
-                tmpout[4][i] = dc;
-                tmpout[5][i] = dc;
-                tmpout[6][i] = dc;
-                tmpout[7][i] = dc;
-                continue;
-            }
-
-            tmp0 = unsafe.getShort(in + (((0 * BLOCK_SIZE) + i) * shortSize));
-            tmp1 = unsafe.getShort(in + (((2 * BLOCK_SIZE) + i) * shortSize));
-            tmp2 = unsafe.getShort(in + (((4 * BLOCK_SIZE) + i) * shortSize));
-            tmp3 = unsafe.getShort(in + (((6 * BLOCK_SIZE) + i) * shortSize));
-
-            tmp10 = tmp0 + tmp2;
-            tmp11 = tmp0 - tmp2;
-
-            tmp13 = tmp1 + tmp3;
-            tmp12 = (tmp1 - tmp3) * _R2 - tmp13;
-
-            tmp0 = tmp10 + tmp13;
-            tmp3 = tmp10 - tmp13;
-            tmp1 = tmp11 + tmp12;
-            tmp2 = tmp11 - tmp12;
-
-            tmp4 = unsafe.getShort(in + (((1 * BLOCK_SIZE) + i) * shortSize));
-            tmp5 = unsafe.getShort(in + (((3 * BLOCK_SIZE) + i) * shortSize));
-            tmp6 = unsafe.getShort(in + (((5 * BLOCK_SIZE) + i) * shortSize));
-            tmp7 = unsafe.getShort(in + (((7 * BLOCK_SIZE) + i) * shortSize));
-
-            z13 = tmp6 + tmp5;
-            z10 = tmp6 - tmp5;
-            z11 = tmp4 + tmp7;
-            z12 = tmp4 - tmp7;
-
-            tmp7 = z11 + z13;
-            tmp11 = (z11 - z13) * _R2;
-
-            z5 = (z10 + z12) * _K2;
-            tmp10 = _M26 * z12 - z5;
-            tmp12 = _P26 * z10 + z5;
-
-            tmp6 = tmp12 - tmp7;
-            tmp5 = tmp11 - tmp6;
-            tmp4 = tmp10 + tmp5;
-
-            tmpout[0][i] = (tmp0 + tmp7);
-            tmpout[7][i] = (tmp0 - tmp7);
-            tmpout[1][i] = (tmp1 + tmp6);
-            tmpout[6][i] = (tmp1 - tmp6);
-            tmpout[2][i] = (tmp2 + tmp5);
-            tmpout[5][i] = (tmp2 - tmp5);
-            tmpout[4][i] = (tmp3 + tmp4);
-            tmpout[3][i] = (tmp3 - tmp4);
-        }
-
-        for (int i = 0; i < BLOCK_SIZE; i++) {
-            tmp10 = tmpout[i][0] + tmpout[i][4];
-            tmp11 = tmpout[i][0] - tmpout[i][4];
-
-            tmp13 = tmpout[i][2] + tmpout[i][6];
-            tmp12 = (tmpout[i][2] - tmpout[i][6]) * _R2 - tmp13;
-
-            tmp0 = tmp10 + tmp13;
-            tmp3 = tmp10 - tmp13;
-            tmp1 = tmp11 + tmp12;
-            tmp2 = tmp11 - tmp12;
-
-            z13 = tmpout[i][5] + tmpout[i][3];
-            z10 = tmpout[i][5] - tmpout[i][3];
-            z11 = tmpout[i][1] + tmpout[i][7];
-            z12 = tmpout[i][1] - tmpout[i][7];
-
-            tmp7 = z11 + z13;
-            tmp11 = (z11 - z13) * _R2;
-
-            z5 = (z10 + z12) * _K2;
-            tmp10 = _M26 * z12 - z5;
-            tmp12 = _P26 * z10 + z5;
-
-            tmp6 = tmp12 - tmp7;
-            tmp5 = tmp11 - tmp6;
-            tmp4 = tmp10 + tmp5;
-
-            int ypos = i * stride;
-            unsafe.putByte(out + 0 + ypos, (byte) ((int) (tmp0 + tmp7) & 0xFF));
-            unsafe.putByte(out + 7 + ypos, (byte) ((int) (tmp0 - tmp7) & 0xFF));
-            unsafe.putByte(out + 1 + ypos, (byte) ((int) (tmp1 + tmp6) & 0xFF));
-            unsafe.putByte(out + 6 + ypos, (byte) ((int) (tmp1 - tmp6) & 0xFF));
-            unsafe.putByte(out + 2 + ypos, (byte) ((int) (tmp2 + tmp5) & 0xFF));
-            unsafe.putByte(out + 5 + ypos, (byte) ((int) (tmp2 - tmp5) & 0xFF));
-            unsafe.putByte(out + 4 + ypos, (byte) ((int) (tmp3 + tmp4) & 0xFF));
-            unsafe.putByte(out + 3 + ypos, (byte) ((int) (tmp3 - tmp4) & 0xFF));
-        }
-    }
-
-    private static final int FP_NORM(int v) {
+    private static int fpNormalize(int v) {
         return (((v) + (1 << (15 - 1))) >> 15);
     }
 
-    private static final float FP_FLOAT(int v) {
-        return (float) v / (float) ((1 << 15) - 1);
-    }
-
-    private static final int LIMIT(int x) {
+    private static int limit(int x) {
         int t = x;
         t &= ~(t >> 31);
         return (t | ~((t - 256) >> 31)) & 0xFF;
     }
 
-    public void rdct(long bp, long m0, byte[] out, long offset, int stride) {
+    /**
+     * Reverse DCT algorithm
+     * @param block The short array block to apply algorithm to
+     * @param m0 The mapping indicating which positions in the block contain
+     *           coefficients
+     * @param out The output array
+     * @param offset The offset in the output array to write to
+     * @param stride The stride of the output array
+     * @throws QuickArrayException
+     */
+    public void rdct(QuickArrayAbstract block, long m0,
+            byte[] out, int offset, int stride) throws QuickArrayException {
+        QuickArrayWrapper output = new QuickArrayWrapper(out);
+        rdct(block, m0, output, offset, stride);
+    }
 
-        inObject = out;
-        unsafe.setMemory(tmp, 64 * intSize, (byte) 0);
-        long tp = tmp;
-        long qt = cross_stage;
+    /**
+     * Reverse DCT algorithm
+     * @param block The short array block to apply algorithm to
+     * @param m0 The mapping indicating which positions in the block contain
+     *           coefficients
+     * @param output The output array
+     * @param offset The offset in the output array to write to
+     * @param stride The stride of the output array
+     * @throws QuickArrayException
+     */
+    public void rdct(QuickArrayAbstract block, long m0,
+            QuickArrayAbstract output,
+            int offset, int stride) throws QuickArrayException {
+        tmp.clear();
+        int tp = 0;
+        int qt = 0;
+        int bp = 0;
         /*
          * First pass is 1D transform over the rows of the input array.
          */
@@ -536,44 +400,47 @@ public class DCT {
                  */
                 int v = 0;
                 if (((m0 >> 0) & 0x1) > 0) {
-                    v = unsafe.getInt(qt) * unsafe.getShort(bp);
+                    v = quickCrossStage.getInt(qt) * block.getShort(bp);
                 }
-                unsafe.putInt(tp + (0 * intSize), v);
-                unsafe.putInt(tp + (1 * intSize), v);
-                unsafe.putInt(tp + (2 * intSize), v);
-                unsafe.putInt(tp + (3 * intSize), v);
-                unsafe.putInt(tp + (4 * intSize), v);
-                unsafe.putInt(tp + (5 * intSize), v);
-                unsafe.putInt(tp + (6 * intSize), v);
-                unsafe.putInt(tp + (7 * intSize), v);
+                tmp.setInt(tp + 0, v);
+                tmp.setInt(tp + 1, v);
+                tmp.setInt(tp + 2, v);
+                tmp.setInt(tp + 3, v);
+                tmp.setInt(tp + 4, v);
+                tmp.setInt(tp + 5, v);
+                tmp.setInt(tp + 6, v);
+                tmp.setInt(tp + 7, v);
             } else {
                 int t4 = 0, t5 = 0, t6 = 0, t7 = 0;
                 if ((m0 & 0xaa) != 0) {
                     /* odd part */
-                    if (((m0 >> 1) & 0x1) > 0)
-                        t4 = unsafe.getInt(qt + (1 * intSize))
-                                * unsafe.getShort(bp + (1 * shortSize));
-                    if (((m0 >> 3) & 0x1) > 0)
-                        t5 = unsafe.getInt(qt + (3 * intSize))
-                                * unsafe.getShort(bp + (3 * shortSize));
-                    if (((m0 >> 5) & 0x1) > 0)
-                        t6 = unsafe.getInt(qt + (5 * intSize))
-                                * unsafe.getShort(bp + (5 * shortSize));
-                    if (((m0 >> 7) & 0x1) > 0)
-                        t7 = unsafe.getInt(qt + (7 * intSize))
-                                * unsafe.getShort(bp + (7 * shortSize));
-
+                    if (((m0 >> 1) & 0x1) > 0) {
+                        t4 = quickCrossStage.getInt(qt + 1)
+                                * block.getShort(bp + 1);
+                    }
+                    if (((m0 >> 3) & 0x1) > 0) {
+                        t5 = quickCrossStage.getInt(qt + 3)
+                                * block.getShort(bp + 3);
+                    }
+                    if (((m0 >> 5) & 0x1) > 0) {
+                        t6 = quickCrossStage.getInt(qt + 5)
+                                * block.getShort(bp + 5);
+                    }
+                    if (((m0 >> 7) & 0x1) > 0) {
+                        t7 = quickCrossStage.getInt(qt + 7)
+                                * block.getShort(bp + 7);
+                    }
                     int x0 = t6 - t5;
                     t6 += t5;
                     int x1 = t4 - t7;
                     t7 += t4;
 
-                    t5 = FP_MUL(t7 - t6, A3);
+                    t5 = fpMultiply(t7 - t6, A3);
                     t7 += t6;
 
-                    t4 = FP_MUL(x1 + x0, A5);
-                    t6 = FP_MUL(x1, A4) - t4;
-                    t4 += FP_MUL(x0, A2);
+                    t4 = fpMultiply(x1 + x0, A5);
+                    t6 = fpMultiply(x1, A4) - t4;
+                    t4 += fpMultiply(x0, A2);
 
                     t7 += t6;
                     t6 += t5;
@@ -582,20 +449,24 @@ public class DCT {
                 int t0 = 0, t1 = 0, t2 = 0, t3 = 0;
                 if ((m0 & 0x55) != 0) {
                     /* even part */
-                    if (((m0 >> 0) & 0x1) > 0)
-                        t0 = unsafe.getInt(qt + (0 * intSize))
-                                * unsafe.getShort(bp + (0 * shortSize));
-                    if (((m0 >> 2) & 0x1) > 0)
-                        t1 = unsafe.getInt(qt + (2 * intSize))
-                                * unsafe.getShort(bp + (2 * shortSize));
-                    if (((m0 >> 4) & 0x1) > 0)
-                        t2 = unsafe.getInt(qt + (4 * intSize))
-                                * unsafe.getShort(bp + (4 * shortSize));
-                    if (((m0 >> 6) & 0x1) > 0)
-                        t3 = unsafe.getInt(qt + (6 * intSize))
-                                * unsafe.getShort(bp + (6 * shortSize));
+                    if (((m0 >> 0) & 0x1) > 0) {
+                        t0 = quickCrossStage.getInt(qt + 0)
+                                * block.getShort(bp + 0);
+                    }
+                    if (((m0 >> 2) & 0x1) > 0) {
+                        t1 = quickCrossStage.getInt(qt + 2)
+                                * block.getShort(bp + 2);
+                    }
+                    if (((m0 >> 4) & 0x1) > 0) {
+                        t2 = quickCrossStage.getInt(qt + 4)
+                                * block.getShort(bp + 4);
+                    }
+                    if (((m0 >> 6) & 0x1) > 0) {
+                        t3 = quickCrossStage.getInt(qt + 6)
+                                * block.getShort(bp + 6);
+                    }
 
-                    int x0 = FP_MUL(t1 - t3, A1);
+                    int x0 = fpMultiply(t1 - t3, A1);
                     t3 += t1;
                     t1 = t0 - t2;
                     t0 += t2;
@@ -605,29 +476,29 @@ public class DCT {
                     t2 = t1 - x0;
                     t1 += x0;
                 }
-                unsafe.putInt(tp + (0 * intSize), t0 + t7);
-                unsafe.putInt(tp + (1 * intSize), t1 + t6);
-                unsafe.putInt(tp + (2 * intSize), t2 + t5);
-                unsafe.putInt(tp + (3 * intSize), t3 + t4);
-                unsafe.putInt(tp + (4 * intSize), t3 - t4);
-                unsafe.putInt(tp + (5 * intSize), t2 - t5);
-                unsafe.putInt(tp + (6 * intSize), t1 - t6);
-                unsafe.putInt(tp + (7 * intSize), t0 - t7);
+                tmp.setInt(tp + 0, t0 + t7);
+                tmp.setInt(tp + 1, t1 + t6);
+                tmp.setInt(tp + 2, t2 + t5);
+                tmp.setInt(tp + 3, t3 + t4);
+                tmp.setInt(tp + 4, t3 - t4);
+                tmp.setInt(tp + 5, t2 - t5);
+                tmp.setInt(tp + 6, t1 - t6);
+                tmp.setInt(tp + 7, t0 - t7);
             }
-            qt += (8 * intSize);
-            tp += (8 * intSize);
-            bp += (8 * shortSize);
+            qt += 8;
+            tp += 8;
+            bp += 8;
             m0 >>= 8;
         }
-        tp -= (64 * intSize);
+        tp -= 64;
         /*
          * Second pass is 1D transform over the rows of the temp array.
          */
         for (i = 0; i < 8; i++) {
-            int t4 = unsafe.getInt(tp + (8 * 1 * intSize));
-            int t5 = unsafe.getInt(tp + (8 * 3 * intSize));
-            int t6 = unsafe.getInt(tp + (8 * 5 * intSize));
-            int t7 = unsafe.getInt(tp + (8 * 7 * intSize));
+            int t4 = tmp.getInt(tp + (8 * 1));
+            int t5 = tmp.getInt(tp + (8 * 3));
+            int t6 = tmp.getInt(tp + (8 * 5));
+            int t7 = tmp.getInt(tp + (8 * 7));
             if ((t4 | t5 | t6 | t7) != 0) {
                 /* odd part */
                 int x0 = t6 - t5;
@@ -635,24 +506,24 @@ public class DCT {
                 int x1 = t4 - t7;
                 t7 += t4;
 
-                t5 = FP_MUL(t7 - t6, A3);
+                t5 = fpMultiply(t7 - t6, A3);
                 t7 += t6;
 
-                t4 = FP_MUL(x1 + x0, A5);
-                t6 = FP_MUL(x1, A4) - t4;
-                t4 += FP_MUL(x0, A2);
+                t4 = fpMultiply(x1 + x0, A5);
+                t6 = fpMultiply(x1, A4) - t4;
+                t4 += fpMultiply(x0, A2);
 
                 t7 += t6;
                 t6 += t5;
                 t5 += t4;
             }
-            int t0 = unsafe.getInt(tp + (8 * 0 * intSize));
-            int t1 = unsafe.getInt(tp + (8 * 2 * intSize));
-            int t2 = unsafe.getInt(tp + (8 * 4 * intSize));
-            int t3 = unsafe.getInt(tp + (8 * 6 * intSize));
+            int t0 = tmp.getInt(tp + (8 * 0));
+            int t1 = tmp.getInt(tp + (8 * 2));
+            int t2 = tmp.getInt(tp + (8 * 4));
+            int t3 = tmp.getInt(tp + (8 * 6));
             if ((t0 | t1 | t2 | t3) != 0) {
                 /* even part */
-                int x0 = FP_MUL(t1 - t3, A1);
+                int x0 = fpMultiply(t1 - t3, A1);
                 t3 += t1;
                 t1 = t0 - t2;
                 t0 += t2;
@@ -663,18 +534,17 @@ public class DCT {
                 t1 += x0;
             }
 
-            long p = unsafe.getLong(this, inObjectOffset) + byteArrayOffset
-                    + offset + (i * stride);
-            unsafe.putByte(p + 0, (byte) (LIMIT(FP_NORM(t0 + t7))));
-            unsafe.putByte(p + 1, (byte) (LIMIT(FP_NORM(t1 + t6))));
-            unsafe.putByte(p + 2, (byte) (LIMIT(FP_NORM(t2 + t5))));
-            unsafe.putByte(p + 3, (byte) (LIMIT(FP_NORM(t3 + t4))));
-            unsafe.putByte(p + 4, (byte) (LIMIT(FP_NORM(t3 - t4))));
-            unsafe.putByte(p + 5, (byte) (LIMIT(FP_NORM(t2 - t5))));
-            unsafe.putByte(p + 6, (byte) (LIMIT(FP_NORM(t1 - t6))));
-            unsafe.putByte(p + 7, (byte) (LIMIT(FP_NORM(t0 - t7))));
+            int p = offset + (i * stride);
+            output.setByte(p + 0, (byte) (limit(fpNormalize(t0 + t7))));
+            output.setByte(p + 1, (byte) (limit(fpNormalize(t1 + t6))));
+            output.setByte(p + 2, (byte) (limit(fpNormalize(t2 + t5))));
+            output.setByte(p + 3, (byte) (limit(fpNormalize(t3 + t4))));
+            output.setByte(p + 4, (byte) (limit(fpNormalize(t3 - t4))));
+            output.setByte(p + 5, (byte) (limit(fpNormalize(t2 - t5))));
+            output.setByte(p + 6, (byte) (limit(fpNormalize(t1 - t6))));
+            output.setByte(p + 7, (byte) (limit(fpNormalize(t0 - t7))));
 
-            tp += intSize;
+            tp += 1;
         }
     }
 
@@ -682,38 +552,38 @@ public class DCT {
      * This method applies the pre-scaling that the IDCT(float[][], float[][],
      * float[][]) method needs to work correctly. The table parameter should be
      * 8x8, non-zigzag order.
+     * @param table The table to scale
      */
-    public void scaleQuantizationTable(float[][] table) {
-        for (int i = 0; i < BLOCK_SIZE; i++)
-            for (int j = 0; j < BLOCK_SIZE; j++)
-                table[i][j] = table[i][j] * _scaleFactor[i] * _scaleFactor[j]
-                        / 8;
+    public static void scaleQuantizationTable(float[][] table) {
+        for (int i = 0; i < BLOCK_SIZE; i++) {
+            for (int j = 0; j < BLOCK_SIZE; j++) {
+                table[i][j] = table[i][j] * SCALE_FACTOR_F[i]
+                                          * SCALE_FACTOR_F[j] / 8;
+            }
+        }
     }
 
-    private void test() {
+    private void test() throws Exception {
         byte[] testArray = new byte[64];
         for (int i = 0; i < 64; i++) {
             testArray[i] = (byte) ((int) (Math.random() * 255) & 0xFF);
         }
-        long out = unsafe.allocateMemory(64 * intSize);
-        FDCT(testArray, out, 0, 0, 0, 8);
+        int[] out = new int[64];
+        fdct(testArray, out, 0, 0, 0, 8);
 
-        long block = unsafe.allocateMemory(64 * shortSize);
+        QuickArray block = new QuickArray(short[].class, 64);
         for (int i = 0; i < 64; i++) {
-            unsafe.putShort(block + (i * shortSize), (short) unsafe.getInt(out
-                    + (i * intSize)));
+            block.setShort(i, (short) out[i]);
         }
         DecimalFormat format = new DecimalFormat(" 0000;-0000");
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                System.err.print(format.format(unsafe.getInt(out
-                        + (((i * 8) + j) * intSize)))
+                System.err.print(format.format(out[(i * 8) + j])
                         + " ");
             }
             System.err.print("    ");
             for (int j = 0; j < 8; j++) {
-                System.err.print(format.format(unsafe.getShort(block
-                        + (((i * 8) + j) * shortSize)))
+                System.err.print(format.format(block.getShort((i * 8) + j))
                         + " ");
             }
             System.err.println();
@@ -721,7 +591,7 @@ public class DCT {
         System.err.println();
 
         byte[] testOutArray = new byte[64];
-        rdct(block, 0xFFFFFFFFFFFFFFFFl, testOutArray, 0, 8);
+        rdct(block, 0xFFFFFFFFFFFFFFFFL, testOutArray, 0, 8);
 
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -739,11 +609,16 @@ public class DCT {
      * Frees any resources used
      */
     public void close() {
-        unsafe.freeMemory(cross_stage);
-        unsafe.freeMemory(tmp);
+        quickCrossStage.clear();
+        tmp.clear();
     }
 
-    public static void main(String[] args) {
+    /**
+     * Test method
+     * @param args Ignored
+     * @throws Exception
+     */
+    public static void main(String[] args) throws Exception {
         DCT dct = new DCT();
         dct.test();
     }

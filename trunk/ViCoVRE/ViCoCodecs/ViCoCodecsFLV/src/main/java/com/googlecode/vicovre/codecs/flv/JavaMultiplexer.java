@@ -47,6 +47,7 @@ import javax.media.protocol.DataSource;
 import javax.media.protocol.PullSourceStream;
 
 import com.googlecode.vicovre.codecs.utils.ByteArrayOutputStream;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 
 /**
  * An FLV Multiplexer
@@ -128,7 +129,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     private static final byte[] FLV_TYPE = new byte[]{0x46, 0x4C, 0x56};
 
-    private final Format[] SUPPORTED_FORMATS = new Format[]{
+    private final Format[] supportedFormats = new Format[]{
         new VideoFormat("flv1"),
         new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 16, 1),
         new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 16, 1),
@@ -222,7 +223,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      * @see javax.media.Multiplexer#getSupportedInputFormats()
      */
     public Format[] getSupportedInputFormats() {
-        return SUPPORTED_FORMATS;
+        return supportedFormats;
     }
 
     /**
@@ -235,8 +236,8 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
         boolean error = false;
         for (int i = 0; i < inputs.length; i++) {
             boolean formatFound = false;
-            for (int j = 0; j < SUPPORTED_FORMATS.length; j++) {
-                if (inputs[i].matches(SUPPORTED_FORMATS[j])) {
+            for (int j = 0; j < supportedFormats.length; j++) {
+                if (inputs[i].matches(supportedFormats[j])) {
                     formatFound = true;
                 }
             }
@@ -335,8 +336,8 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      */
     public Format setInputFormat(Format format, int track) {
         boolean formatSupported = false;
-        for (int i = 0; i < SUPPORTED_FORMATS.length; i++) {
-            if (format.matches(SUPPORTED_FORMATS[i])) {
+        for (int i = 0; i < supportedFormats.length; i++) {
+            if (format.matches(supportedFormats[i])) {
                 formatSupported = true;
             }
         }
@@ -553,7 +554,8 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
     }
 
     private int writeVideoHeader(int length, long timestamp,
-            VideoFormat format, DataOutputStream out) throws IOException {
+            VideoFormat format, DataOutputStream out) throws IOException,
+            QuickArrayException {
         out.writeInt(lastTagSize);
         int startSize = out.size();
         out.write(FLV_VIDEO_TAG);
@@ -656,8 +658,14 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
                                 (AudioFormat) format, out);
                         dataSize = writeData(buffer, bytes, out);
                     } else if (format instanceof VideoFormat) {
-                        headerSize = writeVideoHeader(length, timestamp,
-                                (VideoFormat) format, out);
+                        try {
+                            headerSize = writeVideoHeader(length, timestamp,
+                                    (VideoFormat) format, out);
+                        } catch (QuickArrayException e) {
+                            IOException error = new IOException(e.getMessage());
+                            error.setStackTrace(e.getStackTrace());
+                            throw error;
+                        }
                         dataSize = writeData(buffer, bytes, out);
                     }
                 } else {
@@ -715,7 +723,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      * @param size The size to resize to
      */
     public void resizeVideoTo(Dimension size) {
-        SUPPORTED_FORMATS[0] = new VideoFormat("FLV1", size,
+        supportedFormats[0] = new VideoFormat("FLV1", size,
                 Format.NOT_SPECIFIED, Format.byteArray, Format.NOT_SPECIFIED);
     }
 

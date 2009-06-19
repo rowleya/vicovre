@@ -32,16 +32,28 @@
 
 package com.googlecode.vicovre.codecs.utils;
 
-import java.lang.reflect.Field;
-
-import sun.misc.Unsafe;
-
 /**
  * Outputs bits to an output stream
  * @author Andrew G D Rowley
  * @version 1-1-alpha3
  */
 public class BitOutputStream {
+
+    private static final int FIRST_BYTE_SHIFT = 24;
+
+    private static final int SECOND_BYTE_SHIFT = 16;
+
+    private static final int THIRD_BYTE_SHIFT = 8;
+
+    private static final int FOURTH_BYTE_SHIFT = 0;
+
+    private static final int BYTE_MASK = 0xFF;
+
+    private static final int INT_SIZE = 32;
+
+    private static final int BYTE_SIZE = 8;
+
+    private static final int TIMES_8_SHIFT = 3;
 
     // The bit buffer
     private int bb = 0;
@@ -50,47 +62,35 @@ public class BitOutputStream {
     private int nbb = 0;
 
     // The output array to write to
-    private byte[] output = null;
+    private QuickArrayWrapper output = null;
 
-    private Unsafe unsafe = null;
+    private int startOutput = 0;
 
-    private long outputOffset = 0;
-
-    private long byteArrayOffset = 0;
-
-    private long startOutput = 0;
-
-    private long currentOffset = 0;
+    private int currentOffset = 0;
 
     /**
      * Creates a new bit output stream
      * @param output The byte array to output to
      * @param offset The offset to start writing at
+     * @throws QuickArrayException
      */
-    public BitOutputStream(byte[] output, int offset) {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            outputOffset = unsafe.objectFieldOffset(
-                BitOutputStream.class.getDeclaredField("output"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public BitOutputStream(byte[] output, int offset)
+            throws QuickArrayException {
 
-        this.output = output;
-        startOutput = byteArrayOffset + offset;
+        this.output = new QuickArrayWrapper(output);
+        startOutput = offset;
         currentOffset = startOutput;
     }
 
     private void storeBits() {
-        long currentOutput = unsafe.getLong(this, outputOffset) + currentOffset;
-        unsafe.putByte(currentOutput++, (byte) ((bb >> 24) & 0xFF));
-        unsafe.putByte(currentOutput++, (byte) ((bb >> 16) & 0xFF));
-        unsafe.putByte(currentOutput++, (byte) ((bb >> 8) & 0xFF));
-        unsafe.putByte(currentOutput++, (byte) (bb & 0xFF));
-        currentOffset += 4;
+        output.setByte(currentOffset++,
+                (byte) ((bb >> FIRST_BYTE_SHIFT) & BYTE_MASK));
+        output.setByte(currentOffset++,
+                (byte) ((bb >> SECOND_BYTE_SHIFT) & BYTE_MASK));
+        output.setByte(currentOffset++,
+                (byte) ((bb >> THIRD_BYTE_SHIFT) & BYTE_MASK));
+        output.setByte(currentOffset++,
+                (byte) ((bb >> FOURTH_BYTE_SHIFT) & BYTE_MASK));
     }
 
     /**
@@ -101,14 +101,14 @@ public class BitOutputStream {
      */
     public void add(int bits, int count) {
         nbb += count;
-        if (nbb > 32) {
-            int extra = nbb - 32;
+        if (nbb > INT_SIZE) {
+            int extra = nbb - INT_SIZE;
             bb |= (bits >> extra);
             storeBits();
-            bb = bits << (32 - extra);
+            bb = bits << (INT_SIZE - extra);
             nbb = extra;
         } else {
-            bb |= bits << (32 - nbb);
+            bb |= bits << (INT_SIZE - nbb);
         }
     }
 
@@ -117,7 +117,7 @@ public class BitOutputStream {
      * @return the number of bits written
      */
     public int noBits() {
-        return (int) ((currentOffset - startOutput) * 8) + nbb;
+        return ((currentOffset - startOutput) << TIMES_8_SHIFT) + nbb;
     }
 
     /**
@@ -125,7 +125,7 @@ public class BitOutputStream {
      * @return The number of bytes written to the stream
      */
     public int getLength() {
-        return (int) (currentOffset - startOutput);
+        return (currentOffset - startOutput);
     }
 
     /**
@@ -135,26 +135,25 @@ public class BitOutputStream {
      * @return The number of extra bits unused in the last byte
      */
     public int flush() {
-        long currentOutput = unsafe.getLong(this, outputOffset) + currentOffset;
         if (nbb > 0) {
-            unsafe.putByte(currentOutput++, (byte) ((bb >> 24) & 0xFF));
-            nbb -= 8;
-            currentOffset += 1;
+            output.setByte(currentOffset++,
+                    (byte) ((bb >> FIRST_BYTE_SHIFT) & BYTE_MASK));
+            nbb -= BYTE_SIZE;
         }
         if (nbb > 0) {
-            unsafe.putByte(currentOutput++, (byte) ((bb >> 16) & 0xFF));
-            nbb -= 8;
-            currentOffset += 1;
+            output.setByte(currentOffset++,
+                    (byte) ((bb >> SECOND_BYTE_SHIFT) & BYTE_MASK));
+            nbb -= BYTE_SIZE;
         }
         if (nbb > 0) {
-            unsafe.putByte(currentOutput++, (byte) ((bb >> 8) & 0xFF));
-            nbb -= 8;
-            currentOffset += 1;
+            output.setByte(currentOffset++,
+                    (byte) ((bb >> THIRD_BYTE_SHIFT) & BYTE_MASK));
+            nbb -= BYTE_SIZE;
         }
         if (nbb > 0) {
-            unsafe.putByte(currentOutput++, (byte) (bb & 0xFF));
-            nbb -= 8;
-            currentOffset += 1;
+            output.setByte(currentOffset++,
+                    (byte) ((bb >> FOURTH_BYTE_SHIFT) & BYTE_MASK));
+            nbb -= BYTE_SIZE;
         }
         int extra = -nbb;
         nbb = 0;

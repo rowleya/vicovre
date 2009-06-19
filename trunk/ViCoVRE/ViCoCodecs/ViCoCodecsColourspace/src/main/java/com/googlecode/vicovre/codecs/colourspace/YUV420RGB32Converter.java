@@ -33,7 +33,6 @@
 package com.googlecode.vicovre.codecs.colourspace;
 
 import java.awt.Dimension;
-import java.lang.reflect.Field;
 
 import javax.media.Buffer;
 import javax.media.Codec;
@@ -42,7 +41,9 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.RGBFormat;
 import javax.media.format.YUVFormat;
 
-import sun.misc.Unsafe;
+import com.googlecode.vicovre.codecs.utils.QuickArray;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
+import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
 
 /**
  * A convertor for YUV420 to RGB32
@@ -67,31 +68,15 @@ public class YUV420RGB32Converter implements Codec {
 
     private int blueMask = 0;
 
-    private Unsafe unsafe = null;
+    private QuickArray uvtab = null;
 
-    private long intSize = 0;
+    private QuickArray lumtab = null;
 
-    private long inOffset = 0;
+    private QuickArray satR = null;
 
-    private long outOffset = 0;
+    private QuickArray satG = null;
 
-    private long byteArrayOffset = 0;
-
-    private long intArrayOffset = 0;
-
-    private Object inObject = null;
-
-    private Object outObject = null;
-
-    private long uvtab = 0;
-
-    private long lumtab = 0;
-
-    private long satR = 0;
-
-    private long satG = 0;
-
-    private long satB = 0;
+    private QuickArray satB = null;
 
     private int rlose = 0;
 
@@ -134,8 +119,8 @@ public class YUV420RGB32Converter implements Codec {
         }
         if (inputFormat instanceof YUVFormat) {
             YUVFormat yuv = (YUVFormat) inputFormat;
-            if ((yuv.getYuvType() == YUVFormat.YUV_420) &&
-                    yuv.getDataType().equals(Format.byteArray)) {
+            if ((yuv.getYuvType() == YUVFormat.YUV_420)
+                    && yuv.getDataType().equals(Format.byteArray)) {
                 return new Format[] {
                     new RGBFormat(yuv.getSize(), Format.NOT_SPECIFIED,
                             Format.intArray,
@@ -149,7 +134,7 @@ public class YUV420RGB32Converter implements Codec {
         return null;
     }
 
-    private static final double LIMIT(double x) {
+    private static double limit(double x) {
         return (((x) < -128) ? -128 : (((x) > 127) ? 127 : (x)));
     }
 
@@ -168,15 +153,15 @@ public class YUV420RGB32Converter implements Codec {
                 vf = v - 128;
                 ufa = (uf * costheta + vf * sintheta);
                 vfa = (vf * costheta - uf * sintheta);
-                r = (int) (LIMIT(vfa * 1.596) + 128);
-                b = (int) (LIMIT(ufa * 2.016) + 128);
-                g = (int) (LIMIT(ufa * -0.392 - vfa * 0.813) + 128);
+                r = (int) (limit(vfa * 1.596) + 128);
+                b = (int) (limit(ufa * 2.016) + 128);
+                g = (int) (limit(ufa * -0.392 - vfa * 0.813) + 128);
 
                 // Store XBGR in uvtab_ table
-                unsafe.putInt(uvtab + (((u << 8) | v) * intSize),
-                        ((r & 0xFF) <<  0) |
-                        ((g & 0xFF) <<  8) |
-                        ((b & 0xFF) << 16));
+                uvtab.setInt((u << 8) | v,
+                        ((r & 0xFF) <<  0)
+                        | ((g & 0xFF) <<  8)
+                        | ((b & 0xFF) << 16));
             }
         }
     }
@@ -191,47 +176,40 @@ public class YUV420RGB32Converter implements Codec {
         for (s = 0; s < 256; s++) {
             val = s;
             val = (int) ((val + ycor) * gamma + 128);
-            if (val > 383)
+            if (val > 383) {
                 val = 383;
-            if (val < 0)
+            }
+            if (val < 0) {
                 val = 0;
+            }
 
-            unsafe.putInt(lumtab + (s * intSize), val);
+            lumtab.setInt(s, val);
         }
 
         for (s = 0; s < 256; s++) {
             val = s;
-            unsafe.putInt(satR + ((s + 256) * intSize),
-                    ((val & 0xFF) >> rlose) << rshift);
-            unsafe.putInt(satG + ((s + 256) * intSize),
-                    ((val & 0xFF) >> glose) << gshift);
-            unsafe.putInt(satB + ((s + 256) * intSize),
-                    ((val & 0xFF) >> blose) << bshift);
+            satR.setInt(s + 256, ((val & 0xFF) >> rlose) << rshift);
+            satG.setInt(s + 256, ((val & 0xFF) >> glose) << gshift);
+            satB.setInt(s + 256, ((val & 0xFF) >> blose) << bshift);
         }
 
         for (s = 0; s < 256; s++) {
-            unsafe.putInt(satR + (s * intSize),
-                    unsafe.getInt(satR + (256 * intSize)));
-            unsafe.putInt(satG + (s * intSize),
-                    unsafe.getInt(satG + (256 * intSize)));
-            unsafe.putInt(satB + (s * intSize),
-                    unsafe.getInt(satB + (256 * intSize)));
+            satR.setInt(s, satR.getInt(256));
+            satG.setInt(s, satG.getInt(256));
+            satB.setInt(s, satB.getInt(256));
 
-            unsafe.putInt(satR + ((s + 512) * intSize),
-                    unsafe.getInt(satR + (511 * intSize)));
-            unsafe.putInt(satG + ((s + 512) * intSize),
-                    unsafe.getInt(satG + (511 * intSize)));
-            unsafe.putInt(satB + ((s + 512) * intSize),
-                    unsafe.getInt(satB + (511 * intSize)));
+            satR.setInt(s + 512, satR.getInt(511));
+            satG.setInt(s + 512, satG.getInt(511));
+            satB.setInt(s + 512, satB.getInt(511));
         }
 
     }
 
-    private final int ONEPIX(int r, int g, int b, int y) {
-        int t = unsafe.getShort(lumtab + (y * intSize)) & 0xFFFF;
-        int sr = unsafe.getInt(satR + ((r + t) * intSize));
-        int sg = unsafe.getInt(satG + ((g + t) * intSize));
-        int sb = unsafe.getInt(satB + ((b + t) * intSize));
+    private int onePix(int r, int g, int b, int y) {
+        int t = lumtab.getShort(y) & 0xFFFF;
+        int sr = satR.getInt(r + t);
+        int sg = satG.getInt(g + t);
+        int sb = satB.getInt(b + t);
         return sr | sg | sb;
     }
 
@@ -240,8 +218,8 @@ public class YUV420RGB32Converter implements Codec {
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
      */
     public int process(Buffer input, Buffer output) {
-        inObject = input.getData();
-        outObject = output.getData();
+        Object inObject = input.getData();
+        Object outObject = output.getData();
         if (inObject == null) {
             return BUFFER_PROCESSED_FAILED;
         }
@@ -254,91 +232,84 @@ public class YUV420RGB32Converter implements Codec {
             outObject = new int[outSize.width * outSize.height];
         }
 
+        QuickArrayWrapper in = null;
+        QuickArrayWrapper out = null;
+        try {
+            in = new QuickArrayWrapper(inObject);
+            out = new QuickArrayWrapper(outObject);
+        } catch (QuickArrayException e) {
+            e.printStackTrace();
+            return BUFFER_PROCESSED_FAILED;
+        }
+
         int w = outSize.width;
         int iw = inputFormat.getSize().width;
 
-        int outAdd = 0;
-        int yAdd = 0;
-        int uAdd = 0;
-        int vAdd = 0;
+        int outPos = output.getOffset();
+        int y = input.getOffset() + inputFormat.getOffsetY();
+        int u = input.getOffset() + inputFormat.getOffsetU();
+        int v = input.getOffset() + inputFormat.getOffsetV();
         for (int len = outSize.width * outSize.height; len > 0; len -= 4) {
-            final long out = unsafe.getLong(this, outOffset)
-                + (output.getOffset() * intSize) + intArrayOffset + outAdd;
-            final long in = unsafe.getLong(this, inOffset) + input.getOffset()
-                + byteArrayOffset;
-            final long y = in + inputFormat.getOffsetY() + yAdd;
-            final long u = in + inputFormat.getOffsetU() + uAdd;
-            final long v = in + inputFormat.getOffsetV() + vAdd;
 
-            int uVal = unsafe.getByte(u) & 0xFF;
-            int vVal = unsafe.getByte(v) & 0xFF;
-            int yVal = unsafe.getByte(y) & 0xFF;
-            int yPlus1Val = unsafe.getByte(y + 1) & 0xFF;
+            int uVal = in.getByte(u) & 0xFF;
+            int vVal = in.getByte(v) & 0xFF;
+            int yVal = in.getByte(y) & 0xFF;
+            int yPlus1Val = in.getByte(y + 1) & 0xFF;
 
-            int sum = unsafe.getInt(uvtab + (((uVal << 8) | vVal) * intSize));
+            int sum = uvtab.getInt((uVal << 8) | vVal);
             int r = sum & 0xFF;
             int g = (sum >> 8) & 0xFF;
             int b = (sum >> 16) & 0xFF;
 
-            unsafe.putInt(out, ONEPIX(r, g, b, yVal));
-            unsafe.putInt(out + intSize, ONEPIX(r, g, b, yPlus1Val));
+            out.setInt(outPos, onePix(r, g, b, yVal));
+            out.setInt(outPos + 1, onePix(r, g, b, yPlus1Val));
 
-            outAdd += 2 * intSize;
-            yAdd += 2;
-            uAdd += 1;
-            vAdd += 1;
+            outPos += 2;
+            y += 2;
+            u += 1;
+            v += 1;
 
             w -= 2;
             if (w <= 0) {
                 w = outSize.width;
-                yAdd += 2 * iw - w;
-                uAdd += (iw - w) >> 1;
-                vAdd += (iw - w) >> 1;
-                outAdd += (2 * outSize.width - w) * intSize;
+                y += 2 * iw - w;
+                u += (iw - w) >> 1;
+                v += (iw - w) >> 1;
+                outPos += (2 * outSize.width - w);
             }
         }
 
-        outAdd = 0;
-        yAdd = 0;
-        uAdd = 0;
-        vAdd = 0;
+        outPos = output.getOffset() + outSize.width;
+        y = input.getOffset() + inputFormat.getOffsetY() + iw;
+        u = input.getOffset() + inputFormat.getOffsetU();
+        v = input.getOffset() + inputFormat.getOffsetV();
         for (int len = outSize.width * outSize.height; len > 0; len -= 4) {
-            final long out = unsafe.getLong(this, outOffset)
-                + (output.getOffset() * intSize) + intArrayOffset + outAdd;
-            final long out2 = out + (outSize.width * intSize);
 
-            final long in = unsafe.getLong(this, inOffset) + input.getOffset()
-                + byteArrayOffset;
-            final long y = in + inputFormat.getOffsetY() + yAdd;
-            final long u = in + inputFormat.getOffsetU() + uAdd;
-            final long v = in + inputFormat.getOffsetV() + vAdd;
-            final long y2 = y + iw;
+            int uVal = in.getByte(u) & 0xFF;
+            int vVal = in.getByte(v) & 0xFF;
+            int y2Val = in.getByte(y) & 0xFF;
+            int y2Plus1Val = in.getByte(y + 1) & 0xFF;
 
-            int uVal = unsafe.getByte(u) & 0xFF;
-            int vVal = unsafe.getByte(v) & 0xFF;
-            int y2Val = unsafe.getByte(y2) & 0xFF;
-            int y2Plus1Val = unsafe.getByte(y2 + 1) & 0xFF;
-
-            int sum = unsafe.getInt(uvtab + (((uVal << 8) | vVal) * intSize));
+            int sum = uvtab.getInt((uVal << 8) | vVal);
             int r = sum & 0xFF;
             int g = (sum >> 8) & 0xFF;
             int b = (sum >> 16) & 0xFF;
 
-            unsafe.putInt(out2, ONEPIX(r, g, b, y2Val));
-            unsafe.putInt(out2 + intSize, ONEPIX(r, g, b, y2Plus1Val));
+            out.setInt(outPos, onePix(r, g, b, y2Val));
+            out.setInt(outPos + 1, onePix(r, g, b, y2Plus1Val));
 
-            outAdd += 2 * intSize;
-            yAdd += 2;
-            uAdd += 1;
-            vAdd += 1;
+            outPos += 2;
+            y += 2;
+            u += 1;
+            v += 1;
 
             w -= 2;
             if (w <= 0) {
                 w = outSize.width;
-                yAdd += 2 * iw - w;
-                uAdd += (iw - w) >> 1;
-                vAdd += (iw - w) >> 1;
-                outAdd += (2 * outSize.width - w) * intSize;
+                y += 2 * iw - w;
+                u += (iw - w) >> 1;
+                v += (iw - w) >> 1;
+                outPos += (2 * outSize.width - w);
             }
         }
 
@@ -361,8 +332,8 @@ public class YUV420RGB32Converter implements Codec {
     public Format setInputFormat(Format inputFormat) {
         if (inputFormat instanceof YUVFormat) {
             YUVFormat yuv = (YUVFormat) inputFormat;
-            if ((yuv.getYuvType() == YUVFormat.YUV_420) &&
-                    yuv.getDataType().equals(Format.byteArray)) {
+            if ((yuv.getYuvType() == YUVFormat.YUV_420)
+                    && yuv.getDataType().equals(Format.byteArray)) {
                 this.inputFormat = yuv;
                 return yuv;
             }
@@ -377,8 +348,8 @@ public class YUV420RGB32Converter implements Codec {
     public Format setOutputFormat(Format outputFormat) {
         if (outputFormat instanceof RGBFormat) {
             RGBFormat rgb = (RGBFormat) outputFormat;
-            if ((rgb.getBitsPerPixel() == 32) &&
-                    rgb.getDataType().equals(Format.intArray)) {
+            if ((rgb.getBitsPerPixel() == 32)
+                    && rgb.getDataType().equals(Format.intArray)) {
                 this.outputFormat = rgb;
                 return rgb;
             }
@@ -391,11 +362,11 @@ public class YUV420RGB32Converter implements Codec {
      * @see javax.media.PlugIn#close()
      */
     public void close() {
-        unsafe.freeMemory(uvtab);
-        unsafe.freeMemory(lumtab);
-        unsafe.freeMemory(satR);
-        unsafe.freeMemory(satG);
-        unsafe.freeMemory(satB);
+        uvtab.free();
+        lumtab.free();
+        satR.free();
+        satG.free();
+        satB.free();
     }
 
     /**
@@ -406,7 +377,7 @@ public class YUV420RGB32Converter implements Codec {
         return getClass().getName();
     }
 
-    private static final int mtos(int mask) {
+    private static int mtos(int mask) {
         int shift = 0;
         if (mask != 0) {
             while ((mask & 1) == 0) {
@@ -447,28 +418,17 @@ public class YUV420RGB32Converter implements Codec {
         blose = 8 - mtos(~(blueMask >> bshift));
 
         try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            intSize = unsafe.arrayIndexScale(int[].class);
-            inOffset = unsafe.objectFieldOffset(
-                    getClass().getDeclaredField("inObject"));
-            outOffset = unsafe.objectFieldOffset(
-                    getClass().getDeclaredField("outObject"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-            intArrayOffset = unsafe.arrayBaseOffset(int[].class);
-
-            uvtab = unsafe.allocateMemory(65536 * intSize);
+            uvtab = new QuickArray(int[].class, 65536);
             updateUVTable();
 
-            lumtab = unsafe.allocateMemory(256 * intSize);
-            satR = unsafe.allocateMemory(768 * intSize);
-            satG = unsafe.allocateMemory(768 * intSize);
-            satB = unsafe.allocateMemory(768 * intSize);
+            lumtab = new QuickArray(int[].class, 256);
+            satR = new QuickArray(int[].class, 768);
+            satG = new QuickArray(int[].class, 768);
+            satB = new QuickArray(int[].class, 768);
             updateSaturationTable();
-        } catch (Exception e) {
+        } catch (QuickArrayException e) {
             e.printStackTrace();
-            throw new ResourceUnavailableException("Error getting unsafe");
+            throw new ResourceUnavailableException("Error creating arrays");
         }
     }
 

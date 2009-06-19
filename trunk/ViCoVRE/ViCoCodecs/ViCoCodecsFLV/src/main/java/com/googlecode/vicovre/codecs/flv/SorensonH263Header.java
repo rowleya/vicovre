@@ -35,6 +35,7 @@ package com.googlecode.vicovre.codecs.flv;
 import java.util.Vector;
 
 import com.googlecode.vicovre.codecs.utils.BitInputStream;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 
 /**
  * A parser for the Sorenson H263 Header
@@ -161,8 +162,10 @@ public class SorensonH263Header {
      * @param data The data packet
      * @param offset The offset into the packet
      * @param length The length of the packet
+     * @throws QuickArrayException
      */
-    public SorensonH263Header(byte[] data, int offset, int length) {
+    public SorensonH263Header(byte[] data, int offset, int length)
+            throws QuickArrayException {
         BitInputStream in = new BitInputStream(data, offset, length);
         in.readBits(START_CODE_BITS);
         version = (byte) in.readBits(VERSION_BITS);

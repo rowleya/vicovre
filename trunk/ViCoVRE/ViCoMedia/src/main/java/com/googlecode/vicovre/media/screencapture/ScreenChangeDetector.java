@@ -55,7 +55,8 @@ import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class ScreenChangeDetector extends Thread implements CaptureChangeListener {
+public class ScreenChangeDetector extends Thread
+        implements CaptureChangeListener {
 
     // The delay before sending an update
     private static final int DELAY = 2000;

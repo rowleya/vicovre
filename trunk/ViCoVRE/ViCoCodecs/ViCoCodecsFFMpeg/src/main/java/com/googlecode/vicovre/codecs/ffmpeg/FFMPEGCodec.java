@@ -263,8 +263,6 @@ public class FFMPEGCodec implements Codec {
      * @see javax.media.Codec#getSupportedOutputFormats(javax.media.Format)
      */
     public Format[] getSupportedOutputFormats(Format format) {
-        System.err.println("Checking for output formats for input format "
-                + format);
         if (format == null) {
             return OUTPUT_FORMATS.toArray(new Format[0]);
         }
@@ -350,9 +348,7 @@ public class FFMPEGCodec implements Codec {
             if (isEncoding) {
                 retval = encodeNative(input, output);
             } else {
-                //System.err.println("Decoding native");
                 retval = decodeNative(input, output);
-                //System.err.println("Done decoding native");
             }
             if (retval != BUFFER_PROCESSED_FAILED) {
                 if (outputFormat.getDataType() == Format.intArray) {
@@ -369,10 +365,7 @@ public class FFMPEGCodec implements Codec {
     }
 
     private Format getCompatibleFormat(VideoFormat vf, boolean settingInput) {
-        System.err.println("VideoFormat = " + vf
-                + ", input = " + settingInput + ", currentCodec = " + currentCodec);
         if (currentCodec != null) {
-            System.err.println("isEncoding = " + isEncoding);
             if (isEncoding == settingInput) {
                 Format decodedFormat = Utils.getVideoFormat(
                         currentCodec.pixFormat, vf.getSize(),
@@ -426,8 +419,6 @@ public class FFMPEGCodec implements Codec {
                                     && (codec.decodedFormat.matches(vf)))
                                         || Utils.canBeConverted(vf)) {
                                 int pixelFormat = Utils.getPixFormat(vf);
-                                System.err.println("PixFormat = " + pixelFormat
-                                        + " codec format = " + codec.pixFormat);
                                 if (pixelFormat != codec.pixFormat) {
                                     pixFormat = pixelFormat;
                                 }
@@ -478,7 +469,6 @@ public class FFMPEGCodec implements Codec {
      * @see javax.media.Codec#setInputFormat(javax.media.Format)
      */
     public Format setInputFormat(Format format) {
-        System.err.println("Setting input format to " + format);
         if (!(format instanceof VideoFormat)) {
             return null;
         }
@@ -503,7 +493,6 @@ public class FFMPEGCodec implements Codec {
      * @see javax.media.PlugIn#close()
      */
     public void close() {
-        System.err.println("Closing...");
         synchronized (SYNC) {
             if (!closed) {
                 closeCodec();
@@ -513,7 +502,6 @@ public class FFMPEGCodec implements Codec {
             }
             closed = true;
         }
-        System.err.println("Finished closing");
     }
 
     /**
@@ -525,9 +513,6 @@ public class FFMPEGCodec implements Codec {
     }
 
     private void init() {
-        System.err.println("Initializing Codec with input = " + inputFormat
-                + " and output = " + outputFormat + ", pixFormat = "
-                + pixFormat + ", codecFormat = " + currentCodec.pixFormat);
         int outputSize = 0;
         Dimension size = inputFormat.getSize();
         Dimension outSize = outputFormat.getSize();
@@ -573,10 +558,6 @@ public class FFMPEGCodec implements Codec {
         }
         if (pixFormat != -1) {
             synchronized (SYNC) {
-                System.err.println("Initializing Codec: pixFormat = " + pixFormat
-                        + " width = " + size.width + " height = " + size.height
-                        + " intermediatePixFormat = " + currentCodec.pixFormat
-                        + " interwidth = " + outSize.width + " interheight = " + outSize.height);
                 outputSize = init(pixFormat, size.width, size.height,
                         currentCodec.pixFormat, outSize.width, outSize.height,
                         flipped);
@@ -605,7 +586,6 @@ public class FFMPEGCodec implements Codec {
                         codecContext);
             }
             if (outputFormat.getSize() == null) {
-                System.err.println("Setting size on output to " + outSize);
                 ((FFMpegBasicVideoFormat) outputFormat).setSize(outSize);
             }
         }
@@ -652,7 +632,6 @@ public class FFMPEGCodec implements Codec {
      * @see javax.media.PlugIn#open()
      */
     public void open() throws ResourceUnavailableException {
-        System.err.println("Opening...");
         if (inputFormat == null) {
             throw new ResourceUnavailableException(
                    "Input format not set or not compatible with output format");
@@ -661,8 +640,6 @@ public class FFMPEGCodec implements Codec {
             throw new ResourceUnavailableException(
                    "Output format not set or not compatible with input format");
         }
-        System.err.println("Codec is " + currentCodec.codecId + " encoding = "
-                + isEncoding);
 
         try {
             System.loadLibrary("ffmpegj");
@@ -671,7 +648,6 @@ public class FFMPEGCodec implements Codec {
             t.printStackTrace();
             throw new ResourceUnavailableException("Error initializing FFMPEG");
         }
-        System.err.println("Finished opening");
     }
 
     /**

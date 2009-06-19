@@ -143,7 +143,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
             String rendererClassName = renderers.get(i);
 
             try {
-                System.err.println("Trying renderer " + rendererClassName);
                 Class< ? > rendererClass = Class.forName(rendererClassName);
                 VideoRenderer r = (VideoRenderer) rendererClass.newInstance();
                 Format input = r.setInputFormat(inputFormat);
@@ -152,7 +151,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 } else {
                     r.open();
                 }
-                System.err.println("renderer " + rendererClassName + " " + input + " " + processor);
                 if ((input != null) || (processor != null)) {
                     renderer = r;
                     renderer.start();
@@ -263,7 +261,8 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         }
         bitsRead += bits;
 
-        if (((input.getFormat() instanceof RGBFormat) || (input.getFormat() instanceof YUVFormat))
+        if (((input.getFormat() instanceof RGBFormat)
+                || (input.getFormat() instanceof YUVFormat))
                 && !visible && !updatePreview) {
             framesRead += 1;
             return BUFFER_PROCESSED_OK;
@@ -365,8 +364,8 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      */
     public int getBitRate() {
         long now = System.currentTimeMillis();
-        long rate = (long)(bitsRead * 8.0 /
-                (now - lastBitRateTime) * 1000.0);
+        long rate = (long) (bitsRead * 8.0
+                / (now - lastBitRateTime) * 1000.0);
         long avg = (lastBitRate + rate) / 2;
         lastBitRate = rate;
         lastBitRateTime = now;
@@ -413,7 +412,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
     public float getFrameRate() {
         long now = System.currentTimeMillis();
         float rate = ((float) framesRead / (now - lastFrameRateTime) * 1000.0f);
-        float avg = ((int)(((lastFrameRate + rate)/2) * 10)) / 10.f;
+        float avg = ((int) (((lastFrameRate + rate) / 2) * 10)) / 10.f;
         lastFrameRate = rate;
         lastFrameRateTime = now;
         framesRead = 0;

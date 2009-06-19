@@ -32,10 +32,6 @@
 
 package com.googlecode.vicovre.codecs.utils;
 
-import java.lang.reflect.Field;
-
-import sun.misc.Unsafe;
-
 /**
  * Decides which blocks should be replenished
  *
@@ -44,45 +40,61 @@ import sun.misc.Unsafe;
  */
 public class ConditionalReplenishment {
 
+    /**
+     * Indicates that there is motion in the block
+     */
     public static final int CR_MOTION = 0;
-    private static final int CR_AGETHRESH = 31;
-    private static final int CR_IDLE = 0x40;
+
+    /**
+     * Indicates that the block was updated as background
+     */
     public static final int CR_BG = 0x41;
+
+    private static final int CR_STATE_MASK = 0x7f;
+
+    private static final int CR_AGETHRESH = 31;
+
+    private static final int CR_IDLE = 0x40;
+
     private static final int CR_SEND = 0x80;
 
-    private static final int CR_STATE(int s) {
-        return ((s) & 0x7f);
+    private static final int DIV_16_SHIFT = 4;
+
+    private static final int TIMES_16_SHIFT = 4;
+
+    private static final int TIMES_8_SHIFT = 3;
+
+    private static final int BYTE_MASK = 0xFF;
+
+    private static final int BLOCK_SIZE = 16;
+
+    private static final int INIT_THRESHOLD = 48;
+
+    private static final int SCAN_LINE_SKIP = 3;
+
+    private static final int SCAN_MASK = 7;
+
+    private static int crState(int s) {
+        return ((s) & CR_STATE_MASK);
     }
 
-    private int[] crvec_ = null;
+    private int[] crvec = null;
 
-    private long refbuf_ = 0;
+    private QuickArray refbuf = null;
 
-    private int scan_ = 0;
+    private int scan = 0;
 
-    private int rover_ = 0;
+    private int rover = 0;
 
-    private int blkw_ = 0;
+    private int blkw = 0;
 
-    private int blkh_ = 0;
+    private int blkh = 0;
 
-    private int nblk_ = 0;
+    private int nblk = 0;
 
-    private int width_ = 0;
-
-    private int threshold_ = 48;
-
-    private Unsafe unsafe = null;
-
-    private long outObjectOffset = 0;
-
-    private long byteArrayOffset = 0;
-
-    private Object outObject = null;
+    private int threshold = INIT_THRESHOLD;
 
     private int width = 0;
-
-    private int height = 0;
 
     /**
      * Creates a new ConditionalReplenishment
@@ -91,40 +103,28 @@ public class ConditionalReplenishment {
      *            The width to replenish
      * @param height
      *            The height to replenish
+     * @throws QuickArrayException
      */
-    public ConditionalReplenishment(int width, int height) {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            unsafe = (Unsafe) field.get(null);
-            outObjectOffset = unsafe
-                    .objectFieldOffset(ConditionalReplenishment.class
-                            .getDeclaredField("outObject"));
-            byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public ConditionalReplenishment(int width, int height)
+            throws QuickArrayException {
 
-        this.width_ = width;
-        blkw_ = width >> 4;
-        blkh_ = height >> 4;
-        nblk_ = blkw_ * blkh_;
-        crvec_ = new int[nblk_];
+        blkw = width >> DIV_16_SHIFT;
+        blkh = height >> DIV_16_SHIFT;
+        nblk = blkw * blkh;
+        crvec = new int[nblk];
+        refbuf = new QuickArray(byte[].class, width * height);
         reset();
-        refbuf_ = unsafe.allocateMemory(width * height);
-        unsafe.setMemory(refbuf_, width * height, (byte) 0);
         this.width = width;
-        this.height = height;
     }
 
     /**
      * Resets the replenishment so all blocks appear new
      */
     public void reset() {
-        for (int i = 0; i < nblk_; i++) {
-            crvec_[i] = CR_MOTION | CR_SEND;
+        for (int i = 0; i < nblk; i++) {
+            crvec[i] = CR_MOTION | CR_SEND;
         }
-        unsafe.setMemory(refbuf_, width * height, (byte) 0);
+        refbuf.clear();
     }
 
     /**
@@ -132,138 +132,137 @@ public class ConditionalReplenishment {
      *
      * @param devbuf
      *            The buffer to update with
+     * @throws QuickArrayException
      */
-    public void replenish(byte[] devbuf) {
+    public void replenish(byte[] devbuf) throws QuickArrayException {
 
         /*
          * First age the blocks from the previous frame.
          */
         ageBlocks();
-        outObject = devbuf;
+        QuickArrayWrapper in = new QuickArrayWrapper(devbuf);
 
-        int _ds = width_;
-        int _rs = width_;
-        long devbufAddr = (unsafe.getInt(this, outObjectOffset) & 0xffffffffl)
-                + byteArrayOffset;
-        long db = devbufAddr + scan_ * _ds;
-        long rb = refbuf_ + scan_ * _rs;
-        int w = blkw_;
+        int ds = width;
+        int rs = width;
+        int db = scan * ds;
+        int rb = scan * rs;
+        int w = blkw;
         int crv = 0;
 
-        for (int y = 0; y < blkh_; ++y) {
-            long ndb = db;
-            long nrb = rb;
+        for (int y = 0; y < blkh; ++y) {
+            int ndb = db;
+            int nrb = rb;
             int ncrv = crv;
-            for (int x = 0; x < blkw_; x++) {
+            for (int x = 0; x < blkw; x++) {
                 int left = 0;
                 int right = 0;
                 int top = 0;
                 int bottom = 0;
-                left += (unsafe.getByte(db + 0) & 0xFF)
-                        - (unsafe.getByte(rb + 0) & 0xFF);
-                left += (unsafe.getByte(db + 1) & 0xFF)
-                        - (unsafe.getByte(rb + 1) & 0xFF);
-                left += (unsafe.getByte(db + 2) & 0xFF)
-                        - (unsafe.getByte(rb + 2) & 0xFF);
-                left += (unsafe.getByte(db + 3) & 0xFF)
-                        - (unsafe.getByte(rb + 3) & 0xFF);
-                top += (unsafe.getByte(db + 0 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 1 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 1 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 1 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 2 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 1 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 3 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 1 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 0 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 2 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 1 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 2 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 2 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 2 * 4) & 0xFF);
-                top += (unsafe.getByte(db + 3 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 2 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 0 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 1 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 2 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 3 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 3 * 4) & 0xFF);
+                left += (in.getByte(db + 0) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0) & BYTE_MASK);
+                left += (in.getByte(db + 1) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1) & BYTE_MASK);
+                left += (in.getByte(db + 2) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2) & BYTE_MASK);
+                left += (in.getByte(db + 3) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3) & BYTE_MASK);
+                top += (in.getByte(db + 0 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 1 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 1 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 1 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 2 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 1 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 3 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 1 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 0 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 2 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 1 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 2 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 2 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 2 * 4) & BYTE_MASK);
+                top += (in.getByte(db + 3 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 2 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 0 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 1 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 2 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 3 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 3 * 4) & BYTE_MASK);
                 right = Math.abs(right);
                 left = Math.abs(left);
                 top = Math.abs(top);
-                db += _ds << 3;
-                rb += _rs << 3;
-                left += (unsafe.getByte(db + 0) & 0xFF)
-                        - (unsafe.getByte(rb + 0) & 0xFF);
-                left += (unsafe.getByte(db + 1) & 0xFF)
-                        - (unsafe.getByte(rb + 1) & 0xFF);
-                left += (unsafe.getByte(db + 2) & 0xFF)
-                        - (unsafe.getByte(rb + 2) & 0xFF);
-                left += (unsafe.getByte(db + 3) & 0xFF)
-                        - (unsafe.getByte(rb + 3) & 0xFF);
-                bottom += (unsafe.getByte(db + 0 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 1 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 1 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 1 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 2 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 1 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 3 + 1 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 1 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 0 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 2 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 1 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 2 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 2 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 2 * 4) & 0xFF);
-                bottom += (unsafe.getByte(db + 3 + 2 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 2 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 0 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 0 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 1 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 1 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 2 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 2 + 3 * 4) & 0xFF);
-                right += (unsafe.getByte(db + 3 + 3 * 4) & 0xFF)
-                        - (unsafe.getByte(rb + 3 + 3 * 4) & 0xFF);
+                db += ds << TIMES_8_SHIFT;
+                rb += rs << TIMES_8_SHIFT;
+                left += (in.getByte(db + 0) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0) & BYTE_MASK);
+                left += (in.getByte(db + 1) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1) & BYTE_MASK);
+                left += (in.getByte(db + 2) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2) & BYTE_MASK);
+                left += (in.getByte(db + 3) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3) & BYTE_MASK);
+                bottom += (in.getByte(db + 0 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 1 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 1 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 1 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 2 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 1 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 3 + 1 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 1 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 0 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 2 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 1 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 2 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 2 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 2 * 4) & BYTE_MASK);
+                bottom += (in.getByte(db + 3 + 2 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 2 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 0 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 0 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 1 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 1 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 2 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 2 + 3 * 4) & BYTE_MASK);
+                right += (in.getByte(db + 3 + 3 * 4) & BYTE_MASK)
+                        - (refbuf.getByte(rb + 3 + 3 * 4) & BYTE_MASK);
                 right = Math.abs(right);
                 left = Math.abs(left);
                 bottom = Math.abs(bottom);
-                db -= _ds << 3;
-                rb -= _rs << 3;
+                db -= ds << TIMES_8_SHIFT;
+                rb -= rs << TIMES_8_SHIFT;
 
                 int center = 0;
-                if (left >= threshold_ && x > 0) {
-                    crvec_[crv - 1] = CR_MOTION | CR_SEND;
+                if (left >= threshold && x > 0) {
+                    crvec[crv - 1] = CR_MOTION | CR_SEND;
                     center = 1;
                 }
-                if (right >= threshold_ && x < w - 1) {
-                    crvec_[crv + 1] = CR_MOTION | CR_SEND;
+                if (right >= threshold && x < w - 1) {
+                    crvec[crv + 1] = CR_MOTION | CR_SEND;
                     center = 1;
                 }
-                if (bottom >= threshold_ && y < blkh_ - 1) {
-                    crvec_[crv + w] = CR_MOTION | CR_SEND;
+                if (bottom >= threshold && y < blkh - 1) {
+                    crvec[crv + w] = CR_MOTION | CR_SEND;
                     center = 1;
                 }
-                if (top >= threshold_ && y > 0) {
-                    crvec_[crv - w] = CR_MOTION | CR_SEND;
+                if (top >= threshold && y > 0) {
+                    crvec[crv - w] = CR_MOTION | CR_SEND;
                     center = 1;
                 }
                 if (center > 0) {
-                    crvec_[crv + 0] = CR_MOTION | CR_SEND;
+                    crvec[crv + 0] = CR_MOTION | CR_SEND;
                 }
 
-                db += 16;
-                rb += 16;
+                db += BLOCK_SIZE;
+                rb += BLOCK_SIZE;
                 ++crv;
             }
-            db = ndb + (_ds << 4);
-            rb = nrb + (_rs << 4);
+            db = ndb + (ds << TIMES_16_SHIFT);
+            rb = nrb + (rs << TIMES_16_SHIFT);
             crv = ncrv + w;
         }
-        saveblks(devbufAddr);
+        saveblks(in);
 
         /*
          * Bump the CR scan pointer. This variable controls which scan line of a
@@ -271,12 +270,12 @@ public class ConditionalReplenishment {
          * time to quickly precess over the block. Since 3 and 8 are coprime, we
          * will sweep out every line.
          */
-        scan_ = (scan_ + 3) & 7;
+        scan = (scan + SCAN_LINE_SKIP) & SCAN_MASK;
     }
 
     private void ageBlocks() {
-        for (int i = 0; i < nblk_; ++i) {
-            int s = CR_STATE(crvec_[i]);
+        for (int i = 0; i < nblk; ++i) {
+            int s = crState(crvec[i]);
             /*
              * Age this block. Once we hit the age threshold, we set CR_SEND as
              * a hint to send a higher-quality version of the block. After this
@@ -285,44 +284,46 @@ public class ConditionalReplenishment {
              * quality.
              */
             if (s <= CR_AGETHRESH) {
-                if (s == CR_AGETHRESH)
+                if (s == CR_AGETHRESH) {
                     s = CR_IDLE;
-                else {
-                    if (++s == CR_AGETHRESH)
+                } else {
+                    if (++s == CR_AGETHRESH) {
                         s |= CR_SEND;
+                    }
                 }
-                crvec_[i] = s;
-            } else if (s == CR_BG)
+                crvec[i] = s;
+            } else if (s == CR_BG) {
                 /*
                  * reset the block to IDLE if it was sent as a BG block in the
                  * last frame.
                  */
-                crvec_[i] = CR_IDLE;
+                crvec[i] = CR_IDLE;
+            }
         }
         /*
          * Now go through and look for some idle blocks to send as background
          * fill.
          */
-        int blkno = rover_;
+        int blkno = rover;
         int n = 2;
         while (n > 0) {
-            int s = CR_STATE(crvec_[blkno]);
+            int s = crState(crvec[blkno]);
             if (s == CR_IDLE) {
-                crvec_[blkno] = CR_SEND | CR_BG;
+                crvec[blkno] = CR_SEND | CR_BG;
                 --n;
             }
-            if (++blkno >= nblk_) {
+            if (++blkno >= nblk) {
                 blkno = 0;
                 /* one way to guarantee loop termination */
                 break;
             }
         }
-        rover_ = blkno;
+        rover = blkno;
     }
 
-    private void save(long lum, int pos, int stride) {
-        for (int i = 16; --i >= 0;) {
-            unsafe.copyMemory(lum + pos, refbuf_ + pos, 16);
+    private void save(QuickArrayAbstract lum, int pos, int stride) {
+        for (int i = BLOCK_SIZE; --i >= 0;) {
+            refbuf.copy(lum, pos, pos, BLOCK_SIZE);
             pos += stride;
         }
     }
@@ -330,17 +331,17 @@ public class ConditionalReplenishment {
     /*
      * Default save routine -- stuff new luma blocks into cache.
      */
-    private void saveblks(long lum) {
+    private void saveblks(QuickArrayAbstract lum) {
         int crv = 0;
         int pos = 0;
-        int stride = width_;
-        stride = (stride << 4) - stride;
-        for (int y = 0; y < blkh_; y++) {
-            for (int x = 0; x < blkw_; x++) {
-                if ((crvec_[crv++] & CR_SEND) != 0) {
-                    save(lum, pos, width_);
+        int stride = width;
+        stride = (stride << TIMES_16_SHIFT) - stride;
+        for (int y = 0; y < blkh; y++) {
+            for (int x = 0; x < blkw; x++) {
+                if ((crvec[crv++] & CR_SEND) != 0) {
+                    save(lum, pos, width);
                 }
-                pos += 16;
+                pos += BLOCK_SIZE;
             }
             pos += stride;
         }
@@ -354,7 +355,7 @@ public class ConditionalReplenishment {
      * @return The state
      */
     public int getCrState(int block) {
-        return CR_STATE(crvec_[block]);
+        return crState(crvec[block]);
     }
 
     /**
@@ -365,13 +366,13 @@ public class ConditionalReplenishment {
      * @return True if the block should be sent
      */
     public boolean send(int block) {
-        return (crvec_[block] & CR_SEND) > 0;
+        return (crvec[block] & CR_SEND) > 0;
     }
 
     /**
      * Frees any data structures in use
      */
     public void close() {
-        unsafe.freeMemory(refbuf_);
+        refbuf.free();
     }
 }
