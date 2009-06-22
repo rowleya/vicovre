@@ -609,8 +609,8 @@ public class DCT {
      * Frees any resources used
      */
     public void close() {
-        quickCrossStage.clear();
-        tmp.clear();
+        quickCrossStage.free();
+        tmp.free();
     }
 
     /**
