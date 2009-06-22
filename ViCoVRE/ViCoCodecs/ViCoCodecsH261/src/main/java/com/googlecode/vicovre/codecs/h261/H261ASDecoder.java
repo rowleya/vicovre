@@ -216,7 +216,6 @@ public class H261ASDecoder extends H261AbstractDecoder
                 // Read the rest of the Macroblock
                 mba += mbadiff + 1;
                 int mtype = readMtype(in);
-                System.err.println("Mtype = " + mtype);
                 if ((mtype & MT_MQUANT) > 0) {
                     quant = in.readBits(5);
                     qt = quant << 8;
