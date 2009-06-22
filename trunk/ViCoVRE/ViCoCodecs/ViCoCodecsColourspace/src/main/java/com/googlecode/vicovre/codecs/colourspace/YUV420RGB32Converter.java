@@ -206,7 +206,7 @@ public class YUV420RGB32Converter implements Codec {
     }
 
     private int onePix(int r, int g, int b, int y) {
-        int t = lumtab.getShort(y) & 0xFFFF;
+        int t = (short) (lumtab.getInt(y) & 0xFFFF);
         int sr = satR.getInt(r + t);
         int sg = satG.getInt(g + t);
         int sb = satB.getInt(b + t);
@@ -279,24 +279,24 @@ public class YUV420RGB32Converter implements Codec {
             }
         }
 
-        outPos = output.getOffset() + outSize.width;
-        y = input.getOffset() + inputFormat.getOffsetY() + iw;
+        outPos = output.getOffset();
+        y = input.getOffset() + inputFormat.getOffsetY();
         u = input.getOffset() + inputFormat.getOffsetU();
         v = input.getOffset() + inputFormat.getOffsetV();
         for (int len = outSize.width * outSize.height; len > 0; len -= 4) {
 
             int uVal = in.getByte(u) & 0xFF;
             int vVal = in.getByte(v) & 0xFF;
-            int y2Val = in.getByte(y) & 0xFF;
-            int y2Plus1Val = in.getByte(y + 1) & 0xFF;
+            int yVal = in.getByte(y + iw) & 0xFF;
+            int yPlus1Val = in.getByte(y + iw + 1) & 0xFF;
 
             int sum = uvtab.getInt((uVal << 8) | vVal);
             int r = sum & 0xFF;
             int g = (sum >> 8) & 0xFF;
             int b = (sum >> 16) & 0xFF;
 
-            out.setInt(outPos, onePix(r, g, b, y2Val));
-            out.setInt(outPos + 1, onePix(r, g, b, y2Plus1Val));
+            out.setInt(outPos + outSize.width, onePix(r, g, b, yVal));
+            out.setInt(outPos + outSize.width + 1, onePix(r, g, b, yPlus1Val));
 
             outPos += 2;
             y += 2;
