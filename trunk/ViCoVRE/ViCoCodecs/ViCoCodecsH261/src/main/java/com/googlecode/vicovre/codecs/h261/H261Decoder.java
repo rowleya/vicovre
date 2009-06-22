@@ -152,8 +152,6 @@ public class H261Decoder extends H261AbstractDecoder
         int csize = (width / 2) * (height / 2);
         int dataSize = ysize + (2 * csize);
 
-        System.err.println("Start Gob = " + gob + ", mba = " + mba);
-
         int qt = quant << 8;
 
         int offset = output.getOffset();
@@ -260,7 +258,6 @@ public class H261Decoder extends H261AbstractDecoder
                 if (in.bitsRemaining() <= ebit) {
                     return BUFFER_PROCESSED_OK;
                 }
-                System.err.println("Start Gob = " + gob + ", mba = " + mba);
                 int mtype = readMtype(in);
                 if ((mtype & MT_MQUANT) > 0) {
                     quant = in.readBits(5);
