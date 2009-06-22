@@ -111,6 +111,23 @@ public class Misc {
     }
 
     /**
+     * Adds a codec
+     * @param codecClass The class of the codec
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static void addCodec(Class< ? extends Codec> codecClass)
+            throws InstantiationException, IllegalAccessException {
+        Codec codec = loadCodec(codecClass);
+        PlugInManager.addPlugIn(codec.getClass().getCanonicalName(),
+                codec.getSupportedInputFormats(),
+                codec.getSupportedOutputFormats(null),
+                PlugInManager.CODEC);
+    }
+
+
+
+    /**
      * Loads a codec
      * @param className The name of the codec class
      * @return The codec or null if there is an error
@@ -121,8 +138,20 @@ public class Misc {
     public static Codec loadCodec(String className)
            throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        Class< ? > codecClass = Class.forName(className);
-        Codec codec = (Codec) codecClass.newInstance();
+        Class<Codec> codecClass = (Class<Codec>) Class.forName(className);
+        return loadCodec(codecClass);
+    }
+
+    /**
+     * Loads a codec
+     * @param codecClass The codec class
+     * @return The codec or null if there is an error
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static Codec loadCodec(Class< ? extends Codec> codecClass)
+            throws InstantiationException, IllegalAccessException {
+        Codec codec = codecClass.newInstance();
         return codec;
     }
 
