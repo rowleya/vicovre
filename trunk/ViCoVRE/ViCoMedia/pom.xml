@@ -22,6 +22,11 @@
             <artifactId>ViCoCodecsCommons</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoRepositories</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>pag</groupId>
