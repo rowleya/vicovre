@@ -40,7 +40,7 @@ import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
 
 import com.googlecode.vicovre.media.rtp.RTPHeader;
-import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
  * @author Andrew G D Rowley

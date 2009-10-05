@@ -59,6 +59,8 @@ import com.googlecode.vicovre.media.processor.SimpleProcessor;
 public class RGBRenderer implements VideoRenderer, BitRateControl,
         FrameRateControl {
 
+    private static final boolean DISABLE_PREVIEW = true;
+
     private static final int UPDATE_TIME = 1000;
 
     private Format[] inputFormats = null;
@@ -89,6 +91,11 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
 
     private long lastFrameRateTime = 0;
 
+    // True if the first frame has been processed
+    private boolean firstFrameSeen = false;
+
+    private Integer firstFrameSync = new Integer(0);
+
     /**
      * Creates a new Renderer of RGB Data
      *
@@ -118,7 +125,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
 
         // Find a processor from the input format to the effects
         for (int i = 0; i < renderEffects.length; i++) {
-            System.err.println("Finding input for effect " + renderEffects[i]);
             Format format = renderEffects[i].setInputFormat(inputFormat);
             if (format == null) {
                 Format[] inputs = renderEffects[i].getSupportedInputFormats();
@@ -138,7 +144,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         }
         Vector<String> renderers = new Vector<String>();
         renderers.add("net.sf.fmj.media.renderer.video.Java2dRenderer");
-        System.err.println("Renderers = " + renderers);
         for (int i = 0; (i < renderers.size()) && (renderer == null); i++) {
             String rendererClassName = renderers.get(i);
 
@@ -154,16 +159,17 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 if ((input != null) || (processor != null)) {
                     renderer = r;
                     renderer.start();
-                    preview = (VideoRenderer) rendererClass.newInstance();
-                    if (processor != null) {
-                        preview.setInputFormat(processor.getOutputFormat());
-                    } else if (input != null) {
-                        preview.setInputFormat(input);
+                    if (!DISABLE_PREVIEW) {
+                        preview = (VideoRenderer) rendererClass.newInstance();
+                        if (processor != null) {
+                            preview.setInputFormat(processor.getOutputFormat());
+                        } else if (input != null) {
+                            preview.setInputFormat(input);
+                        }
+                        preview.open();
+                        preview.start();
                     }
-                    preview.open();
-                    preview.start();
                 }
-                System.err.println("Renderer class = " + rendererClass);
             } catch (Throwable e) {
                 e.printStackTrace();
                 renderer = null;
@@ -230,6 +236,10 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * @see javax.media.Renderer#stop()
      */
     public void stop() {
+        synchronized (firstFrameSync) {
+            firstFrameSeen = true;
+            firstFrameSync.notifyAll();
+        }
         if (thread != null) {
             thread.close();
         }
@@ -302,7 +312,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         if ((retval == BUFFER_PROCESSED_OK)
                 || (retval == INPUT_BUFFER_NOT_CONSUMED)) {
             framesRead += 1;
-            if (visible) {
+            if (visible || !firstFrameSeen) {
                 if (processor != null) {
 
                     retval = renderer.process(processor.getOutputBuffer());
@@ -311,14 +321,36 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 }
             }
             if (updatePreview) {
-                if (processor != null) {
-                    retval = preview.process(processor.getOutputBuffer());
-                } else {
-                    retval = preview.process(input);
+                if (!DISABLE_PREVIEW) {
+                    if (processor != null) {
+                        retval = preview.process(processor.getOutputBuffer());
+                    } else {
+                        retval = preview.process(input);
+                    }
                 }
             }
         }
+
+        if (((retval == BUFFER_PROCESSED_OK)
+                || (retval == INPUT_BUFFER_NOT_CONSUMED)) && !firstFrameSeen) {
+            synchronized (firstFrameSync) {
+                firstFrameSeen = true;
+                firstFrameSync.notifyAll();
+            }
+        }
         return retval;
+    }
+
+    public void waitForFirstFrame() {
+        synchronized (firstFrameSync) {
+            while (!firstFrameSeen) {
+                try {
+                    firstFrameSync.wait();
+                } catch (InterruptedException e) {
+                    // Does Nothing
+                }
+            }
+        }
     }
 
     /**
@@ -326,7 +358,10 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * @return the preview video renderer
      */
     public VideoRenderer getPreviewRenderer() {
-        return preview;
+        if (!DISABLE_PREVIEW) {
+            return preview;
+        }
+        return null;
     }
 
     /**

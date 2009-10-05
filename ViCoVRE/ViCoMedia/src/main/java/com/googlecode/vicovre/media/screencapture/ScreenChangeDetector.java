@@ -47,7 +47,7 @@ import javax.media.format.YUVFormat;
 
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
-import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
  * Detects Screen Changes

@@ -31,9 +31,12 @@
 
 package com.googlecode.vicovre.media.protocol.memetic;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 
+import javax.media.Format;
+import javax.media.SystemTimeBase;
 import javax.media.Time;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.protocol.Positionable;
@@ -47,9 +50,9 @@ import javax.media.protocol.PushBufferStream;
 public class DataSource extends PushBufferDataSource implements Positionable {
 
     // The rtp stream
-    private DatagramForwarder rtpStream = new DatagramForwarder();
+    private DatagramForwarder[] rtpStreams = null;
 
-    private StreamSource streamSource = null;
+    private StreamSource[] streamSources = null;
 
     private String filename = null;
 
@@ -59,37 +62,85 @@ public class DataSource extends PushBufferDataSource implements Positionable {
 
     private boolean playing = false;
 
+    private StreamSource minSource = null;
+
+    private long duration = 0;
+
+    private long currentTime = 0;
+
+    private SystemTimeBase timeBase = new SystemTimeBase();
+
+    public DataSource(File... files) {
+        StreamSource maxSource = null;
+        long maxSourceEnd = 0;
+        rtpStreams = new DatagramForwarder[files.length];
+        streamSources = new StreamSource[files.length];
+        for (int i = 0; i < files.length; i++) {
+            rtpStreams[i] = new DatagramForwarder(timeBase);
+            streamSources[i] = new StreamSource(this, files[i], i);
+            if (minSource == null || (streamSources[i].getStartTime()
+                    < minSource.getStartTime())) {
+                minSource = streamSources[i];
+            }
+            long end = streamSources[i].getStartTime()
+                + streamSources[i].getDuration();
+            if (maxSource == null || (end > maxSourceEnd)) {
+                maxSource = streamSources[i];
+                maxSourceEnd = end;
+            }
+        }
+
+        duration = maxSourceEnd - minSource.getStartTime();
+
+        long baseTime = minSource.getStartTime();
+        for (int i = 0; i < streamSources.length; i++) {
+            System.err.println("Offset shift = " + (streamSources[i].getStartTime() - baseTime));
+            streamSources[i].setOffsetShift(
+                    streamSources[i].getStartTime() - baseTime);
+        }
+    }
+
+    public void setFormat(int i, Format format) {
+        rtpStreams[i].setFormat(format);
+    }
+
     /**
      * @see javax.media.protocol.PushDataSource#getStreams()
      */
     public PushBufferStream[] getStreams() {
-        return new PushBufferStream[]{rtpStream};
+        return rtpStreams;
     }
 
     /**
      * @see javax.media.protocol.DataSource#connect()
      */
     public void connect() throws IOException {
-        String locator = getLocator().getRemainder().substring(2);
-        String[] parts = locator.split("\\?", 2);
-        filename = parts[0];
-        if (parts.length > 1) {
-            String query = parts[1];
-            String[] values = query.split("&");
-            for (int i = 0; i < values.length; i++) {
-                String[] value = values[i].split("=", 2);
-                if (value[0].equals("scale")) {
-                    scale = Double.parseDouble(value[1]);
-                } else if (value[0].equals("seek")) {
-                    seek = Long.parseLong(value[1]);
+        if (getLocator() != null) {
+            String locator = getLocator().getRemainder().substring(2);
+            String[] parts = locator.split("\\?", 2);
+            filename = parts[0];
+            if (parts.length > 1) {
+                String query = parts[1];
+                String[] values = query.split("&");
+                for (int i = 0; i < values.length; i++) {
+                    String[] value = values[i].split("=", 2);
+                    if (value[0].equals("scale")) {
+                        scale = Double.parseDouble(value[1]);
+                    } else if (value[0].equals("seek")) {
+                        seek = Long.parseLong(value[1]);
+                    }
                 }
             }
-        }
-        streamSource = new StreamSource(this, filename);
-        try {
-            rtpStream.setFormat(streamSource.getRtpFormat());
-        } catch (UnsupportedFormatException e) {
-            throw new IOException(e.getMessage());
+            streamSources = new StreamSource[1];
+            streamSources[0] = new StreamSource(this, new File(filename), 0);
+            rtpStreams = new DatagramForwarder[1];
+            rtpStreams[0] = new DatagramForwarder(timeBase);
+            minSource = streamSources[0];
+            try {
+                rtpStreams[0].setFormat(streamSources[0].getRtpFormat());
+            } catch (UnsupportedFormatException e) {
+                throw new IOException(e.getMessage());
+            }
         }
     }
 
@@ -98,7 +149,9 @@ public class DataSource extends PushBufferDataSource implements Positionable {
      */
     public void disconnect() {
         stop();
-        rtpStream.close();
+        for (DatagramForwarder stream : rtpStreams) {
+            stream.close();
+        }
     }
 
     /**
@@ -112,7 +165,7 @@ public class DataSource extends PushBufferDataSource implements Positionable {
      * @see javax.media.protocol.DataSource#getControl(java.lang.String)
      */
     public Object getControl(String cls) {
-        return rtpStream.getControl(cls);
+        return null;
     }
 
     /**
@@ -126,26 +179,35 @@ public class DataSource extends PushBufferDataSource implements Positionable {
      * @see javax.media.protocol.DataSource#start()
      */
     public void start() {
-        playing = true;
-        streamSource.play(scale, seek);
+        if (!playing) {
+            playing = true;
+            long allStartTime = System.currentTimeMillis() + 500;
+            for (int i = 0; i < streamSources.length; i++) {
+                streamSources[i].play(scale, seek, allStartTime);
+            }
+        }
     }
 
     /**
      * @see javax.media.protocol.DataSource#stop()
      */
     public void stop() {
-        playing = false;
-        seek = streamSource.getCurrentTime();
-        streamSource.teardown();
-        streamSource = new StreamSource(this, filename);
+        if (playing) {
+            playing = false;
+            seek = getCurrentTime();
+            for (int i = 0; i < streamSources.length; i++) {
+                streamSources[i].teardown();
+            }
+        }
     }
 
     /**
      * Handles an RTP Packet
      * @param packet The packet to handle
+     * @param sourceId The id of the source sending the packet
      */
-    public void handleRTPPacket(DatagramPacket packet) {
-        rtpStream.handlePacket(packet);
+    public void handleRTPPacket(DatagramPacket packet, int sourceId) {
+        rtpStreams[sourceId].handlePacket(packet);
     }
 
     /**
@@ -154,13 +216,27 @@ public class DataSource extends PushBufferDataSource implements Positionable {
      * @param scale The new scale to play at
      */
     public void seek(long seek, double scale) {
+        currentTime = seek;
         this.seek = seek;
         this.scale = scale;
-        streamSource.teardown();
-        streamSource = new StreamSource(this, filename);
-        if (playing) {
-            streamSource.play(scale, seek);
+        boolean wasPlaying = playing;
+        stop();
+        if (wasPlaying) {
+            start();
         }
+    }
+
+    protected synchronized void setCurrentTime(long time) {
+        if (scale > 0) {
+            if (time > currentTime) {
+                currentTime = time;
+            }
+        } else {
+            if (time < currentTime) {
+                currentTime = time;
+            }
+        }
+
     }
 
     /**
@@ -168,14 +244,14 @@ public class DataSource extends PushBufferDataSource implements Positionable {
      * @return The current time in milliseconds
      */
     public long getCurrentTime() {
-        return streamSource.getCurrentTime();
+        return currentTime;
     }
 
     /**
      * @see javax.media.protocol.DataSource#getDuration()
      */
     public Time getDuration() {
-        return new Time(streamSource.getDuration() * 1000000);
+        return new Time(duration * 1000000);
     }
 
     /**
@@ -195,7 +271,7 @@ public class DataSource extends PushBufferDataSource implements Positionable {
         stop();
         seek = where.getNanoseconds() / 1000000;
         playing = wasPlaying;
-        start();
+        seek(seek, this.scale);
         return where;
     }
 }

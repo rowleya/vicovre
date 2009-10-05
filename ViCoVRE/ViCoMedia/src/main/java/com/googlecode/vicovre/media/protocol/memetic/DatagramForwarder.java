@@ -38,6 +38,7 @@ import java.util.LinkedList;
 
 import javax.media.Buffer;
 import javax.media.Format;
+import javax.media.TimeBase;
 import javax.media.format.AudioFormat;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.VideoFormat;
@@ -79,6 +80,14 @@ public class DatagramForwarder implements PushBufferStream {
                 16, 1, AudioFormat.BIG_ENDIAN, AudioFormat.SIGNED));
     }
 
+    private TimeBase timeBase = null;
+
+    private long sequence = 0;
+
+    public DatagramForwarder(TimeBase timeBase) {
+        this.timeBase = timeBase;
+    }
+
     /**
      * Set the packet type
      * @param packetType The packet type to set
@@ -86,6 +95,10 @@ public class DatagramForwarder implements PushBufferStream {
      */
     public void setFormat(int packetType) throws UnsupportedFormatException {
         format = getFormat(packetType);
+    }
+
+    public void setFormat(Format format) {
+        this.format = format;
     }
 
     private Format getFormat(int type) throws UnsupportedFormatException {
@@ -123,10 +136,10 @@ public class DatagramForwarder implements PushBufferStream {
             buffer.setData(data);
             buffer.setOffset(RTPHeader.SIZE);
             buffer.setLength(data.length - RTPHeader.SIZE);
-            buffer.setTimeStamp(header.getTimestamp());
-            buffer.setSequenceNumber(header.getSequence());
+            buffer.setTimeStamp(timeBase.getNanoseconds());
+            buffer.setSequenceNumber(sequence++);
             buffer.setFormat(format);
-            int flags = Buffer.FLAG_RTP_TIME;
+            int flags = Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA;
             if (header.getMarker() == 1) {
                 flags = flags | Buffer.FLAG_RTP_MARKER;
             }
@@ -135,7 +148,6 @@ public class DatagramForwarder implements PushBufferStream {
             e.printStackTrace();
             buffer.setDiscard(true);
         }
-
     }
 
     /**

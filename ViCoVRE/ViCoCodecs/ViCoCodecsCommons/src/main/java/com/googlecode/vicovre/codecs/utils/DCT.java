@@ -384,7 +384,7 @@ public class DCT {
      */
     public void rdct(QuickArrayAbstract block, long m0,
             QuickArrayAbstract output,
-            int offset, int stride) throws QuickArrayException {
+            int offset, int stride) {
         tmp.clear();
         int tp = 0;
         int qt = 0;

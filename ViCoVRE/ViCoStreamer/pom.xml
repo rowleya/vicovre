@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <parent>
+        <artifactId>ViCoVRE</artifactId>
+        <groupId>com.googlecode.vicovre</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>ViCoStreamer</artifactId>
+    <packaging>jar</packaging>
+    <name>ViCo Streamer</name>
+    <url>http://maven.apache.org</url>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>dstovall.org</id>
+            <url>http://dstovall.org/maven2/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>manchester.dev.repo</id>
+            <url>http://memetic.ag.manchester.ac.uk:8081/nexus/content/repositories/manchester.dev.repo/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <finalName>ViCoStreamer</finalName>
+    </build>
+    <dependencies>
+
+        <!-- Codec Dependencies -->
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsH261</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsH264</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsFFMpeg</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsULaw</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsLinear</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoMedia</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ag3.bridge</groupId>
+            <artifactId>multicast</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>ag3.bridge</groupId>
+            <artifactId>quickbridge</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>ag3.bridge</groupId>
+            <artifactId>tcpbridge</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-plus</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-naming</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-management</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jsp-2.1-jetty</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty-annotations</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>start</artifactId>
+            <version>6.1.15</version>
+        </dependency>
+     </dependencies>
+</project>

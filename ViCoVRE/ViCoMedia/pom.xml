@@ -16,10 +16,17 @@
         <finalName>ViCoMedia</finalName>
     </build>
     <dependencies>
+
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsCommons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>pag</groupId>
             <artifactId>ag3</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.4</version>
         </dependency>
         <dependency>
             <groupId>javax.media</groupId>

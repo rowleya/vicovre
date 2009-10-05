@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+    <bean id="viewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <bean id="rtpTypeRepository" class="com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl">
+        <constructor-arg><value>/rtptypes.xml</value></constructor-arg>
+    </bean>
+
+    <bean id="layoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.LayoutRepositoryXmlImpl">
+        <constructor-arg><value>/layouts.xml</value></constructor-arg>
+    </bean>
+
+    <bean id="harvestFormatRepository" class="com.googlecode.vicovre.repositories.harvestFormat.impl.HarvestFormatRepositoryXmlImpl">
+        <constructor-arg><value>/harvestFormats.xml</value></constructor-arg>
+    </bean>
+
+    <bean id="database" class="com.googlecode.vicovre.recordings.db.RecordingDatabase">
+        <constructor-arg><value>${recording.location}</value></constructor-arg>
+        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+        <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
+    </bean>
+
+    <!-- XML-RPC Configuration -->
+    <bean id="venueHandler" class="com.googlecode.vicovre.web.xmlrpc.VenueHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+
+    <bean id="harvestHandler" class="com.googlecode.vicovre.web.xmlrpc.HarvestHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
+    </bean>
+
+    <bean id="unfinishedRecordingHandler" class="com.googlecode.vicovre.web.xmlrpc.UnfinishedRecordingHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+    </bean>
+
+    <bean id="recordingHandler" class="com.googlecode.vicovre.web.xmlrpc.RecordingHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+
+    <bean id="playbackHandler" class="com.googlecode.vicovre.web.xmlrpc.PlayToVenueHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+
+    <bean id="xmlRpcHandlerMapping" class="com.googlecode.vicovre.web.xmlrpc.SimpleHandlerMapping">
+        <constructor-arg>
+            <map>
+                <entry key="venue" value-ref="venueHandler"/>
+                <entry key="harvest" value-ref="harvestHandler"/>
+                <entry key="unfinishedRecording" value-ref="unfinishedRecordingHandler"/>
+                <entry key="recording" value-ref="recordingHandler"/>
+                <entry key="playback" value-ref="playbackHandler"/>
+            </map>
+        </constructor-arg>
+    </bean>
+
+    <bean name="/xmlrpc.do" class="com.googlecode.vicovre.web.xmlrpc.XmlRpcController">
+        <constructor-arg><ref bean="xmlRpcHandlerMapping"/></constructor-arg>
+    </bean>
+</beans>
