@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.media.protocol.memetic;
 
 /**
  * Recording constants

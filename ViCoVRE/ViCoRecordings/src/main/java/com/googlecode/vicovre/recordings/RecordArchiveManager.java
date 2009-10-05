@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTCPPacketSink;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
