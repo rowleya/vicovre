@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemChangeState;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemSeek;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemToVenue;
 
 public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
@@ -134,6 +135,8 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
 
     public void slideValueChanged(float position) {
         setTimePosition(position);
+        int value = (int) (item.getDuration() * position);
+        PlayItemSeek.seek(this, value);
     }
 
     public void slideValueChanging(float position) {

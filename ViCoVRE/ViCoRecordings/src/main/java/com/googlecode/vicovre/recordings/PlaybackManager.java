@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Vector;
 
 import javax.media.Format;
 import javax.media.format.AudioFormat;
@@ -55,10 +54,13 @@ import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.StreamDescription;
 
 import com.googlecode.vicovre.media.protocol.memetic.DataSource;
+import com.googlecode.vicovre.media.protocol.memetic.StreamStartingListener;
+import com.googlecode.vicovre.media.protocol.memetic.StreamStoppingListener;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 
-public class PlaybackManager {
+public class PlaybackManager implements StreamStoppingListener,
+        StreamStartingListener {
 
     private static final BridgeDescription CONNECTION = new BridgeDescription();
 
@@ -89,7 +91,7 @@ public class PlaybackManager {
 
     private DataSource datasource = null;
 
-    private SourceDescription[][] sourceDescriptions = null;
+    private HashMap<Integer, SourceDescription>[] sourceDescriptions = null;
 
     private final int id;
 
@@ -136,51 +138,57 @@ public class PlaybackManager {
         HashSet<Capability> caps = new HashSet<Capability>();
         HashSet<RTPType> rtpTypes = new HashSet<RTPType>();
         List<Stream> streams = recording.getStreams();
-        sourceDescriptions = new SourceDescription[streams.size()][];
+        sourceDescriptions = new HashMap[streams.size()];
         for (int i = 0; i < streams.size(); i++) {
             Stream stream = streams.get(i);
             RTPType type = stream.getRtpType();
             rtpTypes.add(type);
             caps.add(getCapability(type));
-            Vector<SourceDescription> description =
-                new Vector<SourceDescription>();
+            HashMap<Integer, SourceDescription> description =
+                new HashMap<Integer, SourceDescription>();
             if (stream.getCname() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_CNAME,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_CNAME,
                         stream.getCname(), 1, false));
             }
             if (stream.getName() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_NAME,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_NAME,
-                        stream.getCname(), 3, false));
+                        "*R* " + stream.getName(), 3, false));
             }
             if (stream.getEmail() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_EMAIL,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_EMAIL,
                         stream.getEmail(), 3, false));
             }
             if (stream.getPhone() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_PHONE,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_PHONE,
                         stream.getPhone(), 3, false));
             }
             if (stream.getLocation() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_LOC,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_LOC,
                         stream.getLocation(), 3, false));
             }
             if (stream.getTool() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_TOOL,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_TOOL,
                         stream.getTool(), 3, false));
             }
             if (stream.getNote() != null) {
-                description.add(new SourceDescription(
+                description.put(SourceDescription.SOURCE_DESC_NOTE,
+                        new SourceDescription(
                         SourceDescription.SOURCE_DESC_NOTE,
                         stream.getNote(), 3, false));
             }
-            sourceDescriptions[i] = description.toArray(
-                    new SourceDescription[0]);
+            sourceDescriptions[i] = description;
         }
         capabilities = caps.toArray(new Capability[0]);
         types = rtpTypes.toArray(new RTPType[0]);
@@ -272,9 +280,22 @@ public class PlaybackManager {
                 sendStreams[i] = managers[i].createSendStream(datasource, i);
                 NetworkLocation location = findLocationForType(streams,
                         stream.getRtpType());
-                System.err.println("Sending " + files[i] + " to " + location + " using " + sendStreams[i].getSSRC());
                 connector.addStream(sendStreams[i].getSSRC(), location);
-                sendStreams[i].setSourceDescription(sourceDescriptions[i]);
+                SourceDescription note = sourceDescriptions[i].get(
+                        SourceDescription.SOURCE_DESC_NOTE);
+                String extra = "(Starts at "
+                    + datasource.getStartOffset(i) + ")";
+                if (note == null) {
+                    note = new SourceDescription(
+                        SourceDescription.SOURCE_DESC_NOTE, extra, 3, false);
+                } else {
+                    note.setDescription(note.getDescription() + " " + extra);
+                }
+                sourceDescriptions[i].put(SourceDescription.SOURCE_DESC_NOTE,
+                        note);
+                sendStreams[i].setSourceDescription(
+                        sourceDescriptions[i].values().toArray(
+                                new SourceDescription[0]));
                 sendStreams[i].start();
             }
 
@@ -309,5 +330,32 @@ public class PlaybackManager {
 
     public void seek(long seek) {
         datasource.seek(seek, 1.0);
+    }
+
+    public void streamStopping(javax.media.protocol.DataSource datasource,
+            int stream) {
+        try {
+            sendStreams[stream].stop();
+            sendStreams[stream].close();
+            managers[stream].removeTargets("Stopped");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void streamStarting(javax.media.protocol.DataSource datasource,
+            int stream) {
+        SourceDescription note = sourceDescriptions[stream].get(
+                SourceDescription.SOURCE_DESC_NOTE);
+        Stream s = recording.getStreams().get(stream);
+        if (s.getNote() == null) {
+            sourceDescriptions[stream].remove(
+                    SourceDescription.SOURCE_DESC_NOTE);
+        } else {
+            note.setDescription(s.getNote());
+        }
+        sendStreams[stream].setSourceDescription(
+                sourceDescriptions[stream].values().toArray(
+                        new SourceDescription[0]));
     }
 }
