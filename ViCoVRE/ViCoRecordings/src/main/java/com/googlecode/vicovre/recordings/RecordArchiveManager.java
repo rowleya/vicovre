@@ -64,7 +64,7 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
      * The format to use for the date in ids
      */
     public static final SimpleDateFormat DATE_FORMAT =
-        new SimpleDateFormat("yyyy-MM-dd_hhmmss-SSSS");
+        new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
 
     // The maximum RTP type in the RTCP - RTP conflict range
     private static final int MAX_RTCP_CONFLICT = 76;
