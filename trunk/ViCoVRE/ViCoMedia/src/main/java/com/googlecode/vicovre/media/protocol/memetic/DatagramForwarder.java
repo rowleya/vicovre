@@ -136,10 +136,10 @@ public class DatagramForwarder implements PushBufferStream {
             buffer.setData(data);
             buffer.setOffset(RTPHeader.SIZE);
             buffer.setLength(data.length - RTPHeader.SIZE);
-            buffer.setTimeStamp(timeBase.getNanoseconds());
-            buffer.setSequenceNumber(sequence++);
+            buffer.setTimeStamp(header.getTimestamp());
+            buffer.setSequenceNumber(header.getSequence());
             buffer.setFormat(format);
-            int flags = Buffer.FLAG_SYSTEM_TIME | Buffer.FLAG_LIVE_DATA;
+            int flags = Buffer.FLAG_RTP_TIME | Buffer.FLAG_LIVE_DATA;
             if (header.getMarker() == 1) {
                 flags = flags | Buffer.FLAG_RTP_MARKER;
             }
