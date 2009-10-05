@@ -88,7 +88,9 @@ public class MAGICFormatReader implements HarvestFormatReader {
                 metadata.setUrl(XmlIo.readContent(node, "url"));
                 metadata.setLocation(XmlIo.readContent(node, "location"));
                 event.setMetadata(metadata);
-                events.add(event);
+                if (event.getEndDate().getTime() > System.currentTimeMillis()) {
+                    events.add(event);
+                }
             }
             return events.toArray(new HarvestedEvent[0]);
         } catch (Exception e) {
