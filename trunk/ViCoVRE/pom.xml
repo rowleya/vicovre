@@ -13,9 +13,15 @@
     <!-- modules -->
     <modules>
         <module>ViCoCodecs</module>
+        <module>ViCoGWTRecorderInterface</module>
         <module>ViCoMedia</module>
         <module>ViCoPlayer</module>
         <module>ViCoRecorder</module>
+        <module>ViCoRecordings</module>
+        <module>ViCoRepositories</module>
+        <module>ViCoSecurity</module>
+        <module>ViCoStreamer</module>
+        <module>ViCoUtils</module>
         <module>ViCoWeb</module>
     </modules>
 

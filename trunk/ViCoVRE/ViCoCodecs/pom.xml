@@ -21,6 +21,7 @@
         <module>ViCoCodecsFFMpeg</module>
         <module>ViCoCodecsFLV</module>
         <module>ViCoCodecsH261</module>
+        <module>ViCoCodecsH264</module>
         <module>ViCoCodecsLinear</module>
         <module>ViCoCodecsULaw</module>
     </modules>

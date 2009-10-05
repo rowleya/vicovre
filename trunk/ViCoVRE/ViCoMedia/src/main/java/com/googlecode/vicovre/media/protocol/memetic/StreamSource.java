@@ -34,6 +34,7 @@ package com.googlecode.vicovre.media.protocol.memetic;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -42,9 +43,6 @@ import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 
@@ -71,8 +69,6 @@ public class StreamSource {
     // The second last item in an array
     private static final int SECOND_LAST = 2;
 
-    private static final String EXCEPTION_MESSAGE = "Exception ";
-
     // The amount of delay between packets when paused
     private static final int PAUSE_DELAY = 1000;
 
@@ -84,9 +80,6 @@ public class StreamSource {
 
     // The maximum time before a packet is dropped
     private static final long MAX_NEG_DELAY = -500;
-
-    // The log file
-    private static Log logger = LogFactory.getLog(StreamSource.class.getName());
 
     // The last timestamp seen
     private long lastPacketTimestamp = 0;
@@ -130,6 +123,9 @@ public class StreamSource {
     // The offset of the first sent packet
     private long firstOffset = 0;
 
+    // The amount to shift offsets by
+    private long offsetShift = 0;
+
     // The time at which all streams should start in clock time
     private long allStartTime = 0;
 
@@ -163,6 +159,9 @@ public class StreamSource {
     // The datasource to notify of a new packet
     private DataSource dataSource = null;
 
+    // The id of the stream in the datasource
+    private int id = 0;
+
     // The packet data
     private byte[][] packetData = new byte[50][4096];
 
@@ -173,17 +172,23 @@ public class StreamSource {
      * Sets up the stream to be sent
      * @param dataSource The datasource that this stream will be used in
      * @param filename The name of the file
+     * @param id The id of the stream in the datasource
      *
      */
-    public StreamSource(DataSource dataSource, String filename) {
+    public StreamSource(DataSource dataSource, File file, int id) {
 
         this.dataSource = dataSource;
+        this.id = id;
 
         // Open a connection to the data and process some meta-info
-        openStream(filename);
+        openStream(file);
         readHeader();
-        readIndexFile(filename);
+        readIndexFile(file);
         readPacket();
+    }
+
+    public void setOffsetShift(long offsetShift) {
+        this.offsetShift = offsetShift;
     }
 
     /**
@@ -203,7 +208,7 @@ public class StreamSource {
             try {
                 wait();
             } catch (InterruptedException e) {
-                logger.error(EXCEPTION_MESSAGE, e);
+                e.printStackTrace();
             }
         }
     }
@@ -232,18 +237,29 @@ public class StreamSource {
      * Starts playback of the stream
      * @param scale The scale at which to play (1.0 = normal)
      * @param seek The position in ms to seek from
-     *
+     * @param allStartTime The time at which to start the playback
      */
-    public void play(double scale, long seek) {
+    public void play(double scale, long seek, long allStartTime) {
 
-        // Calculate new start time, so that we're aligned w/other streams in
-        // this session
-
+        this.allStartTime = allStartTime;
         if (timer != null) {
             timer.cancel();
         }
         timer = new Timer();
         lastPacketTimestamp = 0;
+        packetTimestamp = 0;
+        lengths.clear();
+        packets.clear();
+        offsets.clear();
+        qError = false;
+        qFoundRtpPacket = false;
+        qEof = false;
+        terminated = false;
+        firstPacketSent = false;
+        currentPos = 0;
+        packetCount = 0;
+        octetCount = 0;
+        lowestSequence = 0;
 
         this.scale = scale;
 
@@ -296,16 +312,18 @@ public class StreamSource {
     private void cancelTimers() {
         if (timer != null) {
             timer.cancel();
+            timer = null;
         }
     }
 
     // Searches through the stream for the first packet to play after the given
     // time
     private void streamSeek(long seek) {
+        long actualSeek = seek - offsetShift;
         int offsetPos = 0;
         firstOffset = seek;
         offsetPos = Collections.binarySearch(packetOffsets, new Long(
-                seek));
+                actualSeek));
         if (offsetPos < 0) {
             offsetPos = (-1 * offsetPos) + 1;
         }
@@ -323,21 +341,21 @@ public class StreamSource {
                 }
             }
         } catch (IOException e) {
-            logger.error(EXCEPTION_MESSAGE, e);
+            e.printStackTrace();
             qEof = true;
         }
     }
 
     // Open the stream file
-    private boolean openStream(String filename) {
+    private boolean openStream(File file) {
         boolean qSuccess = false;
 
         // Open the file for reading
-        if (openStreamFile(filename)) {
-            logger.debug("Stream_Source::openStream: opened stream file");
+        if (openStreamFile(file)) {
+            System.err.println("Stream_Source::openStream: opened stream file");
             qSuccess = true;
         } else {
-            logger.debug("Stream_Source::openStream:  failed to open "
+            System.err.println("Stream_Source::openStream:  failed to open "
                             + "stream file\n");
         }
 
@@ -345,11 +363,11 @@ public class StreamSource {
     }
 
     // Actually open the stream file
-    private boolean openStreamFile(String filename) {
+    private boolean openStreamFile(File file) {
         boolean qSuccess = true;
 
         try {
-            FileInputStream stream = new FileInputStream(filename);
+            FileInputStream stream = new FileInputStream(file);
             streamFile = new DataInputStream(stream);
             streamFileControl = stream.getChannel();
         } catch (IOException e) {
@@ -379,7 +397,7 @@ public class StreamSource {
             streamFile.read(addr, 0, IP_ADDRESS_SIZE);
             streamFile.readUnsignedShort();
         } catch (IOException e) {
-            logger.error(EXCEPTION_MESSAGE, e);
+            e.printStackTrace();
             qSuccess = false;
         }
 
@@ -391,13 +409,13 @@ public class StreamSource {
      * @param filename The name of the file to read
      *
      */
-    public void readIndexFile(String filename) {
+    public void readIndexFile(File file) {
         try {
 
             // Open the index file
-            filename += "_index";
+            file = new File(file.getParentFile(), file.getName() + ".index");
             DataInputStream indexFile = new DataInputStream(
-                    new BufferedInputStream(new FileInputStream(filename)));
+                    new BufferedInputStream(new FileInputStream(file)));
 
             try {
                 while (true) {
@@ -411,7 +429,7 @@ public class StreamSource {
                 indexFile.close();
             }
         } catch (IOException e) {
-            logger.error(EXCEPTION_MESSAGE, e);
+            e.printStackTrace();
         }
 
     }
@@ -455,6 +473,7 @@ public class StreamSource {
                         & RTPHeader.USHORT_TO_INT_CONVERT;
                     offset = streamFile.readInt()
                         & RTPHeader.UINT_TO_LONG_CONVERT;
+                    offset += offsetShift;
 
                     // calculate packet body size and read it
                     streamFile.readFully(packetBuffer, 0, length);
@@ -483,7 +502,7 @@ public class StreamSource {
             } catch (EOFException e) {
                 qEof = true;
             } catch (IOException e) {
-                logger.error(EXCEPTION_MESSAGE, e);
+                e.printStackTrace();
                 qError = true;
             }
         }
@@ -603,12 +622,13 @@ public class StreamSource {
 
                     packet.setLength(length);
                     if (!terminated) {
-                        dataSource.handleRTPPacket(packet);
+                        dataSource.handleRTPPacket(packet, id);
+                        dataSource.setCurrentTime(offsets.get(i));
                     }
                     packetCount++;
                     octetCount += length - RTPHeader.SIZE;
                 } catch (Exception e) {
-                    logger.error(EXCEPTION_MESSAGE, e);
+                    e.printStackTrace();
                 }
             }
         }
@@ -618,7 +638,7 @@ public class StreamSource {
     private void terminateStream() {
         cancelTimers();
         notifyFirstPacket();
-        logger.debug("Stream Finished");
+        System.err.println("Stream Finished");
     }
 
     /**
@@ -634,7 +654,7 @@ public class StreamSource {
      * @return The current time
      */
     public long getCurrentTime() {
-        return packetOffsets.get(currentPos);
+        return packetOffsets.get(currentPos) + offsetShift;
     }
 
     /**

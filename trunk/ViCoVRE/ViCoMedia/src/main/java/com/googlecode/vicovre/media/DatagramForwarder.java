@@ -42,7 +42,7 @@ import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.PushBufferStream;
 
 import com.googlecode.vicovre.media.rtp.RTPHeader;
-import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
  * Forwards received datagrams

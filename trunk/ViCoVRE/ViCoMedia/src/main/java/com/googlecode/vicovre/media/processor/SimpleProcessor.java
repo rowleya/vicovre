@@ -404,11 +404,12 @@ public class SimpleProcessor {
         Vector< ? > codecsFromHere = PlugInManager.getPlugInList(
                 input, output, PlugInManager.CODEC);
         if (!codecsFromHere.isEmpty()) {
+            System.err.println("Trying immediate codecs " + codecsFromHere);
             Codecs searchCodecs = new Codecs();
             for (int i = 0; i < codecsFromHere.size(); i++) {
                 String codecClassName = (String) codecsFromHere.get(i);
                 try {
-                    Codec codec = Misc.loadCodec(codecClassName);
+                    Codec codec = (Codec) Misc.loadPlugin(codecClassName);
                     int matched = -1;
                     Format in = null;
                     Format out = null;
@@ -468,12 +469,13 @@ public class SimpleProcessor {
             codecsFromHere = PlugInManager.getPlugInList(null, output,
                     PlugInManager.CODEC);
         }
+        System.err.println("Trying codecs " + codecsFromHere);
         for (int i = 0; i < codecsFromHere.size(); i++) {
             String codecClassName = (String) codecsFromHere.get(i);
             if (!searched.containsKey(codecClassName)) {
                 searched.put(codecClassName, true);
                 try {
-                    Codec codec = Misc.loadCodec(codecClassName);
+                    Codec codec = (Codec) Misc.loadPlugin(codecClassName);
                     Format[] formats = null;
                     if (forward) {
                         codec.setInputFormat(input);

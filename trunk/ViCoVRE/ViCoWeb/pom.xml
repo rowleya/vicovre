@@ -11,11 +11,32 @@
     <name>ViCo Web Application</name>
     <url>http://maven.apache.org</url>
 
-    <repositories>
-    </repositories>
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <filter.location>src/main/filters/development.properties</filter.location>
+            </properties>
+        </profile>
+        <profile>
+            <id>memetic</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <filter.location>src/main/filters/memetic.properties</filter.location>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <finalName>ViCoVRE</finalName>
+        <filters>
+            <filter>${filter.location}</filter>
+        </filters>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -27,14 +48,38 @@
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>maven-jetty-plugin</artifactId>
                 <configuration>
+                    <contextPath>/</contextPath>
+                    <scanIntervalSeconds>10</scanIntervalSeconds>
                     <connectors>
                         <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
                             <port>9090</port>
                             <maxIdleTime>60000</maxIdleTime>
                         </connector>
                     </connectors>
+                    <systemproperties>
+                        <systemproperty>
+                            <name>org.apache.commons.logging.Log</name>
+                            <value>
+                                org.apache.commons.logging.impl.Log4JLogger
+                            </value>
+                        </systemproperty>
+                        <systemproperty>
+                            <name>slf4j</name>
+                            <value>false</value>
+                        </systemproperty>
+                        <systemproperty>
+                            <name>log4j.configuration</name>
+                            <value>file:./target/ViCoVRE/WEB-INF/classes/log4j.properties</value>
+                        </systemproperty>
+                    </systemproperties>
                 </configuration>
                 <dependencies>
+                    <dependency>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                        <version>1.1</version>
+                        <type>jar</type>
+                    </dependency>
                     <dependency>
                         <groupId>log4j</groupId>
                         <artifactId>log4j</artifactId>
@@ -52,8 +97,17 @@
                             <directory>${basedir}/src/main/webapp/WEB-INF</directory>
                             <includes>
                                 <include>web.xml</include>
+                                <include>vicoSpring-servlet.xml</include>
                             </includes>
                             <targetPath>WEB-INF</targetPath>
+                            <filtering>true</filtering>
+                        </webResource>
+                        <webResource>
+                            <directory>${basedir}/src/main/webapp/</directory>
+                            <includes>
+                                <include>index.html</include>
+                            </includes>
+                            <targetPath></targetPath>
                             <filtering>true</filtering>
                         </webResource>
                     </webResources>
@@ -63,5 +117,34 @@
     </build>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoRecordings</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoSecurity</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoGWTRecorderInterface</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.xmlrpc</groupId>
+            <artifactId>xmlrpc-server</artifactId>
+            <version>3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>2.5.6.SEC01</version>
+        </dependency>
     </dependencies>
 </project>

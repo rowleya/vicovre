@@ -51,8 +51,9 @@ import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 
 import com.googlecode.vicovre.media.rtp.RTPHeader;
-import com.googlecode.vicovre.media.rtptype.RTPType;
-import com.googlecode.vicovre.media.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.recordings.RecordingConstants;
+import com.googlecode.vicovre.repositories.rtptype.RTPType;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
  * Provides standard methods for Memetic file reading

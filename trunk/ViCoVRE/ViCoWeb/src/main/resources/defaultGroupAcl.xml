@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <!-- Who can change the group -->
+    <permissionSet>
+        <role name="Administrator" allow="true">
+            <operation>Read</operation>
+            <operation>Write</operation>
+        </role>
+    </permissionSet>
+
+    <!-- Who can change the ownership -->
+    <permissionSet>
+        <role name="Administrator" allow="true">
+            <operation>Read</operation>
+            <operation>Write</operation>
+        </role>
+    </permissionSet>
+
+    <!-- Who can change the access permissions -->
+    <permissionSet>
+        <role name="Administrator" allow="true">
+            <operation>Read</operation>
+            <operation>Write</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Read</operation>
+            <operation>Write</operation>
+        </user>
+    </permissionSet>
+
+    <!-- Who can access the resource -->
+    <permissionSet>
+        <user name="?user" allow="true">
+            <operation>Read</operation>
+            <operation>Write</operation>
+            <operation>Create</operation>
+            <operation>Delete</operation>
+        </user>
+    </permissionSet>
+</permissions>

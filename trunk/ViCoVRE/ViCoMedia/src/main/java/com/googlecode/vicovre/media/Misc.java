@@ -36,11 +36,14 @@
 package com.googlecode.vicovre.media;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Vector;
 
 import javax.media.Codec;
+import javax.media.Demultiplexer;
 import javax.media.Format;
+import javax.media.PlugIn;
 import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
 
@@ -91,6 +94,7 @@ public class Misc {
         for (String codec : parser.getCodecs()) {
             addCodec(codec);
         }
+        Vector<String> codecs = PlugInManager.getPlugInList(null, null, PlugInManager.CODEC);
     }
 
     /**
@@ -103,11 +107,47 @@ public class Misc {
     public static void addCodec(String codecClassName)
             throws ClassNotFoundException, InstantiationException,
             IllegalAccessException {
-        Codec codec = loadCodec(codecClassName);
+        Codec codec = (Codec) loadPlugin(codecClassName);
         PlugInManager.addPlugIn(codec.getClass().getCanonicalName(),
                 codec.getSupportedInputFormats(),
                 codec.getSupportedOutputFormats(null),
                 PlugInManager.CODEC);
+    }
+
+
+    /**
+     * Adds a demultiplexer
+     * @param demuxClassName The class of the plugin
+     * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static void addDemultiplexer(String demuxClassName)
+            throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException {
+        Demultiplexer demux = (Demultiplexer) loadPlugin(demuxClassName);
+        PlugInManager.addPlugIn(demux.getClass().getCanonicalName(),
+                demux.getSupportedInputContentDescriptors(),
+                null,
+                PlugInManager.DEMULTIPLEXER);
+    }
+
+    /**
+     * Adds a demultiplexer
+     * @param demuxClass The class of the plugin
+     * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static void addDemultiplexer(
+                Class<? extends Demultiplexer> demuxClass)
+            throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException {
+        Demultiplexer demux = (Demultiplexer) loadPlugin(demuxClass);
+        PlugInManager.addPlugIn(demux.getClass().getCanonicalName(),
+                demux.getSupportedInputContentDescriptors(),
+                null,
+                PlugInManager.DEMULTIPLEXER);
     }
 
     /**
@@ -118,7 +158,7 @@ public class Misc {
      */
     public static void addCodec(Class< ? extends Codec> codecClass)
             throws InstantiationException, IllegalAccessException {
-        Codec codec = loadCodec(codecClass);
+        Codec codec = (Codec) loadPlugin(codecClass);
         PlugInManager.addPlugIn(codec.getClass().getCanonicalName(),
                 codec.getSupportedInputFormats(),
                 codec.getSupportedOutputFormats(null),
@@ -128,31 +168,32 @@ public class Misc {
 
 
     /**
-     * Loads a codec
-     * @param className The name of the codec class
-     * @return The codec or null if there is an error
+     * Loads a plugin
+     * @param className The name of the plugin class
+     * @return The plugin or null if there is an error
      * @throws ClassNotFoundException
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    public static Codec loadCodec(String className)
+    public static PlugIn loadPlugin(String className)
            throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        Class<Codec> codecClass = (Class<Codec>) Class.forName(className);
-        return loadCodec(codecClass);
+        Class<? extends PlugIn> pluginClass = (Class<? extends PlugIn>)
+            Class.forName(className);
+        return loadPlugin(pluginClass);
     }
 
     /**
-     * Loads a codec
-     * @param codecClass The codec class
-     * @return The codec or null if there is an error
+     * Loads a plugin
+     * @param pluginClass The plugin class
+     * @return The plugin or null if there is an error
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    public static Codec loadCodec(Class< ? extends Codec> codecClass)
+    public static PlugIn loadPlugin(Class<? extends PlugIn> pluginClass)
             throws InstantiationException, IllegalAccessException {
-        Codec codec = codecClass.newInstance();
-        return codec;
+        PlugIn plugin = pluginClass.newInstance();
+        return plugin;
     }
 
     /**
@@ -173,7 +214,7 @@ public class Misc {
 
         try {
             String codecClass = codecs.removeFirst();
-            Codec codec = Misc.loadCodec(codecClass);
+            Codec codec = (Codec) Misc.loadPlugin(codecClass);
             Format input = codec.setInputFormat(inputFormat);
             if (input == null) {
                 throw new Exception("Cannot set codec " + codecClass

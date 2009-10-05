@@ -68,6 +68,8 @@ public class BridgedRTPConnector implements RTPConnector {
 
     private BridgeClient client = null;
 
+    private Integer closeSync = new Integer(0);
+
     private boolean closed = false;
 
     private Input rtpInput = new Input();
@@ -84,6 +86,8 @@ public class BridgedRTPConnector implements RTPConnector {
 
     private RTCPPacketSink rtcpPacketSink = null;
 
+    private NetworkLocation[] locations = null;
+
     /**
      * Creates a new BridgedRTPConnector
      * @param bridge The bridge to connect to
@@ -97,10 +101,40 @@ public class BridgedRTPConnector implements RTPConnector {
             NetworkLocation[] locations)
             throws ClassNotFoundException, InstantiationException,
             IllegalAccessException, IOException {
+        this.locations = locations;
         client = BridgeClientCreator.create(bridge);
         client.joinBridge(locations);
+        client.setDoLoopback(true);
         rtpInput.start();
         rtcpInput.start();
+        if (client.isSinglePacketStream()) {
+            HashMap<NetworkLocation, Input> inputMap =
+                new HashMap<NetworkLocation, Input>();
+            for (int i = 0; i < locations.length; i++) {
+                inputMap.put(locations[i], rtpInput);
+                inputMap.put(getRtcpLocation(locations[i]), rtcpInput);
+            }
+            SingleStreamReader reader = new SingleStreamReader(inputMap);
+            reader.start();
+        } else {
+            for (int i = 0; i < locations.length; i++) {
+                MultiStreamReader reader = new MultiStreamReader(locations[i],
+                        rtpInput, true);
+                MultiStreamReader rtcpReader = new MultiStreamReader(
+                        getRtcpLocation(locations[i]), rtcpInput, false);
+                reader.start();
+                rtcpReader.start();
+            }
+        }
+    }
+
+    public void setBridge(BridgeDescription bridge)
+            throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException, IOException {
+        BridgeClient newClient = BridgeClientCreator.create(bridge);
+        newClient.joinBridge(locations);
+        client.leaveBridge();
+        client = newClient;
         if (client.isSinglePacketStream()) {
             HashMap<NetworkLocation, Input> inputMap =
                 new HashMap<NetworkLocation, Input>();
@@ -189,10 +223,12 @@ public class BridgedRTPConnector implements RTPConnector {
      */
     public void close() {
         try {
-            closed = true;
-            rtpInput.close();
-            rtcpInput.close();
-            client.leaveBridge();
+            synchronized (closeSync) {
+                closed = true;
+                rtpInput.close();
+                rtcpInput.close();
+                client.leaveBridge();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -347,7 +383,11 @@ public class BridgedRTPConnector implements RTPConnector {
                     DatagramPacket packet = new DatagramPacket(data, offset,
                             length);
                     encrypt(packet, isRtp);
-                    client.sendPacket(packet, location);
+                    synchronized (closeSync) {
+                        if (!closed) {
+                            client.sendPacket(packet, location);
+                        }
+                    }
                     return length;
                 }
                 throw new Exception("Unknown stream " + ssrc);
