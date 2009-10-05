@@ -34,6 +34,7 @@ package com.googlecode.vicovre.media.protocol.memetic;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.HashSet;
 
 import javax.media.Format;
 import javax.media.SystemTimeBase;
@@ -70,6 +71,12 @@ public class DataSource extends PushBufferDataSource implements Positionable {
 
     private SystemTimeBase timeBase = new SystemTimeBase();
 
+    private HashSet<StreamStartingListener> startListeners =
+        new HashSet<StreamStartingListener>();
+
+    private HashSet<StreamStoppingListener> stopListeners =
+        new HashSet<StreamStoppingListener>();
+
     public DataSource(File... files) {
         StreamSource maxSource = null;
         long maxSourceEnd = 0;
@@ -98,6 +105,14 @@ public class DataSource extends PushBufferDataSource implements Positionable {
             streamSources[i].setOffsetShift(
                     streamSources[i].getStartTime() - baseTime);
         }
+    }
+
+    public void addStartingListener(StreamStartingListener listener) {
+        startListeners.add(listener);
+    }
+
+    public void addStoppingListener(StreamStoppingListener listener) {
+        stopListeners.add(listener);
     }
 
     public void setFormat(int i, Format format) {
@@ -273,5 +288,21 @@ public class DataSource extends PushBufferDataSource implements Positionable {
         playing = wasPlaying;
         seek(seek, this.scale);
         return where;
+    }
+
+    protected void streamStarting(int id) {
+        for (StreamStartingListener listener : startListeners) {
+            listener.streamStarting(this, id);
+        }
+    }
+
+    protected void streamStopping(int id) {
+        for (StreamStoppingListener listener : stopListeners) {
+            listener.streamStopping(this, id);
+        }
+    }
+
+    public long getStartOffset(int id) {
+        return streamSources[id].getStartTime() - minSource.getStartTime();
     }
 }

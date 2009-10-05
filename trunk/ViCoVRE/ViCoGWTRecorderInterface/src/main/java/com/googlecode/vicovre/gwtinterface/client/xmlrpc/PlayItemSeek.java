@@ -30,51 +30,42 @@
  *
  */
 
-package com.googlecode.vicovre.web.xmlrpc;
+package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
+import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.MessagePopup;
+import com.googlecode.vicovre.gwtinterface.client.MessageResponse;
+import com.googlecode.vicovre.gwtinterface.client.PlayToVenuePopup;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+public class PlayItemSeek implements AsyncCallback<Boolean> {
 
-import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
-import org.apache.xmlrpc.webserver.XmlRpcServletServer;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.Controller;
+    private PlayToVenuePopup popup = null;
 
-public class XmlRpcController implements Controller {
-
-    private XmlRpcServletServer server = new XmlRpcServletServer();
-
-    public XmlRpcController(XmlRpcHandlerMapping mapping) {
-        server.setHandlerMapping(mapping);
+    public static void seek(PlayToVenuePopup popup, int seek) {
+        new PlayItemSeek(popup, seek);
     }
 
-    public ModelAndView handleRequest(HttpServletRequest request,
-            HttpServletResponse response) throws Exception {
-        try {
-            server.execute(request, response);
-        } catch (Exception e) {
-            System.err.println("Error in XMLRPC:");
-            System.err.println("    Request:");
-            BufferedReader reader = null;
-            try {
-                reader = new BufferedReader(
-                        new InputStreamReader(request.getInputStream()));
-            } catch (IllegalStateException error) {
-                reader = new BufferedReader(request.getReader());
-            }
-            String line = reader.readLine();
-            while (line != null) {
-                System.err.println("        " + line);
-                line = reader.readLine();
-            }
-            e.printStackTrace();
-            throw e;
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return null;
+    private PlayItemSeek(PlayToVenuePopup popup, int seek) {
+        this.popup = popup;
+        XmlRpcClient client = Application.getXmlRpcClient();
+        XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
+                "playback.seek",
+                new Object[]{popup.getId(), seek}, this);
+        request.execute();
+    }
+
+    public void onFailure(Throwable error) {
+        popup.setStopped();
+        MessagePopup errorPopup = new MessagePopup(
+                "Error: " + error.getMessage(), null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
+    }
+
+    public void onSuccess(Boolean result) {
+        // Do Nothing
     }
 }

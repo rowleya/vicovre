@@ -595,6 +595,7 @@ public class StreamSource {
             } else {
 
                 // Stream has finished. Clean up
+                dataSource.streamStopping(id);
                 terminateStream();
             }
         }
@@ -606,6 +607,7 @@ public class StreamSource {
         // Notify that the first packet has been sent
         if (!firstPacketSent) {
             notifyFirstPacket();
+            dataSource.streamStarting(id);
         }
 
         // If the packet is an RTP packet, play it
