@@ -53,7 +53,7 @@ import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemDeleter;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemEditor;
 
 public class PlayItem extends SimplePanel implements ClickHandler,
-        MessageResponseHandler {
+        MessageResponseHandler, Comparable<PlayItem> {
 
     private static final StringDateTimeFormat DATE_FORMAT =
         new StringDateTimeFormat("dd MMM yyyy 'at' HH:mm");
@@ -74,6 +74,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private HTML description = new HTML();
 
     private Label startDate = new Label();
+
+    private Date start = null;
 
     private Label duration = new Label();
 
@@ -141,6 +143,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     }
 
     public void setStartDate(Date date) {
+        this.start = date;
         this.startDate.setText(DATE_FORMAT.format(date));
     }
 
@@ -199,5 +202,14 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         details.put("name", name.getText());
         details.put("description", description.getText());
         return details;
+    }
+
+    public int compareTo(PlayItem item) {
+        int startDateCompare = start.compareTo(item.start);
+        int nameCompare = name.getText().compareTo(item.name.getText());
+        if (startDateCompare == 0) {
+            return nameCompare;
+        }
+        return startDateCompare;
     }
 }

@@ -32,18 +32,17 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.HarvestItem;
-import com.googlecode.vicovre.gwtinterface.client.HarvestItemPopup;
-import com.googlecode.vicovre.gwtinterface.client.HarvestPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
 
@@ -108,16 +107,18 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
     }
 
     public void onSuccess(List<Object> items) {
+        Vector<RecordingItem> recordingItems = new Vector<RecordingItem>();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
                 Map<String, Object> item = (Map) items.get(i);
                 RecordingItem recordingItem = buildRecordingItem(item);
-                panel.addItem(recordingItem);
-            } else {
+                recordingItems.add(recordingItem);
             }
         }
+        Collections.sort(recordingItems);
+        for (RecordingItem item : recordingItems) {
+            panel.add(item);
+        }
     }
-
-
 
 }

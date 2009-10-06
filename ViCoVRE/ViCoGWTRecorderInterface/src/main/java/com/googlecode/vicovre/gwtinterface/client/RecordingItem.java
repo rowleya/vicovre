@@ -57,7 +57,7 @@ import com.googlecode.vicovre.gwtinterface.client.xmlrpc.RecordingItemStarter;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.RecordingItemStopper;
 
 public class RecordingItem extends SimplePanel implements ClickHandler,
-        MessageResponseHandler {
+        MessageResponseHandler, Comparable<RecordingItem> {
 
     private static final String STOPPED = "Stopped";
 
@@ -306,5 +306,20 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             details.put("addresses", addresses);
         }
         return details;
+    }
+
+    public int compareTo(RecordingItem item) {
+        int startDateCompare = popup.getStartDate().compareTo(
+                item.popup.getStartDate());
+        int stopDateCompare = popup.getStopDate().compareTo(
+                item.popup.getStartDate());
+        int nameCompare = name.getText().compareTo(item.name.getText());
+        if (startDateCompare == 0) {
+            if (stopDateCompare == 0) {
+                return nameCompare;
+            }
+            return stopDateCompare;
+        }
+        return startDateCompare;
     }
 }

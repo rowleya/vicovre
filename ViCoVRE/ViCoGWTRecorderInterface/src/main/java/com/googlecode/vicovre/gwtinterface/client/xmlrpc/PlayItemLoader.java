@@ -32,9 +32,11 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
@@ -78,12 +80,17 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
     }
 
     public void onSuccess(List<Object> items) {
+        Vector<PlayItem> playItems = new Vector<PlayItem>();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
                 Map<String, Object> item = (Map) items.get(i);
                 PlayItem playItem = buildPlayItem(item);
-                panel.addItem(playItem);
+                playItems.add(playItem);
             }
+        }
+        Collections.sort(playItems);
+        for (PlayItem item : playItems) {
+            panel.addItem(item);
         }
     }
 

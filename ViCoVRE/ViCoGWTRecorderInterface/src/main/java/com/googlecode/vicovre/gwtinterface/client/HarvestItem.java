@@ -47,7 +47,7 @@ import com.googlecode.vicovre.gwtinterface.client.xmlrpc.HarvestItemEditor;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.HarvestItemUpdater;
 
 public class HarvestItem extends HorizontalPanel implements ClickHandler,
-        MessageResponseHandler {
+        MessageResponseHandler, Comparable<HarvestItem> {
 
     private final Image HARVEST = new Image("images/harvest.gif");
 
@@ -220,5 +220,9 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
             details.put("addresses", addresses);
         }
         return details;
+    }
+
+    public int compareTo(HarvestItem item) {
+        return name.getText().compareTo(item.name.getText());
     }
 }
