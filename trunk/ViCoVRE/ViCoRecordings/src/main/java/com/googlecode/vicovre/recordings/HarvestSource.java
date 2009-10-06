@@ -121,11 +121,12 @@ public class HarvestSource extends TimerTask {
 
     private Timer timer = null;
 
-    public HarvestSource(Folder folder) {
+    public HarvestSource(Folder folder, RtpTypeRepository typeRepository) {
         synchronized (LAST_ID_SYNC) {
             id = lastId++;
         }
         this.folder = folder;
+        this.typeRepostory = typeRepository;
     }
 
     public int getId() {

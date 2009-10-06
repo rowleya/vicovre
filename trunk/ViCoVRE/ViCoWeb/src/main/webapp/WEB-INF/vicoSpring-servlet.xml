@@ -37,6 +37,7 @@
     <bean id="harvestHandler" class="com.googlecode.vicovre.web.xmlrpc.HarvestHandler">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
+        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
     </bean>
 
     <bean id="unfinishedRecordingHandler" class="com.googlecode.vicovre.web.xmlrpc.UnfinishedRecordingHandler">

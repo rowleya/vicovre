@@ -167,4 +167,9 @@ public class SliderBar extends AbsolutePanel implements MouseMoveHandler,
         int x = (int) ((position * (rightMost - leftMost)) - leftMost);
         setSliderPosition(x);
     }
+
+    public float getPosition() {
+        int x = bar.getAbsoluteLeft() - getAbsoluteLeft();
+        return getSliderPosition(x);
+    }
 }
