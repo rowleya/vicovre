@@ -32,8 +32,10 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
@@ -107,13 +109,17 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
     }
 
     public void onSuccess(List<Object> items) {
+        Vector<HarvestItem> harvestItems = new Vector<HarvestItem>();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
                 Map<String, Object> item = (Map) items.get(i);
                 HarvestItem harvestItem = buildHarvestItem(item);
-                panel.addItem(harvestItem);
-            } else {
+                harvestItems.add(harvestItem);
             }
+        }
+        Collections.sort(harvestItems);
+        for (HarvestItem item : harvestItems) {
+            panel.addItem(item);
         }
     }
 
