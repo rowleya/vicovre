@@ -34,6 +34,7 @@ package com.googlecode.vicovre.recordings;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -132,6 +133,14 @@ public class PlaybackManager implements StreamStoppingListener,
         }
     }
 
+    public static int getTime(int id) {
+        PlaybackManager manager = MANAGERS.get(id);
+        if (manager != null) {
+            return manager.getTime();
+        }
+        return -1;
+    }
+
     private PlaybackManager(Recording recording) {
         id = lastId++;
         this.recording = recording;
@@ -198,6 +207,10 @@ public class PlaybackManager implements StreamStoppingListener,
         return id;
     }
 
+    public int getTime() {
+        return (int) datasource.getCurrentTime();
+    }
+
     private Capability getCapability(RTPType type) {
         Capability cap = new Capability();
         cap.setType(type.getMediaType());
@@ -240,6 +253,21 @@ public class PlaybackManager implements StreamStoppingListener,
         return null;
     }
 
+    private static String getTimeText(long duration) {
+        NumberFormat timeFormat = NumberFormat.getIntegerInstance();
+        timeFormat.setMinimumIntegerDigits(2);
+        long remainder = duration / 1000;
+        long hours = remainder / 3600;
+        remainder -= hours * 3600;
+        long minutes = remainder / 60;
+        remainder -= minutes * 60;
+        long seconds = remainder;
+
+        return timeFormat.format(hours) + ":"
+                + timeFormat.format(minutes) + ":"
+                + timeFormat.format(seconds);
+    }
+
     public void play(String ag3VenueUrl) {
         try {
             // Negotiate the streams
@@ -266,6 +294,8 @@ public class PlaybackManager implements StreamStoppingListener,
             for (int i = 0; i < strms.size(); i++) {
                 datasource.setFormat(i, strms.get(i).getRtpType().getFormat());
             }
+            datasource.addStartingListener(this);
+            datasource.addStoppingListener(this);
 
             // Create sendstreams and register them in the connector
             managers = new RTPManager[strms.size()];
@@ -284,7 +314,7 @@ public class PlaybackManager implements StreamStoppingListener,
                 SourceDescription note = sourceDescriptions[i].get(
                         SourceDescription.SOURCE_DESC_NOTE);
                 String extra = "(Starts at "
-                    + datasource.getStartOffset(i) + ")";
+                    + getTimeText(datasource.getStartOffset(i)) + ")";
                 if (note == null) {
                     note = new SourceDescription(
                         SourceDescription.SOURCE_DESC_NOTE, extra, 3, false);

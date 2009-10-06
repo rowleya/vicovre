@@ -48,15 +48,20 @@ import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 public class HarvestHandler extends AbstractHandler {
 
     private HarvestFormatRepository harvestFormatRepository = null;
 
+    private RtpTypeRepository typeRepository = null;
+
     public HarvestHandler(RecordingDatabase recordingDatabase,
-            HarvestFormatRepository harvestFormatRepository) {
+            HarvestFormatRepository harvestFormatRepository,
+            RtpTypeRepository typeRepository) {
         super(recordingDatabase);
         this.harvestFormatRepository = harvestFormatRepository;
+        this.typeRepository = typeRepository;
     }
 
     private void fillIn(HarvestSource harvestSource,
@@ -158,7 +163,7 @@ public class HarvestHandler extends AbstractHandler {
     public Integer addHarvestSource(String folderPath,
             Map<String, Object> details) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
-        HarvestSource harvestSource = new HarvestSource(folder);
+        HarvestSource harvestSource = new HarvestSource(folder, typeRepository);
 
         fillIn(harvestSource, details);
 

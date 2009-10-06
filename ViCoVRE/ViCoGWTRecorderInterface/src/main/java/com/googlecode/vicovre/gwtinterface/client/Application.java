@@ -98,15 +98,15 @@ public class Application implements EntryPoint {
 
         DockPanel topPanel = new DockPanel();
         topPanel.setWidth("100%");
-        topPanel.setHeight("90%");
+        topPanel.setHeight("100%");
         topPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         topPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
         StatusPanel status = new StatusPanel();
-        status.setWidth("80%");
+        status.setWidth("95%");
 
-        panel.setWidth("80%");
-        panel.setHeight("100%");
+        panel.setWidth("95%");
+        panel.setHeight("95%");
         panel.getDeckPanel().setHeight("100%");
         panel.add(playPanel, "Play");
         panel.add(recordPanel, "Record");

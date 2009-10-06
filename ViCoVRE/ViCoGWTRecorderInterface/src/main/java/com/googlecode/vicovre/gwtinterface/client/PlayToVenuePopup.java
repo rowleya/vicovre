@@ -42,6 +42,7 @@ import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemChangeState;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemSeek;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemTimeUpdate;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemToVenue;
 
 public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
@@ -72,6 +73,9 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
     private boolean playing = false;
 
     private int id = 0;
+
+    private PlayItemTimeUpdate timeUpdater =
+        PlayItemTimeUpdate.getUpdater(this);
 
     public PlayToVenuePopup(PlayItem item) {
         super(new VerticalPanel());
@@ -143,10 +147,21 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         setTimePosition(position);
     }
 
+    public long getTime() {
+        return (long) (bar.getPosition() * item.getDuration());
+    }
+
+    public void setTime(long time) {
+        float position = (float) time / item.getDuration();
+        setTimePosition(position);
+        bar.setPosition(position);
+    }
+
     public void setPlaying() {
         playing = true;
         venue.setEnabled(false);
         playButton.setDown(true);
+        timeUpdater.start();
     }
 
     public void setPaused() {
@@ -157,6 +172,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         playButton.setDown(false);
         venue.setEnabled(true);
         playing = false;
+        timeUpdater.stop();
     }
 
     public void onClick(ClickEvent event) {

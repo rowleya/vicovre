@@ -48,6 +48,7 @@ import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
@@ -66,9 +67,10 @@ public class HarvestSourceReader {
      * @throws SAXException
      */
     public static HarvestSource readHarvestSource(InputStream input,
-            HarvestFormatRepository harvestFormatRepository, Folder folder)
+            HarvestFormatRepository harvestFormatRepository,
+            RtpTypeRepository typeRepository, Folder folder)
             throws SAXException, IOException {
-        HarvestSource harvestSource = new HarvestSource(folder);
+        HarvestSource harvestSource = new HarvestSource(folder, typeRepository);
         Node doc = XmlIo.read(input);
         XmlIo.setString(doc, harvestSource, "name");
         XmlIo.setString(doc, harvestSource, "url");

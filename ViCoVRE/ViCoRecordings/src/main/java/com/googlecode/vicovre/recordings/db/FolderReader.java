@@ -101,7 +101,7 @@ public class FolderReader {
                 FileInputStream input = new FileInputStream(file);
                 HarvestSource harvestSource =
                     HarvestSourceReader.readHarvestSource(input,
-                            harvestFormatRepository, folder);
+                            harvestFormatRepository, typeRepository, folder);
                 harvestSource.setFile(file);
                 input.close();
                 harvestSources.add(harvestSource);

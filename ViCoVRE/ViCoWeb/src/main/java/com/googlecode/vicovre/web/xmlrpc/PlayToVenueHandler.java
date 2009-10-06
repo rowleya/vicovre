@@ -72,4 +72,8 @@ public class PlayToVenueHandler extends AbstractHandler {
         return true;
     }
 
+    public Integer getTime(int id) {
+        return PlaybackManager.getTime(id);
+    }
+
 }
