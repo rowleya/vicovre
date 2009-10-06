@@ -45,6 +45,7 @@ import org.xml.sax.SAXException;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
@@ -271,6 +272,24 @@ public class RecordingDatabase {
 
     public void updateFolder(Folder folder) throws IOException {
         FolderReader.writeFolder(folder);
+    }
+
+    private void shutdown(Folder folder) {
+        for (Folder f : folder.getFolders()) {
+            shutdown(f);
+        }
+        for (HarvestSource source : folder.getHarvestSources()) {
+            source.stopTimer();
+        }
+        for (UnfinishedRecording recording : folder.getUnfinishedRecordings()) {
+            recording.stopTimers();
+            recording.stopRecording();
+        }
+    }
+
+    public void shutdown() {
+        shutdown(topLevelFolder);
+        PlaybackManager.shutdown();
     }
 
 
