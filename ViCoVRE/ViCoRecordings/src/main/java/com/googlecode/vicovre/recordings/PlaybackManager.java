@@ -141,6 +141,12 @@ public class PlaybackManager implements StreamStoppingListener,
         return -1;
     }
 
+    public static void shutdown() {
+        for (PlaybackManager manager : MANAGERS.values()) {
+            manager.stop();
+        }
+    }
+
     private PlaybackManager(Recording recording) {
         id = lastId++;
         this.recording = recording;

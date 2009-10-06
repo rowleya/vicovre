@@ -22,7 +22,7 @@
         <constructor-arg><value>/harvestFormats.xml</value></constructor-arg>
     </bean>
 
-    <bean id="database" class="com.googlecode.vicovre.recordings.db.RecordingDatabase">
+    <bean id="database" class="com.googlecode.vicovre.recordings.db.RecordingDatabase" destroy-method="shutdown">
         <constructor-arg><value>${recording.location}</value></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
