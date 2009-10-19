@@ -189,12 +189,12 @@ public class HarvestItemPopup extends ModalPopup<Grid>
             minute.addItem(item);
         }
 
-        updateFrequency.addChangeHandler(this);
-        updateFrequency.setSelectedIndex(0);
         month.setVisible(false);
         day.setVisible(false);
         weekDay.setVisible(false);
         timePanel.setVisible(false);
+        updateFrequency.addChangeHandler(this);
+        updateFrequency.setSelectedIndex(0);
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
@@ -212,31 +212,35 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         }
     }
 
+    private void updateFrequency() {
+        int index = updateFrequency.getSelectedIndex();
+        String value = updateFrequency.getValue(index);
+        if (value.equals("Manual")) {
+            month.setVisible(false);
+            day.setVisible(false);
+            weekDay.setVisible(false);
+            timePanel.setVisible(false);
+        } else if (value.equals("Annual")) {
+            month.setVisible(true);
+            day.setVisible(true);
+            weekDay.setVisible(false);
+            timePanel.setVisible(true);
+        } else if (value.equals("Monthly")) {
+            month.setVisible(false);
+            day.setVisible(true);
+            weekDay.setVisible(false);
+            timePanel.setVisible(true);
+        } else if (value.equals("Weekly")) {
+            month.setVisible(false);
+            day.setVisible(false);
+            weekDay.setVisible(true);
+            timePanel.setVisible(true);
+        }
+    }
+
     public void onChange(ChangeEvent event) {
         if (event.getSource().equals(updateFrequency)) {
-            int index = updateFrequency.getSelectedIndex();
-            String value = updateFrequency.getValue(index);
-            if (value.equals("Manual")) {
-                month.setVisible(false);
-                day.setVisible(false);
-                weekDay.setVisible(false);
-                timePanel.setVisible(false);
-            } else if (value.equals("Annual")) {
-                month.setVisible(true);
-                day.setVisible(true);
-                weekDay.setVisible(false);
-                timePanel.setVisible(true);
-            } else if (value.equals("Monthly")) {
-                month.setVisible(false);
-                day.setVisible(true);
-                weekDay.setVisible(false);
-                timePanel.setVisible(true);
-            } else if (value.equals("Weekly")) {
-                month.setVisible(false);
-                day.setVisible(false);
-                weekDay.setVisible(true);
-                timePanel.setVisible(true);
-            }
+            updateFrequency();
         }
     }
 
@@ -311,6 +315,7 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     public void setUpdateFrequency(String frequency) {
         setValue(this.updateFrequency, frequency);
+        updateFrequency();
     }
 
     public void setMonth(int month) {
