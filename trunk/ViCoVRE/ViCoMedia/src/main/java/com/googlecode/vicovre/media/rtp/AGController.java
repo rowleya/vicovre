@@ -43,21 +43,27 @@ import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
 import javax.media.rtp.LocalParticipant;
+import javax.media.rtp.Participant;
 import javax.media.rtp.RTPControl;
 import javax.media.rtp.RTPManager;
 import javax.media.rtp.ReceiveStream;
 import javax.media.rtp.ReceiveStreamListener;
 import javax.media.rtp.RemoteListener;
+import javax.media.rtp.SessionListener;
 import javax.media.rtp.event.ByeEvent;
+import javax.media.rtp.event.NewParticipantEvent;
 import javax.media.rtp.event.NewReceiveStreamEvent;
 import javax.media.rtp.event.ReceiveStreamEvent;
 import javax.media.rtp.event.ReceiverReportEvent;
 import javax.media.rtp.event.RemoteEvent;
 import javax.media.rtp.event.SenderReportEvent;
+import javax.media.rtp.event.SessionEvent;
 import javax.media.rtp.rtcp.Report;
 import javax.media.rtp.rtcp.SourceDescription;
 
 import org.xml.sax.SAXException;
+
+import com.googlecode.vicovre.media.Misc;
 
 
 import ag3.ClientUpdateThread;
@@ -91,8 +97,11 @@ public class AGController {
 
     private Vector<RTPManager> receiveManagers = new Vector<RTPManager>();
 
-    private Vector<BridgedRTPConnector> agConnectors =
-        new Vector<BridgedRTPConnector>();
+    private HashMap<NetworkLocation, BridgedRTPConnector> agConnectors =
+        new HashMap<NetworkLocation, BridgedRTPConnector>();
+
+    private HashMap<Capability, NetworkLocation> locations =
+        new HashMap<Capability, NetworkLocation>();
 
     private Vector<UpdateHandler> updateHandlers = new Vector<UpdateHandler>();
 
@@ -103,6 +112,10 @@ public class AGController {
 
     private StreamListener listener = null;
 
+    private JoinListener joinListener = null;
+
+    private String tool = null;
+
     /**
      * @param bridge The bridge to connect to
      * @param capabilities The capabilities to connect with
@@ -110,11 +123,12 @@ public class AGController {
      * @param profile The client profile
      */
     public AGController(BridgeDescription bridge, Capability[] capabilities,
-            String encryptionKey, ClientProfile profile) {
+            String encryptionKey, ClientProfile profile, String tool) {
         this.bridge = bridge;
         this.capabilities = capabilities;
         this.encryptionKey = encryptionKey;
         this.profile = profile;
+        this.tool = tool;
     }
 
     /**
@@ -142,17 +156,21 @@ public class AGController {
         }
     }
 
+    public void setJoinListener(JoinListener listener) {
+        this.joinListener = listener;
+    }
+
     private void addAllFormats(RTPManager manager) {
         for (int i : mappedFormats.keySet()) {
             manager.addFormat(mappedFormats.get(i), i);
         }
     }
 
-    private long getNewSsrc() {
-        long ssrc = (long) (Math.random() * Integer.MAX_VALUE);
+    private long getNewSsrc(long ssrc) {
         while (existingSsrcs.contains(ssrc)) {
             ssrc = (long) (Math.random() * Integer.MAX_VALUE);
         }
+        existingSsrcs.add(ssrc);
         return ssrc;
     }
 
@@ -188,6 +206,7 @@ public class AGController {
             boolean matches = false;
             for (int j = 0; (j < streamCaps.size()) && !matches; j++) {
                 Capability cap = streamCaps.get(j);
+                locations.put(cap, streams[i].getLocation());
                 for (int k = 0; (k < capabilities.length) && !matches; k++) {
                     if (cap.matches(capabilities[k])) {
                         matches = true;
@@ -212,9 +231,13 @@ public class AGController {
         addAllFormats(manager);
         manager.addReceiveStreamListener(handler);
         manager.addRemoteListener(handler);
+        manager.addSessionListener(handler);
         manager.initialize(connector);
         LocalParticipant localParticipant =
             manager.getLocalParticipant();
+
+        localParticipant.setSourceDescription(Misc.createSourceDescription(
+                profile, null, tool));
 
         Report report = (Report) localParticipant.getReports().get(0);
         long localssrc = report.getSSRC();
@@ -223,15 +246,23 @@ public class AGController {
         }
         connector.addStream(localssrc, location);
 
-        agConnectors.add(connector);
+        agConnectors.put(location, connector);
         updateHandlers.add(handler);
         receiveManagers.add(manager);
+    }
+
+    public void updateProfile(ClientProfile profile) {
+        this.profile = profile;
+        for (RTPManager manager : receiveManagers) {
+            manager.getLocalParticipant().setSourceDescription(
+                    Misc.createSourceDescription(profile, null, tool));
+        }
     }
 
     public void setEncryptionKey(String key)
             throws UnsupportedEncryptionException {
         this.encryptionKey = key;
-        for (BridgedRTPConnector connector : agConnectors) {
+        for (BridgedRTPConnector connector : agConnectors.values()) {
             connector.setEncryption(key);
         }
     }
@@ -240,9 +271,15 @@ public class AGController {
             throws ClassNotFoundException, InstantiationException,
             IllegalAccessException, IOException {
         this.bridge = bridge;
-        for (BridgedRTPConnector connector : agConnectors) {
+        for (BridgedRTPConnector connector : agConnectors.values()) {
             connector.setBridge(bridge);
         }
+    }
+
+    public BridgedRTPConnector getConnectorForCapability(
+            Capability capability) {
+        NetworkLocation location = locations.get(capability);
+        return agConnectors.get(location);
     }
 
     /**
@@ -274,8 +311,7 @@ public class AGController {
             receiveManagers.clear();
         }
 
-        for (int i = 0; i < agConnectors.size(); i++) {
-            BridgedRTPConnector connector = agConnectors.get(i);
+        for (BridgedRTPConnector connector : agConnectors.values()) {
             connector.close();
         }
         agConnectors.clear();
@@ -283,7 +319,7 @@ public class AGController {
     }
 
     private class UpdateHandler implements ReceiveStreamListener,
-            RemoteListener {
+            RemoteListener, SessionListener {
 
         private HashMap<Long, Stream> streams = new HashMap<Long, Stream>();
 
@@ -303,7 +339,7 @@ public class AGController {
                     Format format = ctl.getFormat();
                     long realSsrc = event.getReceiveStream().getSSRC();
                     if (!ssrcMap.containsKey(realSsrc)) {
-                        long ssrc = getNewSsrc();
+                        long ssrc = getNewSsrc(realSsrc);
                         ssrcMap.put(realSsrc, ssrc);
                         String name = "Waiting for name (" + ssrc + ")";
                         Stream dataStream = new Stream(ssrc, ds, format);
@@ -379,7 +415,8 @@ public class AGController {
                                     if (stream.format instanceof VideoFormat) {
                                         listener.setVideoStreamSDES(ssrc,
                                              d.getType(), d.getDescription());
-                                    } else if (stream.format instanceof AudioFormat) {
+                                    } else if (stream.format
+                                            instanceof AudioFormat) {
                                         listener.setAudioStreamSDES(ssrc,
                                              d.getType(), d.getDescription());
                                     }
@@ -407,6 +444,23 @@ public class AGController {
                                 (AudioFormat) stream.format);
                         stream.setAudioStreamSdes(listener);
                     }
+                }
+            }
+        }
+
+        /**
+         *
+         * @see javax.media.rtp.SessionListener#update(
+         *     javax.media.rtp.event.SessionEvent)
+         */
+        public void update(SessionEvent event) {
+            if (event instanceof NewParticipantEvent) {
+                if (joinListener != null) {
+                    Participant participant =
+                        ((NewParticipantEvent) event).getParticipant();
+                    joinListener.participantJoined((SourceDescription[])
+                            participant.getSourceDescription().toArray(
+                                    new SourceDescription[0]));
                 }
             }
         }

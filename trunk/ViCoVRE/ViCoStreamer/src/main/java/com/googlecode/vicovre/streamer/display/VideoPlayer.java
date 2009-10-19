@@ -47,6 +47,8 @@ import javax.media.Processor;
 import javax.media.control.TrackControl;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
+import javax.media.protocol.PushBufferDataSource;
+import javax.media.protocol.PushBufferStream;
 import javax.media.renderer.VideoRenderer;
 import javax.swing.JLabel;
 
@@ -71,7 +73,7 @@ class VideoPlayer implements ControllerListener {
     private Integer stateLock = new Integer(0);
 
     // The processing player
-    private Processor player;
+    //private Processor player;
 
     // The renderer
     private RGBRenderer renderer;
@@ -99,15 +101,14 @@ class VideoPlayer implements ControllerListener {
         this.previewwidth = previewwidth;
         this.previewheight = previewheight;
 
-        try {
-            renderer = new RGBRenderer(new Effect[0]);
-        } catch (Exception e) {
-            e.printStackTrace();
-            renderer = null;
-        }
+        PushBufferStream[] datastreams =
+            ((PushBufferDataSource) ds).getStreams();
+        renderer = new RGBRenderer(new Effect[0]);
+        renderer.setDataSource(ds, 0);
+        renderer.setInputFormat(datastreams[0].getFormat());
 
         // Configure the player
-        player = javax.media.Manager.createProcessor(ds);
+        /*player = javax.media.Manager.createProcessor(ds);
         player.addControllerListener(this);
         player.configure();
         processorFailed = false;
@@ -154,7 +155,7 @@ class VideoPlayer implements ControllerListener {
         }
         if (processorFailed) {
             throw new NoPlayerException(CONTROLLER_ERROR);
-        }
+        } */
         renderer.getComponent().setVisible(false);
     }
 
@@ -163,7 +164,7 @@ class VideoPlayer implements ControllerListener {
      * @return The preview graphical component
      */
     public Component getPreviewComponent() {
-        while (player.getState() < Processor.Realized) {
+        /*while (player.getState() < Processor.Realized) {
             synchronized (stateLock) {
                 try {
                     stateLock.wait();
@@ -171,7 +172,7 @@ class VideoPlayer implements ControllerListener {
                     // Do Nothing
                 }
             }
-        }
+        } */
         VideoRenderer preview = renderer.getPreviewRenderer();
         Component comp = null;
         if (preview != null) {
@@ -189,7 +190,7 @@ class VideoPlayer implements ControllerListener {
      * @return the graphical component for the video
      */
     public Component getVisualComponent() {
-        while (player.getState() < Processor.Realized) {
+        /*while (player.getState() < Processor.Realized) {
             synchronized (stateLock) {
                 try {
                     stateLock.wait();
@@ -197,8 +198,8 @@ class VideoPlayer implements ControllerListener {
                     // Do Nothing
                 }
             }
-        }
-        return player.getVisualComponent();
+        } */
+        return renderer.getComponent();
     }
 
     /**
@@ -209,29 +210,21 @@ class VideoPlayer implements ControllerListener {
      * @return the control
      */
     public Control getControl(String classname) {
-        return player.getControl(classname);
-    }
-
-    /**
-     * Returns the state of the player
-     * @return the state
-     */
-    public int getState() {
-        return player.getState();
+        return (Control) renderer.getControl(classname);
     }
 
     /**
      * Starts the playback
      */
     public void start() {
-        player.start();
+        renderer.start();
     }
 
     /**
      * Stops the playback
      */
     public void stop() {
-        player.stop();
+        renderer.stop();
     }
 
     /**

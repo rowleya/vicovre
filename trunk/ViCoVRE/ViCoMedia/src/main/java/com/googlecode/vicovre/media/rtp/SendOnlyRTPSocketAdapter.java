@@ -42,8 +42,6 @@ import javax.media.protocol.SourceTransferHandler;
 import javax.media.rtp.OutputDataStream;
 import javax.media.rtp.RTPConnector;
 
-import net.sf.fmj.media.rtp.RTPSocketAdapter;
-
 /**
  * An RTP Socket Adaptor that only sends data
  *
@@ -59,7 +57,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
     private SockInputStream ctrlInStrm = null;
 
     // The sending socket
-    private RTPSocketAdapter socket = null;
+    private RTPConnector connector = null;
 
     /**
      * Creates a new SendOnlyRTPSocketAdaptor using an RTPSocketAdaptor
@@ -67,8 +65,8 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      * @param s
      *            The RTPSocketAdaptor to send using
      */
-    public SendOnlyRTPSocketAdapter(RTPSocketAdapter s) {
-        socket = s;
+    public SendOnlyRTPSocketAdapter(RTPConnector connector) {
+        this.connector = connector;
     }
 
     /**
@@ -87,7 +85,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      * @throws IOException
      */
     public OutputDataStream getDataOutputStream() throws IOException {
-        return socket.getDataOutputStream();
+        return connector.getDataOutputStream();
     }
 
     /**
@@ -106,7 +104,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      * @throws IOException
      */
     public OutputDataStream getControlOutputStream() throws IOException {
-        return socket.getControlOutputStream();
+        return connector.getControlOutputStream();
     }
 
     /**
@@ -128,7 +126,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      * anything to this.
      */
     public void setReceiveBufferSize(int size) throws IOException {
-        socket.setReceiveBufferSize(size);
+        connector.setReceiveBufferSize(size);
     }
 
     /**
@@ -138,7 +136,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      */
     public int getReceiveBufferSize() {
         try {
-            return socket.getReceiveBufferSize();
+            return connector.getReceiveBufferSize();
         } catch (Exception e) {
             return -1;
         }
@@ -151,7 +149,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      * anything to this.
      */
     public void setSendBufferSize(int size) throws IOException {
-        socket.setSendBufferSize(size);
+        connector.setSendBufferSize(size);
     }
 
     /**
@@ -161,7 +159,7 @@ public class SendOnlyRTPSocketAdapter implements RTPConnector {
      */
     public int getSendBufferSize() {
         try {
-            return socket.getSendBufferSize();
+            return connector.getSendBufferSize();
         } catch (Exception e) {
             return -1;
         }

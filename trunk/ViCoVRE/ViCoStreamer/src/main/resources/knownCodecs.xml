@@ -19,6 +19,9 @@
         <class>com.googlecode.vicovre.codecs.h261.H261ASDecoder</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.h261.H261Encoder</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.h261.H261Decoder</class>
     </codec>
     <codec>

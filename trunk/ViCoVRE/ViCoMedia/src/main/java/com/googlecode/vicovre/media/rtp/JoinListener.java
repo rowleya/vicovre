@@ -30,53 +30,21 @@
  *
  */
 
-package com.googlecode.vicovre.codecs.utils;
+package com.googlecode.vicovre.media.rtp;
+
+import javax.media.rtp.rtcp.SourceDescription;
 
 /**
- * An wrapper for an array that is quick but unsafe (uses sun.misc.Unsafe)
+ *
  * @author Andrew G D Rowley
  * @version 1.0
  */
-@SuppressWarnings("restriction")
-public class QuickArrayWrapper extends QuickArrayAbstract {
-
-    @SuppressWarnings("unused")
-    private Object data = null;
-
-    private long dataOffset = 0;
-
-    private long arrayOffset = 0;
+public interface JoinListener {
 
     /**
-     * Creates a new QuickArrayWrapper
-     * @param data The array to wrap
-     * @throws QuickArrayException
+     * Indicates that a participant has joined
+     * @param sourceDescription The description of the participant
      */
-    public QuickArrayWrapper(Object data) throws QuickArrayException {
-        this(data, 0);
-    }
+    void participantJoined(SourceDescription[] sourceDescription);
 
-    /**
-     * Creates a new QuickArrayWrapper
-     * @param data The array to wrap
-     * @param offset The offset into the data to start from
-     * @throws QuickArrayException
-     */
-    public QuickArrayWrapper(Object data, long offset)
-            throws QuickArrayException {
-        super();
-        try {
-            dataOffset = getUnsafe().objectFieldOffset(
-                QuickArrayWrapper.class.getDeclaredField("data"));
-            arrayOffset = getUnsafe().arrayBaseOffset(data.getClass()) + offset;
-        } catch (Exception e) {
-            throw new QuickArrayException(e);
-        }
-
-        this.data = data;
-    }
-
-    protected long getDataAddress() {
-        return getUnsafe().getLong(this, dataOffset) + arrayOffset;
-    }
 }

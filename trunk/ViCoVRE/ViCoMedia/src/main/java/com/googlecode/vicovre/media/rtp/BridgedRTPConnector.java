@@ -324,6 +324,10 @@ public class BridgedRTPConnector implements RTPConnector {
         rtcpOutput.addStream(ssrc, getRtcpLocation(location));
     }
 
+    public void addStream(long ssrc) {
+        addStream(ssrc, locations[0]);
+    }
+
     private class Output implements OutputDataStream {
 
         private HashMap<Long, NetworkLocation> streamLocationMap =
