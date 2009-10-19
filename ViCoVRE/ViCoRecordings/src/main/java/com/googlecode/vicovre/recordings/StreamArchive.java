@@ -43,6 +43,7 @@ import java.util.Date;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
+import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
@@ -124,6 +125,8 @@ public class StreamArchive {
     // The name of the file holding the stream
     private String streamFilename = "";
 
+    private File directory = null;
+
     // The control channel of the stream file
     private FileChannel streamFileControl = null;
 
@@ -154,6 +157,8 @@ public class StreamArchive {
     // The type repository
     private RtpTypeRepository typeRepository = null;
 
+    private ScreenChangeDetector changeDetector = null;
+
 
     /**
      * Creates a new StreamArchive
@@ -171,6 +176,7 @@ public class StreamArchive {
         this.archiveMgr = archiveMgr;
         this.ssrc = ssrc;
         this.typeRepository = typeRepository;
+        this.directory = directory;
 
         // Work out the names of the files
         String slash = System.getProperty("file.separator");
@@ -196,6 +202,10 @@ public class StreamArchive {
         // Close the index file
         if (indexFile != null) {
             indexFile.close();
+        }
+
+        if (changeDetector != null) {
+            changeDetector.close();
         }
     }
 
@@ -262,6 +272,16 @@ public class StreamArchive {
 
             // Write out the timestamp for this first RTP packet in the file.
             stream.setFirstTimestamp(packetHeader.getTimestamp());
+
+            try {
+                changeDetector =
+                    new ScreenChangeDetector(directory.getAbsolutePath(),
+                            String.valueOf(ssrc),
+                            typeRepository, packetHeader.getPacketType());
+            } catch (Throwable e) {
+                e.printStackTrace();
+                changeDetector = null;
+            }
         }
 
         // Set the statistics
@@ -283,7 +303,17 @@ public class StreamArchive {
 
             // Store the packet
             writePacket(packet, RecordingConstants.RTP_PACKET, offset);
+
+            if (changeDetector != null) {
+                try {
+                    changeDetector.process(packetHeader, packet, offset);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    changeDetector = null;
+                }
+            }
         }
+
     }
 
     /**

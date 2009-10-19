@@ -83,6 +83,12 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private ListBox weekDay = new ListBox();
 
+    private HorizontalPanel timePanel = new HorizontalPanel();
+
+    private ListBox hour = new ListBox();
+
+    private ListBox minute = new ListBox();
+
     private VenuePanel venue = new VenuePanel();
 
     private Button ok = new Button("OK");
@@ -109,6 +115,12 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         updatePanel.add(day);
         updatePanel.add(month);
         updatePanel.add(weekDay);
+        updatePanel.add(timePanel);
+
+        timePanel.add(new Label(" at "));
+        timePanel.add(hour);
+        timePanel.add(new Label(":"));
+        timePanel.add(minute);
         grid.setWidget(3, 1, updatePanel);
 
         grid.setWidget(4, 0, new Label("Virtual Venue:"));
@@ -160,11 +172,29 @@ public class HarvestItemPopup extends ModalPopup<Grid>
             String value = weekdayFormat.format(new Date(2009, 8, 20 + i));
             weekDay.addItem("on " + value, value);
         }
+
+        for (int i = 0; i < 23; i++) {
+            String item = String.valueOf(i);
+            if (i < 10) {
+                item = "0" + i;
+            }
+            hour.addItem(item);
+        }
+
+        for (int i = 0; i < 60; i += 5) {
+            String item = String.valueOf(i);
+            if (i < 10) {
+                item = "0" + i;
+            }
+            minute.addItem(item);
+        }
+
         updateFrequency.addChangeHandler(this);
         updateFrequency.setSelectedIndex(0);
         month.setVisible(false);
         day.setVisible(false);
         weekDay.setVisible(false);
+        timePanel.setVisible(false);
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
@@ -190,18 +220,22 @@ public class HarvestItemPopup extends ModalPopup<Grid>
                 month.setVisible(false);
                 day.setVisible(false);
                 weekDay.setVisible(false);
+                timePanel.setVisible(false);
             } else if (value.equals("Annual")) {
                 month.setVisible(true);
                 day.setVisible(true);
                 weekDay.setVisible(false);
+                timePanel.setVisible(true);
             } else if (value.equals("Monthly")) {
                 month.setVisible(false);
                 day.setVisible(true);
                 weekDay.setVisible(false);
+                timePanel.setVisible(true);
             } else if (value.equals("Weekly")) {
                 month.setVisible(false);
                 day.setVisible(false);
                 weekDay.setVisible(true);
+                timePanel.setVisible(true);
             }
         }
     }
@@ -232,6 +266,14 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     public int getDayOfWeek() {
         return weekDay.getSelectedIndex();
+    }
+
+    public int getHour() {
+        return hour.getSelectedIndex();
+    }
+
+    public int getMinute() {
+        return minute.getSelectedIndex() * 5;
     }
 
     public String getVenueServer() {

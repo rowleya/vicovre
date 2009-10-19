@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItem;

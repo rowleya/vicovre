@@ -34,7 +34,9 @@ package com.googlecode.vicovre.gwtinterface.client;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -295,13 +297,15 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             details.put("ag3VenueUrl", popup.getVenue());
         } else {
             String[] addrs = popup.getAddresses();
-            Map<String, Object>[] addresses = new Map[addrs.length];
-            for (int i = 0; i < addresses.length; i++) {
-                addresses[i] = new HashMap<String, Object>();
+            List<Map<String, Object>> addresses =
+                new Vector<Map<String, Object>>();
+            for (int i = 0; i < addrs.length; i++) {
+                Map<String, Object> address = new HashMap<String, Object>();
                 String[] parts = addrs[i].split("/");
-                addresses[i].put("host", parts[0]);
-                addresses[i].put("port", Integer.valueOf(parts[1]));
-                addresses[i].put("ttl", Integer.valueOf(parts[2]));
+                address.put("host", parts[0]);
+                address.put("port", Integer.valueOf(parts[1]));
+                address.put("ttl", Integer.valueOf(parts[2]));
+                addresses.add(address);
             }
             details.put("addresses", addresses);
         }

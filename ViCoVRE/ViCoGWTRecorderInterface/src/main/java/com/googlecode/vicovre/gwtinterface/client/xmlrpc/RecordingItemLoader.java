@@ -117,7 +117,7 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
         }
         Collections.sort(recordingItems);
         for (RecordingItem item : recordingItems) {
-            panel.add(item);
+            panel.addItem(item);
         }
     }
 

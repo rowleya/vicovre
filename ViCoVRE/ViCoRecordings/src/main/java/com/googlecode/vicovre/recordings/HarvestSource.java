@@ -113,6 +113,10 @@ public class HarvestSource extends TimerTask {
 
     private int dayOfWeek = 0;
 
+    private int hour = 0;
+
+    private int minute = 0;
+
     private String status = "OK";
 
     private RecordingDatabase database = null;
@@ -257,6 +261,22 @@ public class HarvestSource extends TimerTask {
         this.dayOfWeek = dayOfWeek;
     }
 
+    public int getHour() {
+        return hour;
+    }
+
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    public int getMinute() {
+        return minute;
+    }
+
+    public void setMinute(int minute) {
+        this.minute = minute;
+    }
+
     /**
      * Gets the status
      * @return The status
@@ -326,6 +346,10 @@ public class HarvestSource extends TimerTask {
             if (updateFrequency.equals(UPDATE_ANUALLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
+                first.set(Calendar.HOUR_OF_DAY, hour);
+                first.set(Calendar.MINUTE, minute);
+                first.set(Calendar.SECOND, 0);
+                first.set(Calendar.MILLISECOND, 0);
                 first.set(Calendar.MONTH, month);
                 first.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 if (first.before(now) || first.equals(now)) {
@@ -335,6 +359,10 @@ public class HarvestSource extends TimerTask {
             } else if (updateFrequency.equals(UPDATE_MONTHLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
+                first.set(Calendar.HOUR_OF_DAY, hour);
+                first.set(Calendar.MINUTE, minute);
+                first.set(Calendar.SECOND, 0);
+                first.set(Calendar.MILLISECOND, 0);
                 first.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 if (first.before(now) || first.equals(now)) {
                     first.add(Calendar.MONTH, 1);
@@ -343,6 +371,10 @@ public class HarvestSource extends TimerTask {
             } else if (updateFrequency.equals(UPDATE_WEEKLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
+                first.set(Calendar.HOUR_OF_DAY, hour);
+                first.set(Calendar.MINUTE, minute);
+                first.set(Calendar.SECOND, 0);
+                first.set(Calendar.MILLISECOND, 0);
                 first.set(Calendar.DAY_OF_WEEK, dayOfWeek);
                 if (first.before(now) || first.equals(now)) {
                     first.add(Calendar.DAY_OF_MONTH, 7);
