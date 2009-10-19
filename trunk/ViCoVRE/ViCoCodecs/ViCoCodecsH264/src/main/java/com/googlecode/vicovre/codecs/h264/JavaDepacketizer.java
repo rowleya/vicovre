@@ -36,7 +36,7 @@ import javax.media.Format;
 import javax.media.format.VideoFormat;
 
 /**
- * A depacketizer for the IOCom H.264 RTP format
+ * A depacketizer for the RFC H.264 RTP format
  * @author Andrew G D Rowley
  * @version 1.0
  */
