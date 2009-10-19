@@ -59,7 +59,7 @@ import com.googlecode.vicovre.media.processor.SimpleProcessor;
 public class RGBRenderer implements VideoRenderer, BitRateControl,
         FrameRateControl {
 
-    private static final boolean DISABLE_PREVIEW = true;
+    private static final boolean DISABLE_PREVIEW = false;
 
     private static final int UPDATE_TIME = 1000;
 
@@ -247,7 +247,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
 
     private boolean updatePreview() {
         if ((System.currentTimeMillis() - lastUpdateTime) > UPDATE_TIME) {
-            lastUpdateTime = System.currentTimeMillis();
             return true;
         }
         return false;
@@ -321,6 +320,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 }
             }
             if (updatePreview) {
+                lastUpdateTime = System.currentTimeMillis();
                 if (!DISABLE_PREVIEW) {
                     if (processor != null) {
                         retval = preview.process(processor.getOutputBuffer());
