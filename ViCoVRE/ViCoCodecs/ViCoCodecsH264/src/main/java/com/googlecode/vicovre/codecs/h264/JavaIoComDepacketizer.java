@@ -32,6 +32,10 @@
 
 package com.googlecode.vicovre.codecs.h264;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import javax.media.Buffer;
 import javax.media.Codec;
 import javax.media.Format;
@@ -46,9 +50,15 @@ public class JavaIoComDepacketizer implements Codec {
 
     private static final String INPUT = "H264/RTP/IOCOM";
 
-    private static final String OUTPUT = "H264/RTP";
+    private static final String OUTPUT = "H264";
 
     private static final VideoFormat OUTPUT_FORMAT = new VideoFormat(OUTPUT);
+
+    private byte[][] packets = new byte[1000][];
+
+    private long firstSequence = -1;
+
+    private long lastSequence = 0;
 
     private boolean aggregatePacket = false;
 
@@ -109,33 +119,66 @@ public class JavaIoComDepacketizer implements Codec {
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
      */
     public int process(Buffer input, Buffer output) {
+
         byte[] in = (byte[]) input.getData();
-        byte[] out = null;
+        long sequence = input.getSequenceNumber();
+
+        if (Math.abs(lastSequence - sequence) > 5) {
+            firstSequence = -1;
+        }
+        lastSequence = sequence;
+
+        if (firstSequence == -1) {
+            aggregatePacket = false;
+            firstSequence = sequence;
+            lastSequence = firstSequence - 1;
+            for (int i = 0; i < packets.length; i++) {
+                packets[i] = null;
+            }
+        }
+        int index = (int) (sequence - firstSequence);
+        if (index < 0) {
+            index = (int) ((0xFFFF - firstSequence) + sequence);
+        }
 
         if (aggregatePacket) {
-            out = new byte[(input.getLength() - 20) + 2];
-            out[0] = 28 & 0x1f;
-            out[1] = 0;
-            System.arraycopy(in, input.getOffset() + 20, out, 2,
+            packets[index] = new byte[input.getLength() - 20];
+            System.arraycopy(in, input.getOffset() + 20, packets[index], 0,
                     input.getLength() - 20);
         } else {
-            out = new byte[(input.getLength() - 24) + 2];
-            out[0] = (byte) ((in[input.getOffset() + 24] & 0xe0) | (28 & 0x1f));
-            out[1] = (byte) (0x80 | (in[input.getOffset() + 24] & 0x1f));
-            System.arraycopy(in, input.getOffset() + 24, out, 2,
-                    input.getLength() - 24);
+            packets[index] = new byte[input.getLength() - 21];
+            System.arraycopy(in, input.getOffset() + 21, packets[index], 0,
+                    input.getLength() - 21);
         }
         aggregatePacket = true;
 
-        if ((input.getFlags() & Buffer.FLAG_RTP_MARKER) > 0) {
-            aggregatePacket = false;
+        if ((input.getFlags() & Buffer.FLAG_RTP_MARKER) == 0) {
+            return OUTPUT_BUFFER_NOT_FILLED;
+        }
+
+        firstSequence = -1;
+
+        int noPackets = index + 1;
+        int totalBytes = 0;
+        for (int i = 0; i < noPackets; i++) {
+            if (packets[i] == null) {
+                return OUTPUT_BUFFER_NOT_FILLED;
+            }
+            totalBytes += packets[i].length;
+        }
+
+        byte[] bytes = new byte[totalBytes];
+        int length = 0;
+        for (int i = 0; i < noPackets; i++) {
+            System.arraycopy(packets[i], 0, bytes, length,
+                    packets[i].length);
+            length += packets[i].length;
         }
 
         output.setFormat(OUTPUT_FORMAT);
-        output.setData(out);
+        output.setData(bytes);
         output.setOffset(0);
-        output.setLength(out.length);
-        output.setFlags(input.getFlags());
+        output.setLength(totalBytes);
         return BUFFER_PROCESSED_OK;
     }
 
