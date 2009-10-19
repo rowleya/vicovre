@@ -342,7 +342,6 @@ public class HarvestSource extends TimerTask {
         stopTimer();
         this.database = database;
         if (!updateFrequency.equals(UPDATE_MANUALLY)) {
-            timer = new Timer();
             if (updateFrequency.equals(UPDATE_ANUALLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
@@ -355,6 +354,7 @@ public class HarvestSource extends TimerTask {
                 if (first.before(now) || first.equals(now)) {
                     first.add(Calendar.YEAR, 1);
                 }
+                timer = new Timer();
                 timer.schedule(this, first.getTime());
             } else if (updateFrequency.equals(UPDATE_MONTHLY)) {
                 Calendar now = Calendar.getInstance();
@@ -367,6 +367,7 @@ public class HarvestSource extends TimerTask {
                 if (first.before(now) || first.equals(now)) {
                     first.add(Calendar.MONTH, 1);
                 }
+                timer = new Timer();
                 timer.schedule(this, first.getTime());
             } else if (updateFrequency.equals(UPDATE_WEEKLY)) {
                 Calendar now = Calendar.getInstance();
@@ -379,6 +380,7 @@ public class HarvestSource extends TimerTask {
                 if (first.before(now) || first.equals(now)) {
                     first.add(Calendar.DAY_OF_MONTH, 7);
                 }
+                timer = new Timer();
                 timer.schedule(this, first.getTime());
             }
         }

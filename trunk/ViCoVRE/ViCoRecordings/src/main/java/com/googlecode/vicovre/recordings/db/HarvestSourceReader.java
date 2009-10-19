@@ -106,6 +106,15 @@ public class HarvestSourceReader {
             harvestSource.setAddresses(locations);
         }
 
+        String hour = XmlIo.readValue(doc, "hour");
+        String minute = XmlIo.readValue(doc, "minute");
+        if (hour != null) {
+            harvestSource.setHour(Integer.parseInt(hour));
+        }
+        if (minute != null) {
+            harvestSource.setMinute(Integer.parseInt(minute));
+        }
+
         String updateFreq = harvestSource.getUpdateFrequency();
         if (updateFreq.equals(HarvestSource.UPDATE_ANUALLY)) {
             String month = XmlIo.readValue(doc, "month");
@@ -131,6 +140,8 @@ public class HarvestSourceReader {
         XmlIo.writeValue(harvestSource, "url", writer);
         XmlIo.writeValue(harvestSource, "updateFrequency", writer);
         XmlIo.writeValue("format", harvestSource.getFormat().getName(), writer);
+        XmlIo.writeValue(harvestSource, "hour", writer);
+        XmlIo.writeValue(harvestSource, "minute", writer);
         String updateFreq = harvestSource.getUpdateFrequency();
         if (updateFreq.equals(HarvestSource.UPDATE_ANUALLY)) {
             XmlIo.writeValue(harvestSource, "month", writer);
