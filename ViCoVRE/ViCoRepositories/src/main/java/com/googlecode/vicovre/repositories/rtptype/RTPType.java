@@ -35,6 +35,7 @@
 package com.googlecode.vicovre.repositories.rtptype;
 
 import javax.media.Format;
+import javax.media.format.AudioFormat;
 
 /**
  * Represents an RTPType
@@ -100,5 +101,31 @@ public class RTPType {
      */
     public Format getFormat() {
         return format;
+    }
+
+    /**
+     *
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        String encoding = format.getEncoding();
+        if (encoding.endsWith("/rtp")) {
+            encoding = encoding.substring(0, encoding.length()
+                    - "/rtp".length());
+        }
+        encoding = encoding.toUpperCase();
+
+        if (format instanceof AudioFormat) {
+            AudioFormat af = (AudioFormat) format;
+            String channels = "Mono";
+            if (af.getChannels() == 2) {
+                channels = "Stereo";
+            } else if (af.getChannels() > 2) {
+                channels = af.getChannels() + " channels";
+            }
+            return encoding + " " + af.getSampleSizeInBits() + "bit/"
+                + (af.getSampleRate() / 1000) + "KHz (" + channels + ")";
+        }
+        return encoding;
     }
 }
