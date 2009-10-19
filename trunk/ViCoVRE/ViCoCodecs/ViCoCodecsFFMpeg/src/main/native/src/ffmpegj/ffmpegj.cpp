@@ -173,7 +173,7 @@ long FFMpegJ::openCodec(bool isEncoding, int codecId) {
     codecContext->codec_id = CodecID(codecId);
     //codecContext->debug |= FF_DEBUG_SKIP | FF_DEBUG_QP | FF_DEBUG_MB_TYPE;
     //codecContext->debug = FF_DEBUG_STARTCODE | FF_DEBUG_MMCO | FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
-    codecContext->debug = FF_DEBUG_PICT_INFO;
+    //codecContext->debug = FF_DEBUG_PICT_INFO;
     this->isEncoding = isEncoding;
     if (isEncoding) {
         codec = avcodec_find_encoder(codecContext->codec_id);

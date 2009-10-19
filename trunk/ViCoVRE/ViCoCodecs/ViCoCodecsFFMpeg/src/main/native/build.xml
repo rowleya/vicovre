@@ -23,10 +23,12 @@
             <arg line="-lavcodec" />
             <arg line="-lavformat" />
             <arg line="-lavutil" />
-            <arg line="-lgsm" />
             <arg line="-lmp3lame" />
             <arg line="-lpostproc" />
             <arg line="-lswscale" />
+            <arg line="-lx264" />
+            <arg line="-lyasm" />
+            <!--<arg line="-lgsm" />
             <arg line="-lfaad"/>
             <arg line="-ltheora" />
             <arg line="-ltheoradec" />
@@ -34,12 +36,11 @@
             <arg line="-lvorbis" />
             <arg line="-lvorbisenc" />
             <arg line="-lvorbisfile" />
-            <arg line="-lx264" />
             <arg line="-lxvidcore" />
-            <arg line="-lyasm" />
             <arg line="-la52" />
-            <arg line="-logg" />
+            <arg line="-logg" /> -->
             <arg line="-lwsock32" />
+            <arg line="-lz" />
         </exec>
     </target>
 
