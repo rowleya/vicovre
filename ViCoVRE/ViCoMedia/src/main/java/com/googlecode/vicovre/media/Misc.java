@@ -36,7 +36,8 @@
 package com.googlecode.vicovre.media;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Vector;
 
@@ -46,8 +47,11 @@ import javax.media.Format;
 import javax.media.PlugIn;
 import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
+import javax.media.rtp.rtcp.SourceDescription;
 
 import org.xml.sax.SAXException;
+
+import ag3.interfaces.types.ClientProfile;
 
 /**
  * Miscellaneous utility functions
@@ -84,17 +88,20 @@ public class Misc {
      * @throws ClassNotFoundException
      */
     public static void configureCodecs(String codecConfigFile)
-            throws IOException, SAXException, ResourceUnavailableException,
-            ClassNotFoundException, InstantiationException,
-            IllegalAccessException {
+            throws IOException, SAXException {
         codecsConfigured = true;
         KNOWN_CODECS.clear();
         PlugInManager.setPlugInList(KNOWN_CODECS, PlugInManager.CODEC);
         KnownCodecsParser parser = new KnownCodecsParser(codecConfigFile);
         for (String codec : parser.getCodecs()) {
-            addCodec(codec);
+            try {
+                addCodec(codec);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        Vector<String> codecs = PlugInManager.getPlugInList(null, null, PlugInManager.CODEC);
+        Vector<String> codecs = PlugInManager.getPlugInList(null, null,
+                PlugInManager.CODEC);
     }
 
     /**
@@ -141,7 +148,7 @@ public class Misc {
      */
     public static void addDemultiplexer(
                 Class<? extends Demultiplexer> demuxClass)
-            throws ClassNotFoundException, InstantiationException,
+            throws InstantiationException,
             IllegalAccessException {
         Demultiplexer demux = (Demultiplexer) loadPlugin(demuxClass);
         PlugInManager.addPlugIn(demux.getClass().getCanonicalName(),
@@ -233,5 +240,46 @@ public class Misc {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public static SourceDescription[] createSourceDescription(
+            ClientProfile profile, String note, String tool) {
+        Vector<SourceDescription> sdes = new Vector<SourceDescription>();
+        String hostname = null;
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            hostname = "localhost";
+        }
+        String username = System.getProperty("user.name");
+        sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_CNAME,
+                username + "@" + hostname, 1, false));
+        if (tool != null) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_TOOL,
+                tool, 3, false));
+        }
+        if ((profile.getName() != null) && !profile.getName().equals("")) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_NAME,
+                    profile.getName(), 3, false));
+        }
+        if ((profile.getEmail() != null) && !profile.getEmail().equals("")) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_EMAIL,
+                    profile.getEmail(), 3, false));
+        }
+        if ((profile.getPhoneNumber() != null)
+                && !profile.getPhoneNumber().equals("")) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_PHONE,
+                    profile.getPhoneNumber(), 3, false));
+        }
+        if ((profile.getLocation() != null)
+                && !profile.getLocation().equals("")) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_LOC,
+                    profile.getLocation(), 3, false));
+        }
+        if (note != null) {
+            sdes.add(new SourceDescription(SourceDescription.SOURCE_DESC_NOTE,
+                    note, 3, false));
+        }
+        return sdes.toArray(new SourceDescription[0]);
     }
 }
