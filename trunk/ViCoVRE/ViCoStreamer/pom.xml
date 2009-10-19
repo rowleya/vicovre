@@ -30,6 +30,11 @@
         <!-- Codec Dependencies -->
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsColourspace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoCodecsH261</artifactId>
             <version>${project.version}</version>
         </dependency>
