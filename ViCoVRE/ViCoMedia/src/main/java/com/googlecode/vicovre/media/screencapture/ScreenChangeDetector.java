@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -47,6 +48,8 @@ import javax.media.format.YUVFormat;
 
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
+import com.googlecode.vicovre.media.rtp.RTPHeader;
+import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
@@ -88,6 +91,8 @@ public class ScreenChangeDetector extends Thread
 
     private MemeticFileReader reader = null;
 
+    private RTPType rtpType = null;
+
     // A map of sequence numbers to times of receipt
     private HashMap<Long, Long> sequenceTimeMap = new HashMap<Long, Long>();
 
@@ -106,13 +111,23 @@ public class ScreenChangeDetector extends Thread
             RtpTypeRepository typeRepository)
             throws UnsupportedFormatException, ResourceUnavailableException,
             IOException {
-        String slash = System.getProperty("file.separator");
-        this.reader = new MemeticFileReader(directory + slash + ssrc,
+        this.reader = new MemeticFileReader(directory + File.separator + ssrc,
                 typeRepository);
         renderer = new ChangeDetection();
         renderer.addScreenListener(this);
         this.processor = new SimpleProcessor(reader.getFormat(), renderer);
-        this.baseFileName = directory + slash + ssrc + "_";
+        this.baseFileName = directory + File.separator + ssrc + "_";
+    }
+
+    public ScreenChangeDetector(String directory, String ssrc,
+            RtpTypeRepository typeRepository, int rtpType)
+            throws UnsupportedFormatException, ResourceUnavailableException {
+        renderer = new ChangeDetection();
+        renderer.addScreenListener(this);
+        this.rtpType = typeRepository.findRtpType(rtpType);
+        this.processor = new SimpleProcessor(this.rtpType.getFormat(),
+                renderer);
+        this.baseFileName = directory + File.separator + ssrc + "_";
     }
 
     /**
@@ -136,6 +151,24 @@ public class ScreenChangeDetector extends Thread
         }
     }
 
+    public void process(RTPHeader header, DatagramPacket packet, long offset) {
+        started = true;
+        Buffer inputBuffer = new Buffer();
+        inputBuffer.setData(packet.getData());
+        inputBuffer.setOffset(packet.getOffset() + RTPHeader.SIZE);
+        inputBuffer.setLength(packet.getLength() - RTPHeader.SIZE);
+        inputBuffer.setTimeStamp(header.getTimestamp());
+        inputBuffer.setSequenceNumber(header.getSequence());
+        int flags = Buffer.FLAG_RTP_TIME;
+        if (header.getMarker() == 1) {
+            flags |= Buffer.FLAG_RTP_MARKER;
+        }
+        inputBuffer.setFlags(flags);
+        inputBuffer.setFormat(rtpType.getFormat());
+        sequenceTimeMap.put(header.getTimestamp(), offset);
+        processor.process(inputBuffer);
+    }
+
     /**
      * Stops the detection
      *
@@ -144,14 +177,15 @@ public class ScreenChangeDetector extends Thread
         if (started) {
             started = false;
             renderer.close();
-            reader.close();
+            if (reader != null) {
+                reader.close();
+            }
             markUpdate();
         }
     }
 
     private void markUpdate() {
         if (nextUpdateTime != -1) {
-            System.err.println("Marking update at " + nextUpdateTime);
             lastSuccessfulUpdateTime = nextUpdateTime;
             try {
                 ImageIO.write(nextUpdateImage, "JPG",
