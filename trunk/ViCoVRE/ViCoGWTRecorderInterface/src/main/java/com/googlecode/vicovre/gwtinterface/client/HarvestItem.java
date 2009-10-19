@@ -196,6 +196,8 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         details.put("url", popup.getUrl());
         details.put("format", popup.getFormat());
         String frequency = popup.getUpdateFrequency();
+        details.put("hour", popup.getHour());
+        details.put("minute", popup.getMinute());
         details.put("updateFrequency", frequency);
         if (frequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
             details.put("month", popup.getMonth());
