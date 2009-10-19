@@ -196,9 +196,6 @@ public class LiveStream implements PushBufferStream, Runnable,
     // The number of frames sent
     private int seqNo = 0;
 
-    // The last line captured
-    private int[] lastLine = null;
-
     // A Timer to time events with
     private Timer timer = null;
 
@@ -239,8 +236,6 @@ public class LiveStream implements PushBufferStream, Runnable,
         } catch (AWTException awe) {
             throw new RuntimeException(awe.getMessage());
         }
-
-        lastLine = new int[width];
     }
 
     // Works out what is to be send
@@ -275,7 +270,6 @@ public class LiveStream implements PushBufferStream, Runnable,
                 } else {
 
                     // Otherwise send the selected screen
-                    screen = screen - 1;
                     GraphicsEnvironment ge = GraphicsEnvironment
                             .getLocalGraphicsEnvironment();
                     GraphicsDevice[] gs = ge.getScreenDevices();
@@ -352,19 +346,19 @@ public class LiveStream implements PushBufferStream, Runnable,
             while (i + lines > height) {
                 lines--;
             }
+            if (lines > 0) {
 
-            // Copy the last line for post comparison
-            System.arraycopy(data, i * width, lastLine, 0, width);
+                // Create the screen capture of the line (avoids jumpyness)
+                BufferedImage bi = robot.createScreenCapture(new Rectangle(x, y
+                        + i, width, lines));
 
-            // Create the screen capture of the line (avoids jumpyness)
-            BufferedImage bi = robot.createScreenCapture(new Rectangle(x, y
-                    + i, width, lines));
+                // Get the RGB data from the capture
+                bi.getRGB(0, 0, size.width, lines, data, i * width, size.width);
 
-            // Get the RGB data from the capture
-            bi.getRGB(0, 0, size.width, lines, data, i * width, size.width);
-
-            // Store the line in the whole image
-            image.setRGB(0, i, size.width, lines, data, i * width, size.width);
+                // Store the line in the whole image
+                image.setRGB(0, i, size.width, lines, data,
+                        i * width, size.width);
+            }
         }
 
         // Get the mouse pointer location
