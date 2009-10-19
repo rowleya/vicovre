@@ -135,6 +135,38 @@
             <type>war</type>
         </dependency>
 
+        <!-- Codec Dependencies -->
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsColourspace</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsH261</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsH264</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsFFMpeg</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsULaw</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsLinear</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.xmlrpc</groupId>
             <artifactId>xmlrpc-server</artifactId>

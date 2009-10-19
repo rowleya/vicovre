@@ -42,6 +42,7 @@ import java.util.Vector;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -145,6 +146,16 @@ public abstract class XmlIo {
         return values.toArray(new Node[0]);
     }
 
+    public static String[] readFields(Node node) {
+        NodeList list = node.getChildNodes();
+        Vector<String> values = new Vector<String>();
+        for (int i = 0; i < list.getLength(); i++) {
+            Node n = list.item(i);
+            values.add(n.getNodeName());
+        }
+        return values.toArray(new String[0]);
+    }
+
     public static String[] readValues(Node node, String field) {
         Node[] nodes = readNodes(node, field);
         String[] values = new String[nodes.length];
@@ -188,5 +199,22 @@ public abstract class XmlIo {
     public static void setLong(Node doc, Object object, String field) {
         setValue(object, field, Long.valueOf(readValue(doc, field)),
                 Long.TYPE);
+    }
+
+    public static String readAttr(Node doc, String field, String def) {
+        Node attr = doc.getAttributes().getNamedItem(field);
+        if (attr == null) {
+            return def;
+        }
+        return attr.getTextContent();
+    }
+
+    public static String[] readAttrs(Node doc) {
+        NamedNodeMap attr = doc.getAttributes();
+        Vector<String> values = new Vector<String>();
+        for (int i = 0; i < attr.getLength(); i++) {
+            values.add(attr.item(i).getTextContent());
+        }
+        return values.toArray(new String[0]);
     }
 }

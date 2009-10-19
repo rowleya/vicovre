@@ -39,6 +39,7 @@ import java.util.Map;
 
 import org.apache.xmlrpc.XmlRpcException;
 
+import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.Stream;
@@ -48,6 +49,13 @@ public class RecordingHandler extends AbstractHandler {
 
     public RecordingHandler(RecordingDatabase database) {
         super(database);
+        if (!Misc.isCodecsConfigured()) {
+            try {
+                Misc.configureCodecs("/knownCodecs.xml");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public Map<String, Object>[] getRecordings(String folderPath)

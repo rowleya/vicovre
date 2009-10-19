@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codecs>
+    <!--<codec>
+        <class>com.googlecode.vicovre.codecs.h264.JavaDepacketizer</class>
+    </codec>-->
+    <codec>
+        <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.H264Decoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.H264RTPDecoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.h261.H261ASDecoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.h261.H261Decoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.linear.RateConverter</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.colourspace.YUV420RGB32Converter</class>
+    </codec>
+    <codec>
+        <class>com.sun.media.codec.video.colorspace.JavaRGBToYUV</class>
+    </codec>
+    <codec>
+        <class>com.sun.media.codec.audio.ulaw.DePacketizer</class>
+    </codec>
+    <codec>
+        <class>com.ibm.media.codec.audio.ulaw.JavaDecoder</class>
+    </codec>
+</codecs>

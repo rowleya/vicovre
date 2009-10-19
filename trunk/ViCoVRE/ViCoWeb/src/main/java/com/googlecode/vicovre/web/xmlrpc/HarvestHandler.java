@@ -91,6 +91,16 @@ public class HarvestHandler extends AbstractHandler {
         }
         harvestSource.setUpdateFrequency(updateFrequency);
 
+        Integer hour = (Integer) details.get("hour");
+        Integer minute = (Integer) details.get("minute");
+        if (hour != null) {
+            harvestSource.setHour(hour);
+        }
+        if (minute != null) {
+            harvestSource.setMinute(minute);
+        }
+
+
         Integer month = (Integer) details.get("month");
         Integer dayOfMonth = (Integer) details.get("dayOfMonth");
         Integer dayOfWeek = (Integer) details.get("dayOfWeek");
@@ -179,6 +189,7 @@ public class HarvestHandler extends AbstractHandler {
 
     public Boolean updateHarvestSource(String folderPath, int id,
             Map<String, Object> details) throws XmlRpcException {
+        System.err.println("Updating source " + id);
         Folder folder = getFolder(folderPath);
         HarvestSource harvestSource = folder.getHarvestSource(id);
         if (harvestSource == null) {
@@ -230,6 +241,8 @@ public class HarvestHandler extends AbstractHandler {
 
             String updateFreq = source.getUpdateFrequency();
             sources[i].put("updateFrequency", updateFreq);
+            sources[i].put("hour", source.getHour());
+            sources[i].put("minute", source.getMinute());
             if (updateFreq.equals(HarvestSource.UPDATE_ANUALLY)) {
                 sources[i].put("month", source.getMonth());
                 sources[i].put("dayOfMonth", source.getDayOfMonth());

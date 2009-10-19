@@ -68,8 +68,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         recording.setStopDate((Date) details.get("stopDate"));
 
         String ag3VenueServer = (String) details.get("ag3VenueServer");
-        Map<String, Object>[] addresses =
-            (Map<String, Object>[]) details.get("addresses");
+        Object[] addresses = (Object[]) details.get("addresses");
         if (ag3VenueServer != null) {
             String ag3VenueUrl = (String) details.get("ag3VenueUrl");
             if (ag3VenueUrl == null) {
@@ -80,7 +79,9 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         } else if (addresses != null) {
             NetworkLocation[] locations = new NetworkLocation[addresses.length];
             for (int i = 0; i < addresses.length; i++) {
-                Integer ttl = (Integer) addresses[i].get("ttl");
+                Map<String, Object> address =
+                    (Map<String, Object>) addresses[i];
+                Integer ttl = (Integer) address.get("ttl");
                 if (ttl != null) {
                     MulticastNetworkLocation location =
                         new MulticastNetworkLocation();
@@ -89,12 +90,12 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
                 } else {
                     locations[i] = new UnicastNetworkLocation();
                 }
-                String host = (String) addresses[i].get("host");
+                String host = (String) address.get("host");
                 if (host == null) {
                     throw new XmlRpcException("Missing host of address " + i);
                 }
                 locations[i].setHost(host);
-                Integer port = (Integer) addresses[i].get("port");
+                Integer port = (Integer) address.get("port");
                 if (port == null) {
                     throw new XmlRpcException("Missing port of address " + i);
                 }
