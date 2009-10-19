@@ -307,17 +307,20 @@ public abstract class H261AbstractEncoder implements Codec,
                 if (cr == null) {
                     cr = new ConditionalReplenishment(width, height);
                 }
-                if (framesSinceLastKey >= framesBetweenKey) {
-                    cr.reset();
-                    framesSinceLastKey = 0;
-                } else {
-                    framesSinceLastKey += 1;
-                }
 
                 byte[] yuv = (byte[]) input.getData();
                 int offset = input.getOffset();
                 int currentX = offset % width;
                 int currentY = offset / width;
+
+                if (offset == 0) {
+                    if (framesSinceLastKey >= framesBetweenKey) {
+                        cr.reset();
+                        framesSinceLastKey = 0;
+                    } else {
+                        framesSinceLastKey += 1;
+                    }
+                }
 
                 // Find the current gob number and macroblock
                 int blockN = ((currentY / 16) * nBlocksWidth)
@@ -542,8 +545,10 @@ public abstract class H261AbstractEncoder implements Codec,
      * @see com.sun.media.BasicPlugIn#getControl(java.lang.String)
      */
     public Object getControl(String className) {
-        if (className.equals(QualityControl.class.getCanonicalName())) {
-            System.err.println("Quality");
+        if (className.equals(QualityControl.class.getCanonicalName())
+                || className.equals(KeyFrameControl.class.getCanonicalName())
+                || className.equals(
+                        KeyFrameForceControl.class.getCanonicalName())) {
             return this;
         }
         return null;
