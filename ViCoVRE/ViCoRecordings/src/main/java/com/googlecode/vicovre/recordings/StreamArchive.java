@@ -273,7 +273,7 @@ public class StreamArchive {
             // Write out the timestamp for this first RTP packet in the file.
             stream.setFirstTimestamp(packetHeader.getTimestamp());
 
-            try {
+            /*try {
                 changeDetector =
                     new ScreenChangeDetector(directory.getAbsolutePath(),
                             String.valueOf(ssrc),
@@ -281,7 +281,7 @@ public class StreamArchive {
             } catch (Throwable e) {
                 e.printStackTrace();
                 changeDetector = null;
-            }
+            } */
         }
 
         // Set the statistics
