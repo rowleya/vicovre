@@ -81,39 +81,43 @@ public class FolderReader {
         Vector<UnfinishedRecording> unfinishedRecordings =
             new Vector<UnfinishedRecording>();
         for (File file : directory.listFiles()) {
-            if (file.isDirectory()) {
-                File recordingIndex = new File(file,
-                        RecordingConstants.RECORDING_INDEX);
-                if (recordingIndex.exists()) {
-                    FileInputStream input = new FileInputStream(recordingIndex);
-                    Recording recording = RecordingReader.readRecording(input,
-                            file, typeRepository, layoutRepository);
-                    recordings.add(recording);
+            try {
+                if (file.isDirectory()) {
+                    File recordingIndex = new File(file,
+                            RecordingConstants.RECORDING_INDEX);
+                    if (recordingIndex.exists()) {
+                        FileInputStream input = new FileInputStream(recordingIndex);
+                        Recording recording = RecordingReader.readRecording(input,
+                                file, typeRepository, layoutRepository);
+                        recordings.add(recording);
+                        input.close();
+                    } else {
+                        Folder subFolder = readFolder(file,
+                                typeRepository, layoutRepository,
+                                harvestFormatRepository, database);
+                        subFolders.add(subFolder);
+                    }
+                } else if (file.getName().endsWith(
+                        RecordingConstants.HARVEST_SOURCE)) {
+                    FileInputStream input = new FileInputStream(file);
+                    HarvestSource harvestSource =
+                        HarvestSourceReader.readHarvestSource(input,
+                                harvestFormatRepository, typeRepository, folder);
+                    harvestSource.setFile(file);
                     input.close();
-                } else {
-                    Folder subFolder = readFolder(file,
-                            typeRepository, layoutRepository,
-                            harvestFormatRepository, database);
-                    subFolders.add(subFolder);
-                }
-            } else if (file.getName().endsWith(
-                    RecordingConstants.HARVEST_SOURCE)) {
-                FileInputStream input = new FileInputStream(file);
-                HarvestSource harvestSource =
-                    HarvestSourceReader.readHarvestSource(input,
-                            harvestFormatRepository, typeRepository, folder);
-                harvestSource.setFile(file);
-                input.close();
-                harvestSources.add(harvestSource);
-            } else if (file.getName().endsWith(
-                    RecordingConstants.UNFINISHED_RECORDING_INDEX)) {
+                    harvestSources.add(harvestSource);
+                } else if (file.getName().endsWith(
+                        RecordingConstants.UNFINISHED_RECORDING_INDEX)) {
 
-                FileInputStream input = new FileInputStream(file);
-                UnfinishedRecording recording =
-                    UnfinishedRecordingReader.readRecording(input, file,
-                            folder, typeRepository, database);
-                input.close();
-                unfinishedRecordings.add(recording);
+                    FileInputStream input = new FileInputStream(file);
+                    UnfinishedRecording recording =
+                        UnfinishedRecordingReader.readRecording(input, file,
+                                folder, typeRepository, database);
+                    input.close();
+                    unfinishedRecordings.add(recording);
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: " + e.getMessage());
             }
         }
         folder.setFolders(subFolders);
