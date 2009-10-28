@@ -36,14 +36,18 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import org.apache.xmlrpc.XmlRpcException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayout;
+import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 
 public class RecordingHandler extends AbstractHandler {
 
@@ -75,6 +79,7 @@ public class RecordingHandler extends AbstractHandler {
             for (int j = 0; j < streams.size(); j++) {
                 Stream stream = streams.get(j);
                 strms[j] = getDetails(stream, "rtpType", "recording");
+                strms[j].put("mediaType", stream.getRtpType().getMediaType());
             }
             recs[i].put("streams", strms);
             List<Long> pauseTimes = rec.getPauseTimes();
@@ -82,6 +87,25 @@ public class RecordingHandler extends AbstractHandler {
             for (int j = 0; j < pauseTimes.size(); j++) {
                 pTimes[j] = pauseTimes.get(j).intValue();
             }
+            List<ReplayLayout> layouts = rec.getReplayLayouts();
+            List<Map<String, Object>> replayLayouts =
+                new Vector<Map<String,Object>>();
+            for (ReplayLayout layout : layouts) {
+                Map<String, Object> replayLayout =
+                    new HashMap<String, Object>();
+                replayLayout.put("name", layout.getName());
+                replayLayout.put("time", new Long(layout.getTime()).intValue());
+                Map<String, Object> positions = new HashMap<String, Object>();
+                for (ReplayLayoutPosition position
+                        : layout.getLayoutPositions()) {
+                    positions.put(position.getName(),
+                            position.getStream().getSsrc());
+                }
+                replayLayout.put("positions", positions);
+                replayLayouts.add(replayLayout);
+            }
+            recs[i].put("layouts", replayLayouts);
+
             recs[i].put("pauseTimes", pTimes);
         }
         return recs;

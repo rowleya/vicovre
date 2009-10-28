@@ -121,6 +121,7 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
         for (HarvestItem item : harvestItems) {
             panel.addItem(item);
         }
+        Application.finishedLoading();
     }
 
 

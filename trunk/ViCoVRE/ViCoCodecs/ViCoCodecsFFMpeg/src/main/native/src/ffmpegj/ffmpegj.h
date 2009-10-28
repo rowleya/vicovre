@@ -30,6 +30,25 @@ class FFMpegJ {
         jmethodID setTimestampMethod;
         jmethodID setSequenceNumberMethod;
 
+        jclass contextClass;
+        jmethodID contextConstructor;
+        jmethodID getCFlagsMethod;
+        jmethodID getFlags2Method;
+        jmethodID getQminMethod;
+        jmethodID getQmaxMethod;
+        jmethodID getMaxQdiffMethod;
+        jmethodID getLowresMethod;
+        jmethodID getDctAlgoMethod;
+        jmethodID getDebugMethod;
+        jmethodID setFlagsMethod;
+        jmethodID setFlags2Method;
+        jmethodID setQminMethod;
+        jmethodID setQmaxMethod;
+        jmethodID setMaxQdiffMethod;
+        jmethodID setLowresMethod;
+        jmethodID setDctAlgoMethod;
+        jmethodID setDebugMethod;
+
         AVCodecParserContext *parser;
         RTPDynamicProtocolHandler *rtpHandler;
         PayloadContext *rtpPayloadContext;
@@ -59,14 +78,15 @@ class FFMpegJ {
         uint8_t *buffer;
 
     public:
-        FFMpegJ(JNIEnv *env, jobject peer);
+        FFMpegJ(JNIEnv *env, jobject peer, int logLevel);
         ~FFMpegJ();
         long openCodec(bool isEncoding, int codecId);
         bool init(int pixFmt, int width, int height, int intermediatePixFmt,
             int intermediateWidth, int intermediateHeight, bool flipped,
-            JNIEnv *env, jstring rtpSdp);
+            JNIEnv *env, jstring rtpSdp, jobject context);
         int decode(JNIEnv *env, jobject input, jobject output);
         int encode(JNIEnv *env, jobject input, jobject output);
         bool closeCodec();
         int getOutputSize();
+        void getCodecContext(JNIEnv *env, jobject context);
 };

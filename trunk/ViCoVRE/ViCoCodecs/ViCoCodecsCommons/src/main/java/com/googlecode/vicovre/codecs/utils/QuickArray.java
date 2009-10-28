@@ -44,6 +44,8 @@ public class QuickArray extends QuickArrayAbstract {
 
     private int size = 0;
 
+    private boolean freed = false;
+
     /**
      * Creates a new QuickArray
      * @param type The type of the array
@@ -70,18 +72,32 @@ public class QuickArray extends QuickArrayAbstract {
      * Clears the array to all 0s
      */
     public void clear() {
+        if (DEBUG) {
+            check(0, size);
+        }
         getUnsafe().setMemory(address, size, (byte) 0);
     }
 
     /**
      * Frees the array
      */
-    public void free() {
-        getUnsafe().freeMemory(address);
+    public synchronized void free() {
+        if (!freed) {
+            freed = true;
+            getUnsafe().freeMemory(address);
+        }
     }
 
     protected void finalize() throws Throwable {
         free();
+    }
+
+    protected boolean freed() {
+        return freed;
+    }
+
+    protected long getLength() {
+        return size;
     }
 
 }

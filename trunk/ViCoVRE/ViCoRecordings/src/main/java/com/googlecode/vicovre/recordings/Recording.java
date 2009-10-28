@@ -75,8 +75,8 @@ public class Recording {
     // The streams in the recording
     private HashMap<String, Stream> streams = new HashMap<String, Stream>();
 
-    private HashMap<String, ReplayLayout> replayLayouts =
-        new HashMap<String, ReplayLayout>();
+    private HashMap<Long, ReplayLayout> replayLayouts =
+        new HashMap<Long, ReplayLayout>();
 
     private Vector<Long> pauseTimes = new Vector<Long>();
 
@@ -186,11 +186,19 @@ public class Recording {
         if (replayLayouts != null) {
             for (ReplayLayout layout : replayLayouts) {
                 layout.setRecording(this);
-                this.replayLayouts.put(layout.getName(), layout);
+                this.replayLayouts.put(layout.getTime(), layout);
             }
         } else {
             this.replayLayouts.clear();
         }
+    }
+
+    /**
+     * Sets the replay layout
+     * @param replayLayout The layout to set
+     */
+    public void setReplayLayout(ReplayLayout replayLayout) {
+        replayLayouts.put(replayLayout.getTime(), replayLayout);
     }
 
     /**
@@ -203,11 +211,11 @@ public class Recording {
 
     /**
      * Gets a replay layout
-     * @param name The name of the layout
+     * @param time The time at which the layout applies
      * @return The layout or null if doesn't exist
      */
-    public ReplayLayout getLayout(String name) {
-        return replayLayouts.get(name);
+    public ReplayLayout getLayout(Long time) {
+        return replayLayouts.get(time);
     }
 
     /**

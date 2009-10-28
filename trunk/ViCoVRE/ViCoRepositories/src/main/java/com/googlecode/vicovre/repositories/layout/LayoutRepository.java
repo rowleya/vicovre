@@ -34,17 +34,25 @@
 
 package com.googlecode.vicovre.repositories.layout;
 
+import java.util.List;
+
 /**
- * A repository of Known Player layouts
+ * A repository of Known Player layouts.
  * @author Tobias M Schiebeck
  * @version 1.0
  */
 public interface LayoutRepository {
 
     /**
-     * Finds an RTP type
-     * @param rtptype The rtp packet identifier
-     * @return The type
+     * Finds a layout.
+     * @param layoutName the name of the layout
+     * @return The layout
      */
     Layout findLayout(final String layoutName);
+
+    /**
+     * Finds all layouts.
+     * @return The layouts
+     */
+    List<Layout> findLayouts();
 }

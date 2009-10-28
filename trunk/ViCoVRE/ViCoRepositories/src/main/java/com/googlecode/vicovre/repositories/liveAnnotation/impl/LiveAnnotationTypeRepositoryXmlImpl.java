@@ -61,7 +61,8 @@ public class LiveAnnotationTypeRepositoryXmlImpl implements
     private HashMap<String, LiveAnnotationType> liveAnnotationTypes =
         new HashMap<String, LiveAnnotationType>();
     private List<String> liveAnnotationTypeNames = new Vector<String>();
-    private LiveAnnotationProperties liveAnnotationProperties;
+    private LiveAnnotationProperties liveAnnotationProperties =
+        new LiveAnnotationProperties();
 
     /**
      * Creates a new RtpTypeRepository
@@ -161,10 +162,12 @@ public class LiveAnnotationTypeRepositoryXmlImpl implements
             }
 
             Node convertsTo = XmlIo.readNode(types[i], "convertsTo");
-            Node[] convertTypes = XmlIo.readNodes(convertsTo, "type");
-            for (Node convert : convertTypes) {
-                String value = XmlIo.readAttr(convert, "name", null);
-                liveAnnotationType.addConversion(value);
+            if (convertsTo != null) {
+                Node[] convertTypes = XmlIo.readNodes(convertsTo, "type");
+                for (Node convert : convertTypes) {
+                    String value = XmlIo.readAttr(convert, "name", null);
+                    liveAnnotationType.addConversion(value);
+                }
             }
 
             liveAnnotationTypes.put(liveAnnotationType.getName(),

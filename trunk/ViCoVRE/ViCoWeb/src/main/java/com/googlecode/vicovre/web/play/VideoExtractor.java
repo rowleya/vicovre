@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.googlecode.vicovre.web.servlet.flv;
+package com.googlecode.vicovre.web.play;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;

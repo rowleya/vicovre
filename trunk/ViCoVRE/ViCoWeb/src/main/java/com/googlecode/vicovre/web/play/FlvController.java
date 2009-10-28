@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.googlecode.vicovre.web.servlet.flv;
+package com.googlecode.vicovre.web.play;
 
 import java.awt.Dimension;
 import java.io.EOFException;
@@ -46,7 +46,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
+import org.xml.sax.SAXException;
+
 import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.recordings.Folder;
+import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
 
@@ -56,10 +63,7 @@ import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class FlvServlet extends HttpServlet {
-
-    private static final Pattern PATTERN = Pattern.compile(
-            "/([^\\.].*).flv");
+public class FlvController implements Controller {
 
     private static final double DEFAULT_GENERATION_SPEED = 1.5;
 
@@ -67,70 +71,27 @@ public class FlvServlet extends HttpServlet {
 
     private static final int EXT_LEN = EXT.length();
 
-    private File recordingDirectory = null;
-
     private RtpTypeRepository rtpTypeRepository = null;
 
+    private RecordingDatabase database = null;
 
-    /**
-     *
-     * @see javax.servlet.GenericServlet#init()
-     */
-    public void init() throws ServletException {
-        String path = getInitParameter("recordingDirectory");
-        if (path == null) {
-            throw new ServletException("recordingDirectory must be specified");
+    public FlvController(RecordingDatabase database,
+            RtpTypeRepository rtpTypeRepository)
+            throws IOException, SAXException {
+        if (!Misc.isCodecsConfigured()) {
+            Misc.configureCodecs("/knownCodecs.xml");
         }
-        recordingDirectory = new File(path);
-        String typeRepositoryfile = getInitParameter("rtpTypeRepository");
-        if (typeRepositoryfile == null) {
-            throw new ServletException("rtpTypeRepository must be specified");
-        }
-        try {
-            rtpTypeRepository =
-                new RtpTypeRepositoryXmlImpl(typeRepositoryfile);
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
-        try {
-            if (!Misc.isCodecsConfigured()) {
-                Misc.configureCodecs("/knownCodecs.xml");
-            }
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
+        this.rtpTypeRepository = rtpTypeRepository;
+        this.database = database;
+
     }
 
-    /**
-     *
-     * @see javax.servlet.http.HttpServlet#doPost(
-     *     javax.servlet.http.HttpServletRequest,
-     *     javax.servlet.http.HttpServletResponse)
-     */
-    public void doPost(HttpServletRequest request,
+    public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-        doGet(request, response);
-    }
-
-    /**
-     *
-     * @throws IOException
-     * @throws IOException
-     * @see javax.servlet.http.HttpServlet#doGet(
-     *     javax.servlet.http.HttpServletRequest,
-     *     javax.servlet.http.HttpServletResponse)
-     */
-    public void doGet(HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-        String requestName = request.getPathInfo();
-        Matcher matcher = PATTERN.matcher(requestName);
-        String sessionId = null;
+        System.err.println("URL = " + request.getRequestURI() + "?" + request.getQueryString());
+        String sessionId = request.getParameter("id");
+        String folderPath = request.getParameter("folder");
         File videoFile = null;
-        if (matcher.matches()) {
-            sessionId = matcher.group(1);
-        } else {
-            throw new IOException("Path format incorrect");
-        }
 
         String off = request.getParameter("start");
         if (off == null) {
@@ -148,7 +109,12 @@ public class FlvServlet extends HttpServlet {
         if (syncStreams == null) {
             syncStreams = new String[0];
         }
-        File path = new File(recordingDirectory, sessionId);
+        Folder folder = database.getTopLevelFolder();
+        if (folderPath != null && !folderPath.equals("")) {
+            database.getFolder(new File(folderPath));
+        }
+        Recording recording = folder.getRecording(sessionId);
+        File path = recording.getDirectory();
 
         System.out.println("Recordings from " + path.getAbsolutePath());
         videoFile = new File(path, videoStream);
@@ -227,6 +193,7 @@ public class FlvServlet extends HttpServlet {
             e.printStackTrace();
             throw new IOException(e.getMessage());
         }
+        return null;
     }
 
     private class StreamFileFilter implements FileFilter {

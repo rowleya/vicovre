@@ -240,10 +240,11 @@ public class ChangeDetection implements Renderer {
         QuickArrayWrapper in = null;
         try {
             if (yuvFormat == null) {
-                in = new QuickArrayWrapper(inObject, bufIn.getOffset());
+                in = new QuickArrayWrapper(inObject, bufIn.getOffset(),
+                        bufIn.getLength());
             } else {
                 in = new QuickArrayWrapper(inObject, bufIn.getOffset()
-                        + yuvFormat.getOffsetY());
+                        + yuvFormat.getOffsetY(), bufIn.getLength());
             }
         } catch (QuickArrayException e) {
             e.printStackTrace();

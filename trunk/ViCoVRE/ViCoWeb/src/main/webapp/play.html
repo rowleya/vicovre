@@ -1,0 +1,17 @@
+<html>
+    <head>
+        <script type="text/javascript" src="js/swfobject.js"></script>
+    </head>
+    <body>
+        <div id="player">
+        </div>
+        <script language="JavaScript">
+            var mplayer = new SWFObject("CrewPlayer.swf", "mplayer",
+                            "1000", "800", "8");
+            mplayer.addParam("AllowScriptAccess", "always");
+            mplayer.addParam("allowfullscreen", "true");
+            mplayer.addVariable("uri", "play.do?recordingId=2009-10-01_020337-037590445%26startTime=0");
+            mplayer.write("player");
+        </script>
+    </body>
+</html>

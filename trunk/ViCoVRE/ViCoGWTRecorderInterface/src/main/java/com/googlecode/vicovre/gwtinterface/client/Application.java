@@ -32,8 +32,12 @@
 
 package com.googlecode.vicovre.gwtinterface.client;
 
+import java.util.HashMap;
+import java.util.List;
+
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -41,6 +45,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.HarvestItemLoader;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.RecordingItemLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.VenueServerLoader;
@@ -64,6 +69,11 @@ public class Application implements EntryPoint {
             + "Please refresh the page to try again.",
             null, MessagePopup.ERROR);
 
+    private HashMap<String, Layout> layouts =
+        new HashMap<String, Layout>();
+
+    private PlayPanel playPanel = new PlayPanel();
+
     public static String getParam(String name) {
         return parameters.get(name);
     }
@@ -79,6 +89,7 @@ public class Application implements EntryPoint {
 
     public static void finishedLoading() {
         objectsLoading -= 1;
+        GWT.log("Finished Loading - objects to load = " + objectsLoading, null);
         if (objectsLoading <= 0) {
             loadingPopup.hide();
         }
@@ -88,13 +99,30 @@ public class Application implements EntryPoint {
         return objectsLoading > 0;
     }
 
+    public void setLayouts(List<Layout> layouts) {
+        for (Layout layout : layouts) {
+            this.layouts.put(layout.getName(), layout);
+        }
+    }
+
+    public void addLayout(Layout layout) {
+        this.layouts.put(layout.getName(), layout);
+    }
+
+    public Layout getLayout(String name) {
+        return layouts.get(name);
+    }
+
+    public void finishLoadingLayouts() {
+        PlayItemLoader.loadPlayItems("", playPanel, layouts);
+    }
+
     public void onModuleLoad() {
         parameters = Dictionary.getDictionary("Parameters");
         xmlrpcClient = new XmlRpcClient(getParam(XMLRPC_SERVER));
 
         RecordPanel recordPanel = new RecordPanel();
         HarvestPanel harvestPanel = new HarvestPanel();
-        PlayPanel playPanel = new PlayPanel();
 
         DockPanel topPanel = new DockPanel();
         topPanel.setWidth("100%");
@@ -121,10 +149,10 @@ public class Application implements EntryPoint {
         RootPanel.get().add(topPanel);
 
         loadingPopup.show();
-        objectsLoading = 1;
+        objectsLoading = 4;
+        LayoutLoader.loadLayouts(this);
         VenueServerLoader.loadVenues();
         RecordingItemLoader.loadRecordingItems("", recordPanel);
         HarvestItemLoader.loadHarvestItems("", harvestPanel);
-        PlayItemLoader.loadPlayItems("", playPanel);
     }
 }

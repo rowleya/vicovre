@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwtinterface.client;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -67,6 +68,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private final Image PLAY_TO_VENUE = new Image("images/playToVenue.gif");
 
+    private final Image LAYOUT = new Image("images/layout.gif");
+
+    private final Image PLAY = new Image("images/play.gif");
+
     private String id = null;
 
     private Label name = new Label();
@@ -87,16 +92,28 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private PushButton playToVenueButton = new PushButton(PLAY_TO_VENUE);
 
+    private PushButton editLayoutButton = new PushButton(LAYOUT);
+
+    private PushButton playButton = new PushButton(PLAY);
+
     private PlayItemEditPopup editPopup = new PlayItemEditPopup(this);
 
     private PlayToVenuePopup playToVenuePopup = null;
 
-    public PlayItem(String id, String name) {
+    private LayoutPopup layoutPopup = null;
+
+    private ReplayLayout layout = null;
+
+    private PlayToFlashPopup playPopup = null;
+
+    public PlayItem(String id, String name, HashMap<String, Layout> layouts) {
 
         this.id = id;
         this.name.setText(name);
         this.editPopup.setName(name);
         this.playToVenuePopup = new PlayToVenuePopup(this);
+        this.layoutPopup = new LayoutPopup(layouts, this);
+        this.playPopup = new PlayToFlashPopup(this, layouts);
 
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
@@ -106,8 +123,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         panel.setWidth("100%");
 
         HorizontalPanel buttons = new HorizontalPanel();
+        buttons.add(playButton);
         buttons.add(playToVenueButton);
         buttons.add(editButton);
+        buttons.add(editLayoutButton);
         buttons.add(deleteButton);
         buttons.setWidth("100px");
 
@@ -136,6 +155,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         editButton.addClickHandler(this);
         deleteButton.addClickHandler(this);
         playToVenueButton.addClickHandler(this);
+        editLayoutButton.addClickHandler(this);
+        playButton.addClickHandler(this);
     }
 
     public String getId() {
@@ -185,6 +206,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
             PlayItemDeleter.deleteRecording(this);
         } else if (event.getSource().equals(playToVenueButton)) {
             playToVenuePopup.center();
+        } else if (event.getSource().equals(editLayoutButton)) {
+            layoutPopup.center();
+        } else if (event.getSource().equals(playButton)) {
+            playPopup.center();
         }
     }
 
@@ -211,5 +236,18 @@ public class PlayItem extends SimplePanel implements ClickHandler,
             return nameCompare;
         }
         return startDateCompare;
+    }
+
+    public ReplayLayout getLayout() {
+        return layout;
+    }
+
+    public void setLayout(ReplayLayout layout) {
+        this.layout = layout;
+        layoutPopup.setLayout(layout);
+    }
+
+    public void setStreams(List<Stream> streams) {
+        layoutPopup.setStreams(streams);
     }
 }

@@ -34,6 +34,7 @@ package com.googlecode.vicovre.codecs.h261;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.lang.reflect.Array;
 
 import javax.media.Buffer;
 import javax.media.Format;
@@ -83,6 +84,8 @@ public class H261Decoder extends H261AbstractDecoder
 
     private int ebit = 0;
 
+    private boolean closed = false;
+
     /**
      * Creates a new H261Decoder
      * @throws QuickArrayException
@@ -125,8 +128,10 @@ public class H261Decoder extends H261AbstractDecoder
     /**
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
      */
-    public int process(Buffer input, Buffer output) {
-
+    public synchronized int process(Buffer input, Buffer output) {
+        if (closed) {
+            return BUFFER_PROCESSED_FAILED;
+        }
         BitInputStream in = null;
         try {
             in = new BitInputStream((byte[]) input.getData(),
@@ -366,10 +371,13 @@ public class H261Decoder extends H261AbstractDecoder
      *
      * @see com.googlecode.vicovre.codecs.h261.H261AbstractDecoder#close()
      */
-    public void close() {
-        super.close();
-        gobPos.free();
-        mbPos.free();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            super.close();
+            gobPos.free();
+            mbPos.free();
+        }
     }
 
     /**

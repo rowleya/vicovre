@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -43,23 +44,30 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.Layout;
 import com.googlecode.vicovre.gwtinterface.client.PlayItem;
 import com.googlecode.vicovre.gwtinterface.client.PlayPanel;
+import com.googlecode.vicovre.gwtinterface.client.ReplayLayout;
+import com.googlecode.vicovre.gwtinterface.client.Stream;
 
 public class PlayItemLoader implements AsyncCallback<List<Object>> {
 
     private PlayPanel panel = null;
 
-    public static void loadPlayItems(String folder, PlayPanel panel) {
+    private HashMap<String, Layout> layouts = null;
+
+    public static void loadPlayItems(String folder, PlayPanel panel,
+            HashMap<String, Layout> layouts) {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 client, "recording.getRecordings",
-                new Object[]{folder}, new PlayItemLoader(panel));
+                new Object[]{folder}, new PlayItemLoader(panel, layouts));
         request.execute();
     }
 
-    private PlayItemLoader(PlayPanel panel) {
+    private PlayItemLoader(PlayPanel panel, HashMap<String, Layout> layouts) {
         this.panel = panel;
+        this.layouts = layouts;
     }
 
     public void onFailure(Throwable error) {
@@ -67,15 +75,46 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         GWT.log("Error loading play items", error);
     }
 
-    public static PlayItem buildPlayItem(Map<String, Object> item) {
+    public static PlayItem buildPlayItem(Map<String, Object> item,
+            HashMap<String, Layout> layouts) {
         String id = (String) item.get("id");
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
         String name = (String) metadata.get("name");
-        PlayItem playItem = new PlayItem(id, name);
+        PlayItem playItem = new PlayItem(id, name, layouts);
         playItem.setDescription((String) metadata.get("description"));
         playItem.setStartDate((Date) item.get("startTime"));
         playItem.setDuration(((Integer) item.get("duration")).longValue());
+
+        List<Map<String, Object>> strms =
+            (List<Map<String, Object>>) item.get("streams");
+        List<Stream> streams = new Vector<Stream>();
+        for (Map<String, Object> streamMap : strms) {
+            String ssrc = (String) streamMap.get("ssrc");
+            String cname = (String) streamMap.get("cname");
+            String streamName = (String) streamMap.get("name");
+            String note = (String) streamMap.get("note");
+            String mediaType = (String) streamMap.get("mediaType");
+            Stream stream = new Stream(ssrc, cname, streamName, note,
+                    mediaType);
+            streams.add(stream);
+        }
+        playItem.setStreams(streams);
+
+        List<Map<String, Object>> replayLayouts =
+            (List<Map<String, Object>>) item.get("layouts");
+        for (Map<String, Object> layoutMap : replayLayouts) {
+            String layoutName = (String) layoutMap.get("name");
+            Integer layoutTime = (Integer) layoutMap.get("time");
+            Map<String, String> positions =
+                (Map<String, String>) layoutMap.get("positions");
+            ReplayLayout layout = new ReplayLayout(layoutName, layoutTime,
+                    positions);
+            if (layoutTime == 0) {
+                playItem.setLayout(layout);
+            }
+        }
+
         return playItem;
     }
 
@@ -84,7 +123,7 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
                 Map<String, Object> item = (Map) items.get(i);
-                PlayItem playItem = buildPlayItem(item);
+                PlayItem playItem = buildPlayItem(item, layouts);
                 playItems.add(playItem);
             }
         }
@@ -92,6 +131,7 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         for (PlayItem item : playItems) {
             panel.addItem(item);
         }
+        Application.finishedLoading();
     }
 
 

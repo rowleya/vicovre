@@ -32,6 +32,8 @@
 
 package com.googlecode.vicovre.codecs.utils;
 
+import java.lang.reflect.Array;
+
 /**
  * An wrapper for an array that is quick but unsafe (uses sun.misc.Unsafe)
  * @author Andrew G D Rowley
@@ -47,13 +49,16 @@ public class QuickArrayWrapper extends QuickArrayAbstract {
 
     private long arrayOffset = 0;
 
+    private long length = 0;
+
     /**
      * Creates a new QuickArrayWrapper
      * @param data The array to wrap
      * @throws QuickArrayException
      */
     public QuickArrayWrapper(Object data) throws QuickArrayException {
-        this(data, 0);
+        this(data, 0, Array.getLength(data));
+        length *= getUnsafe().arrayIndexScale(data.getClass());
     }
 
     /**
@@ -62,7 +67,7 @@ public class QuickArrayWrapper extends QuickArrayAbstract {
      * @param offset The offset into the data to start from
      * @throws QuickArrayException
      */
-    public QuickArrayWrapper(Object data, long offset)
+    public QuickArrayWrapper(Object data, long offset, long length)
             throws QuickArrayException {
         super();
         try {
@@ -74,9 +79,18 @@ public class QuickArrayWrapper extends QuickArrayAbstract {
         }
 
         this.data = data;
+        this.length = length;
     }
 
     protected long getDataAddress() {
         return getUnsafe().getLong(this, dataOffset) + arrayOffset;
+    }
+
+    protected boolean freed() {
+        return false;
+    }
+
+    protected long getLength() {
+        return length;
     }
 }

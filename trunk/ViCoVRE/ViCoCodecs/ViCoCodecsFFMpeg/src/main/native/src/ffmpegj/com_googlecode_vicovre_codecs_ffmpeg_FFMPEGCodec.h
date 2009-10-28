@@ -8,24 +8,30 @@
 extern "C" {
 #endif
 /* Inaccessible static: SYNC */
+#undef com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_DEF_WIDTH
+#define com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_DEF_WIDTH 352L
+#undef com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_DEF_HEIGHT
+#define com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_DEF_HEIGHT 288L
+/* Inaccessible static: loadDone */
+/* Inaccessible static: loadError */
 /* Inaccessible static: CODECS */
 /* Inaccessible static: INPUT_FORMATS */
 /* Inaccessible static: OUTPUT_FORMATS */
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec
  * Method:    openCodec
- * Signature: (ZI)J
+ * Signature: (ZII)J
  */
 JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_openCodec
-  (JNIEnv *, jobject, jboolean, jint);
+  (JNIEnv *, jobject, jboolean, jint, jint);
 
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec
  * Method:    init
- * Signature: (IIIIIIZLjava/lang/String;)I
+ * Signature: (IIIIIIZLjava/lang/String;Lcom/googlecode/vicovre/codecs/ffmpeg/CodecContext;)I
  */
 JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_init
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jstring);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jstring, jobject);
 
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec
@@ -50,6 +56,14 @@ JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_enc
  */
 JNIEXPORT jboolean JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_closeCodec
   (JNIEnv *, jobject);
+
+/*
+ * Class:     com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec
+ * Method:    getCodecContext
+ * Signature: (Lcom/googlecode/vicovre/codecs/ffmpeg/CodecContext;)V
+ */
+JNIEXPORT void JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_getCodecContext
+  (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }

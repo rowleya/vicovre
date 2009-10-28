@@ -16,6 +16,9 @@
       <!-- Inherit Dictionary -->
       <inherits name="com.google.gwt.i18n.I18N"/>
 
+      <!-- Inherit GWT2SWF -->
+      <inherits name="pl.rmalinowski.gwt2swf.GWT2SWF"/>
+
       <!-- Specify the app entry point class.                         -->
       <entry-point class='com.googlecode.vicovre.gwtinterface.client.Application'/>
 

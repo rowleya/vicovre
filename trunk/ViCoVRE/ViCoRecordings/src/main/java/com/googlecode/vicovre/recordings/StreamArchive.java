@@ -40,10 +40,13 @@ import java.net.DatagramPacket;
 import java.nio.channels.FileChannel;
 import java.util.Date;
 
+import javax.media.format.VideoFormat;
+
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
+import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**
@@ -273,15 +276,7 @@ public class StreamArchive {
             // Write out the timestamp for this first RTP packet in the file.
             stream.setFirstTimestamp(packetHeader.getTimestamp());
 
-            /*try {
-                changeDetector =
-                    new ScreenChangeDetector(directory.getAbsolutePath(),
-                            String.valueOf(ssrc),
-                            typeRepository, packetHeader.getPacketType());
-            } catch (Throwable e) {
-                e.printStackTrace();
-                changeDetector = null;
-            } */
+
         }
 
         // Set the statistics
@@ -296,7 +291,21 @@ public class StreamArchive {
 
         if (type == -1) {
             type = packetHeader.getPacketType();
-            stream.setRtpType(typeRepository.findRtpType(type));
+            RTPType rtpType = typeRepository.findRtpType(type);
+            stream.setRtpType(rtpType);
+            if (rtpType.getFormat() instanceof VideoFormat) {
+                try {
+                    changeDetector =
+                        new ScreenChangeDetector(directory.getAbsolutePath(),
+                                String.valueOf(ssrc),
+                                typeRepository, packetHeader.getPacketType());
+                } catch (Throwable e) {
+                    System.err.println(
+                        "Could not initialize ScreenChangeDetector: "
+                        + e.getMessage());
+                    changeDetector = null;
+                }
+            }
         }
 
         if (type == packetHeader.getPacketType()) {

@@ -59,5 +59,11 @@
             <version>1.7.0</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>pl.rmalinowski.gwt2swf</groupId>
+            <artifactId>gwt2swf</artifactId>
+            <version>0.6.0</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>
