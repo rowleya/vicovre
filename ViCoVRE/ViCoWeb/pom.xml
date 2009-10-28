@@ -30,6 +30,15 @@
                 <filter.location>src/main/filters/memetic.properties</filter.location>
             </properties>
         </profile>
+        <profile>
+            <id>memeticplay</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <filter.location>src/main/filters/memeticplay.properties</filter.location>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
