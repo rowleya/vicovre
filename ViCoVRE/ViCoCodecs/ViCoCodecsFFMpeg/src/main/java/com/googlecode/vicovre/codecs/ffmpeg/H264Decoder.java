@@ -39,10 +39,24 @@ package com.googlecode.vicovre.codecs.ffmpeg;
 public class H264Decoder extends FFMPEGDecoder {
 
     /**
-     * Creates a new Decoder
+     * Creates a new Decoder.
      *
      */
     public H264Decoder() {
         super("h264");
+        setLogLevel(Log.AV_LOG_DEBUG);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see com.googlecode.vicovre.codecs.ffmpeg.FFMPEGCodec#getContext()
+     */
+    public CodecContext getContext() {
+        CodecContext context = new CodecContext();
+        getCodecContext(context);
+        context.setFlags(context.getFlags() | CodecContext.CODEC_FLAG_EMU_EDGE
+                | CodecContext.CODEC_FLAG_PART);
+        context.setDebug(CodecContext.FF_DEBUG_PICT_INFO);
+        return context;
     }
 }

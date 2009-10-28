@@ -80,6 +80,8 @@ public class H261ASDecoder extends H261AbstractDecoder
 
     private int cbOffset = 0;
 
+    private boolean closed = false;
+
     /**
      * Creates a new H261ASDecoder
      * @throws QuickArrayException
@@ -122,7 +124,10 @@ public class H261ASDecoder extends H261AbstractDecoder
     /**
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
      */
-    public int process(Buffer input, Buffer output) {
+    public synchronized int process(Buffer input, Buffer output) {
+        if (closed) {
+            return BUFFER_PROCESSED_FAILED;
+        }
 
         BitInputStream in = null;
         try {
@@ -308,9 +313,12 @@ public class H261ASDecoder extends H261AbstractDecoder
      *
      * @see com.googlecode.vicovre.codecs.h261.H261AbstractDecoder#close()
      */
-    public void close() {
-        super.close();
-        blockPos.free();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            super.close();
+            blockPos.free();
+        }
     }
 
     /**

@@ -47,6 +47,7 @@ import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -253,6 +254,16 @@ public class RecordingDatabase {
         RecordingMetadataReader.writeMetadata(recording.getMetadata(),
                 outputStream);
         outputStream.close();
+    }
+
+    public void updateRecordingLayouts(Recording recording) throws IOException {
+        for (ReplayLayout layout : recording.getReplayLayouts()) {
+            File layoutOutput = new File(recording.getDirectory(),
+                    layout.getName() + RecordingConstants.LAYOUT);
+            FileOutputStream outputLayout = new FileOutputStream(layoutOutput);
+            LayoutReader.writeLayout(layout, outputLayout);
+            outputLayout.close();
+        }
     }
 
     public Folder getFolder(File path) {

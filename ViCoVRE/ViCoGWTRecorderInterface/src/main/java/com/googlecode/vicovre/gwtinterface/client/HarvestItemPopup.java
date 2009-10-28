@@ -50,22 +50,22 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         implements ClickHandler, ChangeHandler {
 
     /**
-     * Updates the source manually
+     * Updates the source manually.
      */
     public static final String UPDATE_MANUALLY = "Manual";
 
     /**
-     * Updates the source annually
+     * Updates the source annually.
      */
     public static final String UPDATE_ANUALLY = "Annual";
 
     /**
-     * Updates the source monthly
+     * Updates the source monthly.
      */
     public static final String UPDATE_MONTHLY = "Monthly";
 
     /**
-     * Updates the source weekly
+     * Updates the source weekly.
      */
     public static final String UPDATE_WEEKLY = "Weekly";
 

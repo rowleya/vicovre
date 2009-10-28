@@ -60,7 +60,7 @@ public class ReplayLayout {
     private String name = null;
 
     // The time when the layout appears
-    private Date time = new Date(0);
+    private long time = 0;
 
     private Map<String, ReplayLayoutPosition> replayPosition =
         new HashMap<String, ReplayLayoutPosition>();
@@ -141,7 +141,7 @@ public class ReplayLayout {
      * Returns the time
      * @return the time
      */
-    public Date getTime() {
+    public long getTime() {
         return time;
     }
 
@@ -149,7 +149,7 @@ public class ReplayLayout {
      * Sets the time
      * @param time the time to set
      */
-    public void setTime(Date time) {
+    public void setTime(long time) {
         this.time = time;
     }
 

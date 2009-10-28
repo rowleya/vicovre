@@ -64,7 +64,7 @@ public class HarvestItemEditor implements AsyncCallback<Boolean> {
     }
 
     public void onSuccess(Boolean result) {
-        item.setStatus("OK");
+        item.setStatus("Updated - OK");
         item.setCreated(true);
     }
 

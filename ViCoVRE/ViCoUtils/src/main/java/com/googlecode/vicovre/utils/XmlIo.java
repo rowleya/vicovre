@@ -42,6 +42,7 @@ import java.util.Vector;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -151,7 +152,9 @@ public abstract class XmlIo {
         Vector<String> values = new Vector<String>();
         for (int i = 0; i < list.getLength(); i++) {
             Node n = list.item(i);
-            values.add(n.getNodeName());
+            if (n instanceof Element) {
+                values.add(n.getNodeName());
+            }
         }
         return values.toArray(new String[0]);
     }

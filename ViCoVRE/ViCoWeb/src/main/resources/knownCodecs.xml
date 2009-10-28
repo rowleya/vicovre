@@ -13,6 +13,9 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.H264RTPDecoder</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.FLV1Encoder</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.h261.H261ASDecoder</class>
     </codec>
     <codec>

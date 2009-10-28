@@ -117,8 +117,22 @@ public class LayoutRepositoryXmlImpl implements LayoutRepository {
         }
     }
 
-    public Layout findLayout(String layoutName) {
+    /**
+     * {@inheritDoc}
+     * @see com.googlecode.vicovre.repositories.layout.LayoutRepository#
+     *     findLayout(java.lang.String)
+     */
+    public Layout findLayout(final String layoutName) {
         return layouts.get(layoutName);
+    }
+
+   /**
+    * {@inheritDoc}
+    * @see com.googlecode.vicovre.repositories.layout.LayoutRepository#
+    *     findLayouts()
+    */
+    public List<Layout> findLayouts() {
+        return new Vector<Layout>(layouts.values());
     }
 
 }

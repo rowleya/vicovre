@@ -47,6 +47,8 @@ import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
+import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+
 /**
  * A Codec that uses FFMPEG
  *
@@ -57,9 +59,13 @@ public class FFMPEGCodec implements Codec {
 
     private static final Integer SYNC = new Integer(0);
 
-    private int DEF_WIDTH = 352;
+    private static final int DEF_WIDTH = 352;
 
-    private int DEF_HEIGHT = 288;
+    private static final int DEF_HEIGHT = 288;
+
+    private static boolean loadDone = false;
+
+    private static String loadError = null;
 
     protected static class FFMPEGFormat {
 
@@ -158,6 +164,8 @@ public class FFMPEGCodec implements Codec {
 
     private String rtpSdp = null;
 
+    private int logLevel = Log.AV_LOG_QUIET;
+
     /**
      * Adds a new codec
      *
@@ -202,8 +210,16 @@ public class FFMPEGCodec implements Codec {
         }
     }
 
+    public CodecContext getContext() {
+        return null;
+    }
+
     public void setRtpSdp(String rtpSdp) {
         this.rtpSdp = rtpSdp;
+    }
+
+    public void setLogLevel(int level) {
+        this.logLevel = level;
     }
 
     /**
@@ -516,12 +532,12 @@ public class FFMPEGCodec implements Codec {
     public void close() {
         synchronized (SYNC) {
             if (!closed) {
+                closed = true;
                 closeCodec();
                 bytedata = null;
                 intdata = null;
                 shortdata = null;
             }
-            closed = true;
         }
     }
 
@@ -587,7 +603,7 @@ public class FFMPEGCodec implements Codec {
         synchronized (SYNC) {
             outputSize = init(pix.getId(), size.width, size.height,
                     currentCodec.pixFormat.getId(), outSize.width,
-                    outSize.height, flipped, rtpSdp);
+                    outSize.height, flipped, rtpSdp, getContext());
         }
         if (!isEncoding) {
             outputFormat = Utils.getVideoFormat(pix, size,
@@ -631,17 +647,20 @@ public class FFMPEGCodec implements Codec {
         this.ffmpegj = ffmpegj;
     }
 
-    private native long openCodec(boolean encoding, int codecId);
+    private native long openCodec(boolean encoding, int codecId, int logLevel);
 
     private native int init(int pixFmt, int width, int height,
             int intermediatePixFmt, int intermediateWidth,
-            int intermediateHeight, boolean flipped, String rtpSdp);
+            int intermediateHeight, boolean flipped, String rtpSdp,
+            CodecContext context);
 
     private native int decodeNative(Buffer input, Buffer output);
 
     private native int encodeNative(Buffer input, Buffer output);
 
     private native boolean closeCodec();
+
+    protected native void getCodecContext(CodecContext context);
 
     /**
      *
@@ -656,14 +675,21 @@ public class FFMPEGCodec implements Codec {
             throw new ResourceUnavailableException(
                    "Output format not set or not compatible with input format");
         }
-
-        try {
-            System.loadLibrary("ffmpegj");
-            codecContext = openCodec(isEncoding, currentCodec.codecId);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw new ResourceUnavailableException("Error initializing FFMPEG");
+        if (!loadDone) {
+            try {
+                NativeLoader.loadLibrary(getClass(), "ffmpegj");
+                loadDone = true;
+                loadError = null;
+            } catch (Throwable t) {
+                loadDone = true;
+                loadError = t.getMessage();
+            }
         }
+        if (loadError != null) {
+            throw new ResourceUnavailableException(
+                    "Error initializing FFMPEG " + loadError);
+        }
+        codecContext = openCodec(isEncoding, currentCodec.codecId, logLevel);
     }
 
     /**

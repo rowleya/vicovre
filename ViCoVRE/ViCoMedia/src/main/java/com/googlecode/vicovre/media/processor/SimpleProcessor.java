@@ -86,6 +86,8 @@ public class SimpleProcessor {
 
     private ProcessingThread thread = null;
 
+    private boolean closed = false;
+
     private class CodecIterator {
 
         private ListIterator<Codec> codecIterator = null;
@@ -390,6 +392,9 @@ public class SimpleProcessor {
      * @return The status of the processing
      */
     public int process(Buffer inputBuffer, boolean render) {
+        if (closed) {
+            return PlugIn.BUFFER_PROCESSED_FAILED;
+        }
         try {
             CodecIterator iterator = new CodecIterator(codecs,
                     inputFormats, outputFormats, outputBuffers, inputBuffer);
@@ -585,7 +590,7 @@ public class SimpleProcessor {
                         return searchCodecs;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.err.println("Warning: " + e.getMessage());
                 }
             }
         }
@@ -666,22 +671,26 @@ public class SimpleProcessor {
      * Closes the codecs
      *
      */
-    public void close() {
-        for (Codec codec : codecs) {
-            codec.close();
+    public synchronized void close() {
+        if (!closed) {
+            closed = true;
+            stop();
+            for (Codec codec : codecs) {
+                codec.close();
+            }
+            codecs.clear();
+            for (Buffer buffer : outputBuffers) {
+                buffer.setData(null);
+            }
+            outputBuffers.clear();
+            inputFormats.clear();
+            outputFormats.clear();
+            inputFormats = null;
+            outputFormats = null;
+            outputBuffers = null;
+            codecs = null;
+            System.gc();
         }
-        codecs.clear();
-        for (Buffer buffer : outputBuffers) {
-            buffer.setData(null);
-        }
-        outputBuffers.clear();
-        inputFormats.clear();
-        outputFormats.clear();
-        inputFormats = null;
-        outputFormats = null;
-        outputBuffers = null;
-        codecs = null;
-        System.gc();
     }
 
     /**

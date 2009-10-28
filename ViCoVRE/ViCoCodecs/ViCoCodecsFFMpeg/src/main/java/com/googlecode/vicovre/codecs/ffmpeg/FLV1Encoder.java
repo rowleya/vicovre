@@ -33,18 +33,35 @@
 package com.googlecode.vicovre.codecs.ffmpeg;
 
 /**
- * Represents the FLV1 Encoder
+ * Represents the FLV1 Encoder.
  * @author Andrew G D Rowley
  * @version 1.0
  */
 public class FLV1Encoder extends FFMPEGEncoder {
 
     /**
-     * Creates a new encoder
+     * Creates a new encoder.
      *
      */
     public FLV1Encoder() {
         super("flv1");
+    }
+
+
+    /**
+     * {@inheritDoc}
+     * @see com.googlecode.vicovre.codecs.ffmpeg.FFMPEGCodec#getContext()
+     */
+    public CodecContext getContext() {
+        CodecContext context = new CodecContext();
+        getCodecContext(context);
+        context.setFlags(context.getFlags() | CodecContext.CODEC_FLAG_QSCALE);
+        context.setQmin(8);
+        context.setQmax(31);
+        context.setMaxQdiff(3);
+        context.setLowres(0);
+        context.setDctAlgo(CodecContext.FF_DCT_FAAN);
+        return context;
     }
 
 }

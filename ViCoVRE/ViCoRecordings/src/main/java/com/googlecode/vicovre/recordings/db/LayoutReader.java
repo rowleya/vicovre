@@ -55,7 +55,7 @@ public class LayoutReader {
         ReplayLayout layout = new ReplayLayout(layoutRepository);
         Node doc = XmlIo.read(input);
         XmlIo.setString(doc, layout, "name");
-        XmlIo.setString(doc, layout, "time");
+        XmlIo.setLong(doc, layout, "time");
         for (ReplayLayoutPosition position : layout.getLayoutPositions()) {
             String streamSsrc = XmlIo.readValue(doc,
                     "pos" + position.getName());

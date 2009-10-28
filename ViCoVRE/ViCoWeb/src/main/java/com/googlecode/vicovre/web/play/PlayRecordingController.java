@@ -32,7 +32,7 @@
  *
  */
 
-package com.googlecode.vicovre.web.metadata;
+package com.googlecode.vicovre.web.play;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -399,7 +399,7 @@ public class PlayRecordingController implements Controller {
             new Vector<MetadataLayoutPosition>();
 
         private MetadataLayout(Recording recording, ReplayLayout replayLayout) {
-            this.timeStamp = (double) (replayLayout.getTime().getTime()
+            this.timeStamp = (double) (replayLayout.getTime()
                     - recording.getStartTime().getTime()) / 1000;
             this.layoutName = replayLayout.getName();
             System.out.println("time:" + timeStamp + " layout:" + layoutName);
@@ -950,7 +950,7 @@ public class PlayRecordingController implements Controller {
         values.put("layouts", metadataLayouts);
         values.put("annotations", metadataAnnotations);
         values.put("thumbnails", thumbs);
-        values.put("url", server + "/flv/" + recordingId + ".flv");
+        values.put("url", server + "/flv.do?id=" + recordingId);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream data = new DataOutputStream(bytes);
 

@@ -15,4 +15,11 @@
     <build>
         <finalName>ViCoCodecsFFMpeg</finalName>
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsCommons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

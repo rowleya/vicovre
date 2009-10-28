@@ -78,8 +78,9 @@ static FFMpegJ *getFFMpegJ(JNIEnv *env, jobject obj) {
 }
 
 JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_openCodec
-        (JNIEnv *env, jobject obj, jboolean isEncoding, jint codecId) {
-    FFMpegJ *ffmpegj = new FFMpegJ(env, obj);
+        (JNIEnv *env, jobject obj, jboolean isEncoding, jint codecId,
+        jint logLevel) {
+    FFMpegJ *ffmpegj = new FFMpegJ(env, obj, logLevel);
     if (ffmpegj) {
         return ffmpegj->openCodec(isEncoding, codecId);
     }
@@ -87,12 +88,13 @@ JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_op
 }
 
 JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_init
-        (JNIEnv *env, jobject obj, jint pixFmt, jint width, jint height,
-        jint convertToPixFmt, jint convertToWidth, jint convertToHeight,
-        jboolean flipped, jstring rtpSdp) {
+        (JNIEnv *env, jobject obj, jint pixFmt, jint width,
+        jint height, jint convertToPixFmt, jint convertToWidth,
+        jint convertToHeight, jboolean flipped, jstring rtpSdp,
+        jobject context) {
     FFMpegJ *ffmpegj = getFFMpegJ(env, obj);
     ffmpegj->init(pixFmt, width, height, convertToPixFmt, convertToWidth,
-        convertToHeight, flipped, env, rtpSdp);
+        convertToHeight, flipped, env, rtpSdp, context);
     return ffmpegj->getOutputSize();
 }
 
@@ -116,10 +118,21 @@ JNIEXPORT jboolean JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec
     return true;
 }
 
-FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer) {
+JNIEXPORT void JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_FFMPEGCodec_getCodecContext
+          (JNIEnv *env, jobject obj, jobject context) {
+    FFMpegJ *ffmpegj = getFFMpegJ(env, obj);
+    ffmpegj->getCodecContext(env, context);
+}
+
+FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
+    intermediateFrame = NULL;
+    frame = NULL;
+    codecContext = NULL;
+    buffer = NULL;
+
     avcodec_init();
     firstSequence = -1;
-    av_log_set_level(AV_LOG_DEBUG);
+    av_log_set_level(logLevel);
     swinit = false;
     jclass cls = env->GetObjectClass(peer);
     jmethodID setFFMpegJMethod = env->GetMethodID(cls, "setFFMpegJ", "(J)V");
@@ -157,10 +170,30 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer) {
 
     FLAG_RTP_MARKER = env->GetStaticIntField(buffer, rtpMarker);
     FLAG_KEY_FRAME = env->GetStaticIntField(buffer, keyFrame);
+
+    contextClass = env->FindClass(
+            "com/googlecode/vicovre/codecs/ffmpeg/CodecContext");
+    contextConstructor = env->GetMethodID(contextClass, "<init>", "()V");
+    getCFlagsMethod = env->GetMethodID(contextClass, "getFlags", "()I");
+    getFlags2Method = env->GetMethodID(contextClass, "getFlags2", "()I");
+    getQmaxMethod = env->GetMethodID(contextClass, "getQmax", "()I");
+    getQminMethod = env->GetMethodID(contextClass, "getQmin", "()I");
+    getMaxQdiffMethod = env->GetMethodID(contextClass, "getMaxQdiff", "()I");
+    getLowresMethod = env->GetMethodID(contextClass, "getLowres", "()I");
+    getDctAlgoMethod = env->GetMethodID(contextClass, "getDctAlgo", "()I");
+    getDebugMethod = env->GetMethodID(contextClass, "getDebug", "()I");
+    setFlagsMethod = env->GetMethodID(contextClass, "setFlags", "(I)V");
+    setFlags2Method = env->GetMethodID(contextClass, "setFlags2", "(I)V");
+    setQmaxMethod = env->GetMethodID(contextClass, "setQmax", "(I)V");
+    setQminMethod = env->GetMethodID(contextClass, "setQmin", "(I)V");
+    setMaxQdiffMethod = env->GetMethodID(contextClass, "setMaxQdiff", "(I)V");
+    setLowresMethod = env->GetMethodID(contextClass, "setLowres", "(I)V");
+    setDctAlgoMethod = env->GetMethodID(contextClass, "setDctAlgo", "(I)V");
+    setDebugMethod = env->GetMethodID(contextClass, "setDebug", "(I)V");
 }
 
 FFMpegJ::~FFMpegJ() {
-    av_free(codecContext);
+    // Do Nothing
 }
 
 long FFMpegJ::openCodec(bool isEncoding, int codecId) {
@@ -171,9 +204,7 @@ long FFMpegJ::openCodec(bool isEncoding, int codecId) {
     }
     codecContext = avcodec_alloc_context();
     codecContext->codec_id = CodecID(codecId);
-    //codecContext->debug |= FF_DEBUG_SKIP | FF_DEBUG_QP | FF_DEBUG_MB_TYPE;
-    //codecContext->debug = FF_DEBUG_STARTCODE | FF_DEBUG_MMCO | FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
-    //codecContext->debug = FF_DEBUG_PICT_INFO;
+    codecContext->debug = 0;
     this->isEncoding = isEncoding;
     if (isEncoding) {
         codec = avcodec_find_encoder(codecContext->codec_id);
@@ -188,26 +219,31 @@ long FFMpegJ::openCodec(bool isEncoding, int codecId) {
 
 bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
         int intermediateWidth, int intermediateHeight, bool flipped,
-        JNIEnv *env, jstring rtpSdpString) {
+        JNIEnv *env, jstring rtpSdpString, jobject context) {
     this->pixFmt = PixelFormat(pixFmt);
     this->intermediatePixFmt = PixelFormat(intermediatePixFmt);
     this->width = width;
     this->height = height;
     this->flipped = flipped;
+    if (context != NULL) {
+        codecContext->flags = env->CallIntMethod(context, getCFlagsMethod);
+        codecContext->flags2 = env->CallIntMethod(context, getFlags2Method);
+        codecContext->qmin = env->CallIntMethod(context, getQminMethod);
+        codecContext->qmax = env->CallIntMethod(context, getQmaxMethod);
+        codecContext->max_qdiff = env->CallIntMethod(context, getMaxQdiffMethod);
+        codecContext->lowres = env->CallIntMethod(context, getLowresMethod);
+        codecContext->dct_algo = env->CallIntMethod(context, getDctAlgoMethod);
+        codecContext->debug = env->CallIntMethod(context, getDebugMethod);
+    }
     if (isEncoding) {
         codecContext->pix_fmt = this->intermediatePixFmt;
         codecContext->time_base.num = 1;
         codecContext->time_base.den = 90000;
-        codecContext->flags |= CODEC_FLAG_QSCALE;
-        codecContext->qmin = 8;
-        codecContext->qmax = 31;
-        codecContext->max_qdiff = 3;
     }
     codecContext->width = intermediateWidth;
     codecContext->height = intermediateHeight;
     codecContext->coded_width = intermediateWidth;
     codecContext->coded_height = intermediateHeight;
-    codecContext->flags |= CODEC_FLAG_EMU_EDGE | CODEC_FLAG_PART;
     int result = avcodec_open(codecContext, codec);
     if (result >= 0) {
         pictureSize = avpicture_get_size(this->pixFmt, width, height);
@@ -500,21 +536,33 @@ int FFMpegJ::encode(JNIEnv *env, jobject input, jobject output) {
 }
 
 bool FFMpegJ::closeCodec() {
-    if (intermediateFrame) {
+    if (intermediateFrame != NULL) {
         av_free(intermediateFrame);
-        intermediateFrame = 0;
+        intermediateFrame = NULL;
     }
-    if (frame) {
+    if (frame != NULL) {
         av_free(frame);
-        frame = 0;
+        frame = NULL;
     }
-    if (codecContext) {
+    if (codecContext != NULL) {
         avcodec_close(codecContext);
-        codecContext = 0;
+        codecContext = NULL;
     }
-    if (buffer) {
+    /*
+    if (buffer != NULL) {
         av_free(buffer);
-        buffer = 0;
-    }
+        buffer = NULL;
+    } */
     return true;
+}
+
+void FFMpegJ::getCodecContext(JNIEnv *env, jobject context) {
+    env->CallVoidMethod(context, setFlagsMethod, codecContext->flags);
+    env->CallVoidMethod(context, setFlags2Method, codecContext->flags2);
+    env->CallVoidMethod(context, setQmaxMethod, codecContext->qmax);
+    env->CallVoidMethod(context, setQminMethod, codecContext->qmin);
+    env->CallVoidMethod(context, setMaxQdiffMethod, codecContext->max_qdiff);
+    env->CallVoidMethod(context, setLowresMethod, codecContext->lowres);
+    env->CallVoidMethod(context, setDctAlgoMethod, codecContext->dct_algo);
+    env->CallVoidMethod(context, setDebugMethod, codecContext->debug);
 }

@@ -17,7 +17,7 @@
             <arg line="-shared" />
             <arg line="-static-libgcc"/>
             <arg line="-Wl,--add-stdcall-alias" />
-            <arg line="-o ..\resources\native\windows32\ffmpegj.dll" />
+            <arg line="-o ..\resources\native\x86\windows\ffmpegj.dll" />
             <arg line="src\ffmpegj\ffmpegj.cpp" />
             <arg line='"-Lresources\windows32\lib"'/>
             <arg line="-lavcodec" />
