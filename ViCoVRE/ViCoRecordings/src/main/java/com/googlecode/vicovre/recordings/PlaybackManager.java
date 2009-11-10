@@ -316,7 +316,11 @@ public class PlaybackManager implements StreamStoppingListener,
                 sendStreams[i] = managers[i].createSendStream(datasource, i);
                 NetworkLocation location = findLocationForType(streams,
                         stream.getRtpType());
-                connector.addStream(sendStreams[i].getSSRC(), location);
+                long ssrc = sendStreams[i].getSSRC();
+                if (ssrc < 0) {
+                    ssrc = ((long) Math.pow(2, 32)) + ssrc;
+                }
+                connector.addStream(ssrc, location);
                 SourceDescription note = sourceDescriptions[i].get(
                         SourceDescription.SOURCE_DESC_NOTE);
                 String extra = "(Starts at "
