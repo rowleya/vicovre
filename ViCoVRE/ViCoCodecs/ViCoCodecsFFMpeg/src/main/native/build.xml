@@ -95,7 +95,7 @@
         <attribute name="arch"/>
         <element name="macccopts" optional="true"/>
         <sequential>
-            <build cc="gcc" output="@{arch}/mac/libffmpegj.jnilib">
+            <build cc="g++" output="@{arch}/mac/libffmpegj.jnilib">
                 <ccopts>
                     <arg line="-dynamiclib" />
                     <arg line="-single_module" />
@@ -105,13 +105,13 @@
                     <arg line="-I"/>
                     <arg path="resources/@{arch}/mac/include"/>
                     <arg line="-I"/>
-                    <arg path="${java.home}/../include" />
+                    <arg path="${java.home}/../Headers" />
                 </includes>
                 <libdirs>
-                    <arg line="-L"/>
-                    <arg path="resources/@{arch}/mac/lib"/>
+                    <arg line="-L${basedir}/resources/@{arch}/mac/lib/"/>
                 </libdirs>
                 <libs>
+                    <arg line="-lz" />
                     <arg line="-lbz2" />
                 </libs>
             </build>
@@ -127,7 +127,13 @@
     </target>
 
     <target name="build.mac64" if="os.isMac64">
-        <build.mac arch="x86_64"/>
+        <build.mac arch="x86_64">
+            <macccopts>
+                <arg line="-m64"/>
+                <arg line="-isysroot /Developer/SDKs/MacOSX10.5.sdk"/>
+                <arg line="-mmacosx-version-min=10.5"/>
+            </macccopts>
+        </build.mac>
     </target>
 
     <macrodef name="build.unix">
