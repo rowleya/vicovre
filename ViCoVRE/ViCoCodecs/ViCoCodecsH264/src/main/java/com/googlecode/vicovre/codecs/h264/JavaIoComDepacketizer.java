@@ -52,6 +52,12 @@ public class JavaIoComDepacketizer implements Codec {
 
     private static final String OUTPUT = "H264";
 
+    private static final byte[] SPS = new byte[]{0x00, 0x00, 0x01, 0x27, 0x4d,
+        0x40, 0x14, (byte) 0x95, (byte) 0xc1, 0x60,	(byte) 0x96, 0x40};
+
+    private static final byte[] PPS = new byte[]{0x00, 0x00, 0x01, 0x28,
+        (byte) 0xce, 0x06, 0x72};
+
     private static final VideoFormat OUTPUT_FORMAT = new VideoFormat(OUTPUT);
 
     private byte[][] packets = new byte[1000][];
@@ -61,6 +67,8 @@ public class JavaIoComDepacketizer implements Codec {
     private long lastSequence = 0;
 
     private boolean aggregatePacket = false;
+
+    private boolean doneSPS = false;
 
     /**
      * @see javax.media.Codec#getSupportedInputFormats()
@@ -135,6 +143,12 @@ public class JavaIoComDepacketizer implements Codec {
             for (int i = 0; i < packets.length; i++) {
                 packets[i] = null;
             }
+        }
+        if (!doneSPS) {
+            packets[0] = SPS;
+            packets[1] = PPS;
+            firstSequence -= 2;
+            doneSPS = true;
         }
         int index = (int) (sequence - firstSequence);
         if (index < 0) {
