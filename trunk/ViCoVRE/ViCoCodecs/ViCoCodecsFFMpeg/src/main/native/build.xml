@@ -1,114 +1,171 @@
-<project name="ffmpegj" basedir=".">
-    <property name="java.sdk.win" value="C:\Program Files\Java\jdk1.6.0_14"/>
-    <property name="java.sdk.mac" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0"/>
-    <property name="java.sdk.linux" value="/usr/lib/jvm/java-6-sun"/>
+<project name="ffmpegj" default="main">
     <property name="msys.path" value="C:\msys\1.0" />
     <property name="mingw.path" value="C:\mingw"/>
     <property environment="getenv"/>
 
-    <target name="windows32-dll">
-        <exec dir="." executable="${mingw.path}\bin\g++.exe" failonerror="true" >
-            <env key="Path" value="${msys.path}\bin;${msys.path}\local\bin;${mingw.path}\bin;${getenv.Path}"/>
-            <arg line='"-Iresources\windows32\include"' />
-            <arg line='"-I${java.sdk.win}\include"' />
-            <arg line='"-I${java.sdk.win}\include\win32"' />
-            <arg line='"-Isrc\ffmpegj"' />
-            <arg line="-g"/>
-            <arg line="-shared" />
-            <arg line="-static-libgcc"/>
-            <arg line="-Wl,--add-stdcall-alias" />
-            <arg line="-o ..\resources\native\x86\windows\ffmpegj.dll" />
-            <arg line="src\ffmpegj\ffmpegj.cpp" />
-            <arg line='"-Lresources\windows32\lib"'/>
-            <arg line="-lavcodec" />
-            <arg line="-lavformat" />
-            <arg line="-lavutil" />
-            <arg line="-lmp3lame" />
-            <arg line="-lpostproc" />
-            <arg line="-lswscale" />
-            <arg line="-lx264" />
-            <arg line="-lyasm" />
-            <!--<arg line="-lgsm" />
-            <arg line="-lfaad"/>
-            <arg line="-ltheora" />
-            <arg line="-ltheoradec" />
-            <arg line="-ltheoraenc" />
-            <arg line="-lvorbis" />
-            <arg line="-lvorbisenc" />
-            <arg line="-lvorbisfile" />
-            <arg line="-lxvidcore" />
-            <arg line="-la52" />
-            <arg line="-logg" /> -->
-            <arg line="-lwsock32" />
-            <arg line="-lz" />
-        </exec>
+    <import file="resources/os.xml"/>
+
+    <macrodef name="build">
+        <attribute name="cc"/>
+        <attribute name="output"/>
+        <element name="includes" optional="true"/>
+        <element name="ccopts" optional="true"/>
+        <element name="libdirs" optional="true"/>
+        <element name="libs" optional="true"/>
+        <element name="envopts" optional="true"/>
+        <sequential>
+            <dirname file="../resources/native/@{output}" property="outdir"/>
+            <mkdir dir="${outdir}"/>
+            <exec dir="." executable="@{cc}" failonerror="true">
+                <envopts/>
+                <includes/>
+                <arg line="-I"/>
+                <arg file="src\ffmpegj"/>
+                <arg line="-g"/>
+                <ccopts/>
+                <arg line="-o"/>
+                <arg file="../resources/native/@{output}"/>
+                <arg file="src\ffmpegj\ffmpegj.cpp"/>
+                <libdirs/>
+                <arg line="-lavcodec" />
+                <arg line="-lavformat" />
+                <arg line="-lavutil" />
+                <arg line="-lmp3lame" />
+                <arg line="-lpostproc" />
+                <arg line="-lswscale" />
+                <arg line="-lx264" />
+                <arg line="-lyasm" />
+                <arg line="-lgsm" />
+                <arg line="-lfaad"/>
+                <arg line="-ltheora" />
+                <arg line="-ltheoradec" />
+                <arg line="-ltheoraenc" />
+                <arg line="-lvorbis" />
+                <arg line="-lvorbisenc" />
+                <arg line="-lvorbisfile" />
+                <arg line="-lxvidcore" />
+                <arg line="-la52" />
+                <arg line="-logg" />
+                <libs/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="build.windows">
+        <attribute name="arch"/>
+        <sequential>
+            <build cc="${mingw.path}\bin\g++.exe" output="@{arch}/windows/ffmpegj.dll">
+                <ccopts>
+                    <arg line="-shared" />
+                    <arg line="-static-libgcc"/>
+                    <arg line="-Wl,--add-stdcall-alias" />
+                </ccopts>
+                <envopts>
+                    <env key="Path" value="${msys.path}\bin;${msys.path}\local\bin;${mingw.path}\bin;${getenv.Path}"/>
+                </envopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="resources/@{arch}/windows/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include" />
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include/win32" />
+                </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="resources/@{arch}/windows/lib"/>
+                </libdirs>
+                <libs>
+                    <arg line="-lwsock32" />
+                    <arg line="-lz" />
+                </libs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.windows32" if="os.isWindows32">
+        <build.windows arch="x86"/>
     </target>
 
-    <target name="macosx-jnilib" >
-        <exec dir="." executable="g++" failonerror="true" >
-            <arg line='"-Iresources/macosx/include"' />
-            <arg line='"-I${java.sdk.mac}/include"' />
-            <arg line='"-Isrc\ffmpegj"' />
-            <arg line="-dynamiclib" />
-            <arg line="-single_module" />
-            <arg line="-read_only_relocs suppress" />
-            <arg line="-o ../resources/native/macosx/libffmpegj.jnilib" />
-            <arg line="src\ffmpegj\ffmpegj.cpp" />
-            <arg line='"-Lresources/macosx/lib"'/>
-            <arg line="-lavcodec" />
-            <arg line="-lavformat" />
-            <arg line="-lavutil" />
-            <arg line="-lfaad" />
-            <arg line="-lgsm" />
-            <arg line="-lmp3lame" />
-            <arg line="-lpostproc" />
-            <arg line="-lswscale" />
-            <arg line="-ltheora" />
-            <arg line="-ltheoradec" />
-            <arg line="-ltheoraenc" />
-            <arg line="-lvorbis" />
-            <arg line="-lvorbisenc" />
-            <arg line="-lvorbisfile" />
-            <arg line="-lx264" />
-            <arg line="-lxvidcore" />
-            <arg line="-lyasm" />
-            <arg line="-logg" />
-            <arg line="-la52" />
-            <arg line="-lz" />
-            <arg line="-lbz2" />
-        </exec>
+    <target name="build.windows64" if="os.isWindows64">
+        <build.windows arch="amd64"/>
     </target>
 
-    <target name="linux32-so" >
-        <exec dir="." executable="g++" failonerror="true" >
-            <arg line='"-Iresources/linux32/include"' />
-            <arg line='"-I${java.sdk.linux}/include"' />
-            <arg line='"-I${java.sdk.linux}/include/linux"' />
-            <arg line='"-Isrc\ffmpegj"' />
-            <arg line="-shared" />
-            <arg line="-o ../resources/native/linux32/libffmpegj.so" />
-            <arg line="src\ffmpegj\ffmpegj.cpp" />
-            <arg line='"-Lresources/linux32/lib"'/>
-            <arg line="-lavcodec" />
-            <arg line="-lavformat" />
-            <arg line="-lavutil" />
-            <arg line="-lfaad" />
-            <arg line="-lgsm" />
-            <arg line="-lmp3lame" />
-            <arg line="-lpostproc" />
-            <arg line="-lswscale" />
-            <arg line="-ltheora" />
-            <arg line="-ltheoradec" />
-            <arg line="-ltheoraenc" />
-            <arg line="-lvorbis" />
-            <arg line="-lvorbisenc" />
-            <arg line="-lvorbisfile" />
-            <arg line="-lx264" />
-            <arg line="-lxvidcore" />
-            <arg line="-lyasm" />
-            <arg line="-logg" />
-            <arg line="-la52" />
-        </exec>
+    <macrodef name="build.mac">
+        <attribute name="arch"/>
+        <element name="macccopts" optional="true"/>
+        <sequential>
+            <build cc="gcc" output="@{arch}/mac/libffmpegj.jnilib">
+                <ccopts>
+                    <arg line="-dynamiclib" />
+                    <arg line="-single_module" />
+                    <macccopts/>
+                </ccopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="resources/@{arch}/mac/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include" />
+                </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="resources/@{arch}/mac/lib"/>
+                </libdirs>
+                <libs>
+                    <arg line="-lbz2" />
+                </libs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.mac32" if="os.isMac32">
+        <build.mac arch="x86">
+            <macccopts>
+                <arg line="-read_only_relocs suppress" />
+            </macccopts>
+        </build.mac>
     </target>
 
+    <target name="build.mac64" if="os.isMac64">
+        <build.mac arch="x86_64"/>
+    </target>
+
+    <macrodef name="build.unix">
+        <attribute name="arch"/>
+        <sequential>
+            <build cc="gcc" output="@{arch}/linux/libffmpegj.so">
+                <ccopts>
+                    <arg line="-shared" />
+                </ccopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="resources/@{arch}/unix/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include" />
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include/linux" />
+                </includes>
+                <libdirs>
+                    <arg line="-L${basedir}/resources/@{arch}/unix/lib/"/>
+                </libdirs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.unix32" if="os.isUnix32">
+        <build.unix arch="i386"/>
+    </target>
+
+    <target name="build.unix64" if="os.isUnix64">
+        <build.unix arch="amd64"/>
+    </target>
+
+    <target name="main">
+        <antcall target="build.windows32"/>
+        <antcall target="build.windows64"/>
+        <antcall target="build.mac32"/>
+        <antcall target="build.mac64"/>
+        <antcall target="build.unix32"/>
+        <antcall target="build.unix64"/>
+    </target>
 </project>

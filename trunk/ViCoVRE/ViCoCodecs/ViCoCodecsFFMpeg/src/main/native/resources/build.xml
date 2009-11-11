@@ -1,0 +1,623 @@
+<project name="BuildFFMPEG" default="build-ffmpeg">
+
+    <property file="build.properties"/>
+    <property file="versions.properties"/>
+    <property environment="getenv" />
+
+    <macrodef name="configure">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <element name="configureopts" optional="true"/>
+        <element name="envopts" optional="true"/>
+
+        <sequential>
+            <condition property="ldflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <condition property="cflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <exec executable="sh" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="./configure"/>
+                <arg line='--prefix="${prefix.path}"'/>
+                <configureopts/>
+                <env key="LDFLAGS" value="${ldflags.default}@{ldflags}"/>
+                <env key="CFLAGS" value="${cflags.default}@{cflags}"/>
+                <env key="PATH" path="${prefix.path}/bin:${getenv.PATH}"/>
+                <envopts/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="make">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <attribute name="target" default="" />
+        <element name="envopts" optional="true"/>
+
+        <sequential>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="clean"/>
+            </exec>
+            <condition property="ldflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <condition property="cflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <env key="LDFLAGS" value="${ldflags.default}@{ldflags}"/>
+                <env key="CFLAGS" value="@{cflags}"/>
+                <env key="PATH" path="${prefix.path}/bin:${getenv.PATH}"/>
+                <envopts/>
+                <arg line="@{target}"/>
+            </exec>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="install"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="bootstrap">
+        <attribute name="library"/>
+
+        <sequential>
+            <exec executable="sh" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="bootstrap"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="configureandmake">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <element name="confopts" optional="true"/>
+        <element name="enviropts" optional="true"/>
+
+        <sequential>
+            <configure library="@{library}" ldflags="@{ldflags}" cflags="@{cflags}">
+                <configureopts>
+                    <confopts/>
+                </configureopts>
+                <envopts>
+                    <enviropts/>
+                </envopts>
+            </configure>
+            <make library="@{library}" ldflags="@{ldflags}" cflags="@{cflags}">
+                <envopts>
+                    <enviropts/>
+                </envopts>
+            </make>
+        </sequential>
+    </macrodef>
+
+    <import file="os.xml"/>
+
+    <exec executable="pwd" osfamily="windows" outputproperty="msys.path"/>
+
+    <fail message="Please define msys.path in build.properties">
+        <condition>
+            <and>
+                <isset property="os.isWindows"/>
+                <or>
+                    <not><isset property="msys.path"/></not>
+                    <equals arg1="${msys.path}" arg2=""/>
+                </or>
+            </and>
+        </condition>
+    </fail>
+
+
+
+    <condition property="prefix.path" value="${msys.path}/x86/windows">
+        <isset property="os.isWindows32"/>
+    </condition>
+    <condition property="prefix.path" value="${msys.path}/amd64/windows">
+        <isset property="os.isWindows64"/>
+    </condition>
+    <condition property="prefix.path.real" value="${basedir}/x86/windows">
+        <isset property="os.isWindows32"/>
+    </condition>
+    <condition property="prefix.path.real" value="${basedir}/amd64/windows">
+        <isset property="os.isWindows64"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/i386/unix">
+        <isset property="os.isUnix32"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/amd64/unix">
+        <isset property="os.isUnix64"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/x86/mac">
+        <isset property="os.isMac32"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/x86_64/mac">
+        <isset property="os.isMac64"/>
+    </condition>
+    <condition property="prefix.path.real" value="${prefix.path}">
+        <not><isset property="os.isWindows"/></not>
+    </condition>
+    <echo message="Installation will be made to ${prefix.path}"/>
+
+    <target name="mkdirs.check">
+        <condition property="mkdirs.dontrun">
+            <and>
+                <available file="${download.path}" type="dir"/>
+                <available file="${extract.path}" type="dir"/>
+                <available file="${prefix.path.real}" type="dir"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="mkdirs" depends="mkdirs.check" unless="mkdirs.dontrun">
+        <mkdir dir="${download.path}"/>
+        <mkdir dir="${extract.path}"/>
+        <mkdir dir="${prefix.path.real}"/>
+    </target>
+
+    <target name="yasm.check">
+        <condition property="yasm.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libyasm.a"/>
+                <available file="${prefix.path.real}/include/libyasm.h"/>
+                <available file="${prefix.path.real}/include/libyasm-stdint.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-yasm" depends="mkdirs,yasm.check" unless="yasm.dontrun">
+        <get dest="${download.path}/yasm${yasm.version}" src="${yasm.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/yasm${yasm.version}" compression="${yasm.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/yasm${yasm.version}/config/install-sh" perm="u+x"/>
+        <configureandmake library="yasm${yasm.version}"/>
+    </target>
+
+    <target name="lame.check">
+        <condition property="lame.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libmp3lame.a"/>
+                <available file="${prefix.path.real}/include/lame/lame.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-lame" depends="mkdirs,lame.check" unless="lame.dontrun">
+        <get dest="${download.path}/lame${lame.version}" src="${lame.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/lame${lame.version}" compression="${lame.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/lame${lame.version}/install-sh" perm="u+x"/>
+        <configureandmake library="lame${lame.version}">
+            <confopts>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+                <arg value="--disable-decoder"/>
+            </confopts>
+        </configureandmake>
+    </target>
+
+    <target name="faad.check">
+        <condition property="faad.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libfaad.a"/>
+                <available file="${prefix.path.real}/include/faad.h"/>
+                <available file="${prefix.path.real}/include/neaacdec.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-faad" depends="mkdirs,faad.check" unless="faad.dontrun">
+        <get dest="${download.path}/faad${faad.version}" src="${faad.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/faad${faad.version}" compression="${faad.compression}" dest="${extract.path}"/>
+        <replace file="${extract.path}/faad2/Makefile.am" token="SUBDIRS = libfaad common frontend plugins" value="SUBDIRS = libfaad"/>
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(common/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(common/mp4ff/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(plugins/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(plugins/xmms/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(plugins/xmms/src/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(plugins/mpeg4ip/Makefile)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(faad2.spec)" value="" />
+        <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(frontend/Makefile)" value="" />
+        <bootstrap library="faad2"/>
+        <chmod file="${extract.path}/faad2/install-sh" perm="u+x"/>
+        <configureandmake library="faad2" ldflags="-no-undefined">
+            <confopts>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+            </confopts>
+        </configureandmake>
+    </target>
+
+    <target name="xvidcore.check">
+        <condition property="xvidcore.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libxvidcore.a"/>
+                <available file="${prefix.path.real}/include/xvid.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="xvidcore.move.windows" if="os.isWindows">
+        <exec executable="rm">
+            <arg value="${prefix.path}/lib/xvidcore.dll"/>
+        </exec>
+        <exec executable="mv">
+            <arg value="${prefix.path}/lib/xvidcore.a"/>
+            <arg value="${prefix.path}/lib/libxvidcore.a"/>
+        </exec>
+    </target>
+
+    <target name="xvidcore.move.mac" if="os.isMac">
+        <exec executable="rm">
+            <arg value="${prefix.path}/lib/libxvidcore.4.dylib"/>
+        </exec>
+    </target>
+
+    <target name="xvidcore.move.unix" if="os.isUnix">
+        <exec executable="rm">
+            <arg value="${prefix.path}/lib/libxvidcore.so.4.2"/>
+        </exec>
+    </target>
+
+    <macrodef name="xvidcore.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="xvidcore/build/generic">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="xvidcore" unless="os.isMac">
+        <xvidcore.make/>
+    </target>
+
+    <target name="xvidcore.mac64" if="os.isMac64">
+        <xvidcore.make>
+            <configureopts>
+                <arg value="--disable-assembly"/>
+            </configureopts>
+        </xvidcore.make>
+    </target>
+
+    <target name="xvidcore.mac32" if="os.isMac32">
+        <get dest="${download.path}/xvidcore-patch${xvidcore.version}" src="${xvidcore.patch.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/xvidcore-patch${xvidcore.version}" compression="${xvidcore.patch.compression}" dest="${extract.path}"/>
+        <patch patchfile="${extract.path}/xvidcore-patch/xvid.patch" originalfile="${extract.path}/xvidcore/src/xvid.c"/>
+        <xvidcore.make/>
+    </target>
+
+    <target name="build-xvidcore" depends="mkdirs,xvidcore.check,build-yasm" unless="xvidcore.dontrun">
+        <get dest="${download.path}/xvidcore${xvidcore.version}" src="${xvidcore.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/xvidcore${xvidcore.version}" compression="${xvidcore.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/xvidcore/build/generic/install-sh" perm="u+x"/>
+
+        <antcall target="xvidcore"/>
+        <antcall target="xvidcore.mac64"/>
+        <antcall target="xvidcore.mac32"/>
+
+        <antcall target="xvidcore.move.windows"/>
+        <antcall target="xvidcore.move.mac"/>
+        <antcall target="xvidcore.move.unix"/>
+    </target>
+
+    <target name="x264.check">
+        <condition property="x264.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libx264.a"/>
+                <available file="${prefix.path.real}/include/x264.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <macrodef name="x264.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="x264${x264.version}">
+                <confopts>
+                    <arg value="--disable-pthread"/>
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="x264" unless="os.isMac64">
+        <x264.make/>
+    </target>
+
+    <target name="x264.mac64" if="os.isMac64">
+        <x264.make>
+            <configureopts>
+                <arg value="--host=x86_64-apple-darwin10"/>
+            </configureopts>
+        </x264.make>
+    </target>
+
+    <target name="build-x264" depends="mkdirs,build-yasm,x264.check" unless="x264.dontrun">
+        <get dest="${download.path}/x264${x264.version}" src="${x264.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/x264${x264.version}" compression="${x264.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/x264${x264.version}/config.guess" perm="u+x"/>
+        <chmod file="${extract.path}/x264${x264.version}/config.sub" perm="u+x"/>
+        <chmod file="${extract.path}/x264${x264.version}/version.sh" perm="u+x"/>
+
+        <antcall target="x264"/>
+        <antcall target="x264.mac64"/>
+    </target>
+
+    <target name="ogg.check">
+        <condition property="ogg.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libogg.a"/>
+                <available file="${prefix.path.real}/include/ogg/config_types.h"/>
+                <available file="${prefix.path.real}/include/ogg/ogg.h"/>
+                <available file="${prefix.path.real}/include/ogg/os_types.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-ogg" depends="mkdirs,ogg.check" unless="ogg.dontrun">
+        <get dest="${download.path}/ogg${ogg.version}" src="${ogg.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/ogg${ogg.version}" compression="${ogg.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/libogg${ogg.version}/install-sh" perm="u+x"/>
+        <configureandmake library="libogg${ogg.version}">
+            <confopts>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+            </confopts>
+        </configureandmake>
+    </target>
+
+    <target name="vorbis.check">
+        <condition property="vorbis.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libvorbis.a"/>
+                <available file="${prefix.path.real}/lib/libvorbisenc.a"/>
+                <available file="${prefix.path.real}/lib/libvorbisfile.a"/>
+                <available file="${prefix.path.real}/include/vorbis/codec.h"/>
+                <available file="${prefix.path.real}/include/vorbis/vorbisenc.h"/>
+                <available file="${prefix.path.real}/include/vorbis/vorbisfile.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-vorbis" depends="mkdirs,vorbis.check,build-ogg" unless="vorbis.dontrun">
+        <get dest="${download.path}/vorbis${vorbis.version}" src="${vorbis.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/vorbis${vorbis.version}" compression="${vorbis.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/libvorbis${vorbis.version}/install-sh" perm="u+x"/>
+        <configureandmake library="libvorbis${vorbis.version}">
+            <confopts>
+                <arg value="--with-ogg-libraries=${prefix.path}/lib"/>
+                <arg value="--with-ogg-includes=${prefix.path}/include/"/>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+            </confopts>
+        </configureandmake>
+    </target>
+
+    <target name="theora.check">
+        <condition property="theora.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libtheora.a"/>
+                <available file="${prefix.path.real}/lib/libtheoradec.a"/>
+                <available file="${prefix.path.real}/lib/libtheoraenc.a"/>
+                <available file="${prefix.path.real}/include/theora/codec.h"/>
+                <available file="${prefix.path.real}/include/theora/theora.h"/>
+                <available file="${prefix.path.real}/include/theora/theoradec.h"/>
+                <available file="${prefix.path.real}/include/theora/theoraenc.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <macrodef name="theora.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+        <configureandmake library="libtheora${theora.version}">
+            <confopts>
+                <arg value="--with-ogg-libraries=${prefix.path}/lib"/>
+                <arg value="--with-ogg-includes=${prefix.path}/include/"/>
+                <arg value="--with-vorbis-libraries=${prefix.path}/lib"/>
+                <arg value="--with-vorbis-includes=${prefix.path}/include/"/>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+                <configureopts/>
+            </confopts>
+        </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="theora" unless="os.isMac64">
+        <theora.make/>
+    </target>
+
+    <target name="theora.mac64" if="os.isMac64">
+        <theora.make>
+            <configureopts>
+                <arg value="--disable-asm"/>
+            </configureopts>
+        </theora.make>
+    </target>
+
+    <target name="build-theora" depends="mkdirs,theora.check,build-ogg,build-vorbis" unless="theora.dontrun">
+        <get dest="${download.path}/theora${theora.version}" src="${theora.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/theora${theora.version}" compression="${theora.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/libtheora${theora.version}/install-sh" perm="u+x"/>
+        <antcall target="theora"/>
+        <antcall target="theora.mac64"/>
+    </target>
+
+    <target name="gsm.check">
+        <condition property="gsm.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libgsm.a"/>
+                <available file="${prefix.path.real}/include/gsm.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-gsm" depends="mkdirs,gsm.check" unless="gsm.dontrun">
+        <get dest="${download.path}/gsm${gsm.version}" src="${gsm.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/gsm${gsm.version}" compression="${gsm.compression}" dest="${extract.path}"/>
+        <replace file="${extract.path}/gsm-1.0-pl13/Makefile" token="gcc -ansi -pedantic" value="gcc"/>
+        <make library="gsm-1.0-pl13" target="lib/libgsm.a"/>
+        <exec executable="cp">
+            <arg value="${extract.path}/gsm-1.0-pl13/lib/libgsm.a"/>
+            <arg value="${prefix.path}/lib/libgsm.a"/>
+        </exec>
+        <exec executable="cp">
+            <arg value="${extract.path}/gsm-1.0-pl13/inc/gsm.h"/>
+            <arg value="${prefix.path}/include/gsm.h"/>
+        </exec>
+    </target>
+
+    <target name="a52.check">
+        <condition property="a52.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/liba52.a"/>
+                <available file="${prefix.path.real}/include/a52dec/a52.h"/>
+                <available file="${prefix.path.real}/include/a52dec/attributes.h"/>
+                <available file="${prefix.path.real}/include/a52dec/audio_out.h"/>
+                <available file="${prefix.path.real}/include/a52dec/mm_accel.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-a52" depends="mkdirs,a52.check" unless="a52.dontrun">
+        <get dest="${download.path}/a52${a52.version}" src="${a52.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/a52${a52.version}" compression="${a52.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/a52dec${a52.version}/install-sh" perm="u+x"/>
+        <configureandmake library="a52dec${a52.version}">
+            <confopts>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+            </confopts>
+        </configureandmake>
+    </target>
+
+    <target name="patch-ffmpeg">
+        <get dest="${download.path}/ffmpeg-patch${ffmpeg.version}" src="${ffmpeg.patch.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/ffmpeg-patch${ffmpeg.version}" compression="${ffmpeg.patch.compression}" dest="${extract.path}"/>
+        <copy tofile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/liba52.c" file="${extract.path}/ffmpeg-patch${ffmpeg.version}/liba52.c"/>
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/configure.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/configure"/>
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/Makefile.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/Makefile"/>
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/allcodecs.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/allcodecs.c"/>
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/dsputil_mmx.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/x86/dsputil_mmx.c"/>
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/h264.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/h264.c"/>
+    </target>
+
+    <target name="ffmpeg.check">
+        <condition property="ffmpeg.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libavcodec.a"/>
+                <available file="${prefix.path.real}/lib/libavformat.a"/>
+                <available file="${prefix.path.real}/lib/libavutil.a"/>
+                <available file="${prefix.path.real}/lib/libpostproc.a"/>
+                <available file="${prefix.path.real}/lib/libswscale.a"/>
+                <available file="${prefix.path.real}/include/libavcodec/avcodec.h"/>
+                <available file="${prefix.path.real}/include/libavcodec/opt.h"/>
+                <available file="${prefix.path.real}/include/libavcodec/vdpau.h"/>
+                <available file="${prefix.path.real}/include/libavcodec/xvmc.h"/>
+                <available file="${prefix.path.real}/include/libavformat/avformat.h"/>
+                <available file="${prefix.path.real}/include/libavformat/avi.h"/>
+                <available file="${prefix.path.real}/include/libavformat/avio.h"/>
+                <available file="${prefix.path.real}/include/libavformat/riff.h"/>
+                <available file="${prefix.path.real}/include/libavformat/rtpdec.h"/>
+                <available file="${prefix.path.real}/include/libavformat/rtp.h"/>
+                <available file="${prefix.path.real}/include/libavutil/adler32.h"/>
+                <available file="${prefix.path.real}/include/libavutil/avstring.h"/>
+                <available file="${prefix.path.real}/include/libavutil/avutil.h"/>
+                <available file="${prefix.path.real}/include/libavutil/base64.h"/>
+                <available file="${prefix.path.real}/include/libavutil/common.h"/>
+                <available file="${prefix.path.real}/include/libavutil/crc.h"/>
+                <available file="${prefix.path.real}/include/libavutil/fifo.h"/>
+                <available file="${prefix.path.real}/include/libavutil/intfloat_readwrite.h"/>
+                <available file="${prefix.path.real}/include/libavutil/log.h"/>
+                <available file="${prefix.path.real}/include/libavutil/lzo.h"/>
+                <available file="${prefix.path.real}/include/libavutil/mathematics.h"/>
+                <available file="${prefix.path.real}/include/libavutil/md5.h"/>
+                <available file="${prefix.path.real}/include/libavutil/mem.h"/>
+                <available file="${prefix.path.real}/include/libavutil/pixfmt.h"/>
+                <available file="${prefix.path.real}/include/libavutil/random.h"/>
+                <available file="${prefix.path.real}/include/libavutil/rational.h"/>
+                <available file="${prefix.path.real}/include/libavutil/sha1.h"/>
+                <available file="${prefix.path.real}/include/libpostproc/postprocess.h"/>
+                <available file="${prefix.path.real}/include/libswscale/swscale.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <macrodef name="ffmpeg.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="ffmpeg${ffmpeg.version}" ldflags="-L${prefix.path}/lib" cflags="-I${prefix.path}/include">
+                <confopts>
+                    <arg value="--enable-gpl"/>
+                    <arg value="--disable-ffplay"/>
+                    <arg value="--disable-ffserver"/>
+                    <arg value="--enable-postproc"/>
+                    <arg value="--enable-swscale"/>
+                    <arg value="--enable-libmp3lame"/>
+                    <arg value="--enable-libx264"/>
+                    <arg value="--enable-libgsm"/>
+                    <arg value="--disable-decoder=aac"/>
+                    <arg value="--enable-libfaad"/>
+                    <arg value="--enable-libtheora"/>
+                    <arg value="--enable-libvorbis"/>
+                    <arg value="--enable-libxvid"/>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="ffmpeg.make.windows" if="os.isWindows">
+        <ffmpeg.make>
+            <configureopts>
+                <arg value="--enable-memalign-hack"/>
+            </configureopts>
+        </ffmpeg.make>
+    </target>
+
+    <target name="ffmpeg.make.mac64" if="os.isMac64">
+        <ffmpeg.make>
+            <configureopts>
+                <arg value="--arch=x86_64"/>
+            </configureopts>
+        </ffmpeg.make>
+    </target>
+
+    <target name="ffmpeg.make.mac32" if="os.isMac32">
+        <ffmpeg.make/>
+    </target>
+
+    <target name="ffmpeg.make.unix" if="os.isUnix">
+        <ffmpeg.make>
+            <configureopts>
+                <arg value="--enable-pthreads"/>
+            </configureopts>
+        </ffmpeg.make>
+    </target>
+
+    <target name="build-ffmpeg" depends="mkdirs,ffmpeg.check,build-yasm,build-lame,build-faad,build-xvidcore,build-x264,build-vorbis,build-theora,build-gsm,build-a52" unless="ffmpeg.dontrun">
+        <get dest="${download.path}/ffmpeg${ffmpeg.version}" src="${ffmpeg.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/ffmpeg${ffmpeg.version}" compression="${ffmpeg.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/ffmpeg${ffmpeg.version}/version.sh" perm="u+x"/>
+        <chmod file="${extract.path}/ffmpeg${ffmpeg.version}/doc/texi2pod.pl" perm="u+x"/>
+        <antcall target="patch-ffmpeg"/>
+        <antcall target="ffmpeg.make.windows"/>
+        <antcall target="ffmpeg.make.mac64"/>
+        <antcall target="ffmpeg.make.mac32"/>
+        <antcall target="ffmpeg.make.unix"/>
+        <copy tofile="${prefix.path.real}/include/libavformat/avi.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/avi.h"/>
+        <copy tofile="${prefix.path.real}/include/libavformat/riff.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/riff.h"/>
+        <copy tofile="${prefix.path.real}/include/libavformat/rtpdec.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/rtpdec.h"/>
+        <copy tofile="${prefix.path.real}/include/libavformat/rtp.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/rtp.h"/>
+    </target>
+
+</project>
