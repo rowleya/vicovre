@@ -224,7 +224,7 @@ public class HarvestHandler extends AbstractHandler {
         if (harvestSource == null) {
             throw new XmlRpcException("Unknown id " + id);
         }
-        harvestSource.run();
+        harvestSource.harvest();
         return harvestSource.getStatus();
     }
 
