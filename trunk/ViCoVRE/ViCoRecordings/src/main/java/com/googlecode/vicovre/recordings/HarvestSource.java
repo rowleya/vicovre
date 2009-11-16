@@ -55,7 +55,7 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class HarvestSource extends TimerTask {
+public class HarvestSource {
 
     /**
      * Updates the source manually
@@ -124,6 +124,18 @@ public class HarvestSource extends TimerTask {
     private RtpTypeRepository typeRepostory = null;
 
     private Timer timer = null;
+
+    private class HarvestTask extends TimerTask {
+
+        /**
+         *
+         * @see java.util.TimerTask#run()
+         */
+        public void run() {
+            harvest();
+        }
+
+    }
 
     public HarvestSource(Folder folder, RtpTypeRepository typeRepository) {
         synchronized (LAST_ID_SYNC) {
@@ -355,7 +367,7 @@ public class HarvestSource extends TimerTask {
                     first.add(Calendar.YEAR, 1);
                 }
                 timer = new Timer();
-                timer.schedule(this, first.getTime());
+                timer.schedule(new HarvestTask(), first.getTime());
             } else if (updateFrequency.equals(UPDATE_MONTHLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
@@ -368,7 +380,7 @@ public class HarvestSource extends TimerTask {
                     first.add(Calendar.MONTH, 1);
                 }
                 timer = new Timer();
-                timer.schedule(this, first.getTime());
+                timer.schedule(new HarvestTask(), first.getTime());
             } else if (updateFrequency.equals(UPDATE_WEEKLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
@@ -381,7 +393,7 @@ public class HarvestSource extends TimerTask {
                     first.add(Calendar.DAY_OF_MONTH, 7);
                 }
                 timer = new Timer();
-                timer.schedule(this, first.getTime());
+                timer.schedule(new HarvestTask(), first.getTime());
             }
         }
     }
@@ -397,10 +409,9 @@ public class HarvestSource extends TimerTask {
     }
 
     /**
-     *
-     * @see java.util.TimerTask#run()
+     * Harvests the source
      */
-    public void run() {
+    public void harvest() {
         scheduleTimer(database, typeRepostory);
         String url = this.url;
         Date now = new Date();
