@@ -76,6 +76,7 @@ class FFMpegJ {
         SwsContext *swScaleContext;
         bool swinit;
         uint8_t *buffer;
+        bool codecOpened;
 
     public:
         FFMpegJ(JNIEnv *env, jobject peer, int logLevel);

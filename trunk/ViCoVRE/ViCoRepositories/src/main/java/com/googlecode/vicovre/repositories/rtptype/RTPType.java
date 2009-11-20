@@ -55,6 +55,8 @@ public class RTPType {
 
     private String mediaType = DEFAULT_MEDIA_TYPE;
 
+    private double clockRate = 0;
+
     /**
      * Returns the id
      * @return the id
@@ -101,6 +103,14 @@ public class RTPType {
      */
     public Format getFormat() {
         return format;
+    }
+
+    public double getClockRate() {
+        return clockRate;
+    }
+
+    public void setClockRate(double clockRate) {
+        this.clockRate = clockRate;
     }
 
     /**

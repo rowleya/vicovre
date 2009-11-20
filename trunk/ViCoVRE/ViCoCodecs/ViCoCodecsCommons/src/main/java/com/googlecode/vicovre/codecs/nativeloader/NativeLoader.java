@@ -121,8 +121,6 @@ public final class NativeLoader {
                 System.loadLibrary(name);
                 return;
             } catch (UnsatisfiedLinkError e) {
-                System.err.println("Could not load " + name
-                        + " with System loader");
                 USER_LIB_DIR.mkdirs();
                 String libraryName = System.mapLibraryName(name);
                 for (Loader loader : LOADERS) {
@@ -132,7 +130,7 @@ public final class NativeLoader {
                             LOADERROR.put(name, "");
                             return;
                         } catch (UnsatisfiedLinkError error) {
-                            System.err.println(error.getMessage());
+                            // Do Nothing
                         }
                     }
                 }

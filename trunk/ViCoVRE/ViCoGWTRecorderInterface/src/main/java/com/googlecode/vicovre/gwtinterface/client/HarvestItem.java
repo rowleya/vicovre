@@ -189,6 +189,14 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         this.status.setText(status);
     }
 
+    public void setHour(int hour) {
+        popup.setHour(hour);
+    }
+
+    public void setMinute(int minute) {
+        popup.setMinute(minute);
+    }
+
     public Map<String, Object> getDetails() {
         Map<String, Object> details = new HashMap<String, Object>();
         details.put("id", id);

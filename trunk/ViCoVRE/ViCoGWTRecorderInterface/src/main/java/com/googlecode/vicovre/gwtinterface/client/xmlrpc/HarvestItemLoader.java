@@ -86,6 +86,10 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
             harvestItem.setDayOfMonth(
                     (Integer) item.get("dayOfWeek"));
         }
+        Integer hour = (Integer) item.get("hour");
+        Integer minute = (Integer) item.get("minute");
+        harvestItem.setHour(hour);
+        harvestItem.setMinute(minute);
 
         String venueServerUrl = (String) item.get("ag3VenueServer");
         if (venueServerUrl != null) {

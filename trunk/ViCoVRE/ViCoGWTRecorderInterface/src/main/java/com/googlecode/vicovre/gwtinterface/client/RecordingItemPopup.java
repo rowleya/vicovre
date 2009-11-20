@@ -70,9 +70,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private DateBox startDate = new DateBox();
 
-    private ListBox startHour = new ListBox();
-
-    private ListBox startMinute = new ListBox();
+    private TimeBox startTime = new TimeBox(5, 5);
 
     private RadioButton manualStop = null;
 
@@ -82,9 +80,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private DateBox stopDate = new DateBox();
 
-    private ListBox stopHour = new ListBox();
-
-    private ListBox stopMinute = new ListBox();
+    private TimeBox stopTime = new TimeBox(5, 5);
 
     private Button ok = new Button("OK");
 
@@ -111,36 +107,12 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         Date now = new Date();
         startDate.setValue(now);
         stopDate.setValue(now);
-        int selectedHour = 0;
-        for (int i = 0; i < 23; i++) {
-            if (i == now.getHours()) {
-                selectedHour = i;
-            }
-            startHour.addItem(String.valueOf(i));
-            stopHour.addItem(String.valueOf(i));
-        }
-        startHour.setSelectedIndex(selectedHour);
-        if (selectedHour + 1 > 24) {
-            selectedHour = -1;
-        }
-        stopHour.setSelectedIndex(selectedHour + 1);
-        int selectedMinute = 0;
-        for (int i = 0; i < 60; i += 5) {
-            if (i < (now.getMinutes() + 5)) {
-                selectedMinute = i / 5;
-            }
-            String value = String.valueOf(i);
-            if (i < 10) {
-                value = "0" + value;
-            }
-            startMinute.addItem(value);
-            stopMinute.addItem(value);
-        }
-        if (now.getMinutes() > (selectedMinute * 5)) {
-            selectedMinute = 0;
-        }
-        startMinute.setSelectedIndex(selectedMinute);
-        stopMinute.setSelectedIndex(selectedMinute);
+        startTime.setSecondsVisible(false);
+        stopTime.setSecondsVisible(false);
+        startTime.setHour(now.getHours());
+        startTime.setMinute(now.getMinutes());
+        stopTime.setHour(now.getHours() + 1);
+        stopTime.setMinute(now.getMinutes());
 
         manualStart.addValueChangeHandler(this);
         manualStop.addValueChangeHandler(this);
@@ -161,9 +133,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         startDatePanel.add(new Label(" on "));
         startDatePanel.add(startDate);
         startDatePanel.add(new Label(" at "));
-        startDatePanel.add(startHour);
-        startDatePanel.add(new Label(":"));
-        startDatePanel.add(startMinute);
+        startDatePanel.add(startTime);
         grid.setWidget(2, 0, new Label("Start:"));
         grid.setWidget(2, 1, startPanel);
 
@@ -174,9 +144,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         stopDatePanel.add(new Label(" on "));
         stopDatePanel.add(stopDate);
         stopDatePanel.add(new Label(" at "));
-        stopDatePanel.add(stopHour);
-        stopDatePanel.add(new Label(":"));
-        stopDatePanel.add(stopMinute);
+        stopDatePanel.add(stopTime);
         grid.setWidget(3, 0, new Label("Stop:"));
         grid.setWidget(3, 1, stopPanel);
 
@@ -213,8 +181,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         if (autoStart.getValue()) {
             Date startDate = this.startDate.getValue();
             return new Date(startDate.getYear(), startDate.getMonth(),
-                    startDate.getDate(), startHour.getSelectedIndex(),
-                    startMinute.getSelectedIndex() * 5);
+                    startDate.getDate(), startTime.getHour(),
+                    startTime.getMinute());
         }
         return null;
     }
@@ -223,8 +191,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         if (autoStop.getValue()) {
             Date stopDate = this.stopDate.getValue();
             return new Date(stopDate.getYear(), stopDate.getMonth(),
-                    stopDate.getDate(), stopHour.getSelectedIndex(),
-                    stopMinute.getSelectedIndex() * 5);
+                    stopDate.getDate(), stopTime.getHour(),
+                    stopTime.getMinute());
         }
         return null;
     }
@@ -252,8 +220,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
     public void setStartDate(Date startDate) {
         if (startDate != null) {
             this.startDate.setValue(startDate);
-            this.startHour.setSelectedIndex(startDate.getHours());
-            this.startMinute.setSelectedIndex(startDate.getMinutes() / 5);
+            this.startTime.setHour(startDate.getHours());
+            this.startTime.setMinute(startDate.getMinutes());
             autoStart.setValue(true, true);
         } else {
             manualStart.setValue(true, true);
@@ -263,8 +231,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
     public void setStopDate(Date stopDate) {
         if (stopDate != null) {
             this.stopDate.setValue(stopDate);
-            this.stopHour.setSelectedIndex(stopDate.getHours());
-            this.stopMinute.setSelectedIndex(stopDate.getMinutes() / 5);
+            this.stopTime.setHour(stopDate.getHours());
+            this.stopTime.setMinute(stopDate.getMinutes());
             autoStop.setValue(true, true);
         } else {
             manualStop.setValue(true, true);
@@ -291,8 +259,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         autoStart.setEnabled(!recording);
         manualStart.setEnabled(!recording);
         startDate.setEnabled(!recording);
-        startHour.setEnabled(!recording);
-        startMinute.setEnabled(!recording);
+        startTime.setEnabled(!recording);
         venue.setEnabled(!recording);
     }
 

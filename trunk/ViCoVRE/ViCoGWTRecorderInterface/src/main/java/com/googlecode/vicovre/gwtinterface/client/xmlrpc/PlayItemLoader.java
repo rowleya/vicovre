@@ -106,13 +106,14 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         for (Map<String, Object> layoutMap : replayLayouts) {
             String layoutName = (String) layoutMap.get("name");
             Integer layoutTime = (Integer) layoutMap.get("time");
+            Integer endTime = (Integer) layoutMap.get("endTime");
             Map<String, String> positions =
                 (Map<String, String>) layoutMap.get("positions");
+            List<String> audioStreams = (List<String>)
+                layoutMap.get("audioStreams");
             ReplayLayout layout = new ReplayLayout(layoutName, layoutTime,
-                    positions);
-            if (layoutTime == 0) {
-                playItem.setLayout(layout);
-            }
+                    endTime, positions, audioStreams);
+            playItem.setLayout(layout);
         }
 
         return playItem;

@@ -42,9 +42,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -59,15 +59,19 @@ import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.ReplayLayout;
-import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
+import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.repositories.layout.Layout;
-import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
+import com.googlecode.vicovre.web.play.metadata.MetadataAnnotation;
+import com.googlecode.vicovre.web.play.metadata.MetadataAnnotationType;
+import com.googlecode.vicovre.web.play.metadata.MetadataLayout;
+import com.googlecode.vicovre.web.play.metadata.MetadataLayoutPosition;
+import com.googlecode.vicovre.web.play.metadata.ThumbSorter;
+import com.googlecode.vicovre.web.play.metadata.ThumbFileSorter;
+import com.googlecode.vicovre.web.play.metadata.Thumbnail;
 
 public class PlayRecordingController implements Controller {
 
@@ -91,565 +95,8 @@ public class PlayRecordingController implements Controller {
 
     private static final int BYTE_MASK = 0xFF;
 
-    private class Thumbnail {
-
-        private double start = 0;
-
-        private double end = 0;
-
-        private String filename = null;
-
-        private String yuvfile = null;
-
-        private Thumbnail(double start, double end, String filename,
-                String yuvfile) {
-            this.start = start;
-            this.end = end;
-            this.filename = filename;
-            this.yuvfile = yuvfile;
-        }
-
-        /**
-         * Returns the end
-         *
-         * @return the end
-         */
-        public double getEnd() {
-            return end;
-        }
-
-        /**
-         * Returns the filename
-         *
-         * @return the filename
-         */
-        public String getFilename() {
-            return filename;
-        }
-
-        public String setFilename(String filename) {
-            if (this.filename == null) {
-                this.filename = filename;
-            }
-            return this.filename;
-        }
-
-        public String getYuvfile() {
-            return yuvfile;
-        }
-
-        public String setYUVFile(String yuvfile) {
-            if (this.yuvfile == null) {
-                this.yuvfile = yuvfile;
-            }
-            return this.yuvfile;
-        }
-
-        /**
-         * Returns the start
-         *
-         * @return the start
-         */
-        public double getStart() {
-            return start;
-        }
-
-        public boolean equals(Object o) {
-            if (!(o instanceof Thumbnail)) {
-                return false;
-            }
-
-            Thumbnail t = (Thumbnail) o;
-            if (!t.filename.equals(filename)) {
-                return false;
-            }
-            if (t.start != start) {
-                return false;
-            }
-            return true;
-        }
-
-        public int hashCode() {
-            String hash = filename + start;
-            return hash.hashCode();
-        }
-
-    }
-
-    private class TextThumbnail extends Thumbnail {
-
-        private String text = null;
-        private String type = null;
-        private String name = null;
-        private String url = null;
-        private String email = null;
-        private String icon = null;
-
-        private TextThumbnail(double start, double end, String filename,
-                String text, String type) {
-            super(start, end, filename, null);
-            this.text = text;
-            this.type = type;
-        }
-
-        private TextThumbnail(double start, double end, String icon,
-                String text, String type, String name, String url, String email) {
-            super(start, end, null, null);
-            this.text = text;
-            this.icon = icon;
-            this.type = type;
-            this.name = name;
-            this.url = url;
-            this.email = email;
-        }
-
-        /**
-         * Gets the text
-         *
-         * @return The text
-         */
-        public String getText() {
-            return text;
-        }
-
-        /**
-         * Gets the text
-         *
-         * @return The type
-         */
-        public String getType() {
-            return type;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getIcon() {
-            return icon;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public String setFilename(String filename) {
-            return super.setFilename(filename);
-        }
-
-        public boolean equals(Object o) {
-            if (!(o instanceof TextThumbnail)) {
-                return false;
-            }
-            TextThumbnail t = (TextThumbnail) o;
-            if (!t.type.equals(type)) {
-                return false;
-            }
-            if (!t.text.equals(text)) {
-                return false;
-            }
-            return super.equals(o);
-        }
-
-        public int hashCode() {
-            String hash = type + text;
-            return hash.hashCode();
-        }
-    }
-
-    private class ThumbSorter implements Comparator<Thumbnail> {
-
-        /**
-         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-         */
-        public int compare(Thumbnail arg0, Thumbnail arg1) {
-            if ((arg0.start != 0) && (arg1.start != 0)) {
-                return (int) (arg0.start - arg1.start);
-            }
-            return 0;
-        }
-
-    }
-
-    private class MetadataStream {
-        private long start = 0;
-        private long end = 0;
-        private String type;
-        private String ssrc;
-        private double duration;
-
-        private MetadataStream(Stream stream) {
-            start = stream.getStartTime().getTime();
-            end = stream.getEndTime().getTime();
-            duration = ((double) (end - start)) / 1000;
-            type = stream.getRtpType().getMediaType();
-            ssrc = stream.getSsrc();
-        }
-
-        public long getStart() {
-            return start;
-        }
-
-        public long getEnd() {
-            return end;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public String getSsrc() {
-            return ssrc;
-        }
-
-        public double getDuration() {
-            return duration;
-        }
-
-    }
-
-    private class MetadataLayoutPosition {
-        private MetadataStream stream = null;
-        private String name = null;
-        private String type = null;
-        private int width = 0;
-        private int height = 0;
-        private int x = 0;
-        private int y = 0;
-        private boolean changes = false;
-
-        private MetadataLayoutPosition(String layoutName,
-                ReplayLayoutPosition replayLayoutPosition) {
-            name = replayLayoutPosition.getName();
-            Stream replayStream = replayLayoutPosition.getStream();
-            System.out.println("MetadataLayoutPosition[" + name + "]-stream:"
-                    + replayStream);
-            if (replayStream != null) {
-                stream = new MetadataStream(replayStream);
-                type = stream.type;
-            }
-            LayoutPosition layoutPosition = layoutRepository.findLayout(
-                    layoutName).findStreamPosition(name);
-            if (layoutPosition != null) {
-                x = layoutPosition.getX();
-                y = layoutPosition.getY();
-                width = layoutPosition.getWidth();
-                height = layoutPosition.getHeight();
-                changes = layoutPosition.hasChanges();
-            }
-        }
-
-        private MetadataLayoutPosition(LayoutPosition layoutPosition) {
-            name = layoutPosition.getName();
-            type = layoutPosition.getName();
-            x = layoutPosition.getX();
-            y = layoutPosition.getY();
-            width = layoutPosition.getWidth();
-            height = layoutPosition.getHeight();
-            changes = layoutPosition.hasChanges();
-        }
-
-        private MetadataLayoutPosition(Stream audioStream) {
-            name = "audio";
-            stream = new MetadataStream(audioStream);
-            type = stream.type;
-        }
-
-        public MetadataStream getStream() {
-            return stream;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public int getWidth() {
-            return width;
-        }
-
-        public int getHeight() {
-            return height;
-        }
-
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
-
-        public boolean hasChanges() {
-            return changes;
-        }
-    }
-
-    private class MetadataLayout {
-        private double timeStamp = 0;
-        private String layoutName = null;
-        private Vector<MetadataLayoutPosition> layoutPositions =
-            new Vector<MetadataLayoutPosition>();
-
-        private MetadataLayout(Recording recording, ReplayLayout replayLayout) {
-            this.timeStamp = (double) (replayLayout.getTime()
-                    - recording.getStartTime().getTime()) / 1000;
-            this.layoutName = replayLayout.getName();
-            System.out.println("time:" + timeStamp + " layout:" + layoutName);
-            Layout layout = layoutRepository.findLayout(replayLayout.getName());
-            for (LayoutPosition layoutPosition : layout.getStreamPositions()) {
-                if (!layoutPosition.isAssignable()) {
-                    layoutPositions.add(
-                        new MetadataLayoutPosition(layoutPosition));
-                }
-            }
-            for (Stream stream : recording.getStreams()) {
-                if ((stream.getRtpType() != null)
-                        && stream.getRtpType().getMediaType().equals("audio")) {
-                    layoutPositions.add(new MetadataLayoutPosition(stream));
-                }
-            }
-            for (ReplayLayoutPosition replayLayoutPosition : replayLayout.getLayoutPositions()) {
-                layoutPositions.add(
-                    new MetadataLayoutPosition(layoutName, replayLayoutPosition));
-            }
-        }
-
-        public double getTimeStamp() {
-            return timeStamp;
-        }
-
-        public String getLayoutName() {
-            return layoutName;
-        }
-
-        public Vector<MetadataLayoutPosition> getLayoutPositions() {
-            return layoutPositions;
-        }
-    }
-
-    private class MetadataAnnotation {
-
-        private double start = 0;
-
-        private double end = 0;
-
-        private String nodeType = null;
-
-        private String text = null;
-
-        private String colour = null;
-        private String name = null;
-        private String url = null;
-        private String email = null;
-
-        private MetadataAnnotation(double start, double end, String nodeType,
-                String text, String colour) {
-            this.colour = "0x000000";
-            this.start = start;
-            this.end = end;
-            this.nodeType = nodeType;
-            this.text = text;
-            if (colour != null) {
-                this.colour = colour.replace("#", "0x");
-            }
-        }
-
-        private MetadataAnnotation(double start, double end, String nodeType,
-                String text, String colour, String name, String url,
-                String email) {
-            this.colour = "0x000000";
-            this.start = start;
-            this.end = end;
-            this.nodeType = nodeType;
-            this.text = text;
-            if (colour != null) {
-                this.colour = colour.replace("#", "0x");
-            }
-            this.name = name;
-            this.url = url;
-            this.email = email;
-        }
-
-        /**
-         * Returns the end
-         *
-         * @return the end
-         */
-        public double getEnd() {
-            return end;
-        }
-
-        /**
-         * Returns the text
-         *
-         * @return the text
-         */
-        public String getText() {
-            return text;
-        }
-
-        /**
-         * Returns the nodeType
-         *
-         * @return the nodeType
-         */
-        public String getNodeType() {
-            return nodeType;
-        }
-
-        /**
-         * Returns the start
-         *
-         * @return the start
-         */
-        public double getStart() {
-            return start;
-        }
-
-        /**
-         * Returns the colour
-         *
-         * @return the colour
-         */
-        public String getColour() {
-            return colour;
-        }
-
-        /**
-         * Gets the text
-         *
-         * @return The type
-         */
-        public String getName() {
-            return name;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public boolean equals(Object o) {
-            if (!(o instanceof MetadataAnnotation)) {
-                return false;
-            }
-            MetadataAnnotation a = (MetadataAnnotation) o;
-            if (!a.nodeType.equals(nodeType)) {
-                return false;
-            }
-            if (!a.text.equals(text)) {
-                return false;
-            }
-            if (a.start != start) {
-                return false;
-            }
-            return true;
-        }
-
-        public int hashCode() {
-            String hash = nodeType + text + start;
-            return hash.hashCode();
-        }
-
-        public boolean update(double startTime, String text) {
-            if ((start <= startTime) && (end >= startTime)) {
-                this.text = text;
-                return true;
-            }
-            return false;
-        }
-    }
-
-    private class MetadataAnnotationType implements Comparable<MetadataAnnotationType> {
-
-        private String type = null;
-
-        private String icon = null;
-
-        private String text = null;
-
-        private long index = -1;
-
-        private MetadataAnnotationType(String type, String icon, String text,
-                long index) {
-            this.type = type;
-            this.icon = icon;
-            this.text = text;
-            this.index = index;
-        }
-
-        /**
-         * Returns the type
-         *
-         * @return the type
-         */
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * Returns the icon
-         *
-         * @return the icon
-         */
-        public String getIcon() {
-            return icon;
-        }
-
-        /**
-         * Returns the text
-         *
-         * @return the text
-         */
-        public String getText() {
-            return text;
-        }
-
-        /**
-         *
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        public boolean equals(Object o) {
-            if (!(o instanceof MetadataAnnotationType)) {
-                return false;
-            }
-            MetadataAnnotationType a = (MetadataAnnotationType) o;
-            return a.type.equals(type);
-        }
-
-        /**
-         *
-         * @see java.lang.Object#hashCode()
-         */
-        public int hashCode() {
-            return type.hashCode();
-        }
-
-        public int compareTo(MetadataAnnotationType o) {
-            if (index == -1) {
-                return 1;
-            }
-            if (o.index == -1) {
-                return -1;
-            }
-            long diff = index - o.index;
-            return ((int) diff);
-        }
-    }
-
     private Vector<Thumbnail> getSlides(String server, Recording recording,
-            final String ssrc) {
+            final String ssrc, long minStart, long maxEnd) {
         Vector<Thumbnail> thumb = new Vector<Thumbnail>();
 
         File dir = recording.getDirectory();
@@ -660,19 +107,38 @@ public class PlayRecordingController implements Controller {
             }
         };
 
-        String[] children = dir.list(filter);
+        File[] children = dir.listFiles(filter);
         if (children != null) {
-            for (String fname : children) {
+            Arrays.sort(children, new ThumbFileSorter(ssrc));
+            System.err.println(Arrays.toString(children));
+            Stream stream = recording.getStream(ssrc);
+            long lastStart = stream.getEndTime().getTime()
+                - recording.getStartTime().getTime();
+            if (lastStart > maxEnd) {
+                lastStart = maxEnd;
+            }
+            for (int i = children.length - 1; i >= 0; i--) {
+                String fname = children[i].getName();
                 String[] fparts = fname.split("[_.]");
                 if (fparts.length < 2) {
                     continue;
                 }
-                double start = Double.parseDouble(fparts[1]) / 1000;
-                String imgname = "/image/" + recording.getId() + "/" + ssrc
-                        + ".jpg?offset=" + fparts[1];
-                thumb.add(new Thumbnail(start, start, server + imgname
-                        + "&width=200",
-                        "." + imgname.replace(".jpg", ".yuv.zip")));
+                long start = Long.parseLong(fparts[1]);
+                if (start <= maxEnd) {
+                    if (start < minStart) {
+                        start = minStart;
+                    }
+                    long offsetStart = (start - minStart) / 1000;
+                    long offsetEnd = (lastStart - minStart) / 1000;
+                    String imgname = "/image.do?id=" + recording.getId()
+                            + "&ssrc=" + ssrc + "&offset=" + fparts[1];
+                    thumb.add(new Thumbnail(offsetStart, offsetEnd,
+                            server + imgname));
+                    lastStart = start;
+                }
+                if (start <= minStart) {
+                    break;
+                }
             }
         }
         return thumb;
@@ -812,7 +278,7 @@ public class PlayRecordingController implements Controller {
 
         String server = request.getScheme() + "://" + request.getServerName()
                 + ":" + request.getServerPort() + request.getContextPath();
-        long duration = 1000;
+        long duration = 0;
         long startTime = 0;
         String folderName = request.getParameter("folder");
         Folder folder = null;
@@ -831,29 +297,36 @@ public class PlayRecordingController implements Controller {
             }
         }
 
+        long minStart = Long.MAX_VALUE;
         if (recordingId != null) {
             Recording recording = folder.getRecording(recordingId);
-            duration = recording.getDuration();
 
+            long maxEnd = 0;
             List<ReplayLayout> replayLayouts = recording.getReplayLayouts();
+            Collections.sort(replayLayouts);
             for (ReplayLayout replayLayout : replayLayouts) {
-                MetadataLayout metadataLayout = new MetadataLayout(recording,
-                        replayLayout);
+                if (replayLayout.getTime() < minStart) {
+                    minStart = replayLayout.getTime();
+                }
+                if (replayLayout.getEndTime() > maxEnd) {
+                    maxEnd = replayLayout.getEndTime();
+                }
+                MetadataLayout metadataLayout = new MetadataLayout(
+                        layoutRepository, recording, replayLayout);
                 metadataLayouts.add(metadataLayout);
             }
+            if (maxEnd == 0) {
+                maxEnd = recording.getDuration();
+            }
+            duration = maxEnd - minStart;
             for (MetadataLayout lay : metadataLayouts) {
-                for (MetadataLayoutPosition layPos : lay.layoutPositions) {
-                    if (layPos.hasChanges()) {
+                for (MetadataLayoutPosition layPos : lay.getLayoutPositions()) {
+                    if (layPos.isChanges()) {
                         slideThumbs = getSlides(server, recording,
-                                layPos.stream.getSsrc());
+                                layPos.getStream().getSsrc(), minStart, maxEnd);
                     }
                 }
             }
-            Collections.sort(slideThumbs, new ThumbSorter());
-            double thstart = 0;
-            double thend;
-            int colindex = 0;
-            String colour = SLIDE_COLOURS[0];
             if (slideThumbs.size() != 0) {
                 LiveAnnotationType latype =
                     liveAnnotationTypeRepository.findLiveAnnotationType(
@@ -865,19 +338,13 @@ public class PlayRecordingController implements Controller {
                 if (!metadataAnnotationTypes.contains(matype)) {
                     metadataAnnotationTypes.add(matype);
                 }
+                int colindex = 0;
                 for (Thumbnail thumb : slideThumbs) {
-                    thend = thumb.getStart();
                     slideAnnotations.add(
-                        new MetadataAnnotation(thstart, thend,
-                                SLIDE_TYPE, "",  colour));
-                    thstart = thend;
+                        new MetadataAnnotation(thumb.getStart(), thumb.getEnd(),
+                                SLIDE_TYPE, "",  SLIDE_COLOURS[colindex]));
                     colindex = (colindex + 1) % SLIDE_COLOURS.length;
-                    colour = SLIDE_COLOURS[colindex];
                 }
-                thend = duration / 1000;
-                slideAnnotations.add(
-                    new MetadataAnnotation(thstart, thend,
-                            SLIDE_TYPE, "", colour));
             } else {
                 LiveAnnotationType latype =
                     liveAnnotationTypeRepository.findLiveAnnotationType(
@@ -935,10 +402,13 @@ public class PlayRecordingController implements Controller {
         // time to the filename of the last annotation that has one.
         if (thumbs.size() > 0) {
             String filename = thumbs.get(0).getFilename();
-            String yuvfile = thumbs.get(0).getYuvfile();
             for (Thumbnail thumb : thumbs) {
-                filename = thumb.setFilename(filename);
-                yuvfile = thumb.setYUVFile(yuvfile);
+                String thumbFilename = thumb.getFilename();
+                if (thumbFilename == null) {
+                    thumb.setFilename(filename);
+                } else {
+                    filename = thumbFilename;
+                }
             }
         }
 
@@ -950,7 +420,8 @@ public class PlayRecordingController implements Controller {
         values.put("layouts", metadataLayouts);
         values.put("annotations", metadataAnnotations);
         values.put("thumbnails", thumbs);
-        values.put("url", server + "/flv.do?id=" + recordingId);
+        values.put("url", server + "/flv.do?id=" + recordingId
+                + "&offsetShift=" + minStart);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream data = new DataOutputStream(bytes);
 

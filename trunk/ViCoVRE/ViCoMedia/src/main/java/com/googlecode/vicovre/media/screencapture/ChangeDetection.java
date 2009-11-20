@@ -52,7 +52,7 @@ public class ChangeDetection implements Renderer {
     private static final String NAME = "Change Detection Effect";
 
     // The percentage change between two frames that indicates a scene change
-    private static final int SCENE_CHANGE_PERCENT_THRESHOLD = 10;
+    private static final int SCENE_CHANGE_PERCENT_THRESHOLD = 5;
 
     // The input/output format
     private RGBFormat format = null;

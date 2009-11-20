@@ -92,7 +92,7 @@ public class QuickArray extends QuickArrayAbstract {
         free();
     }
 
-    protected boolean freed() {
+    protected synchronized boolean freed() {
         return freed;
     }
 

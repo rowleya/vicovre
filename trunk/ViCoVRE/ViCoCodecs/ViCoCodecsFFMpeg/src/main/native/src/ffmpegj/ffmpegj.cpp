@@ -129,6 +129,7 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
     frame = NULL;
     codecContext = NULL;
     buffer = NULL;
+    codecOpened = false;
 
     avcodec_init();
     firstSequence = -1;
@@ -152,24 +153,25 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
     INPUT_BUFFER_NOT_CONSUMED = env->GetStaticIntField(plugin, notConsumed);
     OUTPUT_BUFFER_NOT_FILLED = env->GetStaticIntField(plugin, notFilled);
 
-    jclass buffer = env->FindClass("javax/media/Buffer");
-    getDataMethod = env->GetMethodID(buffer, "getData", "()Ljava/lang/Object;");
-    getOffsetMethod = env->GetMethodID(buffer, "getOffset", "()I");
-    getLengthMethod = env->GetMethodID(buffer, "getLength", "()I");
-    getSequenceNumberMethod = env->GetMethodID(buffer, "getSequenceNumber",
+    jclass bufferCl = env->FindClass("javax/media/Buffer");
+    getDataMethod = env->GetMethodID(bufferCl, "getData",
+            "()Ljava/lang/Object;");
+    getOffsetMethod = env->GetMethodID(bufferCl, "getOffset", "()I");
+    getLengthMethod = env->GetMethodID(bufferCl, "getLength", "()I");
+    getSequenceNumberMethod = env->GetMethodID(bufferCl, "getSequenceNumber",
             "()J");
-    getFlagsMethod = env->GetMethodID(buffer, "getFlags", "()I");
-    setOffsetMethod = env->GetMethodID(buffer, "setOffset", "(I)V");
-    setLengthMethod = env->GetMethodID(buffer, "setLength", "(I)V");
-    setTimestampMethod = env->GetMethodID(buffer, "setTimeStamp", "(J)V");
-    setSequenceNumberMethod = env->GetMethodID(buffer,
+    getFlagsMethod = env->GetMethodID(bufferCl, "getFlags", "()I");
+    setOffsetMethod = env->GetMethodID(bufferCl, "setOffset", "(I)V");
+    setLengthMethod = env->GetMethodID(bufferCl, "setLength", "(I)V");
+    setTimestampMethod = env->GetMethodID(bufferCl, "setTimeStamp", "(J)V");
+    setSequenceNumberMethod = env->GetMethodID(bufferCl,
         "setSequenceNumber", "(J)V");
 
-    jfieldID rtpMarker = env->GetStaticFieldID(buffer, "FLAG_RTP_MARKER", "I");
-    jfieldID keyFrame = env->GetStaticFieldID(buffer, "FLAG_KEY_FRAME", "I");
+    jfieldID rtpMarker = env->GetStaticFieldID(bufferCl, "FLAG_RTP_MARKER", "I");
+    jfieldID keyFrame = env->GetStaticFieldID(bufferCl, "FLAG_KEY_FRAME", "I");
 
-    FLAG_RTP_MARKER = env->GetStaticIntField(buffer, rtpMarker);
-    FLAG_KEY_FRAME = env->GetStaticIntField(buffer, keyFrame);
+    FLAG_RTP_MARKER = env->GetStaticIntField(bufferCl, rtpMarker);
+    FLAG_KEY_FRAME = env->GetStaticIntField(bufferCl, keyFrame);
 
     contextClass = env->FindClass(
             "com/googlecode/vicovre/codecs/ffmpeg/CodecContext");
@@ -246,6 +248,7 @@ bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
     codecContext->coded_height = intermediateHeight;
     int result = avcodec_open(codecContext, codec);
     if (result >= 0) {
+        codecOpened = true;
         pictureSize = avpicture_get_size(this->pixFmt, width, height);
         frame = avcodec_alloc_frame();
         intermediateFrame = avcodec_alloc_frame();
@@ -544,15 +547,21 @@ bool FFMpegJ::closeCodec() {
         av_free(frame);
         frame = NULL;
     }
-    if (codecContext != NULL) {
+    if (codecOpened) {
         avcodec_close(codecContext);
+        codecOpened = false;
+    }
+    if (codecContext != NULL) {
+        av_free(codecContext);
         codecContext = NULL;
     }
-    /*
+
     if (buffer != NULL) {
+        fprintf(stderr, "Freeing buffer\n");
+        fflush(stderr);
         av_free(buffer);
         buffer = NULL;
-    } */
+    }
     return true;
 }
 

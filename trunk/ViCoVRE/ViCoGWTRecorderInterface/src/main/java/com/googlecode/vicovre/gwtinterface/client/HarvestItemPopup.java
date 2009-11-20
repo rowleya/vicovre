@@ -85,9 +85,7 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private HorizontalPanel timePanel = new HorizontalPanel();
 
-    private ListBox hour = new ListBox();
-
-    private ListBox minute = new ListBox();
+    private TimeBox time = new TimeBox(5, 5);
 
     private VenuePanel venue = new VenuePanel();
 
@@ -117,10 +115,9 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         updatePanel.add(weekDay);
         updatePanel.add(timePanel);
 
+        time.setSecondsVisible(false);
         timePanel.add(new Label(" at "));
-        timePanel.add(hour);
-        timePanel.add(new Label(":"));
-        timePanel.add(minute);
+        timePanel.add(time);
         grid.setWidget(3, 1, updatePanel);
 
         grid.setWidget(4, 0, new Label("Virtual Venue:"));
@@ -171,22 +168,6 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         for (int i = 0; i < 7; i++) {
             String value = weekdayFormat.format(new Date(2009, 8, 20 + i));
             weekDay.addItem("on " + value, value);
-        }
-
-        for (int i = 0; i < 23; i++) {
-            String item = String.valueOf(i);
-            if (i < 10) {
-                item = "0" + i;
-            }
-            hour.addItem(item);
-        }
-
-        for (int i = 0; i < 60; i += 5) {
-            String item = String.valueOf(i);
-            if (i < 10) {
-                item = "0" + i;
-            }
-            minute.addItem(item);
         }
 
         month.setVisible(false);
@@ -273,11 +254,11 @@ public class HarvestItemPopup extends ModalPopup<Grid>
     }
 
     public int getHour() {
-        return hour.getSelectedIndex();
+        return time.getHour();
     }
 
     public int getMinute() {
-        return minute.getSelectedIndex() * 5;
+        return time.getMinute();
     }
 
     public String getVenueServer() {
@@ -340,5 +321,13 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     public void setAddresses(String[] addresses) {
         this.venue.setAddresses(addresses);
+    }
+
+    public void setHour(int hour) {
+        time.setHour(hour);
+    }
+
+    public void setMinute(int minute) {
+        time.setMinute(minute);
     }
 }

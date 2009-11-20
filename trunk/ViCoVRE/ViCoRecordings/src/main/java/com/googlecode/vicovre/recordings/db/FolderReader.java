@@ -117,6 +117,7 @@ public class FolderReader {
                     unfinishedRecordings.add(recording);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 System.err.println("Warning: " + e.getMessage());
             }
         }

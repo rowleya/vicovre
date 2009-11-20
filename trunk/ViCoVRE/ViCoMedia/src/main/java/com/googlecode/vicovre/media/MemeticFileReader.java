@@ -106,6 +106,10 @@ public class MemeticFileReader {
 
     private long lastTimestamp = -1;
 
+    private long lastOffset = -1;
+
+    private long lastRealTimestamp = -1;
+
     private long maxTimestamp = -1;
 
     private long noTimestampLoops = 0;
@@ -115,6 +119,8 @@ public class MemeticFileReader {
     private long startTime = 0;
 
     private RTPHeader header = null;
+
+    private RTPType rtpType = null;
 
     // A vector of positions of packets in the stream file
     private Vector<Long> packetPositions = new Vector<Long>();
@@ -144,7 +150,6 @@ public class MemeticFileReader {
         channel = fileInput.getChannel();
         readHeader();
         readIndexFile(filename);
-        System.err.println("Positioning " + filename + " at start");
         streamSeek(0);
         readNextPacket();
         offsetShift = 0;
@@ -154,7 +159,8 @@ public class MemeticFileReader {
         Format format = getFormat();
         if (format != null) {
             if (format instanceof VideoFormat) {
-                maxTimestamp = 4294967296000000000L / 90000;
+                maxTimestamp = (long) (4294967296000000000L
+                        / rtpType.getClockRate());
             } else if (format instanceof AudioFormat) {
                 AudioFormat audioFormat = (AudioFormat) format;
                 maxTimestamp = (long) (4294967296000000000L
@@ -191,6 +197,7 @@ public class MemeticFileReader {
                     flags = 0;
                     header = new RTPHeader(data, 0, length);
                     this.type = header.getPacketType();
+                    rtpType = typeRepository.findRtpType(this.type);
                     timestamp = header.getTimestamp();
                     sequence = header.getSequence();
                     if (lastSequence == -1) {
@@ -206,7 +213,8 @@ public class MemeticFileReader {
                         Format format = getFormat();
                         if (format != null) {
                             if (format instanceof VideoFormat) {
-                                timestamp = (timestamp * 1000000000L) / 90000;
+                                timestamp = (long)((timestamp * 1000000000L)
+                                        / rtpType.getClockRate());
                             } else if (format instanceof AudioFormat) {
                                 AudioFormat audioFormat = (AudioFormat) format;
                                 timestamp = (long) ((timestamp * 1000000000L)
@@ -222,12 +230,6 @@ public class MemeticFileReader {
                         if (firstTimestamp == -1) {
                             firstTimestamp = timestamp;
                             noTimestampLoops = 0;
-                            System.err.println(filename + ": timestamp = "
-                                    + timestamp + " first = " + firstTimestamp
-                                    + " offset = " + firstOffset + " tsOff = "
-                                    + timestampOffset + " loops = "
-                                    + noTimestampLoops + " max = "
-                                    + maxTimestamp);
                         }
 
                         if (timestamp < lastTimestamp) {
@@ -255,7 +257,6 @@ public class MemeticFileReader {
      * @throws IOException
      */
     public void streamSeek(long seek) throws IOException {
-        System.err.println("Seeking to " + seek);
         int offsetPos = Collections.binarySearch(packetOffsets, seek);
         if (offsetPos < 0) {
             offsetPos = (offsetPos + 1) * -1;
@@ -263,15 +264,13 @@ public class MemeticFileReader {
 
         if (offsetPos >= packetPositions.size()) {
             channel.position(new File(filename).length());
-            System.err.println(filename + " seek beyond end of file");
         } else {
             channel.position(packetPositions.get(offsetPos));
             firstTimestamp = -1;
             lastTimestamp = -1;
             lastSequence = -1;
+            offset = packetOffsets.get(offsetPos);
             firstOffset = (packetOffsets.get(offsetPos) - seek) * 1000000;
-            System.err.println(filename + " first Offset = " + firstOffset
-                    + " pos = " + packetOffsets.get(offsetPos));
         }
     }
 
@@ -305,7 +304,6 @@ public class MemeticFileReader {
     }
 
     protected long getTimestampAt(long seek) throws IOException {
-        System.err.println("Finding timestamp for " + filename);
         streamSeek(seek);
         readNextPacket();
         return getTimestamp();
@@ -447,5 +445,13 @@ public class MemeticFileReader {
             e.printStackTrace();
         }
         data = null;
+    }
+
+    public double getProgress() {
+        try {
+            return channel.position() / channel.size();
+        } catch (IOException e) {
+            return 0;
+        }
     }
 }

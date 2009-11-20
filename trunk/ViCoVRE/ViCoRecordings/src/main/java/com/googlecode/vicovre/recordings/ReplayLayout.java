@@ -51,7 +51,7 @@ import com.googlecode.vicovre.repositories.layout.LayoutRepository;
  * @author Tobias M Schiebeck
  * @version 1.0
  */
-public class ReplayLayout {
+public class ReplayLayout implements Comparable<ReplayLayout> {
 
     // The recording the layout belongs to
     private Recording recording = null;
@@ -62,8 +62,13 @@ public class ReplayLayout {
     // The time when the layout appears
     private long time = 0;
 
+    // The time at which the layout disappears
+    private long endTime = 0;
+
     private Map<String, ReplayLayoutPosition> replayPosition =
         new HashMap<String, ReplayLayoutPosition>();
+
+    private Vector<Stream> audioStreams = new Vector<Stream>();
 
     private LayoutRepository layoutRepository;
 
@@ -129,6 +134,22 @@ public class ReplayLayout {
         replayPosition.put(posName, new ReplayLayoutPosition(posName, stream));
     }
 
+    public void addAudioStream(Stream stream) {
+        audioStreams.add(stream);
+    }
+
+    public List<Stream> getAudioStreams() {
+        return audioStreams;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
     /**
      * Gets the layout positions
      * @return The layout positions
@@ -167,6 +188,10 @@ public class ReplayLayout {
      */
     public Recording getRecording() {
         return recording;
+    }
+
+    public int compareTo(ReplayLayout o) {
+        return (int) (time - o.time);
     }
 
 }
