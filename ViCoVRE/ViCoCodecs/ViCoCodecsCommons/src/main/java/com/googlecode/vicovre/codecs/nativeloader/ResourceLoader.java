@@ -53,7 +53,6 @@ public class ResourceLoader implements Loader {
     public void load(final Class<?> loadingClass, final String name) {
         InputStream input = loadingClass.getResourceAsStream("/" + name);
         if (input != null) {
-            System.err.println("Found " + name + " in classpath");
             File file = new File(NativeLoader.USER_LIB_DIR, name);
             if (!file.exists()) {
                 System.err.println("    Extracting to " + file);
@@ -72,7 +71,6 @@ public class ResourceLoader implements Loader {
                     throw new UnsatisfiedLinkError(e.getMessage());
                 }
             }
-            System.err.println("    Loading from " + file.getAbsolutePath());
             System.load(file.getAbsolutePath());
             return;
         }

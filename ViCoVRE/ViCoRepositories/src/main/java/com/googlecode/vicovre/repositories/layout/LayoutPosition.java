@@ -44,6 +44,7 @@ public class LayoutPosition {
     private String name;
     private boolean assignable = true;
     private boolean changes = false;
+    private boolean audio = false;
 
     public LayoutPosition() {
         name = null;
@@ -115,5 +116,13 @@ public class LayoutPosition {
 
     public boolean hasChanges() {
         return changes;
+    }
+
+    public boolean hasAudio() {
+        return audio;
+    }
+
+    public void setAudio(boolean audio) {
+        this.audio = audio;
     }
 }

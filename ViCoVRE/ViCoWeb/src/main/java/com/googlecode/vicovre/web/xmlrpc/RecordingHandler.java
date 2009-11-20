@@ -95,6 +95,8 @@ public class RecordingHandler extends AbstractHandler {
                     new HashMap<String, Object>();
                 replayLayout.put("name", layout.getName());
                 replayLayout.put("time", new Long(layout.getTime()).intValue());
+                replayLayout.put("endTime", new Long(
+                        layout.getEndTime()).intValue());
                 Map<String, Object> positions = new HashMap<String, Object>();
                 for (ReplayLayoutPosition position
                         : layout.getLayoutPositions()) {
@@ -103,6 +105,11 @@ public class RecordingHandler extends AbstractHandler {
                 }
                 replayLayout.put("positions", positions);
                 replayLayouts.add(replayLayout);
+                List<String> audioStreams = new Vector<String>();
+                for (Stream stream : layout.getAudioStreams()) {
+                    audioStreams.add(stream.getSsrc());
+                }
+                replayLayout.put("audioStreams", audioStreams);
             }
             recs[i].put("layouts", replayLayouts);
 

@@ -179,8 +179,10 @@ public abstract class XmlIo {
     }
 
     public static void setInt(Node doc, Object object, String field) {
-        setValue(object, field, Integer.valueOf(readValue(doc, field)),
-                Integer.TYPE);
+        String value = readValue(doc, field);
+        if (value != null) {
+            setValue(object, field, Integer.valueOf(value), Integer.TYPE);
+        }
     }
 
     public static void setString(Node doc, Object object, String field) {
@@ -200,8 +202,10 @@ public abstract class XmlIo {
     }
 
     public static void setLong(Node doc, Object object, String field) {
-        setValue(object, field, Long.valueOf(readValue(doc, field)),
-                Long.TYPE);
+        String value = readValue(doc, field);
+        if (value != null) {
+            setValue(object, field, Long.valueOf(value), Long.TYPE);
+        }
     }
 
     public static String readAttr(Node doc, String field, String def) {

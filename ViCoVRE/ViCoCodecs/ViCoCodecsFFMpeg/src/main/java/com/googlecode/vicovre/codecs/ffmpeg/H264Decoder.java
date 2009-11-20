@@ -44,7 +44,6 @@ public class H264Decoder extends FFMPEGDecoder {
      */
     public H264Decoder() {
         super("h264");
-        setLogLevel(Log.AV_LOG_DEBUG);
     }
 
     /**
@@ -56,7 +55,6 @@ public class H264Decoder extends FFMPEGDecoder {
         getCodecContext(context);
         context.setFlags(context.getFlags() | CodecContext.CODEC_FLAG_EMU_EDGE
                 | CodecContext.CODEC_FLAG_PART);
-        context.setDebug(CodecContext.FF_DEBUG_PICT_INFO);
         return context;
     }
 }

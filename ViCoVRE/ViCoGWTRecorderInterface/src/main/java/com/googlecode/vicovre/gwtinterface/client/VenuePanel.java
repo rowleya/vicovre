@@ -290,21 +290,24 @@ public class VenuePanel extends VerticalPanel
 
     public void setVenueServer(String server) {
         this.venueServer.setText(server);
-        loadVenuesFromServer();
+        //loadVenuesFromServer();
         venueSelect.setValue(true, true);
     }
 
-    private void setValue(ListBox box, String value) {
+    private boolean setValue(ListBox box, String value) {
         for (int i = 0; i < box.getItemCount(); i++) {
             if (box.getValue(i).equals(value)) {
                 box.setSelectedIndex(i);
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     public void setVenue(String venue) {
-        setValue(this.venue, venue);
+        if (!setValue(this.venue, venue)) {
+            this.venue.addItem(venue, venue);
+        }
         venueSelected = venue;
         venueSelect.setValue(true, true);
     }

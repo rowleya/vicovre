@@ -108,6 +108,8 @@ public class SimpleProcessor {
 
         private Buffer firstBuffer = null;
 
+        private Format outputFormat = null;
+
         private CodecIterator(List<Codec> codecs,
                 List<Format> inputFormats, List<Format> outputFormats,
                 List<Buffer> buffers, Buffer firstBuffer) {
@@ -127,13 +129,13 @@ public class SimpleProcessor {
             lastBuffer = outputBuffer;
             codec = codecIterator.next();
             inputFormat = inputFormatIterator.next();
-            outputFormatIterator.next();
+            outputFormat = outputFormatIterator.next();
             outputBuffer = outputBufferIterator.next();
         }
 
         private void previous() {
             outputBuffer = outputBufferIterator.previous();
-            outputFormatIterator.previous();
+            outputFormat = outputFormatIterator.previous();
             inputFormat = inputFormatIterator.previous();
             codec = codecIterator.previous();
             if (outputBufferIterator.hasPrevious()) {
@@ -162,6 +164,14 @@ public class SimpleProcessor {
 
         private void setInputFormat(Format inputFormat) {
             inputFormatIterator.set(inputFormat);
+        }
+
+        private Format getOutputFormat() {
+            return outputFormat;
+        }
+
+        private void setOutputFormat(Format outputFormat) {
+            outputFormatIterator.set(outputFormat);
         }
 
         private void insertBefore(Codec codec, Format inputFormat,
@@ -407,17 +417,17 @@ public class SimpleProcessor {
         }
     }
 
-    private int render() {
+    private int render(CodecIterator iterator) {
         int status = PlugIn.BUFFER_PROCESSED_OK;
         do {
-            if (!outputBuffers.getLast().getFormat().equals(
-                    outputFormats.getLast())) {
+            Buffer outputBuffer = iterator.getOutputBuffer();
+            Format outputFormat = iterator.getOutputFormat();
+            if (!outputBuffer.getFormat().equals(outputFormat)) {
                 Format format = renderer.setInputFormat(
-                        outputBuffers.getLast().getFormat());
-                outputFormats.removeLast();
-                outputFormats.addLast(format);
+                        outputBuffer.getFormat());
+                iterator.setOutputFormat(format);
             }
-            status = renderer.process(outputBuffers.getLast());
+            status = renderer.process(outputBuffer);
             if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
                 return status;
             }
@@ -491,7 +501,8 @@ public class SimpleProcessor {
                     } else if (render && (renderer != null)
                             && ((status == PlugIn.BUFFER_PROCESSED_OK)
                             || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                        if (render() == PlugIn.BUFFER_PROCESSED_FAILED) {
+                        if (render(iterator)
+                                == PlugIn.BUFFER_PROCESSED_FAILED) {
                             return PlugIn.BUFFER_PROCESSED_FAILED;
                         }
                     } else if (render && (multiplexer != null)

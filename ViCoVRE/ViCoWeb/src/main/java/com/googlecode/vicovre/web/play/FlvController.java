@@ -88,7 +88,6 @@ public class FlvController implements Controller {
 
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-        System.err.println("URL = " + request.getRequestURI() + "?" + request.getQueryString());
         String sessionId = request.getParameter("id");
         String folderPath = request.getParameter("folder");
         File videoFile = null;
@@ -109,9 +108,14 @@ public class FlvController implements Controller {
         if (syncStreams == null) {
             syncStreams = new String[0];
         }
+        String offShift = request.getParameter("offsetShift");
+        if (offShift == null) {
+            offShift = "0";
+        }
+        long offsetShift = Long.parseLong(offShift);
         Folder folder = database.getTopLevelFolder();
         if (folderPath != null && !folderPath.equals("")) {
-            database.getFolder(new File(folderPath));
+            folder = database.getFolder(new File(folderPath));
         }
         Recording recording = folder.getRecording(sessionId);
         File path = recording.getDirectory();
@@ -178,7 +182,8 @@ public class FlvController implements Controller {
                             + times[pos] + EXT);
                 }
                 // Generate the stream
-                extractor.transferToStream(response.getOutputStream(), offset,
+                extractor.transferToStream(response.getOutputStream(),
+                        offsetShift, offset,
                         duration, 0, frameFile);
             } else {
                 extractor.transferFirstFrame(response.getOutputStream(),

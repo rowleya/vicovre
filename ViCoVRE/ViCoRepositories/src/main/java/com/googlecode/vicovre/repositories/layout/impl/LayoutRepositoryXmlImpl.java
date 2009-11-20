@@ -92,22 +92,32 @@ public class LayoutRepositoryXmlImpl implements LayoutRepository {
                         && streamnode.getLocalName().equals("element")) {
                     NamedNodeMap streamAttributes = streamnode.getAttributes();
                     LayoutPosition pos = new LayoutPosition();
-                    pos.setName(streamAttributes.getNamedItem("name").getNodeValue());
+                    pos.setName(streamAttributes.getNamedItem(
+                            "name").getNodeValue());
                     pos.setX(Integer.parseInt(
                             streamAttributes.getNamedItem("x").getNodeValue()));
                     pos.setY(Integer.parseInt(
                             streamAttributes.getNamedItem("y").getNodeValue()));
                     pos.setWidth(Integer.parseInt(
-                            streamAttributes.getNamedItem("width").getNodeValue()));
+                            streamAttributes.getNamedItem(
+                                    "width").getNodeValue()));
                     pos.setHeight(Integer.parseInt(
-                            streamAttributes.getNamedItem("height").getNodeValue()));
+                            streamAttributes.getNamedItem(
+                                    "height").getNodeValue()));
                     if (streamAttributes.getNamedItem("assignable") != null) {
                         pos.setAssignable(Boolean.parseBoolean(
-                                streamAttributes.getNamedItem("assignable").getNodeValue()));
+                            streamAttributes.getNamedItem(
+                                    "assignable").getNodeValue()));
                     }
-                    if (streamAttributes.getNamedItem("has-changes") != null) {
+                    if (streamAttributes.getNamedItem("changes") != null) {
                         pos.setChanges(Boolean.parseBoolean(
-                                streamAttributes.getNamedItem("has-changes").getNodeValue()));
+                                streamAttributes.getNamedItem(
+                                        "changes").getNodeValue()));
+                    }
+                    if (streamAttributes.getNamedItem("audio") != null) {
+                        pos.setAudio(Boolean.parseBoolean(
+                                streamAttributes.getNamedItem(
+                                        "audio").getNodeValue()));
                     }
                     layoutPostions.add(pos);
                 }

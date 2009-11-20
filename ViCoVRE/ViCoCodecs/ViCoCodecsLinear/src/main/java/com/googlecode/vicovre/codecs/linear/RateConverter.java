@@ -83,9 +83,15 @@ public class RateConverter implements Codec {
                 int endian = af.getEndian();
 
                 return new Format[] {
+                    new AudioFormat(AudioFormat.LINEAR, 5500,
+                            sampleSize, channels, endian, signed),
                     new AudioFormat(AudioFormat.LINEAR, 8000,
                             sampleSize, channels, endian, signed),
+                    new AudioFormat(AudioFormat.LINEAR, 11025,
+                            sampleSize, channels, endian, signed),
                     new AudioFormat(AudioFormat.LINEAR, 16000,
+                            sampleSize, channels, endian, signed),
+                    new AudioFormat(AudioFormat.LINEAR, 22050,
                             sampleSize, channels, endian, signed),
                     new AudioFormat(AudioFormat.LINEAR, 32000,
                             sampleSize, channels, endian, signed),

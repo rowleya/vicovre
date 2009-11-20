@@ -86,7 +86,10 @@ public class RtpTypeRepositoryXmlImpl implements RtpTypeRepository {
                     attributes.getNamedItem("id").getNodeValue()));
             String mediaType = attributes.getNamedItem(
                     "mediaType").getNodeValue();
+            String clockRate = attributes.getNamedItem(
+                    "clockrate").getNodeValue();
             type.setMediaType(mediaType);
+            type.setClockRate(Double.parseDouble(clockRate));
             if (mediaType.equals("audio")) {
                 Node encoding = attributes.getNamedItem("encoding");
                 Node sampleRate = attributes.getNamedItem("sampleRate");

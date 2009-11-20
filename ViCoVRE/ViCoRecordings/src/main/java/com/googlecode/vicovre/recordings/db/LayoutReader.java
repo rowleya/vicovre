@@ -56,11 +56,17 @@ public class LayoutReader {
         Node doc = XmlIo.read(input);
         XmlIo.setString(doc, layout, "name");
         XmlIo.setLong(doc, layout, "time");
+        XmlIo.setLong(doc, layout, "endTime");
         for (ReplayLayoutPosition position : layout.getLayoutPositions()) {
             String streamSsrc = XmlIo.readValue(doc,
                     "pos" + position.getName());
             Stream stream = recording.getStream(streamSsrc);
             layout.setStream(position.getName(), stream);
+        }
+        String[] audioStreams = XmlIo.readValues(doc, "audioStream");
+        for (String streamSsrc : audioStreams) {
+            Stream stream = recording.getStream(streamSsrc);
+            layout.addAudioStream(stream);
         }
         return layout;
     }
@@ -71,9 +77,13 @@ public class LayoutReader {
         writer.println("<layout>");
         XmlIo.writeValue(layout, "name", writer);
         XmlIo.writeValue(layout, "time", writer);
+        XmlIo.writeValue(layout, "endTime", writer);
         for (ReplayLayoutPosition position : layout.getLayoutPositions()) {
             XmlIo.writeValue("pos" + position.getName(),
                     position.getStream().getSsrc(), writer);
+        }
+        for (Stream stream : layout.getAudioStreams()) {
+            XmlIo.writeValue("audioStream", stream.getSsrc(), writer);
         }
         writer.println("</layout>");
         writer.flush();

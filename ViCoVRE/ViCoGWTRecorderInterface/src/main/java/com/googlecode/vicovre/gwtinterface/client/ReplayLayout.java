@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.gwtinterface.client;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ReplayLayout {
@@ -41,17 +42,19 @@ public class ReplayLayout {
 
     private long time = 0;
 
+    private long endTime = 0;
+
     private Map<String, String> positions = null;
 
-    public ReplayLayout(String name, long time) {
-        this(name, time, new HashMap<String, String>());
-    }
+    private List<String> audioStreams = null;
 
-    public ReplayLayout(String name, long time,
-            Map<String, String> positions) {
+    public ReplayLayout(String name, long time, long endTime,
+            Map<String, String> positions, List<String> audioStreams) {
         this.name = name;
         this.time = time;
+        this.endTime = endTime;
         this.positions = positions;
+        this.audioStreams = audioStreams;
     }
 
     public String getName() {
@@ -62,8 +65,16 @@ public class ReplayLayout {
         return time;
     }
 
+    public long getEndTime() {
+        return endTime;
+    }
+
     public String getStream(String position) {
         return positions.get(position);
+    }
+
+    public List<String> getAudioStreams() {
+        return audioStreams;
     }
 
 }

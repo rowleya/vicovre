@@ -48,6 +48,9 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 
 /**
  * Handler of layouts.
@@ -58,15 +61,19 @@ public class LayoutHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
+    private RtpTypeRepository typeRepository = null;
+
     /**
      * Creates a LayoutHandler.
      * @param database The database
      * @param layoutRepository The layout repository
      */
     public LayoutHandler(final RecordingDatabase database,
-            final LayoutRepository layoutRepository) {
+            final LayoutRepository layoutRepository,
+            final RtpTypeRepository typeRepository) {
         super(database);
         this.layoutRepository = layoutRepository;
+        this.typeRepository = typeRepository;
     }
 
     /**
@@ -110,7 +117,7 @@ public class LayoutHandler extends AbstractHandler {
     public Boolean setLayouts(final String folderPath, final String recordingId,
             final Object[] layouts) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(recordingId);
+        final Recording recording = folder.getRecording(recordingId);
         if (recording == null) {
             throw new XmlRpcException("Unknown recording " + recordingId);
         }
@@ -120,8 +127,11 @@ public class LayoutHandler extends AbstractHandler {
             Map<String, Object> layoutMap = (Map<String, Object>) layoutObject;
             String layoutName = (String) layoutMap.get("name");
             Integer time = (Integer) layoutMap.get("time");
+            Integer endTime = (Integer) layoutMap.get("endTime");
             Map<String, Object> positions = (Map<String, Object>)
                 layoutMap.get("positions");
+            Object[] audioStreamList =
+                (Object[]) layoutMap.get("audioStreams");
 
             Layout layout = layoutRepository.findLayout(layoutName);
             if (layout == null) {
@@ -132,6 +142,7 @@ public class LayoutHandler extends AbstractHandler {
             replayLayout.setName(layoutName);
             replayLayout.setRecording(recording);
             replayLayout.setTime(time.longValue());
+            replayLayout.setEndTime(endTime.longValue());
             for (LayoutPosition position : layout.getStreamPositions()) {
                 if (position.isAssignable()) {
                     String streamId = (String) positions.get(
@@ -141,15 +152,53 @@ public class LayoutHandler extends AbstractHandler {
                                 "No stream specified for position "
                                 + position.getName());
                     }
-                    Stream stream = recording.getStream(streamId);
+                    final Stream stream = recording.getStream(streamId);
                     if (stream == null) {
-                        throw new XmlRpcException("Stream not found");
+                        throw new XmlRpcException("Stream " + streamId
+                                + "not found");
                     }
                     replayLayout.setStream(position.getName(), stream);
+
+                    if (position.hasChanges()) {
+                        try {
+                            if (!Misc.isCodecsConfigured()) {
+                                Misc.configureCodecs("/knownCodecs.xml");
+                            }
+                            Thread changeThread = new Thread() {
+                                public void run() {
+                                    try {
+                                        ScreenChangeDetector changeDetector =
+                                            new ScreenChangeDetector(
+                                                recording.getDirectory(),
+                                                stream.getSsrc(),
+                                                typeRepository);
+                                        changeDetector.run();
+                                        changeDetector.close();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            };
+                            changeThread.start();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            throw new XmlRpcException(e.getMessage());
+                        }
+                    }
                 }
             }
+            for (Object streamId : audioStreamList) {
+                Stream stream = recording.getStream((String) streamId);
+                if (stream == null) {
+                    throw new XmlRpcException("Stream " + streamId
+                            + "not found");
+                }
+                replayLayout.addAudioStream(stream);
+            }
+
             replayLayouts.add(replayLayout);
         }
+        recording.setReplayLayouts(null);
         recording.setReplayLayouts(replayLayouts);
         try {
             getDatabase().updateRecordingLayouts(recording);

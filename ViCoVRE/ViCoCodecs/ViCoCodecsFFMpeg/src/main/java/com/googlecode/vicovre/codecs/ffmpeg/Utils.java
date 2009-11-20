@@ -1254,13 +1254,11 @@ public class Utils {
      * @return The pixel format
      */
     public static PixelFormat getPixFormat(VideoFormat format) {
-        System.err.println("Finding pixel format for " + format);
         for (PixelFormat i : PixelFormat.values()) {
             VideoFormat videoFormat = getVideoFormat(i, format.getSize(),
                     format.getFrameRate());
             if (videoFormat != null) {
                 if (videoFormat.matches(format)) {
-                    System.err.println("Pixel format = " + i + "( video format = " + videoFormat + ")");
                     return i;
                 }
             }

@@ -62,7 +62,7 @@ public class ScreenChangeDetector extends Thread
         implements CaptureChangeListener {
 
     // The delay before sending an update
-    private static final int DELAY = 2000;
+    private static final int DELAY = 10000;
 
     // The time before a forced update is done
     private static final int TIME_BETWEEN_FORCED_UPDATES = 20000;
@@ -81,13 +81,13 @@ public class ScreenChangeDetector extends Thread
 
     private BufferedImage nextUpdateImage = null;
 
+    private File recordingDirectory = null;
+
     // The base file name for stored images
     private String baseFileName = null;
 
     // The renderer
     private ChangeDetection renderer = null;
-
-    private Buffer nextUpdateBuffer = null;
 
     private MemeticFileReader reader = null;
 
@@ -107,27 +107,29 @@ public class ScreenChangeDetector extends Thread
      * @throws IOException
      *
      */
-    public ScreenChangeDetector(String directory, String ssrc,
+    public ScreenChangeDetector(File recordingDirectory, String ssrc,
             RtpTypeRepository typeRepository)
             throws UnsupportedFormatException, ResourceUnavailableException,
             IOException {
-        this.reader = new MemeticFileReader(directory + File.separator + ssrc,
+        this.recordingDirectory = recordingDirectory;
+        this.reader = new MemeticFileReader(
+                new File(recordingDirectory, ssrc).getAbsolutePath(),
                 typeRepository);
         renderer = new ChangeDetection();
         renderer.addScreenListener(this);
         this.processor = new SimpleProcessor(reader.getFormat(), renderer);
-        this.baseFileName = directory + File.separator + ssrc + "_";
+        this.baseFileName = ssrc + "_";
     }
 
-    public ScreenChangeDetector(String directory, String ssrc,
-            RtpTypeRepository typeRepository, int rtpType)
+    public ScreenChangeDetector(File recordingDirectory, String ssrc,
+            RtpTypeRepository typeRepository, int type)
             throws UnsupportedFormatException, ResourceUnavailableException {
+        this.recordingDirectory = recordingDirectory;
         renderer = new ChangeDetection();
         renderer.addScreenListener(this);
-        this.rtpType = typeRepository.findRtpType(rtpType);
-        this.processor = new SimpleProcessor(this.rtpType.getFormat(),
-                renderer);
-        this.baseFileName = directory + File.separator + ssrc + "_";
+        this.rtpType = typeRepository.findRtpType(type);
+        this.processor = new SimpleProcessor(rtpType.getFormat(), renderer);
+        this.baseFileName = ssrc + "_";
     }
 
     /**
@@ -186,24 +188,10 @@ public class ScreenChangeDetector extends Thread
 
     private void markUpdate() {
         if (nextUpdateTime != -1) {
-            lastSuccessfulUpdateTime = nextUpdateTime;
             try {
                 ImageIO.write(nextUpdateImage, "JPG",
-                        new File(baseFileName + nextUpdateTime + ".jpg"));
-                if (nextUpdateBuffer != null) {
-                    byte[] data = (byte[]) nextUpdateBuffer.getData();
-                    int length = nextUpdateBuffer.getLength();
-                    int offset = nextUpdateBuffer.getOffset();
-                    ZipEntry entry =
-                        new ZipEntry(baseFileName + nextUpdateTime + ".yuv");
-                    entry.setSize(length);
-                    ZipOutputStream file = new ZipOutputStream(
-                        new FileOutputStream(baseFileName + nextUpdateTime
-                                + ".yuv.zip"));
-                    file.putNextEntry(entry);
-                    file.write(data, offset, length);
-                    file.close();
-                }
+                        new File(recordingDirectory,
+                                baseFileName + nextUpdateTime + ".jpg"));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -223,18 +211,19 @@ public class ScreenChangeDetector extends Thread
             if (nextUpdateTime != -1) {
                 if ((time - nextUpdateTime) > DELAY) {
                     markUpdate();
+                    lastSuccessfulUpdateTime = time;
                 } else if ((time - lastSuccessfulUpdateTime)
                         > TIME_BETWEEN_FORCED_UPDATES) {
                     markUpdate();
+                    lastSuccessfulUpdateTime = time;
                 }
             }
             nextUpdateTime = time;
-            nextUpdateBuffer = processor.getBuffer(
-                    new YUVFormat(YUVFormat.YUV_420));
-            if (nextUpdateBuffer != null) {
-                nextUpdateBuffer = (Buffer) nextUpdateBuffer.clone();
-            }
             nextUpdateImage = renderer.getImage();
         }
+    }
+
+    public double getProgress() {
+        return reader.getProgress();
     }
 }

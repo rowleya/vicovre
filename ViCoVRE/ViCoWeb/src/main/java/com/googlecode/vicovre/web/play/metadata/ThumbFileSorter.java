@@ -30,34 +30,35 @@
  *
  */
 
-package com.googlecode.vicovre.codecs.ffmpeg;
+package com.googlecode.vicovre.web.play.metadata;
 
-/**
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class H264RTPDecoder extends FFMPEGDecoder {
+import java.io.File;
+import java.util.Comparator;
 
-    /**
-     * Creates a new Decoder.
-     *
-     */
-    public H264RTPDecoder() {
-        super("h264/rtp");
-        setRtpSdp("rtpmap:96 H264/90000\n"
-                + "fmtp:96 profile-level-id=00000d; packetization-mode=1\n");
+public class ThumbFileSorter implements Comparator<File> {
+
+    private String ssrc = null;
+
+    public ThumbFileSorter(String ssrc) {
+        this.ssrc = ssrc + "_";
+    }
+
+    public int compare(File file1, File file2) {
+        if (file1.getName().startsWith(ssrc)
+                && file1.getName().endsWith(".jpg")
+                && file2.getName().startsWith(ssrc)
+                && file2.getName().endsWith(".jpg")) {
+            String name1 = file1.getName().substring(ssrc.length(),
+                    file1.getName().length() - 4);
+            String name2 = file2.getName().substring(ssrc.length(),
+                    file2.getName().length() - 4);
+            int time1 = Integer.parseInt(name1);
+            int time2 = Integer.parseInt(name2);
+            return time1 - time2;
+        }
+        return 0;
     }
 
 
-    /**
-     * {@inheritDoc}
-     * @see com.googlecode.vicovre.codecs.ffmpeg.FFMPEGCodec#getContext()
-     */
-    public CodecContext getContext() {
-        CodecContext context = new CodecContext();
-        getCodecContext(context);
-        context.setFlags(context.getFlags() | CodecContext.CODEC_FLAG_EMU_EDGE
-                | CodecContext.CODEC_FLAG_PART);
-        return context;
-    }
+
 }

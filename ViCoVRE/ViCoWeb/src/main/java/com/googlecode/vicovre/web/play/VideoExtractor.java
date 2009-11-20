@@ -34,6 +34,7 @@ package com.googlecode.vicovre.web.play;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -49,11 +50,13 @@ import javax.media.util.ImageToBuffer;
 
 import com.googlecode.vicovre.codecs.controls.FrameFillControl;
 import com.googlecode.vicovre.codecs.flv.JavaMultiplexer;
-import com.googlecode.vicovre.media.AudioMixer;
 import com.googlecode.vicovre.media.MemeticFileReader;
+import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.media.audio.AudioMixer;
 import com.googlecode.vicovre.media.processor.OutputStreamDataSink;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
 
 /**
  * Extracts video from a Memetic stream
@@ -62,9 +65,6 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @version 1.0
  */
 public class VideoExtractor {
-
-    private static final AudioFormat BLANK_AUDIO_FORMAT =
-        new AudioFormat(AudioFormat.LINEAR, 5500, 8, 1);
 
     private SimpleProcessor videoProcessor = null;
 
@@ -135,11 +135,6 @@ public class VideoExtractor {
             mixer = new AudioMixer(audioReaders);
             audioProcessor = new SimpleProcessor(mixer.getFormat(),
                     multiplexer, audioTrack);
-        } else {
-
-            // If there is no audio track, make up a blank one at the lowest
-            // bit rate
-            multiplexer.setInputFormat(BLANK_AUDIO_FORMAT, audioTrack);
         }
 
         long earliestStart = Long.MAX_VALUE;
@@ -253,10 +248,9 @@ public class VideoExtractor {
      * @param delay The delay before the stream starts (in milliseconds)
      * @throws IOException
      */
-    public void transferToStream(OutputStream outputStream, long offset,
-            long duration, long delay, File firstFrame)
+    public void transferToStream(OutputStream outputStream, long offsetShift,
+            long offset, long duration, long delay, File firstFrame)
             throws IOException {
-        System.err.println("Transfer to stream");
         multiplexer.setDuration(duration + delay);
         multiplexer.setTimestampOffset(offset);
         OutputStreamDataSink dataSink = new OutputStreamDataSink(
@@ -267,38 +261,57 @@ public class VideoExtractor {
         long audioEndTimestamp = (duration - offset) * 1000000L;
         long videoEndTimestamp = (duration - offset) * 1000000L;
         if ((videoReader != null) && (mixer != null)) {
-            videoReader.setTimestampOffset(videoOffset);
-            mixer.setTimestampOffset(audioOffset);
             videoReader.streamSeek(offset - (videoOffset / 1000000L)
-                    - videoReader.getOffsetShift());
-            mixer.streamSeek(offset - (audioOffset / 1000000L));
+                    + offsetShift);
+            mixer.streamSeek(offset - (audioOffset / 1000000L) + offsetShift);
+            long videoOffsetShift =
+                (videoReader.getOffset() - offset - offsetShift) * 1000000;
+            long audioOffsetShift =
+                (mixer.getOffset() - offset - offsetShift) * 1000000;
+            videoReader.setTimestampOffset(videoOffset  + videoOffsetShift);
+            mixer.setTimestampOffset(audioOffset + audioOffsetShift);
         } else if (videoReader != null) {
-            videoReader.streamSeek(offset - videoReader.getOffsetShift());
+            videoReader.streamSeek(offset - (videoOffset / 1000000L)
+                    + offsetShift);
+            long videoOffsetShift =
+                (videoReader.getOffset() - offset - offsetShift) * 1000000;
+            videoReader.setTimestampOffset(videoOffset  + videoOffsetShift);
+            try {
+                mixer = new AudioMixer(new MemeticFileReader[0]);
+                audioProcessor = new SimpleProcessor(mixer.getFormat(),
+                        multiplexer, audioTrack);
+            } catch (Exception e) {
+                // Does Nothing
+            }
         } else if (mixer != null) {
-            mixer.streamSeek(offset);
+            mixer.streamSeek(offset + offsetShift);
+            mixer.setTimestampOffset(
+                    (mixer.getOffset() - offset - offsetShift) * 1000000);
         }
 
         boolean isAudioData = false;
         boolean isVideoData = false;
 
         // create new OutputBuffer
-        FrameFillControl control = (FrameFillControl)
-            videoProcessor.getControl("controls.FrameFillControl");
-        if (control != null) {
-            if (firstFrame != null) {
-                if (firstFrame.exists()) {
-                    BufferedImage image = ImageIO.read(firstFrame);
-                    Buffer buf = ImageToBuffer.createBuffer(image, -1);
-                    try {
-                        SimpleProcessor processor = new SimpleProcessor(
-                                buf.getFormat(),
-                                new YUVFormat(YUVFormat.YUV_420));
-                        processor.process(buf);
-                        Buffer out = processor.getOutputBuffer();
-                        byte[] data = (byte[]) out.getData();
-                        control.fillFrame(data);
-                    } catch (UnsupportedFormatException e) {
-                        e.printStackTrace();
+        if (videoProcessor != null) {
+            FrameFillControl control = (FrameFillControl)
+                videoProcessor.getControl("controls.FrameFillControl");
+            if (control != null) {
+                if (firstFrame != null) {
+                    if (firstFrame.exists()) {
+                        BufferedImage image = ImageIO.read(firstFrame);
+                        Buffer buf = ImageToBuffer.createBuffer(image, -1);
+                        try {
+                            SimpleProcessor processor = new SimpleProcessor(
+                                    buf.getFormat(),
+                                    new YUVFormat(YUVFormat.YUV_420));
+                            processor.process(buf);
+                            Buffer out = processor.getOutputBuffer();
+                            byte[] data = (byte[]) out.getData();
+                            control.fillFrame(data);
+                        } catch (UnsupportedFormatException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -430,5 +443,32 @@ public class VideoExtractor {
         multiplexer.close();
         dataSink.close();
         System.err.println("Extractor finished");
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (!Misc.isCodecsConfigured()) {
+            Misc.configureCodecs("/codecs.xml");
+        }
+        VideoExtractor extractor = new VideoExtractor(
+            //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
+            //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
+            "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
+            /*new String[]{
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/548913710",
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/251851200",
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/267823638",
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/282971832",
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/66893508",
+                "VicoWeb/target/recordings/2009-10-05_090000-000095270/163114337"
+                    }, */
+            null,
+            new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
+                    "VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
+                    "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",},
+            new Dimension(640, 480),
+            new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
+        extractor.setGenerationSpeed(1.0);
+        FileOutputStream testout = new FileOutputStream("test.flv");
+        extractor.transferToStream(testout, 320000, 0, 30000, 0, null);
     }
 }

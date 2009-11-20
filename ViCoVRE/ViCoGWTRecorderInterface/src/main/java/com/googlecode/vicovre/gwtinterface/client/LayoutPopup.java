@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwtinterface.client;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -67,6 +69,14 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     private HashMap<String, ListBox> positions = new HashMap<String, ListBox>();
 
+    private VerticalPanel audioStreams = new VerticalPanel();
+
+    private Vector<CheckBox> audioBoxes = new Vector<CheckBox>();
+
+    private TimeBox startTime = new TimeBox(1, 1);
+
+    private TimeBox stopTime = new TimeBox(1, 1);
+
     private Button okButton = new Button("OK");
 
     private Button cancelButton = new Button("Cancel");
@@ -85,6 +95,18 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         layout.setWidth("100%");
         layout.setHeight("20px");
 
+        HorizontalPanel startPanel = new HorizontalPanel();
+        startPanel.add(new Label("Start at:"));
+        startPanel.add(startTime);
+        HorizontalPanel endPanel = new HorizontalPanel();
+        endPanel.add(new Label("End at:"));
+        endPanel.add(stopTime);
+        HorizontalPanel timePanel = new HorizontalPanel();
+        timePanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
+        timePanel.setWidth("100%");
+        timePanel.add(startPanel);
+        timePanel.add(endPanel);
+
         HorizontalPanel buttonPanel = new HorizontalPanel();
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
@@ -97,9 +119,16 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         buttonPanel.setWidth("100%");
         buttonPanel.setHeight("20px");
 
+        HorizontalPanel streamContainer = new HorizontalPanel();
+        streamContainer.setWidth("100%");
+        streamContainer.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
+        streamContainer.add(audioStreams);
+
         VerticalPanel panel = getWidget();
         panel.add(layoutBox);
         panel.add(layout);
+        panel.add(timePanel);
+        panel.add(streamContainer);
         panel.add(buttonPanel);
 
         layout.setWidth("0px");
@@ -113,6 +142,31 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     public void setStreams(List<Stream> streams) {
         this.streams = streams;
+        audioStreams.add(new Label("Select which audio streams are used:"));
+        for (Stream stream : streams) {
+            if (stream.getMediaType().equalsIgnoreCase("Audio")) {
+                CheckBox box = new CheckBox(getStreamName(stream));
+                box.setFormValue(stream.getSsrc());
+                box.setValue(true);
+                audioBoxes.add(box);
+                audioStreams.add(box);
+            }
+        }
+    }
+
+    private String getStreamName(Stream stream) {
+        String text = "";
+        if (stream.getName() != null) {
+            text = stream.getName();
+            if (stream.getNote() != null) {
+                text += " - " + stream.getNote();
+            }
+            text += " (" + stream.getSsrc() + ")";
+        } else {
+            text = stream.getCname() + " ("
+                + stream.getSsrc() + ")";
+        }
+        return text;
     }
 
     private void updateLayout() {
@@ -135,19 +189,11 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                     ListBox box = new ListBox();
                     for (Stream stream : streams) {
                         if (stream.getMediaType().equalsIgnoreCase("Video")) {
-                            String text = "";
-                            if (stream.getName() != null) {
-                                text = stream.getName();
-                                if (stream.getNote() != null) {
-                                    text += " - " + stream.getNote();
-                                }
-                            } else {
-                                text = stream.getCname() + "("
-                                    + stream.getSsrc() + ")";
-                            }
-                            box.addItem(text, stream.getSsrc());
+                            box.addItem(getStreamName(stream),
+                                    stream.getSsrc());
                         }
                     }
+
                     positions.put(position.getName(), box);
                     box.setWidth(position.getWidth() + "px");
                     widget = box;
@@ -198,6 +244,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         if (replayLayout == null) {
             setValue(layoutBox, "");
             updateLayout();
+            stopTime.setValue(item.getDuration());
         } else {
             setValue(layoutBox, replayLayout.getName());
             updateLayout();
@@ -208,6 +255,12 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                     setValue(positions.get(position.getName()), stream);
                 }
             }
+            List<String> audioStreams = replayLayout.getAudioStreams();
+            for (CheckBox box : audioBoxes) {
+                box.setValue(audioStreams.contains(box.getFormValue()));
+            }
+            startTime.setValue(replayLayout.getTime());
+            stopTime.setValue(replayLayout.getEndTime());
         }
     }
 
@@ -234,7 +287,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         if ((name == null) || name.equals("")) {
             return null;
         }
-        long time = 0;
+        long time = startTime.getValue();
+        long endTime = stopTime.getValue();
         Layout layout = layouts.get(name);
         HashMap<String, String> positionMap = new HashMap<String, String>();
         for (LayoutPosition position : layout.getPositions()) {
@@ -244,8 +298,14 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                         box.getValue(box.getSelectedIndex()));
             }
         }
+        Vector<String> audioStreams = new Vector<String>();
+        for (CheckBox box : audioBoxes) {
+            if (box.getValue()) {
+                audioStreams.add(box.getFormValue());
+            }
+        }
 
-        return new ReplayLayout(name, time, positionMap);
+        return new ReplayLayout(name, time, endTime, positionMap, audioStreams);
     }
 
     public List<Map<String, Object>> getLayoutDetails() {
@@ -255,7 +315,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         if ((name == null) || name.equals("")) {
             return null;
         }
-        long time = 0;
+        long time = startTime.getValue();
+        long endTime = stopTime.getValue();
         Layout layout = layouts.get(name);
         HashMap<String, String> positionMap = new HashMap<String, String>();
         for (LayoutPosition position : layout.getPositions()) {
@@ -265,9 +326,17 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                         box.getValue(box.getSelectedIndex()));
             }
         }
+        Vector<String> audioStreams = new Vector<String>();
+        for (CheckBox box : audioBoxes) {
+            if (box.getValue()) {
+                audioStreams.add(box.getFormValue());
+            }
+        }
         details.put("name", name);
         details.put("time", new Long(time).intValue());
+        details.put("endTime", new Long(endTime).intValue());
         details.put("positions", positionMap);
+        details.put("audioStreams", audioStreams);
 
         allDetails.add(details);
 

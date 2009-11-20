@@ -296,7 +296,7 @@ public class StreamArchive {
             if (rtpType.getFormat() instanceof VideoFormat) {
                 try {
                     changeDetector =
-                        new ScreenChangeDetector(directory.getAbsolutePath(),
+                        new ScreenChangeDetector(directory,
                                 String.valueOf(ssrc),
                                 typeRepository, packetHeader.getPacketType());
                 } catch (Throwable e) {
