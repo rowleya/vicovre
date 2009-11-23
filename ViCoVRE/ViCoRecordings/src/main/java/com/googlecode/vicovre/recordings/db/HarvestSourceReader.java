@@ -126,7 +126,7 @@ public class HarvestSourceReader {
             harvestSource.setDayOfMonth(Integer.parseInt(dayOfMonth));
         } else if (updateFreq.equals(HarvestSource.UPDATE_WEEKLY)) {
             String dayOfWeek = XmlIo.readValue(doc, "dayOfWeek");
-            harvestSource.setDayOfMonth(Integer.parseInt(dayOfWeek));
+            harvestSource.setDayOfWeek(Integer.parseInt(dayOfWeek));
         }
         return harvestSource;
     }
