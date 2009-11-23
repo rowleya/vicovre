@@ -293,7 +293,7 @@ public class StreamArchive {
             type = packetHeader.getPacketType();
             RTPType rtpType = typeRepository.findRtpType(type);
             stream.setRtpType(rtpType);
-            if (rtpType.getFormat() instanceof VideoFormat) {
+            /*if (rtpType.getFormat() instanceof VideoFormat) {
                 try {
                     changeDetector =
                         new ScreenChangeDetector(directory,
@@ -305,7 +305,7 @@ public class StreamArchive {
                         + e.getMessage());
                     changeDetector = null;
                 }
-            }
+            } */
         }
 
         if (type == packetHeader.getPacketType()) {

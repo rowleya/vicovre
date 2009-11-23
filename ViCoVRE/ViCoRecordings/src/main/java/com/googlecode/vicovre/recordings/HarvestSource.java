@@ -368,6 +368,8 @@ public class HarvestSource {
                 }
                 timer = new Timer();
                 timer.schedule(new HarvestTask(), first.getTime());
+                System.err.println("Harvest of " + url + " scheduled for "
+                        + first.getTime());
             } else if (updateFrequency.equals(UPDATE_MONTHLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
@@ -381,6 +383,8 @@ public class HarvestSource {
                 }
                 timer = new Timer();
                 timer.schedule(new HarvestTask(), first.getTime());
+                System.err.println("Harvest of " + url + " scheduled for "
+                        + first.getTime());
             } else if (updateFrequency.equals(UPDATE_WEEKLY)) {
                 Calendar now = Calendar.getInstance();
                 Calendar first = Calendar.getInstance();
@@ -394,6 +398,8 @@ public class HarvestSource {
                 }
                 timer = new Timer();
                 timer.schedule(new HarvestTask(), first.getTime());
+                System.err.println("Harvest of " + url + " scheduled for "
+                        + first.getTime());
             }
         }
     }
