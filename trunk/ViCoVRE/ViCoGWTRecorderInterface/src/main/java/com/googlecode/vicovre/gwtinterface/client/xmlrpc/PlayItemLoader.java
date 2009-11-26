@@ -56,6 +56,8 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
 
     private HashMap<String, Layout> layouts = null;
 
+    private long startTime = 0;
+
     public static void loadPlayItems(String folder, PlayPanel panel,
             HashMap<String, Layout> layouts) {
         XmlRpcClient client = Application.getXmlRpcClient();
@@ -68,6 +70,7 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
     private PlayItemLoader(PlayPanel panel, HashMap<String, Layout> layouts) {
         this.panel = panel;
         this.layouts = layouts;
+        startTime = System.currentTimeMillis();
     }
 
     public void onFailure(Throwable error) {
@@ -120,6 +123,8 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
     }
 
     public void onSuccess(List<Object> items) {
+        GWT.log("Play items took " + (System.currentTimeMillis() - startTime) + "ms to read", null);
+        startTime = System.currentTimeMillis();
         Vector<PlayItem> playItems = new Vector<PlayItem>();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
@@ -132,6 +137,7 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         for (PlayItem item : playItems) {
             panel.addItem(item);
         }
+        GWT.log("Play items took " + (System.currentTimeMillis() - startTime) + "ms to load.", null);
         Application.finishedLoading();
     }
 
