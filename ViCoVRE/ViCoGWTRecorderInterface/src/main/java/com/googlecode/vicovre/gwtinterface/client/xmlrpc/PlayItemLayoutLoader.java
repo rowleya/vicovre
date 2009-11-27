@@ -33,48 +33,66 @@
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.VenuePanel;
+import com.googlecode.vicovre.gwtinterface.client.PlayItem;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
+import com.googlecode.vicovre.gwtinterface.client.ReplayLayout;
 
-public class VenueServerLoader implements AsyncCallback<List<Object>> {
+public class PlayItemLayoutLoader implements AsyncCallback<List<Object>> {
+
+    private PlayItem playItem = null;
 
     private ActionLoader loader = null;
 
-    public static void loadVenues(ActionLoader loader) {
-        XmlRpcClient xmlrpcClient = Application.getXmlRpcClient();
-
-        // Get the known venue servers
+    public static void loadLayouts(String folder, PlayItem playItem,
+            ActionLoader loader) {
+        if (playItem.getReplayLayouts() != null) {
+            loader.itemLoaded();
+            return;
+        }
+        XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
-                xmlrpcClient, "venue.getVenueServers", new Object[0],
-                new VenueServerLoader(loader));
+                client, "recording.getLayouts",
+                new Object[]{folder, playItem.getId()},
+                new PlayItemLayoutLoader(playItem, loader));
         request.execute();
     }
 
-    private VenueServerLoader(ActionLoader loader) {
+    private PlayItemLayoutLoader(PlayItem playItem, ActionLoader loader) {
+        this.playItem = playItem;
         this.loader = loader;
     }
 
     public void onFailure(Throwable error) {
-        GWT.log("Error loading venue servers", error);
-        loader.itemFailed("Error loading venue servers");
+        GWT.log("Error loading layout", error);
+        loader.itemFailed("Error loading layout: " + error.getMessage());
     }
 
-    public void onSuccess(List<Object> venueServers) {
-        for (Object v : venueServers) {
-            if (v instanceof String) {
-                VenuePanel.addVenueServer((String) v);
-                GWT.log("Added server " + v, null);
-            } else {
-                onFailure(new Throwable("Item not a string"));
-                return;
-            }
+    public void onSuccess(List<Object> items) {
+        List<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
+        for (Object item : items) {
+            Map<String, Object> layoutMap = (Map<String, Object>) item;
+            String layoutName = (String) layoutMap.get("name");
+            Integer layoutTime = (Integer) layoutMap.get("time");
+            Integer endTime = (Integer) layoutMap.get("endTime");
+            Map<String, String> positions =
+                (Map<String, String>) layoutMap.get("positions");
+            List<String> audioStreams = (List<String>)
+                layoutMap.get("audioStreams");
+            ReplayLayout layout = new ReplayLayout(layoutName, layoutTime,
+                    endTime, positions, audioStreams);
+            replayLayouts.add(layout);
         }
-        loader.itemLoaded();
+        playItem.setReplayLayouts(replayLayouts);
+        if (loader != null) {
+            loader.itemLoaded();
+        }
     }
 }

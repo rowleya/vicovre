@@ -50,8 +50,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemDeleter;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemEditor;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemLayoutLoader;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemStreamLoader;
 
 public class PlayItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<PlayItem> {
@@ -78,6 +81,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private HTML description = new HTML();
 
+    private boolean descriptionEditable = true;
+
     private Label startDate = new Label();
 
     private Date start = null;
@@ -85,6 +90,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private Label duration = new Label();
 
     private long durationValue = 0;
+
+    private List<Stream> streams = null;
+
+    private List<ReplayLayout> replayLayouts = null;
 
     private PushButton editButton = new PushButton(EDIT);
 
@@ -96,24 +105,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private PushButton playButton = new PushButton(PLAY);
 
-    private PlayItemEditPopup editPopup = new PlayItemEditPopup(this);
-
-    private PlayToVenuePopup playToVenuePopup = null;
-
-    private LayoutPopup layoutPopup = null;
-
-    private ReplayLayout layout = null;
-
-    private PlayToFlashPopup playPopup = null;
-
-    public PlayItem(String id, String name, HashMap<String, Layout> layouts) {
+    public PlayItem(String id, String name) {
 
         this.id = id;
         this.name.setText(name);
-        this.editPopup.setName(name);
-        this.playToVenuePopup = new PlayToVenuePopup(this);
-        this.layoutPopup = new LayoutPopup(layouts, this);
-        this.playPopup = new PlayToFlashPopup(this, layouts);
 
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
@@ -192,29 +187,45 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     public void setDescription(String description) {
         this.description.setHTML(description.replaceAll("\n", "<br/>"));
-        this.editPopup.setDescription(description);
     }
 
     public void setDescriptionIsEditable(boolean editable) {
-        editPopup.setDescriptionIsEditable(editable);
+        this.descriptionEditable = editable;
     }
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(editButton)) {
+            PlayItemEditPopup editPopup = new PlayItemEditPopup(this);
+            editPopup.setDescription(this.description.getHTML().replaceAll(
+                    "<br/>", "\n"));
+            editPopup.setDescriptionIsEditable(descriptionEditable);
+            editPopup.setName(this.name.getText());
             editPopup.center();
         } else if (event.getSource().equals(deleteButton)) {
             PlayItemDeleter.deleteRecording(this);
         } else if (event.getSource().equals(playToVenueButton)) {
+            PlayToVenuePopup playToVenuePopup = new PlayToVenuePopup(this);
             playToVenuePopup.center();
         } else if (event.getSource().equals(editLayoutButton)) {
-            layoutPopup.center();
+            LayoutPopup layoutPopup = new LayoutPopup(this);
+            ActionLoader loader = new ActionLoader(layoutPopup, 3,
+                    "Loading recording details...", null, true, false);
+            LayoutLoader.loadLayouts(loader);
+            PlayItemLayoutLoader.loadLayouts("", this, loader);
+            PlayItemStreamLoader.loadStreams("", this, loader);
         } else if (event.getSource().equals(playButton)) {
-            playPopup.center();
+            PlayToFlashPopup playPopup = new PlayToFlashPopup(this);
+            ActionLoader loader = new ActionLoader(playPopup, 2,
+                    "Loading recording details...", null, true, false);
+            LayoutLoader.loadLayouts(loader);
+            PlayItemLayoutLoader.loadLayouts("", this, loader);
         }
     }
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
+            PlayItemEditPopup editPopup =
+                (PlayItemEditPopup) response.getSource();
             name.setText(editPopup.getName());
             description.setHTML(editPopup.getDescription().replaceAll(
                     "\n", "<br/>"));
@@ -238,16 +249,19 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         return startDateCompare;
     }
 
-    public ReplayLayout getLayout() {
-        return layout;
-    }
-
-    public void setLayout(ReplayLayout layout) {
-        this.layout = layout;
-        layoutPopup.setLayout(layout);
-    }
-
     public void setStreams(List<Stream> streams) {
-        layoutPopup.setStreams(streams);
+        this.streams = streams;
+    }
+
+    public List<Stream> getStreams() {
+        return streams;
+    }
+
+    public void setReplayLayouts(List<ReplayLayout> replayLayouts) {
+        this.replayLayouts = replayLayouts;
+    }
+
+    public List<ReplayLayout> getReplayLayouts() {
+        return replayLayouts;
     }
 }

@@ -79,7 +79,8 @@ public class HarvestItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            harvestItem = new HarvestItem(0, popup);
+            harvestItem = new HarvestItem(0, popup.getName());
+            harvestItem.handleResponse(response);
             harvestItem.setCreated(false);
             harvestItem.setStatus("Creating...");
             panel.addItem(harvestItem);

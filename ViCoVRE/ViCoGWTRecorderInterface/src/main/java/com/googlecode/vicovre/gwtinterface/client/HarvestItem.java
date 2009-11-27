@@ -61,6 +61,28 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private Label name = new Label("");
 
+    private String url = null;
+
+    private String format = null;
+
+    private String updateFrequency = null;
+
+    private int month = 0;
+
+    private int dayOfMonth = 0;
+
+    private int dayOfWeek = 0;
+
+    private int hour = 0;
+
+    private int minute = 0;
+
+    private String venueServerUrl = null;
+
+    private String venueUrl = null;
+
+    private String[] addresses = null;
+
     private Label status = new Label("OK");
 
     private PushButton harvestButton = new PushButton(HARVEST);
@@ -69,22 +91,9 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private PushButton deleteButton = new PushButton(DELETE);
 
-    private HarvestItemPopup popup = new HarvestItemPopup(this);
-
     public HarvestItem(int id, String itemName) {
-        popup = new HarvestItemPopup(this);
-        popup.setName(itemName);
-        init(id);
-    }
-
-    public HarvestItem(int id, HarvestItemPopup popup) {
-        this.popup = popup;
-        init(id);
-    }
-
-    public void init(int id) {
         this.id = id;
-        name.setText(popup.getName());
+        name.setText(itemName);
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderColor", "black");
         DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
@@ -112,44 +121,105 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         return id;
     }
 
+    public String getName() {
+        return name.getText();
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public String getUpdateFrequency() {
+        return updateFrequency;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public int getDayOfMonth() {
+        return dayOfMonth;
+    }
+
+    public int getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public int getHour() {
+        return hour;
+    }
+
+    public int getMinute() {
+        return minute;
+    }
+
+    public String getVenueServerUrl() {
+        return venueServerUrl;
+    }
+
+    public String getVenueUrl() {
+        return venueUrl;
+    }
+
+    public String[] getAddresses() {
+        return addresses;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
 
     public void setUrl(String url) {
-        this.popup.setUrl(url);
+        this.url = url;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
     }
 
     public void setUpdateFrequency(String frequency) {
-        this.popup.setUpdateFrequency(frequency);
+        this.updateFrequency = frequency;
     }
 
     public void setMonth(int month) {
-        this.popup.setMonth(month);
+        this.month = month;
     }
 
     public void setDayOfMonth(int dayOfMonth) {
-        this.popup.setDayOfMonth(dayOfMonth);
+        this.dayOfMonth = dayOfMonth;
     }
 
     public void setDayOfWeek(int dayOfWeek) {
-        this.popup.setDayOfWeek(dayOfWeek);
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    public void setMinute(int minute) {
+        this.minute = minute;
     }
 
     public void setVenueServerUrl(String venueServerUrl) {
-        this.popup.setVenueServer(venueServerUrl);
+        this.venueServerUrl = venueServerUrl;
     }
 
     public void setVenueUrl(String venueUrl) {
-        this.popup.setVenue(venueUrl);
+        this.venueUrl = venueUrl;
     }
 
     public void setAddresses(String[] addresses) {
-        this.popup.setAddresses(addresses);
+        this.addresses = addresses;
     }
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(editButton)) {
+            HarvestItemPopup popup = new HarvestItemPopup(this);
             popup.center();
         } else if (event.getSource().equals(harvestButton)) {
             HarvestItemUpdater.harvest(this);
@@ -160,10 +230,19 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            if (response.getSource().equals(popup)) {
-                name.setText(popup.getName());
-                HarvestItemEditor.updateItem(this);
-            }
+            HarvestItemPopup popup = (HarvestItemPopup) response.getSource();
+            name.setText(popup.getName());
+            url = popup.getUrl();
+            updateFrequency = popup.getUpdateFrequency();
+            month = popup.getMonth();
+            dayOfMonth = popup.getDayOfMonth();
+            dayOfWeek = popup.getDayOfWeek();
+            hour = popup.getHour();
+            minute = popup.getMinute();
+            venueServerUrl = popup.getVenueServer();
+            venueUrl = popup.getVenue();
+            addresses = popup.getAddresses();
+            HarvestItemEditor.updateItem(this);
         }
     }
 
@@ -189,49 +268,38 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         this.status.setText(status);
     }
 
-    public void setHour(int hour) {
-        popup.setHour(hour);
-    }
-
-    public void setMinute(int minute) {
-        popup.setMinute(minute);
-    }
-
     public Map<String, Object> getDetails() {
         Map<String, Object> details = new HashMap<String, Object>();
         details.put("id", id);
-        details.put("name", popup.getName());
-        details.put("url", popup.getUrl());
-        details.put("format", popup.getFormat());
-        String frequency = popup.getUpdateFrequency();
-        details.put("hour", popup.getHour());
-        details.put("minute", popup.getMinute());
-        details.put("updateFrequency", frequency);
-        if (frequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
-            details.put("month", popup.getMonth());
-            details.put("dayOfMonth", popup.getDayOfMonth());
-        } else if (frequency.equals(HarvestItemPopup.UPDATE_MONTHLY)) {
-            details.put("dayOfMonth", popup.getDayOfMonth());
-        } else if (frequency.equals(HarvestItemPopup.UPDATE_WEEKLY)) {
-            details.put("dayOfWeek", popup.getDayOfWeek());
+        details.put("name", name.getText());
+        details.put("url", url);
+        details.put("format", format);
+        details.put("updateFrequency", updateFrequency);
+        if (updateFrequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
+            details.put("month", month);
+            details.put("dayOfMonth", dayOfMonth);
+        } else if (updateFrequency.equals(HarvestItemPopup.UPDATE_MONTHLY)) {
+            details.put("dayOfMonth", dayOfMonth);
+        } else if (updateFrequency.equals(HarvestItemPopup.UPDATE_WEEKLY)) {
+            details.put("dayOfWeek", dayOfWeek);
         }
-        String venueServerUrl = popup.getVenueServer();
+        details.put("hour", hour);
+        details.put("minute", minute);
         if (venueServerUrl != null) {
             details.put("ag3VenueServer", venueServerUrl);
-            details.put("ag3VenueUrl", popup.getVenue());
+            details.put("ag3VenueUrl", venueUrl);
         } else {
-            String[] addrs = popup.getAddresses();
-            List<Map<String, Object>> addresses =
+            List<Map<String, Object>> addrs =
                 new Vector<Map<String, Object>>();
-            for (int i = 0; i < addrs.length; i++) {
+            for (int i = 0; i < addresses.length; i++) {
                 Map<String, Object> address = new HashMap<String, Object>();
-                String[] parts = addrs[i].split("/");
+                String[] parts = addresses[i].split("/");
                 address.put("host", parts[0]);
                 address.put("port", Integer.valueOf(parts[1]));
                 address.put("ttl", Integer.valueOf(parts[2]));
-                addresses.add(address);
+                addrs.add(address);
             }
-            details.put("addresses", addresses);
+            details.put("addresses", addrs);
         }
         return details;
     }

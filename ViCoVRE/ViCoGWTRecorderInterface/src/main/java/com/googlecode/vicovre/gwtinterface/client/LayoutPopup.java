@@ -53,15 +53,12 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutChanger;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutLoader;
 
 public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         ClickHandler, ChangeHandler {
 
     private PlayItem item = null;
-
-    private HashMap<String, Layout> layouts = null;
-
-    private List<Stream> streams = null;
 
     private ListBox layoutBox = new ListBox();
 
@@ -81,17 +78,11 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     private Button cancelButton = new Button("Cancel");
 
-    public LayoutPopup(HashMap<String, Layout> layouts, PlayItem item) {
+    public LayoutPopup(PlayItem item) {
         super(new VerticalPanel());
         this.item = item;
-        this.layouts = layouts;
 
         layoutBox.setVisibleItemCount(1);
-        layoutBox.addItem("Select a layout", "");
-        for (String layoutName : layouts.keySet()) {
-            layoutBox.addItem(layoutName);
-        }
-        layoutBox.setSelectedIndex(0);
         layout.setWidth("100%");
         layout.setHeight("20px");
 
@@ -140,18 +131,20 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         layoutBox.addChangeHandler(this);
     }
 
-    public void setStreams(List<Stream> streams) {
-        this.streams = streams;
-        audioStreams.add(new Label("Select which audio streams are used:"));
-        for (Stream stream : streams) {
-            if (stream.getMediaType().equalsIgnoreCase("Audio")) {
-                CheckBox box = new CheckBox(getStreamName(stream));
-                box.setFormValue(stream.getSsrc());
-                box.setValue(true);
-                audioBoxes.add(box);
-                audioStreams.add(box);
-            }
+    public void center() {
+        layoutBox.clear();
+        layoutBox.addItem("Select a layout", "");
+        for (String layoutName : LayoutLoader.getLayouts().keySet()) {
+            layoutBox.addItem(layoutName);
         }
+        layoutBox.setSelectedIndex(0);
+        List<ReplayLayout> layouts = item.getReplayLayouts();
+        if (layouts.size() > 0) {
+            setLayout(layouts.get(0));
+        } else {
+            setLayout(null);
+        }
+        super.center();
     }
 
     private String getStreamName(Stream stream) {
@@ -172,12 +165,23 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
     private void updateLayout() {
         layout.clear();
         positions.clear();
+        audioStreams.clear();
         String value = layoutBox.getValue(layoutBox.getSelectedIndex());
         if (value.equals("")) {
             layout.setWidth("0px");
             layout.setHeight("0px");
         } else {
-            Layout layoutSelected = layouts.get(value);
+            audioStreams.add(new Label("Select which audio streams are used:"));
+            for (Stream stream : item.getStreams()) {
+                if (stream.getMediaType().equalsIgnoreCase("Audio")) {
+                    CheckBox box = new CheckBox(getStreamName(stream));
+                    box.setFormValue(stream.getSsrc());
+                    box.setValue(true);
+                    audioBoxes.add(box);
+                    audioStreams.add(box);
+                }
+            }
+            Layout layoutSelected = LayoutLoader.getLayouts().get(value);
             List<LayoutPosition> positionList = layoutSelected.getPositions();
             int maxX = 0;
             int maxY = 0;
@@ -187,7 +191,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                 Widget widget = null;
                 if (position.isAssignable()) {
                     ListBox box = new ListBox();
-                    for (Stream stream : streams) {
+                    for (Stream stream : item.getStreams()) {
                         if (stream.getMediaType().equalsIgnoreCase("Video")) {
                             box.addItem(getStreamName(stream),
                                     stream.getSsrc());
@@ -240,7 +244,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         }
     }
 
-    public void setLayout(ReplayLayout replayLayout) {
+    private void setLayout(ReplayLayout replayLayout) {
         if (replayLayout == null) {
             setValue(layoutBox, "");
             updateLayout();
@@ -248,7 +252,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         } else {
             setValue(layoutBox, replayLayout.getName());
             updateLayout();
-            Layout layout = layouts.get(replayLayout.getName());
+            Layout layout = LayoutLoader.getLayouts().get(
+                    replayLayout.getName());
             for (LayoutPosition position : layout.getPositions()) {
                 String stream = replayLayout.getStream(position.getName());
                 if (position.isAssignable()) {
@@ -266,10 +271,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(okButton)) {
-            item.setLayout(getLayout());
             LayoutChanger.setLayout(this);
         } else if (event.getSource().equals(cancelButton)) {
-            setLayout(item.getLayout());
             hide();
         }
     }
@@ -289,7 +292,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         }
         long time = startTime.getValue();
         long endTime = stopTime.getValue();
-        Layout layout = layouts.get(name);
+        Layout layout = LayoutLoader.getLayouts().get(name);
         HashMap<String, String> positionMap = new HashMap<String, String>();
         for (LayoutPosition position : layout.getPositions()) {
             if (position.isAssignable()) {
@@ -317,7 +320,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         }
         long time = startTime.getValue();
         long endTime = stopTime.getValue();
-        Layout layout = layouts.get(name);
+        Layout layout = LayoutLoader.getLayouts().get(name);
         HashMap<String, String> positionMap = new HashMap<String, String>();
         for (LayoutPosition position : layout.getPositions()) {
             if (position.isAssignable()) {

@@ -93,12 +93,24 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private Button cancel = new Button("Cancel");
 
+    private HarvestItem item = null;
+
     private MessageResponseHandler handler = null;
 
-    @SuppressWarnings("deprecation")
+    public HarvestItemPopup(HarvestItem item) {
+        super(new Grid(6, 2));
+        this.item = item;
+        this.handler = item;
+        init();
+    }
+
     public HarvestItemPopup(MessageResponseHandler handler) {
         super(new Grid(6, 2));
         this.handler = handler;
+        init();
+    }
+
+    private void init() {
         Grid grid = getWidget();
         grid.setWidget(0, 0, new Label("Name:"));
         grid.setWidget(0, 1, name);
@@ -166,7 +178,7 @@ public class HarvestItemPopup extends ModalPopup<Grid>
             day.addItem("on the " + value + ordinal, value);
         }
         for (int i = 0; i < 7; i++) {
-            String value = weekdayFormat.format(new Date(2009, 8, 20 + i));
+            String value = weekdayFormat.format(new Date(2009, 8, 18 + i));
             weekDay.addItem("on " + value, value);
         }
 
@@ -179,6 +191,34 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
+    }
+
+    public void center() {
+        if (item != null) {
+            name.setText(item.getName());
+            url.setText(item.getUrl());
+            setValue(format, item.getFormat());
+            String frequency = item.getUpdateFrequency();
+            setValue(updateFrequency, frequency);
+            if (frequency.equals(UPDATE_ANUALLY)) {
+                month.setSelectedIndex(item.getMonth());
+                day.setSelectedIndex(item.getDayOfMonth());
+            } else if (frequency.equals(UPDATE_MONTHLY)) {
+                day.setSelectedIndex(item.getDayOfMonth());
+            } else if (frequency.equals(UPDATE_WEEKLY)) {
+                weekDay.setSelectedIndex(item.getDayOfWeek());
+            }
+            updateFrequency();
+            time.setHour(item.getHour());
+            time.setMinute(item.getMinute());
+            if (item.getVenueServerUrl() != null) {
+                venue.setVenueServer(item.getVenueServerUrl());
+                venue.setVenue(item.getVenueUrl());
+            } else {
+                venue.setAddresses(item.getAddresses());
+            }
+        }
+        super.center();
     }
 
     public void onClick(ClickEvent event) {
@@ -273,14 +313,6 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         return venue.getAddresses();
     }
 
-    public void setName(String name) {
-        this.name.setText(name);
-    }
-
-    public void setUrl(String url) {
-        this.url.setText(url);
-    }
-
     private void setValue(ListBox box, String value) {
         for (int i = 0; i < box.getItemCount(); i++) {
             if (box.getValue(i).equals(value)) {
@@ -290,44 +322,4 @@ public class HarvestItemPopup extends ModalPopup<Grid>
         }
     }
 
-    public void setFormat(String format) {
-        setValue(this.format, format);
-    }
-
-    public void setUpdateFrequency(String frequency) {
-        setValue(this.updateFrequency, frequency);
-        updateFrequency();
-    }
-
-    public void setMonth(int month) {
-        this.month.setSelectedIndex(month);
-    }
-
-    public void setDayOfMonth(int day) {
-        this.day.setSelectedIndex(day);
-    }
-
-    public void setDayOfWeek(int weekDay) {
-        this.weekDay.setSelectedIndex(weekDay);
-    }
-
-    public void setVenueServer(String server) {
-        venue.setVenueServer(server);
-    }
-
-    public void setVenue(String venue) {
-        this.venue.setVenue(venue);
-    }
-
-    public void setAddresses(String[] addresses) {
-        this.venue.setAddresses(addresses);
-    }
-
-    public void setHour(int hour) {
-        time.setHour(hour);
-    }
-
-    public void setMinute(int minute) {
-        time.setMinute(minute);
-    }
 }

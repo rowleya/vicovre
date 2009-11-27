@@ -41,6 +41,7 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItem;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItemPopup;
@@ -50,22 +51,25 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
 
     private HarvestPanel panel = null;
 
+    private ActionLoader loader = null;
+
     public static void loadHarvestItems(String folder,
-            HarvestPanel panel) {
+            HarvestPanel panel, ActionLoader loader) {
         XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 xmlRpcClient, "harvest.getSources", new Object[]{folder},
-                new HarvestItemLoader(panel));
+                new HarvestItemLoader(panel, loader));
         request.execute();
     }
 
-    private HarvestItemLoader(HarvestPanel panel) {
+    private HarvestItemLoader(HarvestPanel panel, ActionLoader loader) {
         this.panel = panel;
+        this.loader = loader;
     }
 
     public void onFailure(Throwable error) {
-        Application.showErrorLoading();
         GWT.log("Error loading harvest items", error);
+        loader.itemFailed("Error loading harvest items");
     }
 
     public static HarvestItem buildHarvestItem(Map<String, Object> item) {
@@ -73,6 +77,7 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
         String name = (String) item.get("name");
         HarvestItem harvestItem = new HarvestItem(id, name);
         harvestItem.setUrl((String) item.get("url"));
+        harvestItem.setFormat((String) item.get("format"));
         String frequency = (String) item.get("updateFrequency");
         harvestItem.setUpdateFrequency(frequency);
         if (frequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
@@ -125,7 +130,7 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
         for (HarvestItem item : harvestItems) {
             panel.addItem(item);
         }
-        Application.finishedLoading();
+        loader.itemLoaded();
     }
 
 

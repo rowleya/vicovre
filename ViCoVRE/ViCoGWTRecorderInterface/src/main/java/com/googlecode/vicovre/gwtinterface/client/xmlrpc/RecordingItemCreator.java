@@ -78,7 +78,8 @@ public class RecordingItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            item = new RecordingItem(0, popup);
+            item = new RecordingItem(0, popup.getName());
+            item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");
             panel.addItem(item);

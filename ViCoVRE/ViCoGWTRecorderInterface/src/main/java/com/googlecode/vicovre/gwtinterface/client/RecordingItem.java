@@ -85,6 +85,18 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private HTML description = new HTML();
 
+    private boolean descriptionEditable = true;
+
+    private Date startDate = null;
+
+    private Date stopDate = null;
+
+    private String venueServerUrl = null;
+
+    private String venueUrl = null;
+
+    private String[] addresses = null;
+
     private Label status = new Label(STOPPED);
 
     private ToggleButton recordButton = new ToggleButton(RECORD, PAUSE);
@@ -95,24 +107,11 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private PushButton editButton = new PushButton(EDIT);
 
-    private RecordingItemPopup popup = new RecordingItemPopup(this);
-
     private int id = 0;
 
     public RecordingItem(int id, String itemName) {
-        popup = new RecordingItemPopup(this);
-        popup.setName(itemName);
-        init(id);
-    }
-
-    public RecordingItem(int id, RecordingItemPopup popup) {
-        this.popup = popup;
-        init(id);
-    }
-
-    private void init(int id) {
         this.id = id;
-        name.setText(popup.getName());
+        name.setText(itemName);
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
         DOM.setStyleAttribute(getElement(), "borderStyle", "solid");
@@ -169,31 +168,58 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     public void setDescription(String description) {
         this.description.setHTML(description.replaceAll("\n", "<br/>"));
-        popup.setDescription(description);
     }
 
     public void setDescriptionIsEditable(boolean editable) {
-        popup.setDescriptionEditable(editable);
+        this.descriptionEditable = editable;
     }
 
     public void setStartDate(Date startDate) {
-        popup.setStartDate(startDate);
+        this.startDate = startDate;
     }
 
     public void setStopDate(Date stopDate) {
-        popup.setStopDate(stopDate);
+        this.stopDate = stopDate;
     }
 
     public void setVenueServerUrl(String url) {
-        popup.setVenueServerUrl(url);
+        this.venueServerUrl = url;
     }
 
     public void setVenueUrl(String venue) {
-        popup.setVenueUrl(venue);
+        this.venueUrl = venue;
     }
 
     public void setAddresses(String[] addresses) {
-        popup.setAddresses(addresses);
+        this.addresses = addresses;
+    }
+
+    public String getName() {
+        return name.getText();
+    }
+
+    public String getDescription() {
+        return description.getHTML().replaceAll("<br/>", "\n");
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public Date getStopDate() {
+        return stopDate;
+    }
+
+    public String getVenueServerUrl() {
+        return venueServerUrl;
+    }
+
+    public String getVenueUrl() {
+        return venueUrl;
+    }
+
+    public String[] getAddresses() {
+        return addresses;
     }
 
     public void setStatus(String status) {
@@ -202,19 +228,16 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             DOM.setStyleAttribute(this.status.getElement(), "color", "red");
             stopButton.setEnabled(true);
             recordButton.setDown(true);
-            popup.setRecording(true);
         } else if (status.startsWith(ERROR)) {
             DOM.setStyleAttribute(this.status.getElement(), "color", "red");
         } else {
             DOM.setStyleAttribute(this.status.getElement(), "color", "black");
             if (status.equals(PAUSED)) {
-                popup.setRecording(true);
                 stopButton.setEnabled(true);
                 recordButton.setDown(false);
             } else if (status.equals(STOPPED)) {
                 stopButton.setEnabled(false);
                 recordButton.setDown(false);
-                popup.setRecording(false);
             } else if (status.equals(COMPLETED)) {
                 recordButton.setEnabled(false);
                 stopButton.setEnabled(false);
@@ -260,6 +283,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         } else if (event.getSource().equals(stopButton)) {
             RecordingItemStopper.stop(this);
         } else if (event.getSource().equals(editButton)) {
+            RecordingItemPopup popup = new RecordingItemPopup(this);
             popup.center();
         } else if (event.getSource().equals(deleteButton)) {
             RecordingItemDeleter.deleteRecording(this);
@@ -268,9 +292,16 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
+            RecordingItemPopup popup = (RecordingItemPopup)
+                response.getSource();
             name.setText(popup.getName());
             description.setHTML(popup.getDescription().replaceAll(
                     "\n", "<br/>"));
+            startDate = popup.getStartDate();
+            stopDate = popup.getStopDate();
+            venueServerUrl = popup.getVenueServer();
+            venueUrl = popup.getVenue();
+            addresses = popup.getAddresses();
             RecordingItemEditor.updateRecording(this);
         }
     }
@@ -280,43 +311,39 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         details.put("id", id);
 
         Map<String, Object> metadata = new HashMap<String, Object>();
-        metadata.put("name", popup.getName());
-        metadata.put("description", popup.getDescription());
+        metadata.put("name", getName());
+        metadata.put("description", getDescription());
         details.put("metadata", metadata);
 
-        if (popup.getStartDate() != null) {
-            details.put("startDate", popup.getStartDate());
+        if (startDate != null) {
+            details.put("startDate", startDate);
         }
-        if (popup.getStopDate() != null) {
-            details.put("stopDate", popup.getStopDate());
+        if (stopDate != null) {
+            details.put("stopDate", stopDate);
         }
 
-        String venueServerUrl = popup.getVenueServer();
         if (venueServerUrl != null) {
             details.put("ag3VenueServer", venueServerUrl);
-            details.put("ag3VenueUrl", popup.getVenue());
+            details.put("ag3VenueUrl", venueUrl);
         } else {
-            String[] addrs = popup.getAddresses();
-            List<Map<String, Object>> addresses =
+            List<Map<String, Object>> addrs =
                 new Vector<Map<String, Object>>();
-            for (int i = 0; i < addrs.length; i++) {
+            for (int i = 0; i < addresses.length; i++) {
                 Map<String, Object> address = new HashMap<String, Object>();
-                String[] parts = addrs[i].split("/");
+                String[] parts = addresses[i].split("/");
                 address.put("host", parts[0]);
                 address.put("port", Integer.valueOf(parts[1]));
                 address.put("ttl", Integer.valueOf(parts[2]));
-                addresses.add(address);
+                addrs.add(address);
             }
-            details.put("addresses", addresses);
+            details.put("addresses", addrs);
         }
         return details;
     }
 
     public int compareTo(RecordingItem item) {
-        int startDateCompare = popup.getStartDate().compareTo(
-                item.popup.getStartDate());
-        int stopDateCompare = popup.getStopDate().compareTo(
-                item.popup.getStartDate());
+        int startDateCompare = startDate.compareTo(item.startDate);
+        int stopDateCompare = stopDate.compareTo(item.stopDate);
         int nameCompare = name.getText().compareTo(item.name.getText());
         if (startDateCompare == 0) {
             if (stopDateCompare == 0) {

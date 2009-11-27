@@ -30,51 +30,55 @@
  *
  */
 
-package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
+package com.googlecode.vicovre.gwtinterface.client;
 
-import java.util.List;
-
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
-import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.VenuePanel;
 
-public class VenueServerLoader implements AsyncCallback<List<Object>> {
+public class ActionLoader {
 
-    private ActionLoader loader = null;
+    private ModalPopup<?> popupToLaunch = null;
 
-    public static void loadVenues(ActionLoader loader) {
-        XmlRpcClient xmlrpcClient = Application.getXmlRpcClient();
+    private int itemsToLoad = 0;
 
-        // Get the known venue servers
-        XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
-                xmlrpcClient, "venue.getVenueServers", new Object[0],
-                new VenueServerLoader(loader));
-        request.execute();
+    private WaitPopup loading = null;
+
+    private boolean fatal = false;
+
+    private String errorMessage = null;
+
+    public ActionLoader(ModalPopup<?> popupToLaunch, int itemsToLoad,
+            String message, String errorMessage, boolean cancellable,
+            boolean fatal) {
+        this.popupToLaunch = popupToLaunch;
+        this.itemsToLoad = itemsToLoad;
+        this.errorMessage = errorMessage;
+        this.fatal = fatal;
+        loading = new WaitPopup(message, cancellable);
+        loading.center();
     }
 
-    private VenueServerLoader(ActionLoader loader) {
-        this.loader = loader;
-    }
-
-    public void onFailure(Throwable error) {
-        GWT.log("Error loading venue servers", error);
-        loader.itemFailed("Error loading venue servers");
-    }
-
-    public void onSuccess(List<Object> venueServers) {
-        for (Object v : venueServers) {
-            if (v instanceof String) {
-                VenuePanel.addVenueServer((String) v);
-                GWT.log("Added server " + v, null);
-            } else {
-                onFailure(new Throwable("Item not a string"));
-                return;
+    public void itemLoaded() {
+        if (loading.wasCancelled()) {
+            return;
+        }
+        itemsToLoad -= 1;
+        if (itemsToLoad == 0) {
+            loading.hide();
+            if (popupToLaunch != null) {
+                popupToLaunch.center();
             }
         }
-        loader.itemLoaded();
     }
+
+    public void itemFailed(String error) {
+        loading.hide();
+        String errorMsg = errorMessage;
+        if (errorMsg == null) {
+            errorMsg = error;
+        }
+        MessagePopup errorPopup = new MessagePopup(errorMsg, null,
+                MessagePopup.ERROR, fatal? 0: MessageResponse.OK);
+        errorPopup.center();
+    }
+
 }

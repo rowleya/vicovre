@@ -86,11 +86,24 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private Button cancel = new Button("Cancel");
 
+    private RecordingItem item = null;
+
     private MessageResponseHandler handler = null;
+
+    public RecordingItemPopup(RecordingItem item) {
+        super(new Grid(6, 2));
+        this.item = item;
+        this.handler = item;
+        init();
+    }
 
     public RecordingItemPopup(MessageResponseHandler handler) {
         super(new Grid(6, 2));
         this.handler = handler;
+        init();
+    }
+
+    private void init() {
         Grid grid = getWidget();
 
         manualStart = new RadioButton("start" + id);
@@ -169,6 +182,38 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         cancel.addClickHandler(this);
     }
 
+    public void center() {
+        if (item != null) {
+            this.name.setText(item.getName());
+            this.description.setText(item.getDescription());
+            Date startDate = item.getStartDate();
+            if (startDate != null) {
+                this.startDate.setValue(startDate);
+                this.startTime.setHour(startDate.getHours());
+                this.startTime.setMinute(startDate.getMinutes());
+                autoStart.setValue(true, true);
+            } else {
+                manualStart.setValue(true, true);
+            }
+            Date stopDate = item.getStartDate();
+            if (stopDate != null) {
+                this.stopDate.setValue(stopDate);
+                this.stopTime.setHour(stopDate.getHours());
+                this.stopTime.setMinute(stopDate.getMinutes());
+                autoStop.setValue(true, true);
+            } else {
+                manualStop.setValue(true, true);
+            }
+            if (item.getVenueServerUrl() != null) {
+                venue.setVenueServer(item.getVenueServerUrl());
+                venue.setVenue(item.getVenueUrl());
+            } else {
+                venue.setAddresses(item.getAddresses());
+            }
+        }
+        super.center();
+    }
+
     public String getName() {
         return name.getText();
     }
@@ -207,48 +252,6 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public String[] getAddresses() {
         return venue.getAddresses();
-    }
-
-    public void setName(String name) {
-        this.name.setText(name);
-    }
-
-    public void setDescription(String description) {
-        this.description.setText(description);
-    }
-
-    public void setStartDate(Date startDate) {
-        if (startDate != null) {
-            this.startDate.setValue(startDate);
-            this.startTime.setHour(startDate.getHours());
-            this.startTime.setMinute(startDate.getMinutes());
-            autoStart.setValue(true, true);
-        } else {
-            manualStart.setValue(true, true);
-        }
-    }
-
-    public void setStopDate(Date stopDate) {
-        if (stopDate != null) {
-            this.stopDate.setValue(stopDate);
-            this.stopTime.setHour(stopDate.getHours());
-            this.stopTime.setMinute(stopDate.getMinutes());
-            autoStop.setValue(true, true);
-        } else {
-            manualStop.setValue(true, true);
-        }
-    }
-
-    public void setVenueServerUrl(String url) {
-        this.venue.setVenueServer(url);
-    }
-
-    public void setVenueUrl(String venue) {
-        this.venue.setVenue(venue);
-    }
-
-    public void setAddresses(String[] addresses) {
-        this.venue.setAddresses(addresses);
     }
 
     public void setDescriptionEditable(boolean editable) {
