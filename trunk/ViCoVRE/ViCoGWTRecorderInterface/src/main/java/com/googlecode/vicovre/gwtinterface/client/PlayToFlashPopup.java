@@ -32,7 +32,7 @@
 
 package com.googlecode.vicovre.gwtinterface.client;
 
-import java.util.HashMap;
+import java.util.List;
 
 import pl.rmalinowski.gwt2swf.client.ui.SWFWidget;
 
@@ -40,6 +40,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutLoader;
 
 public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
@@ -50,12 +51,9 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
 
     private PlayItem item = null;
 
-    private HashMap<String, Layout> layouts = null;
-
-    public PlayToFlashPopup(PlayItem item, HashMap<String, Layout> layouts) {
+    public PlayToFlashPopup(PlayItem item) {
         super(new VerticalPanel());
         this.item = item;
-        this.layouts = layouts;
         closeButton.addClickHandler(this);
     }
 
@@ -68,25 +66,28 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
             panel.add(player);
             panel.add(closeButton);
         }
-        ReplayLayout replayLayout = item.getLayout();
-        if (replayLayout != null) {
-            Layout layout = layouts.get(replayLayout.getName());
+        List<ReplayLayout> replayLayouts = item.getReplayLayouts();
+        if ((replayLayouts != null) && (replayLayouts.size() > 0)) {
             int minX = Integer.MAX_VALUE;
             int maxX = 0;
             int minY = Integer.MAX_VALUE;
             int maxY = 0;
-            for (LayoutPosition position : layout.getPositions()) {
-                if ((position.getX() + position.getWidth()) > maxX) {
-                    maxX = position.getX() + position.getWidth();
-                }
-                if ((position.getY() + position.getHeight()) > maxY) {
-                    maxY = position.getY() + position.getHeight();
-                }
-                if (position.getX() < minX) {
-                    minX = position.getX();
-                }
-                if (position.getY() < minY) {
-                    minY = position.getY();
+            for (ReplayLayout replayLayout : replayLayouts) {
+                Layout layout = LayoutLoader.getLayouts().get(
+                        replayLayout.getName());
+                for (LayoutPosition position : layout.getPositions()) {
+                    if ((position.getX() + position.getWidth()) > maxX) {
+                        maxX = position.getX() + position.getWidth();
+                    }
+                    if ((position.getY() + position.getHeight()) > maxY) {
+                        maxY = position.getY() + position.getHeight();
+                    }
+                    if (position.getX() < minX) {
+                        minX = position.getX();
+                    }
+                    if (position.getY() < minY) {
+                        minY = position.getY();
+                    }
                 }
             }
             player.setSize(maxX + "px", maxY + "px");

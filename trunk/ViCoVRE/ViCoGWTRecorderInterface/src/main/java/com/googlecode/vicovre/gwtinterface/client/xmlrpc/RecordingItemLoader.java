@@ -42,6 +42,7 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
 import com.googlecode.vicovre.gwtinterface.client.RecordPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
@@ -50,23 +51,26 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
 
     private RecordPanel panel = null;
 
+    private ActionLoader loader = null;
+
     public static void loadRecordingItems(String folder,
-            RecordPanel panel) {
+            RecordPanel panel, ActionLoader loader) {
         XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 xmlRpcClient, "unfinishedRecording.getUnfinishedRecordings",
                 new Object[]{folder},
-                new RecordingItemLoader(panel));
+                new RecordingItemLoader(panel, loader));
         request.execute();
     }
 
-    private RecordingItemLoader(RecordPanel panel) {
+    private RecordingItemLoader(RecordPanel panel, ActionLoader loader) {
         this.panel = panel;
+        this.loader = loader;
     }
 
     public void onFailure(Throwable error) {
-        Application.showErrorLoading();
         GWT.log("Error loading recording items", error);
+        loader.itemFailed("Error loading recording items");
     }
 
     public static RecordingItem buildRecordingItem(Map<String, Object> item) {
@@ -119,7 +123,7 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
         for (RecordingItem item : recordingItems) {
             panel.addItem(item);
         }
-        Application.finishedLoading();
+        loader.itemLoaded();
     }
 
 }

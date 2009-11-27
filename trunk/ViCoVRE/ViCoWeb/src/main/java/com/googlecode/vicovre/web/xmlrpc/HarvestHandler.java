@@ -239,7 +239,7 @@ public class HarvestHandler extends AbstractHandler {
             sources[i].put("id", source.getId());
             sources[i].put("name", source.getName());
             sources[i].put("url", source.getUrl());
-
+            sources[i].put("format", source.getFormat().getName());
             String updateFreq = source.getUpdateFrequency();
             sources[i].put("updateFrequency", updateFreq);
             sources[i].put("hour", source.getHour());

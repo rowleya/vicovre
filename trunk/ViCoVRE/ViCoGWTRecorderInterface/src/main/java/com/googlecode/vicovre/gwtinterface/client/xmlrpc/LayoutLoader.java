@@ -40,20 +40,36 @@ import java.util.Vector;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
 import com.googlecode.vicovre.gwtinterface.client.Layout;
 import com.googlecode.vicovre.gwtinterface.client.LayoutPosition;
 
 public class LayoutLoader implements AsyncCallback<List<Object>> {
 
-    private Application application = null;
+    private static HashMap<String, Layout> layouts = null;
 
-    public static void loadLayouts(Application application) {
-        new LayoutLoader(application);
+    private static boolean isLoading = false;
+
+    private static Vector<ActionLoader> loaders = new Vector<ActionLoader>();
+
+    public static HashMap<String, Layout> getLayouts() {
+        return layouts;
     }
 
-    private LayoutLoader(Application application) {
-        this.application = application;
+    public static void loadLayouts(ActionLoader loader) {
+        if (layouts == null) {
+            loaders.add(loader);
+            if (!isLoading) {
+                new LayoutLoader();
+                isLoading = true;
+            }
+        } else {
+            loader.itemLoaded();
+        }
+    }
+
+    private LayoutLoader() {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 client, "layout.getLayouts", new Object[]{}, this);
@@ -61,10 +77,13 @@ public class LayoutLoader implements AsyncCallback<List<Object>> {
     }
 
     public void onFailure(Throwable error) {
-        Application.showErrorLoading();
+        for (ActionLoader loader : loaders) {
+            loader.itemFailed("Error loading layout: " + error.getMessage());
+        }
     }
 
     public void onSuccess(List<Object> layouts) {
+        HashMap<String, Layout> loadedLayouts = new HashMap<String, Layout>();
         for (Object layoutObject : layouts) {
             Map<String, Object> layoutMap = (Map<String, Object>) layoutObject;
             String name = (String) layoutMap.get("name");
@@ -83,9 +102,12 @@ public class LayoutLoader implements AsyncCallback<List<Object>> {
                 positions.add(position);
             }
             Layout layout = new Layout(name, positions);
-            application.addLayout(layout);
+            loadedLayouts.put(name, layout);
         }
-        application.finishLoadingLayouts();
+        LayoutLoader.layouts = loadedLayouts;
+        for (ActionLoader loader : loaders) {
+            loader.itemLoaded();
+        }
     }
 
 

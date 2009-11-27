@@ -62,6 +62,57 @@ public class RecordingHandler extends AbstractHandler {
         }
     }
 
+    public Map<String, Object>[] getStreams(String folderPath, String id)
+            throws XmlRpcException {
+        Folder folder = getFolder(folderPath);
+        Recording recording = folder.getRecording(id);
+        if (recording == null) {
+            throw new XmlRpcException("Recording " + id + " not found");
+        }
+        List<Stream> streams = recording.getStreams();
+        Map<String, Object>[] strms = new Map[streams.size()];
+        for (int j = 0; j < streams.size(); j++) {
+            Stream stream = streams.get(j);
+            strms[j] = getDetails(stream, "rtpType", "recording");
+            strms[j].put("mediaType", stream.getRtpType().getMediaType());
+        }
+        return strms;
+    }
+
+    public Map<String, Object>[] getLayouts(String folderPath, String id)
+            throws XmlRpcException {
+        Folder folder = getFolder(folderPath);
+        Recording recording = folder.getRecording(id);
+        if (recording == null) {
+            throw new XmlRpcException("Recording " + id + " not found");
+        }
+        List<ReplayLayout> layouts = recording.getReplayLayouts();
+                List<Map<String, Object>> replayLayouts =
+            new Vector<Map<String,Object>>();
+        for (ReplayLayout layout : layouts) {
+            Map<String, Object> replayLayout =
+                new HashMap<String, Object>();
+            replayLayout.put("name", layout.getName());
+            replayLayout.put("time", new Long(layout.getTime()).intValue());
+            replayLayout.put("endTime", new Long(
+                    layout.getEndTime()).intValue());
+            Map<String, Object> positions = new HashMap<String, Object>();
+            for (ReplayLayoutPosition position
+                    : layout.getLayoutPositions()) {
+                positions.put(position.getName(),
+                        position.getStream().getSsrc());
+            }
+            replayLayout.put("positions", positions);
+            List<String> audioStreams = new Vector<String>();
+            for (Stream stream : layout.getAudioStreams()) {
+                audioStreams.add(stream.getSsrc());
+            }
+            replayLayout.put("audioStreams", audioStreams);
+            replayLayouts.add(replayLayout);
+        }
+        return replayLayouts.toArray(new Map[0]);
+    }
+
     public Map<String, Object>[] getRecordings(String folderPath)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
@@ -74,46 +125,9 @@ public class RecordingHandler extends AbstractHandler {
             recs[i].put("metadata", getDetails(rec.getMetadata()));
             recs[i].put("startTime", rec.getStartTime());
             recs[i].put("duration", (int) rec.getDuration());
-            List<Stream> streams = rec.getStreams();
-            Map<String, Object>[] strms = new Map[streams.size()];
-            for (int j = 0; j < streams.size(); j++) {
-                Stream stream = streams.get(j);
-                strms[j] = getDetails(stream, "rtpType", "recording");
-                strms[j].put("mediaType", stream.getRtpType().getMediaType());
-            }
-            recs[i].put("streams", strms);
-            List<Long> pauseTimes = rec.getPauseTimes();
-            Object[] pTimes = new Object[pauseTimes.size()];
-            for (int j = 0; j < pauseTimes.size(); j++) {
-                pTimes[j] = pauseTimes.get(j).intValue();
-            }
-            List<ReplayLayout> layouts = rec.getReplayLayouts();
-            List<Map<String, Object>> replayLayouts =
-                new Vector<Map<String,Object>>();
-            for (ReplayLayout layout : layouts) {
-                Map<String, Object> replayLayout =
-                    new HashMap<String, Object>();
-                replayLayout.put("name", layout.getName());
-                replayLayout.put("time", new Long(layout.getTime()).intValue());
-                replayLayout.put("endTime", new Long(
-                        layout.getEndTime()).intValue());
-                Map<String, Object> positions = new HashMap<String, Object>();
-                for (ReplayLayoutPosition position
-                        : layout.getLayoutPositions()) {
-                    positions.put(position.getName(),
-                            position.getStream().getSsrc());
-                }
-                replayLayout.put("positions", positions);
-                replayLayouts.add(replayLayout);
-                List<String> audioStreams = new Vector<String>();
-                for (Stream stream : layout.getAudioStreams()) {
-                    audioStreams.add(stream.getSsrc());
-                }
-                replayLayout.put("audioStreams", audioStreams);
-            }
-            recs[i].put("layouts", replayLayouts);
 
-            recs[i].put("pauseTimes", pTimes);
+            /*
+            recs[i].put("layouts", replayLayouts); */
         }
         return recs;
     }

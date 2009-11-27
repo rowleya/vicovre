@@ -32,12 +32,9 @@
 
 package com.googlecode.vicovre.gwtinterface.client;
 
-import java.util.HashMap;
-import java.util.List;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -45,7 +42,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.HarvestItemLoader;
-import com.googlecode.vicovre.gwtinterface.client.xmlrpc.LayoutLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.RecordingItemLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.VenueServerLoader;
@@ -60,18 +56,6 @@ public class Application implements EntryPoint {
 
     private TabPanel panel = new TabPanel();
 
-    private static WaitPopup loadingPopup = new WaitPopup("Loading...", false);
-
-    private static int objectsLoading = 0;
-
-    private static MessagePopup errorLoadingPopup = new MessagePopup(
-            "There was an error loading the application.\n"
-            + "Please refresh the page to try again.",
-            null, MessagePopup.ERROR);
-
-    private HashMap<String, Layout> layouts =
-        new HashMap<String, Layout>();
-
     private PlayPanel playPanel = new PlayPanel();
 
     public static String getParam(String name) {
@@ -80,41 +64,6 @@ public class Application implements EntryPoint {
 
     public static XmlRpcClient getXmlRpcClient() {
         return xmlrpcClient;
-    }
-
-    public static void showErrorLoading() {
-        loadingPopup.hide();
-        errorLoadingPopup.center();
-    }
-
-    public static void finishedLoading() {
-        objectsLoading -= 1;
-        GWT.log("Finished Loading - objects to load = " + objectsLoading, null);
-        if (objectsLoading <= 0) {
-            loadingPopup.hide();
-        }
-    }
-
-    public static boolean isLoading() {
-        return objectsLoading > 0;
-    }
-
-    public void setLayouts(List<Layout> layouts) {
-        for (Layout layout : layouts) {
-            this.layouts.put(layout.getName(), layout);
-        }
-    }
-
-    public void addLayout(Layout layout) {
-        this.layouts.put(layout.getName(), layout);
-    }
-
-    public Layout getLayout(String name) {
-        return layouts.get(name);
-    }
-
-    public void finishLoadingLayouts() {
-        PlayItemLoader.loadPlayItems("", playPanel, layouts);
     }
 
     public void onModuleLoad() {
@@ -148,11 +97,14 @@ public class Application implements EntryPoint {
         topPanel.setCellHeight(status, "50px");
         RootPanel.get().add(topPanel);
 
-        loadingPopup.show();
-        objectsLoading = 4;
-        LayoutLoader.loadLayouts(this);
-        VenueServerLoader.loadVenues();
-        RecordingItemLoader.loadRecordingItems("", recordPanel);
-        HarvestItemLoader.loadHarvestItems("", harvestPanel);
+        ActionLoader loader = new ActionLoader(null, 4,
+                "Loading Application...",
+                "There was an error loading the application.\n"
+                + "Please refresh the page to try again.",
+                false, true);
+        VenueServerLoader.loadVenues(loader);
+        PlayItemLoader.loadPlayItems("", playPanel, loader);
+        RecordingItemLoader.loadRecordingItems("", recordPanel, loader);
+        HarvestItemLoader.loadHarvestItems("", harvestPanel, loader);
     }
 }

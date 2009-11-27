@@ -34,7 +34,6 @@ package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -43,93 +42,56 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.Layout;
 import com.googlecode.vicovre.gwtinterface.client.PlayItem;
 import com.googlecode.vicovre.gwtinterface.client.PlayPanel;
-import com.googlecode.vicovre.gwtinterface.client.ReplayLayout;
-import com.googlecode.vicovre.gwtinterface.client.Stream;
 
 public class PlayItemLoader implements AsyncCallback<List<Object>> {
 
     private PlayPanel panel = null;
 
-    private HashMap<String, Layout> layouts = null;
-
-    private long startTime = 0;
+    private ActionLoader loader = null;
 
     public static void loadPlayItems(String folder, PlayPanel panel,
-            HashMap<String, Layout> layouts) {
+            ActionLoader loader) {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 client, "recording.getRecordings",
-                new Object[]{folder}, new PlayItemLoader(panel, layouts));
+                new Object[]{folder}, new PlayItemLoader(panel, loader));
         request.execute();
     }
 
-    private PlayItemLoader(PlayPanel panel, HashMap<String, Layout> layouts) {
+    private PlayItemLoader(PlayPanel panel, ActionLoader loader) {
         this.panel = panel;
-        this.layouts = layouts;
-        startTime = System.currentTimeMillis();
+        this.loader = loader;
     }
 
     public void onFailure(Throwable error) {
-        Application.showErrorLoading();
         GWT.log("Error loading play items", error);
+        loader.itemFailed("Error loading play items");
     }
 
-    public static PlayItem buildPlayItem(Map<String, Object> item,
-            HashMap<String, Layout> layouts) {
+    public static PlayItem buildPlayItem(Map<String, Object> item) {
         String id = (String) item.get("id");
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
         String name = (String) metadata.get("name");
-        PlayItem playItem = new PlayItem(id, name, layouts);
+        PlayItem playItem = new PlayItem(id, name);
         playItem.setDescription((String) metadata.get("description"));
+        playItem.setDescriptionIsEditable((Boolean)
+                metadata.get("descriptionIsEditable"));
         playItem.setStartDate((Date) item.get("startTime"));
         playItem.setDuration(((Integer) item.get("duration")).longValue());
-
-        List<Map<String, Object>> strms =
-            (List<Map<String, Object>>) item.get("streams");
-        List<Stream> streams = new Vector<Stream>();
-        for (Map<String, Object> streamMap : strms) {
-            String ssrc = (String) streamMap.get("ssrc");
-            String cname = (String) streamMap.get("cname");
-            String streamName = (String) streamMap.get("name");
-            String note = (String) streamMap.get("note");
-            String mediaType = (String) streamMap.get("mediaType");
-            Stream stream = new Stream(ssrc, cname, streamName, note,
-                    mediaType);
-            streams.add(stream);
-        }
-        playItem.setStreams(streams);
-
-        List<Map<String, Object>> replayLayouts =
-            (List<Map<String, Object>>) item.get("layouts");
-        for (Map<String, Object> layoutMap : replayLayouts) {
-            String layoutName = (String) layoutMap.get("name");
-            Integer layoutTime = (Integer) layoutMap.get("time");
-            Integer endTime = (Integer) layoutMap.get("endTime");
-            Map<String, String> positions =
-                (Map<String, String>) layoutMap.get("positions");
-            List<String> audioStreams = (List<String>)
-                layoutMap.get("audioStreams");
-            ReplayLayout layout = new ReplayLayout(layoutName, layoutTime,
-                    endTime, positions, audioStreams);
-            playItem.setLayout(layout);
-        }
-
         return playItem;
     }
 
     public void onSuccess(List<Object> items) {
-        GWT.log("Play items took " + (System.currentTimeMillis() - startTime) + "ms to read", null);
-        startTime = System.currentTimeMillis();
         Vector<PlayItem> playItems = new Vector<PlayItem>();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i) instanceof Map) {
-                Map<String, Object> item = (Map) items.get(i);
-                PlayItem playItem = buildPlayItem(item, layouts);
+                Map<String, Object> item = (Map<String, Object>) items.get(i);
+                PlayItem playItem = buildPlayItem(item);
                 playItems.add(playItem);
             }
         }
@@ -137,8 +99,7 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         for (PlayItem item : playItems) {
             panel.addItem(item);
         }
-        GWT.log("Play items took " + (System.currentTimeMillis() - startTime) + "ms to load.", null);
-        Application.finishedLoading();
+        loader.itemLoaded();
     }
 
 

@@ -290,7 +290,7 @@ public class VenuePanel extends VerticalPanel
 
     public void setVenueServer(String server) {
         this.venueServer.setText(server);
-        //loadVenuesFromServer();
+        loadVenuesFromServer();
         venueSelect.setValue(true, true);
     }
 
