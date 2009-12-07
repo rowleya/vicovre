@@ -434,7 +434,10 @@ public class Stream implements Comparable<Stream> {
             }
             return name;
         }
-        return cname;
+        if (cname != null) {
+            return cname;
+        }
+        return ssrc;
     }
 
     /**
