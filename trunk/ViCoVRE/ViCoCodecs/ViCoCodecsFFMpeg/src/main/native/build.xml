@@ -154,6 +154,9 @@
                 <libdirs>
                     <arg line="-L${basedir}/resources/@{arch}/unix/lib/"/>
                 </libdirs>
+                <libs>
+                    <arg line="-lstdc++"/>
+                </libs>
             </build>
         </sequential>
     </macrodef>
