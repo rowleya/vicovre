@@ -289,6 +289,9 @@ bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
                             rtpPayloadContext, sdpLine);
                 }
                 env->ReleaseStringUTFChars(rtpSdpString, rtpSdp);
+                for (int i = 0; i < 1024; i++) {
+                    rtpPackets[i] = NULL;
+                }
             }
         }
         return true;
@@ -346,7 +349,7 @@ int FFMpegJ::decode(JNIEnv *env, jobject input, jobject output) {
             lastSequence = firstSequence;
             for (int i = 0; i < 1024; i++) {
                 if (rtpPackets[i] != NULL) {
-                    free(rtpPackets[i]);
+                    delete rtpPackets[i];
                 }
                 rtpPackets[i] = NULL;
             }
