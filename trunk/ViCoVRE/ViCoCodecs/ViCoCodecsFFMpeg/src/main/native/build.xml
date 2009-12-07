@@ -156,6 +156,7 @@
                 </libdirs>
                 <libs>
                     <arg line="-lstdc++"/>
+                    <arg line="-lz" />
                 </libs>
             </build>
         </sequential>
