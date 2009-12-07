@@ -43,7 +43,7 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class Stream {
+public class Stream implements Comparable<Stream> {
 
     // The RTP SSRC of the stream
     private String ssrc = "";
@@ -421,5 +421,27 @@ public class Stream {
      */
     public void setNote(String note) {
         this.note = note;
+    }
+
+    /**
+     *
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        if (name != null) {
+            if (note != null) {
+                return name + " - " + note;
+            }
+            return name;
+        }
+        return cname;
+    }
+
+    /**
+     *
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    public int compareTo(Stream stream) {
+        return toString().compareTo(stream.toString());
     }
 }

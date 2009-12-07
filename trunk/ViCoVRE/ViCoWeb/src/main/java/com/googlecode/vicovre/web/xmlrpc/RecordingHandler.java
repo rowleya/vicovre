@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.web.xmlrpc;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class RecordingHandler extends AbstractHandler {
             throw new XmlRpcException("Recording " + id + " not found");
         }
         List<Stream> streams = recording.getStreams();
+        Collections.sort(streams);
         Map<String, Object>[] strms = new Map[streams.size()];
         for (int j = 0; j < streams.size(); j++) {
             Stream stream = streams.get(j);
