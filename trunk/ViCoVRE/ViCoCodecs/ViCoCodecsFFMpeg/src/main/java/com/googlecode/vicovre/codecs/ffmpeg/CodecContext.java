@@ -166,6 +166,10 @@ public final class CodecContext {
 
     private int debug = 0;
 
+    private int bitrate = 0;
+
+    private int maxrate = 0;
+
     /**
      * Returns the flags.
      * @return the flags
@@ -293,6 +297,38 @@ public final class CodecContext {
      */
     public void setDebug(final int debug) {
         this.debug = debug;
+    }
+
+    /**
+     * Sets the bitrate.
+     * @return bitrate The bitrate
+     */
+    public int getBitrate() {
+        return bitrate;
+    }
+
+    /**
+     * Gets the bitrate.
+     * @param bitrate The bitrate to set
+     */
+    public void setBitrate(final int bitrate) {
+        this.bitrate = bitrate;
+    }
+
+    /**
+     * Returns the maxrate
+     * @return the maxrate
+     */
+    public int getMaxrate() {
+        return maxrate;
+    }
+
+    /**
+     * Sets the maxrate
+     * @param maxrate the maxrate to set
+     */
+    public void setMaxrate(int maxrate) {
+        this.maxrate = maxrate;
     }
 
 }
