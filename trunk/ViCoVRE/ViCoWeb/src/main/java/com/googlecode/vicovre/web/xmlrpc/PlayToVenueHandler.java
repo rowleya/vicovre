@@ -45,11 +45,11 @@ public class PlayToVenueHandler extends AbstractHandler {
         super(database);
     }
 
-    public Integer play(String folderPath, String id, String ag3VenueUrl)
-            throws XmlRpcException {
+    public Integer play(String folderPath, String id, String ag3VenueUrl,
+            int seek) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         Recording recording = folder.getRecording(id);
-        return PlaybackManager.play(recording, ag3VenueUrl);
+        return PlaybackManager.play(recording, ag3VenueUrl, seek);
     }
 
     public Boolean stop(int id) {

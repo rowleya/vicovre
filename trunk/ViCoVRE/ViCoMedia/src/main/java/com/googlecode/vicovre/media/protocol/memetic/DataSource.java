@@ -235,6 +235,9 @@ public class DataSource extends PushBufferDataSource implements Positionable {
         this.seek = seek;
         this.scale = scale;
         boolean wasPlaying = playing;
+        if (!playing) {
+            currentTime = seek;
+        }
         stop();
         if (wasPlaying) {
             start();

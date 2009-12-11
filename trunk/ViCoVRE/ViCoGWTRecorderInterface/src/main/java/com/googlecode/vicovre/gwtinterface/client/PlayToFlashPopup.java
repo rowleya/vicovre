@@ -61,7 +61,8 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
         if (player == null) {
             player = new SWFWidget("CrewPlayer.swf");
             player.addFlashVar("uri", Application.getParam("playUrl")
-                    + "?recordingId=" + item.getId() + "%26startTime=0");
+                    + "?folder=" + item.getFolder() + "%26recordingId="
+                    + item.getId() + "%26startTime=0");
             VerticalPanel panel = getWidget();
             panel.add(player);
             panel.add(closeButton);

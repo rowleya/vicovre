@@ -188,11 +188,11 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
     // True if the first video packet has been seen
     private boolean firstVideoPacketSeen = false;
 
-    // Queue of initial audio packets to write
-    private LinkedList<Buffer> audioQueue = new LinkedList<Buffer>();
-
     // The offset of the timestamps
     private long timestampOffset = 0;
+
+    // The last video buffer seen
+    private Buffer lastVideoBuffer = null;
 
     /**
      * Sets the offset to add to timestamps
@@ -301,19 +301,15 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      * @see javax.media.Multiplexer#process(javax.media.Buffer, int)
      */
     public int process(Buffer buf, int trk) {
-
         if ((videoTrack != -1) && !firstVideoPacketSeen) {
             if (buf.getFormat() instanceof AudioFormat) {
-                audioQueue.addLast((Buffer) buf.clone());
                 return BUFFER_PROCESSED_OK;
             } else if (buf.getFormat() instanceof VideoFormat) {
                 size = ((VideoFormat) buf.getFormat()).getSize();
-                while (!audioQueue.isEmpty()) {
-                    processBuffer(audioQueue.removeFirst());
-                }
                 firstVideoPacketSeen = true;
             }
         }
+
         return processBuffer(buf);
     }
 

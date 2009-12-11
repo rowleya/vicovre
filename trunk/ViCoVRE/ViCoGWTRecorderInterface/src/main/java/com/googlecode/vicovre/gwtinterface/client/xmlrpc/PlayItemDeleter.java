@@ -85,7 +85,7 @@ public class PlayItemDeleter implements AsyncCallback<Boolean>,
             XmlRpcClient client = Application.getXmlRpcClient();
             XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
                     "recording.deleteRecording",
-                    new Object[]{"", item.getId()}, this);
+                    new Object[]{item.getFolder(), item.getId()}, this);
             request.execute();
         }
     }

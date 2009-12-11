@@ -44,16 +44,18 @@ public class PlayItemToVenue implements AsyncCallback<Integer> {
 
     private PlayToVenuePopup popup = null;
 
-    public static void play(PlayToVenuePopup popup) {
-        new PlayItemToVenue(popup);
+    public static void play(PlayToVenuePopup popup, int seek) {
+        new PlayItemToVenue(popup, seek);
     }
 
-    private PlayItemToVenue(PlayToVenuePopup popup) {
+    private PlayItemToVenue(PlayToVenuePopup popup, int seek) {
         this.popup = popup;
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<Integer> request = new XmlRpcRequest<Integer>(client,
                 "playback.play",
-                new Object[]{"", popup.getItemId(), popup.getVenueUrl()}, this);
+                new Object[]{popup.getItemFolder(), popup.getItemId(),
+                    popup.getVenueUrl(),
+                seek}, this);
         request.execute();
     }
 

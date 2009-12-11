@@ -168,38 +168,7 @@ public class VideoExtractor {
             videoOffset = (videoReader.getStartTime() - earliestStart)
                 * 1000000L;
         }
-    }
 
-    /**
-     * Transfers the first video frame to the stream
-     * @param outputStream The output stream to transfer to
-     * @param duration The duration of the whole stream
-     * @throws IOException
-     */
-    public void transferFirstFrame(OutputStream outputStream, long duration)
-            throws IOException {
-        multiplexer.setDuration(duration);
-        OutputStreamDataSink dataSink = new OutputStreamDataSink(
-                multiplexer.getDataOutput(), 0, outputStream);
-        dataSink.start();
-
-        boolean isVideoData = videoReader.readNextPacket();
-        int count = 0;
-        while (isVideoData && (count < 2)) {
-            int result = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
-            while (isVideoData && (result != PlugIn.BUFFER_PROCESSED_OK)) {
-                Buffer inputBuffer = videoReader.getBuffer();
-                result = videoProcessor.process(inputBuffer);
-                inputBuffer.setData(null);
-                isVideoData = videoReader.readNextPacket();
-            }
-            count += 1;
-        }
-        videoReader.close();
-        videoProcessor.close();
-        multiplexer.close();
-        dataSink.close();
-        System.err.println("First Frame transferred");
     }
 
     /**
@@ -230,6 +199,7 @@ public class VideoExtractor {
                 / generationSpeed);
         waitTime -= (long) ((System.currentTimeMillis() - startTime)
                 / generationSpeed);
+
         if (waitTime > 0) {
             try {
                 Thread.sleep(waitTime);
@@ -249,17 +219,18 @@ public class VideoExtractor {
      * @throws IOException
      */
     public void transferToStream(OutputStream outputStream, long offsetShift,
-            long offset, long duration, long delay, File firstFrame)
+            long offset, long duration, File firstFrame)
             throws IOException {
-        multiplexer.setDuration(duration + delay);
+        multiplexer.setDuration(duration);
         multiplexer.setTimestampOffset(offset);
         OutputStreamDataSink dataSink = new OutputStreamDataSink(
                 multiplexer.getDataOutput(), 0, outputStream);
         dataSink.start();
 
-        // Seek to the start of the video
+        // Seek to the start of the video and audio
         long audioEndTimestamp = (duration - offset) * 1000000L;
         long videoEndTimestamp = (duration - offset) * 1000000L;
+        long videoTimestampOffset = 0;
         if ((videoReader != null) && (mixer != null)) {
             videoReader.streamSeek(offset - (videoOffset / 1000000L)
                     + offsetShift);
@@ -268,14 +239,14 @@ public class VideoExtractor {
                 (videoReader.getOffset() - offset - offsetShift) * 1000000;
             long audioOffsetShift =
                 (mixer.getOffset() - offset - offsetShift) * 1000000;
-            videoReader.setTimestampOffset(videoOffset  + videoOffsetShift);
+            videoTimestampOffset = videoOffset  + videoOffsetShift;
             mixer.setTimestampOffset(audioOffset + audioOffsetShift);
         } else if (videoReader != null) {
             videoReader.streamSeek(offset - (videoOffset / 1000000L)
                     + offsetShift);
             long videoOffsetShift =
                 (videoReader.getOffset() - offset - offsetShift) * 1000000;
-            videoReader.setTimestampOffset(videoOffset  + videoOffsetShift);
+            videoTimestampOffset = videoOffset  + videoOffsetShift;
             try {
                 mixer = new AudioMixer(new MemeticFileReader[0]);
                 audioProcessor = new SimpleProcessor(mixer.getFormat(),
@@ -292,7 +263,7 @@ public class VideoExtractor {
         boolean isAudioData = false;
         boolean isVideoData = false;
 
-        // create new OutputBuffer
+        // Fill in the first frame if possible
         if (videoProcessor != null) {
             FrameFillControl control = (FrameFillControl)
                 videoProcessor.getControl("controls.FrameFillControl");
@@ -317,59 +288,22 @@ public class VideoExtractor {
             }
         }
 
-        // Output frames up to the start of the video,
-        // so missing blocks are filled in
+
+        // Output the first video frame
         if (videoReader != null) {
-            Buffer lastFrame = null;
-            boolean done = false;
-            while (!done) {
+            videoReader.setTimestampOffset(videoTimestampOffset);
+            isVideoData = videoReader.readNextPacket();
+            int status = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
+            while (isVideoData && (status != PlugIn.BUFFER_PROCESSED_OK)
+                    && (status != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                Buffer inputBuffer = videoReader.getBuffer();
+                //System.err.println("Video ts = " + videoReader.getTimestamp() + " os = " + videoReader.getOffset());
+                inputBuffer.setTimeStamp(0);
+                status = videoProcessor.process(inputBuffer);
                 isVideoData = videoReader.readNextPacket();
-                if (isVideoData) {
-                    if (videoReader.getOffset() < offset) {
-                        int result = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
-                        while (isVideoData
-                                && (result != PlugIn.BUFFER_PROCESSED_OK)) {
-                            Buffer inputBuffer = videoReader.getBuffer();
-                            result = videoProcessor.process(inputBuffer, false);
-                            isVideoData = videoReader.readNextPacket();
-                        }
-                        lastFrame = videoProcessor.getBuffer(new YUVFormat());
-                    } else {
-                        done = true;
-                    }
-                } else {
-                    done = true;
-                }
             }
-            long timestamp = videoReader.getTimestamp();
-            videoReader.setTimestampOffset(videoOffset - timestamp);
-            timestamp = videoReader.getTimestamp();
 
-            // Output repeats of the last video frame until the delay is done
-            if (isVideoData && (delay > 0)) {
-                try {
-                    Buffer delayFrame = lastFrame;
-                    int off = 0;
-                    byte[] data = (byte[]) delayFrame.getData();
-                    int len = data.length;
-                    SimpleProcessor output =
-                        new SimpleProcessor(delayFrame.getFormat(), multiplexer,
-                                videoTrack);
-                    long sequence = delayFrame.getSequenceNumber();
-                    for (long i = delay; i >= 0; i -= 40) {
-                        delayFrame.setOffset(off);
-                        delayFrame.setLength(len);
-                        delayFrame.setData(data);
-                        delayFrame.setTimeStamp(timestamp - (i * 1000000));
-                        delayFrame.setSequenceNumber(sequence - i / 40);
-                        output.process(delayFrame);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
         }
-
 
         // Read the first audio buffer
         if (mixer != null) {
@@ -383,6 +317,8 @@ public class VideoExtractor {
         while (isAudioData && isVideoData && !dataSink.isDone()) {
             long audioTimestamp = mixer.getTimestamp();
             long videoTimestamp = videoReader.getTimestamp();
+
+            //System.err.println("Audio ts = " + audioTimestamp + " os = " + mixer.getOffset() + " Video ts = " + videoTimestamp + " os = " + videoReader.getOffset());
 
             if (audioTimestamp < videoTimestamp) {
                 if (mixer.getTimestamp() <= audioEndTimestamp) {
@@ -452,7 +388,10 @@ public class VideoExtractor {
         VideoExtractor extractor = new VideoExtractor(
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
-            "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
+            //"VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
+            //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
+            "VicoWeb/target/recordings/2009-10-08_090000-002983902/2792696808",
+            //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
             /*new String[]{
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/548913710",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/251851200",
@@ -461,14 +400,19 @@ public class VideoExtractor {
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/66893508",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/163114337"
                     }, */
+            //new String[]{"VicoWeb/target/recordings/2009-10-08_090000-002983902/124113515"},
             null,
-            new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
+            /*new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
-                    "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",},
+                    "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",}, */
+            new String[]{
+                    "VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
+                    "VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160"
+            },
             new Dimension(640, 480),
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
-        extractor.setGenerationSpeed(1.0);
+        extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream("test.flv");
-        extractor.transferToStream(testout, 320000, 0, 30000, 0, null);
+        extractor.transferToStream(testout, 0, 0, 600000, null);
     }
 }

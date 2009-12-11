@@ -22,6 +22,15 @@
             </properties>
         </profile>
         <profile>
+            <id>marvin</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <filter.location>src/main/filters/marvin.properties</filter.location>
+            </properties>
+        </profile>
+        <profile>
             <id>memetic</id>
             <activation>
                 <activeByDefault>false</activeByDefault>

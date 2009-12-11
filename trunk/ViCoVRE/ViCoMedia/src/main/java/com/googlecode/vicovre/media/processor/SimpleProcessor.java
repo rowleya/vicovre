@@ -492,8 +492,8 @@ public class SimpleProcessor {
                         && !outputBuffer.isEOM()) {
                     if (iterator.hasNext()) {
                         iterator.next();
-                        if (process(iterator, render)
-                                == PlugIn.BUFFER_PROCESSED_FAILED) {
+                        status = process(iterator, render);
+                        if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
                             iterator.previous();
                             return PlugIn.BUFFER_PROCESSED_FAILED;
                         }

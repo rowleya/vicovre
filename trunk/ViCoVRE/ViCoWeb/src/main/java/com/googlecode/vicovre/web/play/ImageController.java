@@ -76,7 +76,8 @@ public class ImageController implements Controller {
         String folderPath = request.getParameter("folder");
         Folder folder = database.getTopLevelFolder();
         if (folderPath != null && !folderPath.equals("")) {
-            folder = database.getFolder(new File(folderPath));
+            folder = database.getFolder(new File(
+                    database.getTopLevelFolder().getFile(), folderPath));
         }
         Recording recording = folder.getRecording(sessionId);
 

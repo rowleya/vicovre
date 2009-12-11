@@ -65,6 +65,7 @@ public class PlayItemTimeUpdate extends Timer
 
     public void start() {
         cancelled = false;
+        hasFirstTime = false;
         time = popup.getTime();
         run();
     }

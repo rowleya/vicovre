@@ -51,7 +51,7 @@ public class PlayItemLayoutLoader implements AsyncCallback<List<Object>> {
 
     private ActionLoader loader = null;
 
-    public static void loadLayouts(String folder, PlayItem playItem,
+    public static void loadLayouts(PlayItem playItem,
             ActionLoader loader) {
         if (playItem.getReplayLayouts() != null) {
             loader.itemLoaded();
@@ -60,7 +60,7 @@ public class PlayItemLayoutLoader implements AsyncCallback<List<Object>> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 client, "recording.getLayouts",
-                new Object[]{folder, playItem.getId()},
+                new Object[]{playItem.getFolder(), playItem.getId()},
                 new PlayItemLayoutLoader(playItem, loader));
         request.execute();
     }
