@@ -75,6 +75,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private final Image PLAY = new Image("images/play.gif");
 
+    private String folder = null;
+
     private String id = null;
 
     private Label name = new Label();
@@ -105,8 +107,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private PushButton playButton = new PushButton(PLAY);
 
-    public PlayItem(String id, String name) {
-
+    public PlayItem(String folder, String id, String name) {
+        this.folder = folder;
         this.id = id;
         this.name.setText(name);
 
@@ -152,6 +154,14 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         playToVenueButton.addClickHandler(this);
         editLayoutButton.addClickHandler(this);
         playButton.addClickHandler(this);
+    }
+
+    public String[] getFolders() {
+        return folder.split("/");
+    }
+
+    public String getFolder() {
+        return folder;
     }
 
     public String getId() {
@@ -211,14 +221,14 @@ public class PlayItem extends SimplePanel implements ClickHandler,
             ActionLoader loader = new ActionLoader(layoutPopup, 3,
                     "Loading recording details...", null, true, false);
             LayoutLoader.loadLayouts(loader);
-            PlayItemLayoutLoader.loadLayouts("", this, loader);
-            PlayItemStreamLoader.loadStreams("", this, loader);
+            PlayItemLayoutLoader.loadLayouts(this, loader);
+            PlayItemStreamLoader.loadStreams(this, loader);
         } else if (event.getSource().equals(playButton)) {
             PlayToFlashPopup playPopup = new PlayToFlashPopup(this);
             ActionLoader loader = new ActionLoader(playPopup, 2,
                     "Loading recording details...", null, true, false);
             LayoutLoader.loadLayouts(loader);
-            PlayItemLayoutLoader.loadLayouts("", this, loader);
+            PlayItemLayoutLoader.loadLayouts(this, loader);
         }
     }
 

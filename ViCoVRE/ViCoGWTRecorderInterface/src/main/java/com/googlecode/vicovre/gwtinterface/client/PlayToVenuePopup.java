@@ -124,6 +124,10 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         return id;
     }
 
+    public String getItemFolder() {
+        return item.getFolder();
+    }
+
     public String getItemId() {
         return item.getId();
     }
@@ -140,10 +144,18 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
     public void slideValueChanged(float position) {
         setTimePosition(position);
         int value = (int) (item.getDuration() * position);
-        PlayItemSeek.seek(this, value);
+        if (!playing) {
+            startPlay(value);
+        } else {
+            PlayItemSeek.seek(this, value);
+            PlayItemChangeState.resume(this);
+            timeUpdater.start();
+        }
     }
 
     public void slideValueChanging(float position) {
+        timeUpdater.stop();
+        PlayItemChangeState.pause(this);
         setTimePosition(position);
     }
 
@@ -152,6 +164,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
     }
 
     public void setTime(long time) {
+        GWT.log("Setting time to " + time, null);
         float position = (float) time / item.getDuration();
         setTimePosition(position);
         bar.setPosition(position);
@@ -175,21 +188,24 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         timeUpdater.stop();
     }
 
+    private void startPlay(int seek) {
+        if ((venue.getVenue() == null)
+                && (venue.getAddresses() == null)) {
+            MessagePopup error = new MessagePopup(
+                    "You must specify a venue to play to", null,
+                    MessagePopup.ERROR, MessageResponse.OK);
+            error.center();
+            playButton.setDown(false);
+        } else {
+            PlayItemToVenue.play(this, seek);
+        }
+    }
+
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(playButton)) {
             if (playButton.isDown()) {
                 if (!playing) {
-                    GWT.log("", null);
-                    if ((venue.getVenue() == null)
-                            && (venue.getAddresses() == null)) {
-                        MessagePopup error = new MessagePopup(
-                                "You must specify a venue to play to", null,
-                                MessagePopup.ERROR, MessageResponse.OK);
-                        error.center();
-                        playButton.setDown(false);
-                    } else {
-                        PlayItemToVenue.play(this);
-                    }
+                    startPlay(0);
                 } else {
                     PlayItemChangeState.resume(this);
                 }

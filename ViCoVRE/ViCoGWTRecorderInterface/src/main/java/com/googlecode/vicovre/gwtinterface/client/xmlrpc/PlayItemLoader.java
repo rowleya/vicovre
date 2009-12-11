@@ -73,11 +73,12 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
     }
 
     public static PlayItem buildPlayItem(Map<String, Object> item) {
+        String folder = (String) item.get("folder");
         String id = (String) item.get("id");
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
         String name = (String) metadata.get("name");
-        PlayItem playItem = new PlayItem(id, name);
+        PlayItem playItem = new PlayItem(folder, id, name);
         playItem.setDescription((String) metadata.get("description"));
         playItem.setDescriptionIsEditable((Boolean)
                 metadata.get("descriptionIsEditable"));

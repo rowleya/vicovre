@@ -50,7 +50,7 @@ public class PlayItemStreamLoader implements AsyncCallback<List<Object>> {
 
     private ActionLoader loader = null;
 
-    public static void loadStreams(String folder, PlayItem playItem,
+    public static void loadStreams(PlayItem playItem,
             ActionLoader loader) {
         if (playItem.getStreams() != null) {
             loader.itemLoaded();
@@ -59,7 +59,7 @@ public class PlayItemStreamLoader implements AsyncCallback<List<Object>> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 client, "recording.getStreams",
-                new Object[]{folder, playItem.getId()},
+                new Object[]{playItem.getFolder(), playItem.getId()},
                 new PlayItemStreamLoader(playItem, loader));
         request.execute();
     }

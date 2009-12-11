@@ -50,7 +50,10 @@ import javax.media.Format;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 
+import net.sf.fmj.media.rtp.RTCPSenderInfo;
+
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
@@ -106,10 +109,6 @@ public class MemeticFileReader {
 
     private long lastTimestamp = -1;
 
-    private long lastOffset = -1;
-
-    private long lastRealTimestamp = -1;
-
     private long maxTimestamp = -1;
 
     private long noTimestampLoops = 0;
@@ -159,8 +158,8 @@ public class MemeticFileReader {
         Format format = getFormat();
         if (format != null) {
             if (format instanceof VideoFormat) {
-                maxTimestamp = (long) (4294967296000000000L
-                        / rtpType.getClockRate());
+                maxTimestamp = 0;/*(long) (4294967296000000000L
+                        / rtpType.getClockRate()); */
             } else if (format instanceof AudioFormat) {
                 AudioFormat audioFormat = (AudioFormat) format;
                 maxTimestamp = (long) (4294967296000000000L
@@ -213,8 +212,9 @@ public class MemeticFileReader {
                         Format format = getFormat();
                         if (format != null) {
                             if (format instanceof VideoFormat) {
-                                timestamp = (long)((timestamp * 1000000000L)
-                                        / rtpType.getClockRate());
+                                timestamp = offset * 1000000L;
+                                        /*(long)((timestamp * 1000000000L)
+                                        / rtpType.getClockRate()); */
                             } else if (format instanceof AudioFormat) {
                                 AudioFormat audioFormat = (AudioFormat) format;
                                 timestamp = (long) ((timestamp * 1000000000L)
@@ -272,41 +272,6 @@ public class MemeticFileReader {
             offset = packetOffsets.get(offsetPos);
             firstOffset = (packetOffsets.get(offsetPos) - seek) * 1000000;
         }
-    }
-
-    protected int getNoPacketsBetween(long start, long end) {
-        int startPos = Collections.binarySearch(packetOffsets, start);
-        if (startPos < 0) {
-            startPos = (-1 * startPos) + 1;
-        }
-        int endPos = Collections.binarySearch(packetOffsets, end);
-        if (endPos < 0) {
-            endPos = (-1 * endPos) + 1;
-        }
-        return endPos - startPos;
-    }
-
-    protected long rewindBy(int noFrames) throws IOException {
-        long position = channel.position();
-        int pos = Collections.binarySearch(packetPositions, position);
-        if (pos < 0) {
-            pos = (-1 * pos) + 1;
-        }
-        if (pos >= packetPositions.size()) {
-            pos = packetPositions.size() - 1;
-        }
-        pos -= noFrames;
-        if (pos < 0) {
-            pos = 0;
-        }
-        channel.position(packetPositions.get(pos));
-        return packetOffsets.get(pos);
-    }
-
-    protected long getTimestampAt(long seek) throws IOException {
-        streamSeek(seek);
-        readNextPacket();
-        return getTimestamp();
     }
 
     private void readIndexFile(String streamSpec) {

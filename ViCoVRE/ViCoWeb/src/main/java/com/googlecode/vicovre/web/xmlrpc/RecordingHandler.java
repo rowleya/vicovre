@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.web.xmlrpc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -118,20 +119,33 @@ public class RecordingHandler extends AbstractHandler {
     public Map<String, Object>[] getRecordings(String folderPath)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
+        Vector<Map<String, Object>> recs = new Vector<Map<String, Object>>();
+        getRecordings(
+                getDatabase().getTopLevelFolder().getFile().getAbsolutePath(),
+                folder, recs);
+        return recs.toArray(new Map[0]);
+    }
+
+    private void getRecordings(String topLevelPath, Folder folder,
+            Vector<Map<String, Object>> recs)
+            throws XmlRpcException {
         List<Recording> recordings = folder.getRecordings();
-        Map<String, Object>[] recs = new Map[recordings.size()];
         for (int i = 0; i < recordings.size(); i++) {
             Recording rec = recordings.get(i);
-            recs[i] = new HashMap<String, Object>();
-            recs[i].put("id", rec.getId());
-            recs[i].put("metadata", getDetails(rec.getMetadata()));
-            recs[i].put("startTime", rec.getStartTime());
-            recs[i].put("duration", (int) rec.getDuration());
-
-            /*
-            recs[i].put("layouts", replayLayouts); */
+            HashMap<String, Object> recording = new HashMap<String, Object>();
+            recording.put("folder",
+                folder.getFile().getAbsolutePath().substring(
+                    topLevelPath.length()).replace(File.separator, "/"));
+            recording.put("id", rec.getId());
+            recording.put("metadata", getDetails(rec.getMetadata()));
+            recording.put("startTime", rec.getStartTime());
+            recording.put("duration", (int) rec.getDuration());
+            recs.add(recording);
         }
-        return recs;
+
+        for (Folder subFolder : folder.getFolders()) {
+            getRecordings(topLevelPath, subFolder, recs);
+        }
     }
 
     public Boolean updateMetadata(String folderPath, String id,

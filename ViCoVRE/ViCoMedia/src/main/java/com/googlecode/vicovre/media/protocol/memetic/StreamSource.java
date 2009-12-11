@@ -163,7 +163,7 @@ public class StreamSource {
     private int id = 0;
 
     // The packet data
-    private byte[][] packetData = new byte[50][4096];
+    private byte[][] packetData = new byte[100][4096];
 
     // The format of the streams
     private int rtpFormat = 0;

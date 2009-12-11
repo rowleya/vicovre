@@ -115,12 +115,12 @@ public class FlvController implements Controller {
         long offsetShift = Long.parseLong(offShift);
         Folder folder = database.getTopLevelFolder();
         if (folderPath != null && !folderPath.equals("")) {
-            folder = database.getFolder(new File(folderPath));
+            folder = database.getFolder(new File(
+                    database.getTopLevelFolder().getFile(), folderPath));
         }
         Recording recording = folder.getRecording(sessionId);
         File path = recording.getDirectory();
 
-        System.out.println("Recordings from " + path.getAbsolutePath());
         videoFile = new File(path, videoStream);
         for (int i = 0; i < audioStreams.length; i++) {
             audioStreams[i] = new File(path, audioStreams[i]).getAbsolutePath();
@@ -128,8 +128,6 @@ public class FlvController implements Controller {
         for (int i = 0; i < syncStreams.length; i++) {
             syncStreams[i] = new File(path, syncStreams[i]).getAbsolutePath();
         }
-
-        String firstFrame = request.getParameter("firstframe");
 
         Dimension size = null;
         String width = request.getParameter("width");
@@ -152,43 +150,38 @@ public class FlvController implements Controller {
             extractor.setGenerationSpeed(generationSpeed);
             response.setContentType("video/x-flv");
             response.setStatus(HttpServletResponse.SC_OK);
-            if ((firstFrame == null) || !firstFrame.equals("true")) {
 
-                // Search for a file with name <videoStream>_<time>.yuv.zip
-                // where <time> is <= offset
-                File frameFile = null;
-                File[] files = path.listFiles(
-                        new StreamFileFilter(videoStream));
-                if (files==null) {
-                    throw new IOException("Recording does not exist in Directory: "+ path.getAbsolutePath());
-                }
-                if (files.length > 0) {
-                    long[] times = new long[files.length];
-                    for (int i = 0; i < times.length; i++) {
-                        String fName = files[i].getName();
-                        String fTime = fName.substring(videoStream.length() + 1,
-                                fName.length() - EXT_LEN);
-                        times[i] = Long.parseLong(fTime);
-                    }
-                    Arrays.sort(times);
-                    int pos = Arrays.binarySearch(times, offset);
-                    if (pos < 0) {
-                        pos = -pos - 1;
-                        if (pos >= times.length) {
-                            pos = times.length - 1;
-                        }
-                    }
-                    frameFile = new File(path, videoStream + "_"
-                            + times[pos] + EXT);
-                }
-                // Generate the stream
-                extractor.transferToStream(response.getOutputStream(),
-                        offsetShift, offset,
-                        duration, 0, frameFile);
-            } else {
-                extractor.transferFirstFrame(response.getOutputStream(),
-                        duration);
+            // Search for a file with name <videoStream>_<time>.yuv.zip
+            // where <time> is <= offset
+            File frameFile = null;
+            File[] files = path.listFiles(
+                    new StreamFileFilter(videoStream));
+            if (files==null) {
+                throw new IOException("Recording does not exist in Directory: "+ path.getAbsolutePath());
             }
+            if (files.length > 0) {
+                long[] times = new long[files.length];
+                for (int i = 0; i < times.length; i++) {
+                    String fName = files[i].getName();
+                    String fTime = fName.substring(videoStream.length() + 1,
+                            fName.length() - EXT_LEN);
+                    times[i] = Long.parseLong(fTime);
+                }
+                Arrays.sort(times);
+                int pos = Arrays.binarySearch(times, offset);
+                if (pos < 0) {
+                    pos = -pos - 1;
+                    if (pos >= times.length) {
+                        pos = times.length - 1;
+                    }
+                }
+                frameFile = new File(path, videoStream + "_"
+                        + times[pos] + EXT);
+            }
+            // Generate the stream
+            extractor.transferToStream(response.getOutputStream(),
+                    offsetShift, offset,
+                    duration, frameFile);
             response.flushBuffer();
         } catch (EOFException e) {
             System.err.println("User disconnected");

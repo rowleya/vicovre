@@ -97,10 +97,11 @@ public class PlaybackManager implements StreamStoppingListener,
     private final int id;
 
     public static int play(Recording recording,
-            String ag3VenueUrl) {
+            String ag3VenueUrl, int seek) {
         PlaybackManager manager =
             new PlaybackManager(recording);
         MANAGERS.put(manager.getId(), manager);
+        manager.seek(seek);
         manager.play(ag3VenueUrl);
         return manager.getId();
     }
@@ -207,6 +208,20 @@ public class PlaybackManager implements StreamStoppingListener,
         }
         capabilities = caps.toArray(new Capability[0]);
         types = rtpTypes.toArray(new RTPType[0]);
+
+        // Create a Datasource for the streams
+        List<Stream> strms = recording.getStreams();
+        File[] files = new File[strms.size()];
+        for (int i = 0; i < strms.size(); i++) {
+            files[i] = new File(recording.getDirectory(),
+                    strms.get(i).getSsrc());
+        }
+        datasource = new DataSource(files);
+        for (int i = 0; i < strms.size(); i++) {
+            datasource.setFormat(i, strms.get(i).getRtpType().getFormat());
+        }
+        datasource.addStartingListener(this);
+        datasource.addStoppingListener(this);
     }
 
     public int getId() {
@@ -289,21 +304,8 @@ public class PlaybackManager implements StreamStoppingListener,
             // Create an RTPManager for sending the streams
             connector = new BridgedRTPConnector(CONNECTION, addrs);
 
-            // Create a Datasource for the streams
-            List<Stream> strms = recording.getStreams();
-            File[] files = new File[strms.size()];
-            for (int i = 0; i < strms.size(); i++) {
-                files[i] = new File(recording.getDirectory(),
-                        strms.get(i).getSsrc());
-            }
-            datasource = new DataSource(files);
-            for (int i = 0; i < strms.size(); i++) {
-                datasource.setFormat(i, strms.get(i).getRtpType().getFormat());
-            }
-            datasource.addStartingListener(this);
-            datasource.addStoppingListener(this);
-
             // Create sendstreams and register them in the connector
+            List<Stream> strms = recording.getStreams();
             managers = new RTPManager[strms.size()];
             sendStreams = new SendStream[strms.size()];
             for (int i = 0; i < strms.size(); i++) {
@@ -314,6 +316,7 @@ public class PlaybackManager implements StreamStoppingListener,
                     managers[i].addFormat(type.getFormat(), type.getId());
                 }
                 sendStreams[i] = managers[i].createSendStream(datasource, i);
+                System.err.println("Created stream " + i);
                 NetworkLocation location = findLocationForType(streams,
                         stream.getRtpType());
                 long ssrc = sendStreams[i].getSSRC();
@@ -336,9 +339,11 @@ public class PlaybackManager implements StreamStoppingListener,
                 sendStreams[i].setSourceDescription(
                         sourceDescriptions[i].values().toArray(
                                 new SourceDescription[0]));
-                sendStreams[i].start();
             }
 
+            for (int i = 0; i < strms.size(); i++) {
+                sendStreams[i].start();
+            }
             datasource.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -374,13 +379,7 @@ public class PlaybackManager implements StreamStoppingListener,
 
     public void streamStopping(javax.media.protocol.DataSource datasource,
             int stream) {
-        try {
-            sendStreams[stream].stop();
-            sendStreams[stream].close();
-            managers[stream].removeTargets("Stopped");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        managers[stream].removeTargets("Stopped");
     }
 
     public void streamStarting(javax.media.protocol.DataSource datasource,

@@ -59,6 +59,7 @@ import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -100,6 +101,8 @@ public class PlayRecordingController implements Controller {
         Vector<Thumbnail> thumb = new Vector<Thumbnail>();
 
         File dir = recording.getDirectory();
+        String folder = dir.getParentFile().getAbsolutePath().substring(
+            database.getTopLevelFolder().getFile().getAbsolutePath().length());
 
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
@@ -110,10 +113,11 @@ public class PlayRecordingController implements Controller {
         File[] children = dir.listFiles(filter);
         if (children != null) {
             Arrays.sort(children, new ThumbFileSorter(ssrc));
-            System.err.println(Arrays.toString(children));
             Stream stream = recording.getStream(ssrc);
-            long lastStart = stream.getEndTime().getTime()
+            long streamStartOffset = stream.getStartTime().getTime()
                 - recording.getStartTime().getTime();
+            long lastStart = (stream.getEndTime().getTime()
+                - recording.getStartTime().getTime()) + streamStartOffset;
             if (lastStart > maxEnd) {
                 lastStart = maxEnd;
             }
@@ -123,7 +127,7 @@ public class PlayRecordingController implements Controller {
                 if (fparts.length < 2) {
                     continue;
                 }
-                long start = Long.parseLong(fparts[1]);
+                long start = Long.parseLong(fparts[1]) + streamStartOffset;
                 if (start <= maxEnd) {
                     if (start < minStart) {
                         start = minStart;
@@ -131,7 +135,8 @@ public class PlayRecordingController implements Controller {
                     long offsetStart = (start - minStart) / 1000;
                     long offsetEnd = (lastStart - minStart) / 1000;
                     String imgname = "/image.do?id=" + recording.getId()
-                            + "&ssrc=" + ssrc + "&offset=" + fparts[1];
+                            + "&ssrc=" + ssrc + "&offset=" + fparts[1]
+                            + "&folder=" + folder;
                     thumb.add(new Thumbnail(offsetStart, offsetEnd,
                             server + imgname));
                     lastStart = start;
@@ -281,11 +286,13 @@ public class PlayRecordingController implements Controller {
         long duration = 0;
         long startTime = 0;
         String folderName = request.getParameter("folder");
+        System.err.println("Folder = " + folderName);
         Folder folder = null;
         if (folderName == null || folderName.equals("")) {
             folder = database.getTopLevelFolder();
         } else {
-            folder = database.getFolder(new File(folderName));
+            folder = database.getFolder(new File(
+                    database.getTopLevelFolder().getFile(), folderName));
         }
         String recordingId = request.getParameter("recordingId");
         String stTime = request.getParameter("startTime");
@@ -301,24 +308,57 @@ public class PlayRecordingController implements Controller {
         if (recordingId != null) {
             Recording recording = folder.getRecording(recordingId);
 
+            // Get the real start and end time based on the layout
             long maxEnd = 0;
             List<ReplayLayout> replayLayouts = recording.getReplayLayouts();
             Collections.sort(replayLayouts);
+            ReplayLayout minStartLayout = null;
+            ReplayLayout maxEndLayout = null;
             for (ReplayLayout replayLayout : replayLayouts) {
                 if (replayLayout.getTime() < minStart) {
                     minStart = replayLayout.getTime();
+                    minStartLayout = replayLayout;
                 }
                 if (replayLayout.getEndTime() > maxEnd) {
                     maxEnd = replayLayout.getEndTime();
+                    maxEndLayout = replayLayout;
                 }
                 MetadataLayout metadataLayout = new MetadataLayout(
                         layoutRepository, recording, replayLayout);
                 metadataLayouts.add(metadataLayout);
             }
+            minStart = Long.MAX_VALUE;
+            for (ReplayLayoutPosition position :
+                    minStartLayout.getLayoutPositions()) {
+                Stream stream = position.getStream();
+                long streamStartOffset = stream.getStartTime().getTime()
+                    - recording.getStartTime().getTime();
+                if (streamStartOffset < minStart) {
+                    minStart = streamStartOffset;
+                }
+            }
+            if (minStart < minStartLayout.getTime()) {
+                minStart = minStartLayout.getTime();
+            }
+            maxEnd = 0;
+            for (ReplayLayoutPosition position :
+                maxEndLayout.getLayoutPositions()) {
+                Stream stream = position.getStream();
+                long streamEndOffset = stream.getEndTime().getTime()
+                    - recording.getStartTime().getTime();
+                if (streamEndOffset > maxEnd) {
+                    maxEnd = streamEndOffset;
+                }
+            }
+            if (maxEnd > maxEndLayout.getEndTime()) {
+                maxEnd = maxEndLayout.getEndTime();
+            }
             if (maxEnd == 0) {
                 maxEnd = recording.getDuration();
             }
             duration = maxEnd - minStart;
+
+            // Get the slide changes
             for (MetadataLayout lay : metadataLayouts) {
                 for (MetadataLayoutPosition layPos : lay.getLayoutPositions()) {
                     if (layPos.isChanges()) {
@@ -421,7 +461,7 @@ public class PlayRecordingController implements Controller {
         values.put("annotations", metadataAnnotations);
         values.put("thumbnails", thumbs);
         values.put("url", server + "/flv.do?id=" + recordingId
-                + "&offsetShift=" + minStart);
+                + "&offsetShift=" + minStart + "&folder=" + folderName);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream data = new DataOutputStream(bytes);
 

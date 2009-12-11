@@ -50,7 +50,8 @@ public class PlayItemEditor implements AsyncCallback<Boolean> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
                 "recording.updateMetadata",
-                new Object[]{"", item.getId(), item.getDetails()}, this);
+                new Object[]{item.getFolder(), item.getId(), item.getDetails()},
+                this);
         request.execute();
     }
 

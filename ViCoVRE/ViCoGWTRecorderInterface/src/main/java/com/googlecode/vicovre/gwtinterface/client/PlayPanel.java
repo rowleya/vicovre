@@ -32,14 +32,34 @@
 
 package com.googlecode.vicovre.gwtinterface.client;
 
+import java.util.HashMap;
+import java.util.Vector;
+
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class PlayPanel extends VerticalPanel {
+public class PlayPanel extends HorizontalPanel
+        implements SelectionHandler<TreeItem> {
 
     private VerticalPanel items = new VerticalPanel();
+
+    private HashMap<String, Vector<PlayItem>> folderItems =
+        new HashMap<String, Vector<PlayItem>>();
+
+    private HashMap<String, TreeItem> folderTreeItems =
+        new HashMap<String, TreeItem>();
+
+    private Tree folders = new Tree();
 
     public PlayPanel() {
         setWidth("100%");
@@ -50,20 +70,74 @@ public class PlayPanel extends VerticalPanel {
         ScrollPanel scroller = new ScrollPanel(items);
         items.setWidth("100%");
         scroller.setHeight("100%");
+
+        VerticalPanel folderTree = new VerticalPanel();
+        folderTree.setWidth("90%");
+        DOM.setStyleAttribute(folderTree.getElement(), "borderWidth", "1px");
+        DOM.setStyleAttribute(folderTree.getElement(), "borderStyle", "solid");
+        DOM.setStyleAttribute(folderTree.getElement(), "borderColor", "black");
+        HTML folderTitle = new HTML("<b>Categories</b>");
+        DOM.setStyleAttribute(folderTitle.getElement(), "background",
+                "DodgerBlue");
+        ScrollPanel folderScroller = new ScrollPanel(folders);
+        folderScroller.setHeight("100%");
+        folderTree.add(folderTitle);
+        folderTree.add(folderScroller);
+
+        add(folderTree);
         add(scroller);
-        setCellWidth(scroller, "100%");
+        setCellWidth(folderTree, "20%");
+        setCellWidth(scroller, "80%");
         setCellHeight(scroller, "100%");
+
+        TreeItem rootItem = new TreeItem("All");
+        rootItem.setUserObject("/");
+        Vector<PlayItem> rootItems = new Vector<PlayItem>();
+        folderItems.put("/", rootItems);
+        folderTreeItems.put("/", rootItem);
+        folders.addItem(rootItem);
+        folders.setSelectedItem(rootItem);
+        folders.addSelectionHandler(this);
     }
 
-    public void addItem(PlayItem item, int index) {
-        items.insert(item, index);
+    private boolean isInFolder(PlayItem item) {
+        String currentFolder = (String)
+            folders.getSelectedItem().getUserObject();
+        return item.getFolder().startsWith(currentFolder);
     }
 
     public void addItem(PlayItem item) {
-        items.add(item);
+        String folderPath = "";
+        TreeItem parent = null;
+        for (String folder : item.getFolders()) {
+            folderPath += "/" + folder;
+            Vector<PlayItem> playItems = folderItems.get(folderPath);
+            if (playItems == null) {
+                playItems = new Vector<PlayItem>();
+                TreeItem folderItem = new TreeItem(folder);
+                folderItem.setUserObject(folderPath);
+                if (parent == null) {
+                    folders.addItem(folderItem);
+                } else {
+                    parent.addItem(folderItem);
+                }
+                folderTreeItems.put(folderPath, folderItem);
+            }
+            parent = folderTreeItems.get(folderPath);
+            playItems.add(item);
+            folderItems.put(folderPath, playItems);
+        }
+        if (isInFolder(item)) {
+            items.add(item);
+        }
     }
 
-    public int getIndex(PlayItem item) {
-        return items.getWidgetIndex(item);
+    public void onSelection(SelectionEvent<TreeItem> event) {
+        String folder = (String) event.getSelectedItem().getUserObject();
+        items.clear();
+        Vector<PlayItem> playItems = folderItems.get(folder);
+        for (PlayItem item : playItems) {
+            items.add(item);
+        }
     }
 }

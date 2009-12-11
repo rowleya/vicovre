@@ -76,9 +76,15 @@ public class ActionLoader {
         if (errorMsg == null) {
             errorMsg = error;
         }
-        MessagePopup errorPopup = new MessagePopup(errorMsg, null,
-                MessagePopup.ERROR, fatal? 0: MessageResponse.OK);
-        errorPopup.center();
+        if (fatal) {
+            MessagePopup errorPopup = new MessagePopup(errorMsg, null,
+                    MessagePopup.ERROR);
+            errorPopup.center();
+        } else {
+            MessagePopup errorPopup = new MessagePopup(errorMsg, null,
+                    MessagePopup.ERROR, MessageResponse.OK);
+            errorPopup.center();
+        }
     }
 
 }

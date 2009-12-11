@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwtinterface.client;
 
 import java.util.HashSet;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
@@ -115,6 +116,7 @@ public class SliderBar extends AbsolutePanel implements MouseMoveHandler,
     }
 
     private float getSliderPosition(int x) {
+        x -= (SLIDER_WIDTH / 2);
         int leftMost = getWidgetLeft(table);
         int rightMost = leftMost + bar.getOffsetWidth();
         if (x < leftMost) {
