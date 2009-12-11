@@ -184,6 +184,8 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
     getLowresMethod = env->GetMethodID(contextClass, "getLowres", "()I");
     getDctAlgoMethod = env->GetMethodID(contextClass, "getDctAlgo", "()I");
     getDebugMethod = env->GetMethodID(contextClass, "getDebug", "()I");
+    getBitrateMethod = env->GetMethodID(contextClass, "getBitrate", "()I");
+    getMaxrateMethod = env->GetMethodID(contextClass, "getMaxrate", "()I");
     setFlagsMethod = env->GetMethodID(contextClass, "setFlags", "(I)V");
     setFlags2Method = env->GetMethodID(contextClass, "setFlags2", "(I)V");
     setQmaxMethod = env->GetMethodID(contextClass, "setQmax", "(I)V");
@@ -192,6 +194,8 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
     setLowresMethod = env->GetMethodID(contextClass, "setLowres", "(I)V");
     setDctAlgoMethod = env->GetMethodID(contextClass, "setDctAlgo", "(I)V");
     setDebugMethod = env->GetMethodID(contextClass, "setDebug", "(I)V");
+    setBitrateMethod = env->GetMethodID(contextClass, "setBitrate", "(I)V");
+    setMaxrateMethod = env->GetMethodID(contextClass, "setMaxrate", "(I)V");
 }
 
 FFMpegJ::~FFMpegJ() {
@@ -236,6 +240,11 @@ bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
         codecContext->lowres = env->CallIntMethod(context, getLowresMethod);
         codecContext->dct_algo = env->CallIntMethod(context, getDctAlgoMethod);
         codecContext->debug = env->CallIntMethod(context, getDebugMethod);
+        codecContext->bit_rate = env->CallIntMethod(context, getBitrateMethod);
+        codecContext->rc_max_rate = env->CallIntMethod(context, getMaxrateMethod);
+        if (codecContext->rc_max_rate > 0) {
+            codecContext->rc_buffer_size = codecContext->bit_rate * av_q2d(codecContext->time_base);
+        }
     }
     if (isEncoding) {
         codecContext->pix_fmt = this->intermediatePixFmt;
@@ -577,4 +586,6 @@ void FFMpegJ::getCodecContext(JNIEnv *env, jobject context) {
     env->CallVoidMethod(context, setLowresMethod, codecContext->lowres);
     env->CallVoidMethod(context, setDctAlgoMethod, codecContext->dct_algo);
     env->CallVoidMethod(context, setDebugMethod, codecContext->debug);
+    env->CallVoidMethod(context, setBitrateMethod, codecContext->bit_rate);
+    env->CallVoidMethod(context, setMaxrateMethod, codecContext->rc_max_rate);
 }

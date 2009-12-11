@@ -40,6 +40,8 @@ class FFMpegJ {
         jmethodID getLowresMethod;
         jmethodID getDctAlgoMethod;
         jmethodID getDebugMethod;
+        jmethodID getBitrateMethod;
+        jmethodID getMaxrateMethod;
         jmethodID setFlagsMethod;
         jmethodID setFlags2Method;
         jmethodID setQminMethod;
@@ -48,6 +50,8 @@ class FFMpegJ {
         jmethodID setLowresMethod;
         jmethodID setDctAlgoMethod;
         jmethodID setDebugMethod;
+        jmethodID setBitrateMethod;
+        jmethodID setMaxrateMethod;
 
         AVCodecParserContext *parser;
         RTPDynamicProtocolHandler *rtpHandler;
