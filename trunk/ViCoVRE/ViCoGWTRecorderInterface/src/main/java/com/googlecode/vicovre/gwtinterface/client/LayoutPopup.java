@@ -42,6 +42,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -164,6 +165,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         layout.clear();
         positions.clear();
         audioStreams.clear();
+        audioBoxes.clear();
         String value = layoutBox.getValue(layoutBox.getSelectedIndex());
         if (value.equals("")) {
             layout.setWidth("0px");
@@ -186,32 +188,6 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
             int minX = Integer.MAX_VALUE;
             int minY = Integer.MAX_VALUE;
             for (LayoutPosition position : positionList) {
-                Widget widget = null;
-                if (position.isAssignable()) {
-                    ListBox box = new ListBox();
-                    for (Stream stream : item.getStreams()) {
-                        if (stream.getMediaType().equalsIgnoreCase("Video")) {
-                            box.addItem(getStreamName(stream),
-                                    stream.getSsrc());
-                        }
-                    }
-
-                    positions.put(position.getName(), box);
-                    box.setWidth(position.getWidth() + "px");
-                    widget = box;
-                } else {
-                    Label label = new Label(position.getName());
-                    widget = label;
-                }
-                HorizontalPanel panel = new HorizontalPanel();
-                panel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
-                panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-                panel.add(widget);
-                panel.setWidth(position.getWidth() + "px");
-                panel.setHeight(position.getHeight() + "px");
-                DOM.setStyleAttribute(panel.getElement(), "border",
-                        "1px solid blue");
-                layout.add(panel, position.getX(), position.getY());
                 if ((position.getX() + position.getWidth()) > maxX) {
                     maxX = position.getX() + position.getWidth();
                 }
@@ -225,8 +201,50 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                     minY = position.getY();
                 }
             }
-            layout.setWidth((maxX + minX) + "px");
-            layout.setHeight((maxY + minY) + "px");
+            int width = maxX + minX;
+            int height = maxY + minY + (40 * audioBoxes.size()) + 160;
+            double scaleWidth = 1.0;
+            double scaleHeight = 1.0;
+            if (Window.getClientWidth() < width) {
+                scaleWidth = (double) Window.getClientWidth() / width;
+            }
+            if (Window.getClientHeight() < height) {
+                scaleHeight = (double) Window.getClientHeight() / height;
+            }
+            double scale = Math.min(scaleWidth, scaleHeight);
+
+            for (LayoutPosition position : positionList) {
+                Widget widget = null;
+                if (position.isAssignable()) {
+                    ListBox box = new ListBox();
+                    for (Stream stream : item.getStreams()) {
+                        if (stream.getMediaType().equalsIgnoreCase("Video")) {
+                            box.addItem(getStreamName(stream),
+                                    stream.getSsrc());
+                        }
+                    }
+
+                    positions.put(position.getName(), box);
+                    box.setWidth((int) (position.getWidth() * scale) + "px");
+                    widget = box;
+                } else {
+                    Label label = new Label(position.getName());
+                    widget = label;
+                }
+                HorizontalPanel panel = new HorizontalPanel();
+                panel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
+                panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+                panel.add(widget);
+                panel.setWidth((int) (position.getWidth() * scale) + "px");
+                panel.setHeight((int) (position.getHeight() * scale) + "px");
+                DOM.setStyleAttribute(panel.getElement(), "border",
+                        "1px solid blue");
+                layout.add(panel, (int) (position.getX() * scale),
+                        (int) (position.getY() * scale));
+
+            }
+            layout.setWidth((int) ((maxX + minX) * scale) + "px");
+            layout.setHeight((int) ((maxY + minY) * scale) + "px");
         }
         if (isShowing()) {
             super.center();
