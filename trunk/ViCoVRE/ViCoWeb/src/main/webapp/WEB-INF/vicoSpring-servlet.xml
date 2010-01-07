@@ -91,4 +91,11 @@
     <bean name="/image.do" class="com.googlecode.vicovre.web.play.ImageController">
         <constructor-arg><ref bean="database"/></constructor-arg>
     </bean>
+    <bean name="/**/listRecordings.do" class="com.googlecode.vicovre.web.play.ListRecordingsController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+    <bean name="/**/displayRecording.do" class="com.googlecode.vicovre.web.play.DisplayRecordingController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+    </bean>
 </beans>

@@ -58,7 +58,7 @@ import ag3.interfaces.types.StreamDescription;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class Recording {
+public class Recording implements Comparable<Recording> {
 
     // The recording metadata
     private RecordingMetadata metadata = null;
@@ -253,5 +253,13 @@ public class Recording {
 
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public int compareTo(Recording r) {
+        int value = startTime.compareTo(r.startTime);
+        if (value == 0) {
+            return metadata.compareTo(r.metadata);
+        }
+        return value;
     }
 }
