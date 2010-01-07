@@ -178,7 +178,7 @@
                         <webResource>
                             <directory>${basedir}/src/main/webapp/</directory>
                             <includes>
-                                <include>index.html</include>
+                                <include>gwt.html</include>
                             </includes>
                             <targetPath></targetPath>
                             <filtering>true</filtering>
