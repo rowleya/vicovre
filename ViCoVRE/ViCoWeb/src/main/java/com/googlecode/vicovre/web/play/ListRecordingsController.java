@@ -30,62 +30,41 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.web.play;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+import java.io.File;
 
-    private String name = null;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    private String description = null;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
 
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    public boolean isDescriptionEditable() {
-        return true;
+import com.googlecode.vicovre.recordings.Folder;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+
+public class ListRecordingsController implements Controller {
+
+    private RecordingDatabase database = null;
+
+    public ListRecordingsController(RecordingDatabase database) {
+        this.database = database;
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+    public ModelAndView handleRequest(HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
+        File path = new File(database.getTopLevelFolder().getFile(),
+                request.getRequestURI());
+        path = path.getParentFile();
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
+        Folder folder = database.getFolder(path);
 
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
+        ModelAndView modelAndView = new ModelAndView("listRecordings");
+        modelAndView.addObject("folder", folder);
+        modelAndView.addObject("isTopLevel",
+                folder.equals(database.getTopLevelFolder()));
+        return modelAndView;
     }
 
 }

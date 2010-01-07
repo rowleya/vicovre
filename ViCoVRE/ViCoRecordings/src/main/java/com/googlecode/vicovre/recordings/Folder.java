@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
@@ -43,7 +44,7 @@ import java.util.Vector;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class Folder {
+public class Folder implements Comparable<Folder> {
 
     private File file = null;
 
@@ -119,7 +120,9 @@ public class Folder {
      * @return the folders
      */
     public List<Folder> getFolders() {
-        return new Vector<Folder>(folders.values());
+        Vector<Folder> folders = new Vector<Folder>(this.folders.values());
+        Collections.sort(folders);
+        return folders;
     }
 
     /**
@@ -162,7 +165,9 @@ public class Folder {
      * @return the recordings
      */
     public List<Recording> getRecordings() {
-        return new Vector<Recording>(recordings.values());
+        Vector<Recording> recs = new Vector<Recording>(recordings.values());
+        Collections.sort(recs);
+        return recs;
     }
 
     /**
@@ -237,5 +242,9 @@ public class Folder {
 
     public int hashCode() {
         return file.hashCode();
+    }
+
+    public int compareTo(Folder f) {
+        return name.compareTo(f.name);
     }
 }

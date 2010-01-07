@@ -2,6 +2,24 @@
 <web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
 
     <display-name>ViCo Web</display-name>
+
+    <!-- <filter>
+        <filter-name>security</filter-name>
+        <filter-class>com.googlecode.vicovre.security.servlet.SecurityFilter</filter-class>
+        <init-param>
+            <param-name>permissionDatabase</param-name>
+            <param-value>${recording.location}/acls</param-value>
+        </init-param>
+        <init-param>
+            <param-name>roles</param-name>
+            <param-value>/roles.xml</param-value>
+        </init-param>
+        <init-param>
+            <param-name>operations</param-name>
+            <param-value>/operations.xml</param-value>
+        </init-param>
+    </filter> -->
+
     <servlet>
         <servlet-name>vicoSpring</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -12,4 +30,9 @@
         <servlet-name>vicoSpring</servlet-name>
         <url-pattern>*.do</url-pattern>
     </servlet-mapping>
+
+    <!-- <filter-mapping>
+        <filter-name>security</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping> -->
 </web-app>
