@@ -53,8 +53,8 @@ public class LayoutChanger implements AsyncCallback<Boolean> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
                 "layout.setLayouts",
-                new Object[]{"", popup.getId(), popup.getLayoutDetails()},
-                this);
+                new Object[]{popup.getFolder(), popup.getId(),
+                    popup.getLayoutDetails()}, this);
         request.execute();
     }
 

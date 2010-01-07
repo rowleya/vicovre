@@ -361,4 +361,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
         return allDetails;
     }
+
+    public String getFolder() {
+        return item.getFolder();
+    }
 }
