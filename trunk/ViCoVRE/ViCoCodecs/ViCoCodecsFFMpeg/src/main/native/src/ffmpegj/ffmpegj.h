@@ -61,6 +61,7 @@ class FFMpegJ {
         long lastSequence;
         long firstSequence;
         AVPacket *rtpPackets[1024];
+        bool rtpPacketCreated[1024];
         uint8_t rtpData[1024*1600];
 
         AVCodecContext *codecContext;
