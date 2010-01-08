@@ -129,6 +129,7 @@ FFMpegJ::FFMpegJ(JNIEnv *env, jobject peer, int logLevel) {
     frame = NULL;
     codecContext = NULL;
     buffer = NULL;
+    rtpHandler = NULL;
     codecOpened = false;
 
     avcodec_init();
@@ -298,8 +299,11 @@ bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
                             rtpPayloadContext, sdpLine);
                 }
                 env->ReleaseStringUTFChars(rtpSdpString, rtpSdp);
+                fprintf(stderr, "Clearing array\n");
+                fflush(stderr);
                 for (int i = 0; i < 1024; i++) {
                     rtpPackets[i] = NULL;
+                    rtpPacketCreated[i] = false;
                 }
             }
         }
@@ -357,17 +361,24 @@ int FFMpegJ::decode(JNIEnv *env, jobject input, jobject output) {
             firstSequence = sequence;
             lastSequence = firstSequence;
             for (int i = 0; i < 1024; i++) {
-                if (rtpPackets[i] != NULL) {
+                if (!rtpPacketCreated[i]) {
+                    fprintf(stderr, "Deleting packet\n");
+                    fflush(stderr);
                     delete rtpPackets[i];
+                    fprintf(stderr, "Deleted packet\n");
+                    fflush(stderr);
                 }
-                rtpPackets[i] = NULL;
+                rtpPacketCreated[i] = false;
             }
         }
         int index = sequence - firstSequence;
         if (index < 0) {
             index = ((0xFFFF - firstSequence) + sequence);
         }
+        fprintf(stderr, "Creating RTP Packet\n");
+        fflush(stderr);
         rtpPackets[index] = new AVPacket;
+        rtpPacketCreated[index] = true;
         AVPacket *rtpPacket = rtpPackets[index];
 
         uint32_t timestamp;
