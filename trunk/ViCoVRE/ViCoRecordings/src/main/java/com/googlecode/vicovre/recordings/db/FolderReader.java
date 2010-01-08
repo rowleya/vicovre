@@ -42,9 +42,11 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -80,6 +82,8 @@ public class FolderReader {
         Vector<HarvestSource> harvestSources = new Vector<HarvestSource>();
         Vector<UnfinishedRecording> unfinishedRecordings =
             new Vector<UnfinishedRecording>();
+        Vector<DefaultLayout> defaultLayouts = new Vector<DefaultLayout>();
+
         for (File file : directory.listFiles()) {
             try {
                 if (file.isDirectory()) {
@@ -115,6 +119,12 @@ public class FolderReader {
                                 folder, typeRepository, database);
                     input.close();
                     unfinishedRecordings.add(recording);
+                } else if (file.getName().endsWith(RecordingConstants.LAYOUT)) {
+                    FileInputStream input = new FileInputStream(file);
+                    DefaultLayout layout = DefaultLayoutReader.readLayout(input,
+                            layoutRepository);
+                    defaultLayouts.add(layout);
+                    input.close();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -125,6 +135,27 @@ public class FolderReader {
         folder.setRecordings(recordings);
         folder.setHarvestSources(harvestSources);
         folder.setUnfinishedRecordings(unfinishedRecordings);
+        folder.setDefaultLayouts(defaultLayouts);
+
+        // Go through the recordings and apply the default layouts where
+        // necessary
+        for (Recording recording : recordings) {
+            if (recording.getReplayLayouts().isEmpty()) {
+                Vector<ReplayLayout> layouts = new Vector<ReplayLayout>();
+                for (DefaultLayout layout : defaultLayouts) {
+
+                    // Try to match the positions to the streams
+                    ReplayLayout replayLayout = layout.matchLayout(recording);
+                    if (replayLayout != null) {
+                        layouts.add(replayLayout);
+                    }
+                }
+                if (!layouts.isEmpty()) {
+                    recording.setReplayLayouts(layouts);
+                }
+            }
+        }
+
         return folder;
     }
 

@@ -63,6 +63,8 @@ public class Folder implements Comparable<Folder> {
     private HashMap<Integer, HarvestSource> harvestSources =
         new HashMap<Integer, HarvestSource>();
 
+    private List<DefaultLayout> defaultLayouts = new Vector<DefaultLayout>();
+
     /**
      * Creates a folder
      * @param file The real folder
@@ -234,6 +236,14 @@ public class Folder implements Comparable<Folder> {
         } else {
             this.harvestSources.clear();
         }
+    }
+
+    public void setDefaultLayouts(List<DefaultLayout> defaultLayouts) {
+        this.defaultLayouts = defaultLayouts;
+    }
+
+    public List<DefaultLayout> getDefaultLayouts() {
+        return defaultLayouts;
     }
 
     public boolean equals(Folder folder) {
