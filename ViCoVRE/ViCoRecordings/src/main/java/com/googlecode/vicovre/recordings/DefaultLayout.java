@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.media.format.AudioFormat;
+
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -172,6 +174,22 @@ public class DefaultLayout implements Comparable<DefaultLayout> {
                 if (pos.getFieldSet().test(stream)) {
                     layout.setStream(posName, stream);
                     matchFound = true;
+                }
+            }
+            if (!matchFound) {
+                return null;
+            }
+        }
+        for (DefaultLayoutPosition audioStream : audioStreams) {
+            boolean matchFound = false;
+            List<Stream> streams = recording.getStreams();
+            for (int i = 0; (i < streams.size()) && !matchFound; i++) {
+                Stream stream = streams.get(i);
+                if (stream.getRtpType().getFormat() instanceof AudioFormat) {
+                    if (audioStream.getFieldSet().test(stream)) {
+                        layout.addAudioStream(stream);
+                        matchFound = true;
+                    }
                 }
             }
             if (!matchFound) {
