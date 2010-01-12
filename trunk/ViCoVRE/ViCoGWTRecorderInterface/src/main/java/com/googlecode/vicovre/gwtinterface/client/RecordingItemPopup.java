@@ -195,7 +195,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
             } else {
                 manualStart.setValue(true, true);
             }
-            Date stopDate = item.getStartDate();
+            Date stopDate = item.getStopDate();
             if (stopDate != null) {
                 this.stopDate.setValue(stopDate);
                 this.stopTime.setHour(stopDate.getHours());
