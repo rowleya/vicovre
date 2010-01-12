@@ -290,11 +290,12 @@ bool FFMpegJ::init(int pixFmt, int width, int height, int intermediatePixFmt,
                 jboolean isCopy;
                 const char *rtpSdp = env->GetStringUTFChars(rtpSdpString,
                         &isCopy);
-                while ((nChar = strcspn(rtpSdp, "\n")) != 0) {
+                const char *rtpSdpp = rtpSdp;
+                while ((nChar = strcspn(rtpSdpp, "\n")) != 0) {
                     sdpLine = (char*) realloc((void*) sdpLine, nChar + 1);
                     memset(sdpLine, '\0', nChar + 1);
-                    strncpy(sdpLine, rtpSdp, nChar);
-                    rtpSdp += nChar + 1;
+                    strncpy(sdpLine, rtpSdpp, nChar);
+                    rtpSdpp += nChar + 1;
                     rtpHandler->parse_sdp_a_line(rtpFormatContext, 0,
                             rtpPayloadContext, sdpLine);
                 }
