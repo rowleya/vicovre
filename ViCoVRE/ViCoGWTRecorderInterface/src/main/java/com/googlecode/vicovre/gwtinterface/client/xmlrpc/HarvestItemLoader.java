@@ -88,7 +88,7 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
             harvestItem.setDayOfMonth(
                     (Integer) item.get("dayOfMonth"));
         } else if (frequency.equals(HarvestItemPopup.UPDATE_WEEKLY)) {
-            harvestItem.setDayOfMonth(
+            harvestItem.setDayOfWeek(
                     (Integer) item.get("dayOfWeek"));
         }
         Integer hour = (Integer) item.get("hour");
