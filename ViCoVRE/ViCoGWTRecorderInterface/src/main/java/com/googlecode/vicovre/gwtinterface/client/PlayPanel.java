@@ -35,6 +35,7 @@ package com.googlecode.vicovre.gwtinterface.client;
 import java.util.HashMap;
 import java.util.Vector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.DOM;
@@ -91,10 +92,10 @@ public class PlayPanel extends HorizontalPanel
         setCellHeight(scroller, "100%");
 
         TreeItem rootItem = new TreeItem("All");
-        rootItem.setUserObject("/");
+        rootItem.setUserObject("");
         Vector<PlayItem> rootItems = new Vector<PlayItem>();
-        folderItems.put("/", rootItems);
-        folderTreeItems.put("/", rootItem);
+        folderItems.put("", rootItems);
+        folderTreeItems.put("", rootItem);
         folders.addItem(rootItem);
         folders.setSelectedItem(rootItem);
         folders.addSelectionHandler(this);
@@ -110,7 +111,7 @@ public class PlayPanel extends HorizontalPanel
         String folderPath = "";
         TreeItem parent = null;
         for (String folder : item.getFolders()) {
-            folderPath += "/" + folder;
+            folderPath += folder;
             Vector<PlayItem> playItems = folderItems.get(folderPath);
             if (playItems == null) {
                 playItems = new Vector<PlayItem>();
@@ -126,6 +127,7 @@ public class PlayPanel extends HorizontalPanel
             parent = folderTreeItems.get(folderPath);
             playItems.add(item);
             folderItems.put(folderPath, playItems);
+            folderPath += "/";
         }
         if (isInFolder(item)) {
             items.add(item);
