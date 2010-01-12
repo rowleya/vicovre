@@ -301,10 +301,16 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
                 ((stopDate == null) || stopDate.after(now))) {
             startTimer = new Timer();
             startTimer.schedule(new StartRecording(), startDate);
+            System.err.println("Recording of " + getMetadata().getName() + " scheduled to start at " + startDate);
+        } else if (startDate != null) {
+            System.err.println("Not scheduling start of recording of " + getMetadata().getName() + " as already recording or finished");
         }
         if ((stopDate != null) && !recordingFinished && stopDate.after(now)) {
             stopTimer = new Timer();
             stopTimer.schedule(new StopRecording(), stopDate);
+            System.err.println("Recording of " + getMetadata().getName() + " scheduled to stop at " + stopDate);
+        } else if (stopDate != null) {
+            System.err.println("Not scheduling stop of recording of " + getMetadata().getName() + " as already finished");
         }
     }
 
