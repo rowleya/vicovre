@@ -59,6 +59,8 @@ public class TimeBox extends HorizontalPanel {
     private int secondPrecision = 1;
 
     public TimeBox(int minutePrecision, int secondPrecision) {
+        this.minutePrecision = minutePrecision;
+        this.secondPrecision = secondPrecision;
         for (int i = 0; i < 23; i++) {
             hour.addItem(String.valueOf(i));
         }
