@@ -107,7 +107,7 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
     private Vector<String> newStreams = new Vector<String>();
 
     // The recording being made
-    private Recording recording = new Recording();
+    private Recording recording = null;
 
     // The RtpTypeRepository
     private RtpTypeRepository typeRepository = null;
@@ -142,10 +142,7 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
     public RecordArchiveManager(RtpTypeRepository typeRepository,
             Folder folder, String recordingId) {
         this.typeRepository = typeRepository;
-        recording.setId(recordingId);
-
-        directory = new File(folder.getFile(), recordingId);
-        recording.setDirectory(directory);
+        recording = new Recording(folder, recordingId);
         start();
     }
 

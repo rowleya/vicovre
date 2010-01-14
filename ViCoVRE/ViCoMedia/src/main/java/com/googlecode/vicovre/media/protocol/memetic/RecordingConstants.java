@@ -76,6 +76,11 @@ public interface RecordingConstants {
     String DESCRIPTION = ".description";
 
     /**
+     * The name of a folder
+     */
+    String NAME = ".name";
+
+    /**
      * The normalization factor to multiply random numbers by in ids
      */
     int ID_NORMALIZATION = 100000;

@@ -33,10 +33,29 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
+
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.db.DefaultLayoutReader;
+import com.googlecode.vicovre.recordings.db.HarvestSourceReader;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.RecordingReader;
+import com.googlecode.vicovre.recordings.db.UnfinishedRecordingReader;
+import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
+import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.ExtensionFilter;
+import com.googlecode.vicovre.utils.FolderFilter;
+import com.googlecode.vicovre.utils.XmlIo;
 
 /**
  * A folder of recordings (and other folders)
@@ -48,29 +67,33 @@ public class Folder implements Comparable<Folder> {
 
     private File file = null;
 
-    private String name = null;
+    private HashMap<String, Long> recordingCacheTime =
+        new HashMap<String, Long>();
 
-    private String description = null;
-
-    private HashMap<String, Folder> folders = new HashMap<String, Folder>();
-
-    private HashMap<String, Recording> recordings =
+    private HashMap<String, Recording> recordingCache =
         new HashMap<String, Recording>();
 
-    private HashMap<Integer, UnfinishedRecording> unfinishedRecordings =
-        new HashMap<Integer, UnfinishedRecording>();
+    private RtpTypeRepository typeRepository = null;
 
-    private HashMap<Integer, HarvestSource> harvestSources =
-        new HashMap<Integer, HarvestSource>();
+    private LayoutRepository layoutRepository = null;
 
-    private List<DefaultLayout> defaultLayouts = new Vector<DefaultLayout>();
+    private HarvestFormatRepository harvestFormatRepository = null;
+
+    private RecordingDatabase database = null;
 
     /**
      * Creates a folder
      * @param file The real folder
      */
-    public Folder(File file) {
+    public Folder(File file, RtpTypeRepository typeRepository,
+            LayoutRepository layoutRepository,
+            HarvestFormatRepository harvestFormatRepository,
+            RecordingDatabase database) {
         this.file = file;
+        this.typeRepository = typeRepository;
+        this.layoutRepository = layoutRepository;
+        this.harvestFormatRepository = harvestFormatRepository;
+        this.database = database;
     }
 
     /**
@@ -86,15 +109,38 @@ public class Folder implements Comparable<Folder> {
      * @return the name
      */
     public String getName() {
+        String name = file.getName();
+        File description = new File(file, RecordingConstants.NAME);
+        try {
+            if (description.exists()) {
+                FileInputStream input = new FileInputStream(description);
+                Node doc = XmlIo.read(input);
+                name = XmlIo.readValue(doc, "name");
+                input.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error reading folder metadata");
+            e.printStackTrace();
+        }
         return name;
     }
 
     /**
      * Sets the name
      * @param name the name to set
+     * @throws IOException
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setName(String name) throws IOException {
+        File outputFile = new File(file, RecordingConstants.NAME);
+        if (!name.equals(file.getName())) {
+            PrintWriter output = new PrintWriter(outputFile);
+            output.println("<folder>");
+            output.println("<name value=\"" + name + "\">");
+            output.println("</folder>");
+            output.close();
+        } else if (outputFile.exists()) {
+            outputFile.delete();
+        }
     }
 
     /**
@@ -102,19 +148,37 @@ public class Folder implements Comparable<Folder> {
      * @return the description
      */
     public String getDescription() {
-        return description;
+        String name = null;
+        File description = new File(file, RecordingConstants.DESCRIPTION);
+        try {
+            if (description.exists()) {
+                FileInputStream input = new FileInputStream(description);
+                Node doc = XmlIo.read(input);
+                name = XmlIo.readValue(doc, "description");
+                input.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Error reading folder metadata");
+            e.printStackTrace();
+        }
+        return name;
     }
 
     /**
      * Sets the description
      * @param description the description to set
      */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void addFolder(Folder folder) {
-        folders.put(folder.getName(), folder);
+    public void setDescription(String description) throws IOException {
+        File outputFile = new File(file, RecordingConstants.DESCRIPTION);
+        if (description != null) {
+            PrintWriter output = new PrintWriter(outputFile);
+            output.println("<folder>");
+            output.println("<description value=\"" + description + "\">");
+            output.println("</folder>");
+            output.close();
+        } else if (outputFile.exists()) {
+            outputFile.delete();
+        }
     }
 
     /**
@@ -122,35 +186,15 @@ public class Folder implements Comparable<Folder> {
      * @return the folders
      */
     public List<Folder> getFolders() {
-        Vector<Folder> folders = new Vector<Folder>(this.folders.values());
+        Vector<Folder> folders = new Vector<Folder>();
+        File[] files = file.listFiles(new FolderFilter(false));
+        for (File folderFile : files) {
+            Folder folder = new Folder(folderFile, typeRepository,
+                    layoutRepository, harvestFormatRepository, database);
+            folders.add(folder);
+        }
         Collections.sort(folders);
         return folders;
-    }
-
-    /**
-     * Sets the folders
-     * @param folders the folders to set
-     */
-    public void setFolders(List<Folder> folders) {
-        if (folders != null) {
-            for (Folder folder : folders) {
-                this.folders.put(folder.getName(), folder);
-            }
-        } else {
-            this.folders.clear();
-        }
-    }
-
-    /**
-     * Adds a recording
-     * @param recording The recording to add
-     */
-    public void addRecording(Recording recording) {
-        recordings.put(recording.getId(), recording);
-    }
-
-    public void deleteRecording(Recording recording) {
-        recordings.remove(recording.getId());
     }
 
     /**
@@ -159,7 +203,35 @@ public class Folder implements Comparable<Folder> {
      * @return The recording or null if doesn't exist
      */
     public Recording getRecording(String id) {
-        return recordings.get(id);
+        synchronized (recordingCache) {
+            File recordingFile = new File(file, id);
+            File recordingIndex = new File(recordingFile,
+                    RecordingConstants.RECORDING_INDEX);
+            try {
+                if (recordingFile.exists() && recordingIndex.exists()) {
+                    if (!recordingCache.containsKey(id)
+                            || (recordingCacheTime.get(id)
+                                < recordingIndex.lastModified())) {
+                        FileInputStream input = new FileInputStream(
+                                recordingIndex);
+                        Recording recording = RecordingReader.readRecording(
+                                input, this, typeRepository,
+                                layoutRepository);
+                        input.close();
+                        recordingCacheTime.put(id,
+                                recordingIndex.lastModified());
+                        recordingCache.put(id, recording);
+                    }
+                } else {
+                    recordingCache.remove(id);
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: error reading recording "
+                        + recordingFile);
+                e.printStackTrace();
+            }
+            return recordingCache.get(id);
+        }
     }
 
     /**
@@ -167,82 +239,120 @@ public class Folder implements Comparable<Folder> {
      * @return the recordings
      */
     public List<Recording> getRecordings() {
-        Vector<Recording> recs = new Vector<Recording>(recordings.values());
+        Vector<Recording> recs = new Vector<Recording>();
+        File[] recordingFiles = file.listFiles(new FolderFilter(true));
+        for (File recordingFile : recordingFiles) {
+            try {
+                Recording recording = getRecording(recordingFile.getName());
+                recs.add(recording);
+            } catch (Exception e) {
+                System.err.println("Warning: error reading recording "
+                        + recordingFile);
+                e.printStackTrace();
+            }
+        }
         Collections.sort(recs);
         return recs;
     }
 
-    /**
-     * Sets the recordings
-     * @param recordings the recordings to set
-     */
-    public void setRecordings(List<Recording> recordings) {
-        if (recordings != null) {
-            for (Recording recording : recordings) {
-                this.recordings.put(recording.getId(), recording);
-            }
-        } else {
-            this.recordings.clear();
-        }
-    }
-
-    public void addUnfinishedRecording(UnfinishedRecording recording) {
-        unfinishedRecordings.put(recording.getId(), recording);
-    }
-
-    public void deleteUnfinishedRecording(UnfinishedRecording recording) {
-        unfinishedRecordings.remove(recording.getId());
-    }
-
     public UnfinishedRecording getUnfinishedRecording(int id) {
-        return unfinishedRecordings.get(id);
+        File recordingIndex = new File(file,
+                RecordingConstants.UNFINISHED_RECORDING_INDEX);
+        try {
+            if (recordingIndex.exists()) {
+                FileInputStream input = new FileInputStream(recordingIndex);
+                UnfinishedRecording recording =
+                    UnfinishedRecordingReader.readRecording(input,
+                            recordingIndex, this, typeRepository, database);
+                input.close();
+                return recording;
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: error reading unfinished recording "
+                    + recordingIndex);
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<UnfinishedRecording> getUnfinishedRecordings() {
-        return new Vector<UnfinishedRecording>(unfinishedRecordings.values());
-    }
-
-    public void setUnfinishedRecordings(List<UnfinishedRecording> recordings) {
-        if (recordings != null) {
-            for (UnfinishedRecording recording : recordings) {
-                this.unfinishedRecordings.put(recording.getId(), recording);
+        Vector<UnfinishedRecording> recs = new Vector<UnfinishedRecording>();
+        File[] recordingFiles = file.listFiles(new ExtensionFilter(
+                RecordingConstants.UNFINISHED_RECORDING_INDEX));
+        for (File recordingFile : recordingFiles) {
+            try {
+                FileInputStream input = new FileInputStream(recordingFile);
+                UnfinishedRecording recording =
+                    UnfinishedRecordingReader.readRecording(input,
+                            recordingFile, this, typeRepository, database);
+                input.close();
+                recs.add(recording);
+            } catch (Exception e) {
+                System.err.println("Warning: error reading unfinished recording"
+                        + recordingFile);
+                e.printStackTrace();
             }
-        } else {
-            this.unfinishedRecordings.clear();
         }
-    }
-
-    public void addHarvestSource(HarvestSource harvestSource) {
-        harvestSources.put(harvestSource.getId(), harvestSource);
-    }
-
-    public void deleteHarvestSource(HarvestSource harvestSource) {
-        harvestSources.remove(harvestSource.getId());
+        Collections.sort(recs);
+        return recs;
     }
 
     public HarvestSource getHarvestSource(int id) {
-        return harvestSources.get(id);
+        File harvestIndex = new File(file,
+                RecordingConstants.HARVEST_SOURCE);
+        try {
+            if (harvestIndex.exists()) {
+                FileInputStream input = new FileInputStream(harvestIndex);
+                HarvestSource harvestSource =
+                    HarvestSourceReader.readHarvestSource(input,
+                            harvestFormatRepository, typeRepository, this);
+                harvestSource.setFile(harvestIndex);
+                input.close();
+                return harvestSource;
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: error reading harvest source "
+                    + harvestIndex);
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<HarvestSource> getHarvestSources() {
-        return new Vector<HarvestSource>(harvestSources.values());
-    }
-
-    public void setHarvestSources(List<HarvestSource> harvestSources) {
-        if (harvestSources != null) {
-            for (HarvestSource harvestSource : harvestSources) {
-                this.harvestSources.put(harvestSource.getId(), harvestSource);
+        Vector<HarvestSource> sources = new Vector<HarvestSource>();
+        File[] sourceFiles = file.listFiles(new ExtensionFilter(
+                RecordingConstants.HARVEST_SOURCE));
+        for (File sourceFile : sourceFiles) {
+            try {
+                FileInputStream input = new FileInputStream(sourceFile);
+                HarvestSource harvestSource =
+                    HarvestSourceReader.readHarvestSource(input,
+                            harvestFormatRepository, typeRepository, this);
+                harvestSource.setFile(sourceFile);
+                input.close();
+                sources.add(harvestSource);
+            } catch (Exception e) {
+                System.err.println("Warning: error reading harvest source "
+                        + sourceFile);
+                e.printStackTrace();
             }
-        } else {
-            this.harvestSources.clear();
         }
+        return sources;
     }
 
-    public void setDefaultLayouts(List<DefaultLayout> defaultLayouts) {
-        this.defaultLayouts = defaultLayouts;
-    }
+    public List<DefaultLayout> getDefaultLayouts() throws IOException,
+            SAXException {
+        Vector<DefaultLayout> defaultLayouts = new Vector<DefaultLayout>();
+        File[] layoutFiles = file.listFiles(new ExtensionFilter(
+                RecordingConstants.LAYOUT));
+        for (File layoutFile : layoutFiles) {
+            FileInputStream input = new FileInputStream(layoutFile);
+            DefaultLayout layout = DefaultLayoutReader.readLayout(input,
+                    layoutRepository);
+            defaultLayouts.add(layout);
+            input.close();
+        }
 
-    public List<DefaultLayout> getDefaultLayouts() {
         return defaultLayouts;
     }
 
@@ -255,6 +365,6 @@ public class Folder implements Comparable<Folder> {
     }
 
     public int compareTo(Folder f) {
-        return name.compareTo(f.name);
+        return getName().compareTo(f.getName());
     }
 }

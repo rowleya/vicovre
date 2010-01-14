@@ -67,10 +67,13 @@ public class RecordingDatabase {
 
     private Folder topLevelFolder = null;
 
-    private HashMap<File, Folder> folders =
-        new HashMap<File, Folder>();
+    private HashMap<File, Folder> folderCache = new HashMap<File, Folder>();
 
     private RtpTypeRepository typeRepository = null;
+
+    private LayoutRepository layoutRepository = null;
+
+    private HarvestFormatRepository harvestFormatRepository = null;
 
     /**
      * Creates a Database
@@ -85,11 +88,12 @@ public class RecordingDatabase {
             HarvestFormatRepository harvestFormatRepository)
             throws SAXException, IOException {
         this.typeRepository = typeRepository;
+        this.layoutRepository = layoutRepository;
+        this.harvestFormatRepository = harvestFormatRepository;
         File topLevel = new File(directory);
         topLevel.mkdirs();
-        topLevelFolder = FolderReader.readFolder(topLevel,
-                typeRepository, layoutRepository, harvestFormatRepository,
-                this);
+        topLevelFolder = new Folder(topLevel, typeRepository, layoutRepository,
+                harvestFormatRepository, this);
         traverseFolders(topLevelFolder);
 
         File venueServerFile = new File(topLevel, VENUE_SERVER_FILE);
@@ -104,7 +108,7 @@ public class RecordingDatabase {
     }
 
     private void traverseFolders(Folder folder) {
-        folders.put(folder.getFile(), folder);
+        folderCache.put(folder.getFile(), folder);
         List<HarvestSource> harvestSources = folder.getHarvestSources();
         for (HarvestSource harvestSource : harvestSources) {
             harvestSource.scheduleTimer(this, typeRepository);
@@ -153,7 +157,6 @@ public class RecordingDatabase {
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
         Folder folder = harvestSource.getFolder();
-        folder.addHarvestSource(harvestSource);
         if (harvestSource.getFile() == null) {
             File file = File.createTempFile("harvest",
                     RecordingConstants.HARVEST_SOURCE, folder.getFile());
@@ -167,8 +170,6 @@ public class RecordingDatabase {
     }
 
     public void deleteHarvestSource(HarvestSource harvestSource) {
-        Folder folder = harvestSource.getFolder();
-        folder.deleteHarvestSource(harvestSource);
         File file = harvestSource.getFile();
         file.delete();
     }
@@ -181,7 +182,6 @@ public class RecordingDatabase {
     public void addUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
         Folder folder = recording.getFolder();
-        folder.addUnfinishedRecording(recording);
         if (recording.getFile() == null) {
             File file = File.createTempFile("recording",
                     RecordingConstants.UNFINISHED_RECORDING_INDEX,
@@ -198,7 +198,6 @@ public class RecordingDatabase {
     public void deleteUnfinishedRecording(UnfinishedRecording recording) {
         recording.stopRecording();
         Folder folder = recording.getFolder();
-        folder.deleteUnfinishedRecording(recording);
         File file = recording.getFile();
         String prefix = file.getName();
         prefix = prefix.substring(0, prefix.indexOf(
@@ -217,9 +216,6 @@ public class RecordingDatabase {
     public void addRecording(Recording recording)
             throws IOException {
         recording.getDirectory().mkdirs();
-        File parentFile = recording.getDirectory().getParentFile();
-        Folder parent = folders.get(parentFile);
-        parent.addRecording(recording);
         FileOutputStream output = new FileOutputStream(
                 new File(recording.getDirectory(),
                         RecordingConstants.RECORDING_INDEX));
@@ -240,9 +236,6 @@ public class RecordingDatabase {
     }
 
     public void deleteRecording(Recording recording) {
-        File parentFile = recording.getDirectory().getParentFile();
-        Folder parent = folders.get(parentFile);
-        parent.deleteRecording(recording);
         deleteDirectory(recording.getDirectory());
     }
 
@@ -270,19 +263,19 @@ public class RecordingDatabase {
         if (path == null || path.equals(topLevelFolder.getFile())) {
             return topLevelFolder;
         }
-        return folders.get(path);
-    }
-
-    public Folder addFolder(Folder parent, String folderName) {
-        File file = new File(parent.getFile(), folderName);
-        file.mkdirs();
-        Folder folder = new Folder(file);
-        parent.addFolder(folder);
+        Folder folder = folderCache.get(path);
+        if (folder == null) {
+            if (path.exists() && path.isDirectory()) {
+                File recordingIndex = new File(path,
+                        RecordingConstants.RECORDING_INDEX);
+                if (!recordingIndex.exists()) {
+                    folder = new Folder(path, typeRepository, layoutRepository,
+                        harvestFormatRepository, this);
+                    folderCache.put(path, folder);
+                }
+            }
+        }
         return folder;
-    }
-
-    public void updateFolder(Folder folder) throws IOException {
-        FolderReader.writeFolder(folder);
     }
 
     private void shutdown(Folder folder) {
