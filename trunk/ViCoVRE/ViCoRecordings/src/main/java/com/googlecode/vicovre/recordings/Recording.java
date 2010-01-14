@@ -83,6 +83,15 @@ public class Recording implements Comparable<Recording> {
     // The directory holding the streams
     private File directory = null;
 
+    // The folder holding the recording
+    private Folder folder = null;
+
+    public Recording(Folder folder, String id) {
+        this.folder = folder;
+        this.id = id;
+        this.directory = new File(folder.getFile(), id);
+    }
+
     /**
      * Returns the directory
      * @return the directory
@@ -92,27 +101,11 @@ public class Recording implements Comparable<Recording> {
     }
 
     /**
-     * Sets the directory
-     * @param directory the directory to set
-     */
-    public void setDirectory(File directory) {
-        this.directory = directory;
-    }
-
-    /**
      * Returns the id
      * @return the id
      */
     public String getId() {
         return id;
-    }
-
-    /**
-     * Sets the id
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
     }
 
     /**
@@ -206,7 +199,24 @@ public class Recording implements Comparable<Recording> {
      * @return The replay layouts
      */
     public List<ReplayLayout> getReplayLayouts() {
-        return new Vector<ReplayLayout>(replayLayouts.values());
+        if (!replayLayouts.isEmpty()) {
+            return new Vector<ReplayLayout>(replayLayouts.values());
+        }
+        Vector<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
+        try {
+            for (DefaultLayout layout : folder.getDefaultLayouts()) {
+
+                // Try to match the positions to the streams
+                ReplayLayout replayLayout = layout.matchLayout(this);
+                if (replayLayout != null) {
+                    replayLayouts.add(replayLayout);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: error reading layouts");
+            e.printStackTrace();
+        }
+        return replayLayouts;
     }
 
     /**

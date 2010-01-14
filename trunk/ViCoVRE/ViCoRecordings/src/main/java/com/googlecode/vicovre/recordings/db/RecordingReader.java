@@ -45,6 +45,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
@@ -69,18 +70,19 @@ public class RecordingReader {
      * @throws IOException
      * @throws SAXException
      */
-    public static Recording readRecording(InputStream input, File directory,
+    public static Recording readRecording(InputStream input, Folder folder,
             RtpTypeRepository typeRepository, LayoutRepository layoutRepository)
             throws SAXException, IOException {
-        Recording recording = new Recording();
-        recording.setDirectory(directory);
         Node doc = XmlIo.read(input);
-        XmlIo.setString(doc, recording, "id");
+        String id = XmlIo.readValue(doc, "id");
+        Recording recording = new Recording(folder, id);
 
         String[] pauseTimes = XmlIo.readValues(doc, "pauseTime");
         for (String time : pauseTimes) {
             recording.addPauseTime(Long.valueOf(time));
         }
+
+        File directory = recording.getDirectory();
 
         Vector<Stream> streams = new Vector<Stream>();
         File[] streamFiles = directory.listFiles(
