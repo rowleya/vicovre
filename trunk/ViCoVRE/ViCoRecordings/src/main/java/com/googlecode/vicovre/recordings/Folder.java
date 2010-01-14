@@ -46,6 +46,7 @@ import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.db.DefaultLayoutReader;
+import com.googlecode.vicovre.recordings.db.FolderFilter;
 import com.googlecode.vicovre.recordings.db.HarvestSourceReader;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.RecordingReader;
@@ -54,7 +55,6 @@ import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.ExtensionFilter;
-import com.googlecode.vicovre.utils.FolderFilter;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
