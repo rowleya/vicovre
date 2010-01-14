@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.utils;
+package com.googlecode.vicovre.recordings.db;
 
 import java.io.File;
 import java.io.FileFilter;
