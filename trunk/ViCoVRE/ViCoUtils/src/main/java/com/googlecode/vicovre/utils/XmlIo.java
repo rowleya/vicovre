@@ -190,13 +190,16 @@ public abstract class XmlIo {
     }
 
     public static void setDate(Node doc, Object object, String field) {
+        String date = null;
         try {
-            String date = readValue(doc, field);
+            date = readValue(doc, field);
             if (date != null) {
-                setValue(object, field, DATE_FORMAT.parse(date),
-                    Date.class);
+                Date dateValue = DATE_FORMAT.parse(date);
+                setValue(object, field, dateValue, Date.class);
             }
         } catch (Exception e) {
+            System.err.println("Warning: error parsing date " + date);
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
