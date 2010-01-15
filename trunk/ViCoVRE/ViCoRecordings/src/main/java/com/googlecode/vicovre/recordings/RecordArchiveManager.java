@@ -143,6 +143,7 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
             Folder folder, String recordingId) {
         this.typeRepository = typeRepository;
         recording = new Recording(folder, recordingId);
+        directory = recording.getDirectory();
         start();
     }
 
