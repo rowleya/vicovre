@@ -117,7 +117,7 @@ class com.googlecode.vicovre.player.TimeSlider {
             bufferColour:Number,
             annotations:Array, annotationTypes:Array) {
 
-        MovieClip.prototype.toolTip = function(thumb:Array) {
+        MovieClip.prototype.toolTip = function(text:String) {
             var timer;
             this.onRollOver = function() {
                 var showTip = function() {
@@ -130,9 +130,9 @@ class com.googlecode.vicovre.player.TimeSlider {
 
                     var largestWidth = 0;
                     if (mouseX > halfWidth) {
-                        largestWidth = mouseX;
+                        largestWidth = mouseX - 5;
                     } else {
-                        largestWidth = Stage.width - mouseX;
+                        largestWidth = Stage.width - mouseX - 5;
                     }
 
                     _root.createTextField("toolTip", 65534, 0, 0, largestWidth,
@@ -144,7 +144,7 @@ class com.googlecode.vicovre.player.TimeSlider {
                     _root.toolTip.background = true;
                     _root.toolTip.html = true;
                     _root.toolTip.backgroundColor = 0xFFFFC9;
-                    _root.toolTip.htmlText = thumb["text"];
+                    _root.toolTip.htmlText = text;
 
                     var textFormat:TextFormat = new TextFormat();
                     textFormat.bold = false;
@@ -158,18 +158,18 @@ class com.googlecode.vicovre.player.TimeSlider {
                     var xPos = 0;
                     var yPos = 0;
 
-                    _root.toolTip.htmlText = thumb["text"];
+                    _root.toolTip.htmlText = text;
 
-                    _root.toolTip._width = _root.toolTip.textWidth + 10;
+                    _root.toolTip._width = _root.toolTip.textWidth + 5;
 
                     if (mouseX > halfWidth) {
-                        xPos = mouseX - _root.toolTip.textWidth - 10;
+                        xPos = mouseX - _root.toolTip.textWidth - 6;
                     } else {
                         xPos = mouseX + 1;
                     }
 
                     if (mouseY > halfHeight) {
-                        yPos = mouseY - _root.toolTip.textHeight - 10;
+                        yPos = mouseY - _root.toolTip.textHeight - 5;
                     } else {
                         yPos = mouseY + 1;
                     }
@@ -180,6 +180,7 @@ class com.googlecode.vicovre.player.TimeSlider {
 
                 }
                 timer = setInterval(showTip, 500);
+                parent.logger.debug("Roll over " + text);
             };
             this.onRollOut = function() {
                 _root.toolTip.removeTextField();
@@ -234,7 +235,6 @@ class com.googlecode.vicovre.player.TimeSlider {
 
     public function setDims(x:Number, y:Number, width:Number, height:Number) {
         this.barheight = (height / this.noBars) - 5;
-        this.barwidth = ((width - barheight - 5) * 0.85) - 5;
         this.barstartX = x + barheight + 5;
         this.x = x;
         this.y = y;
@@ -266,13 +266,28 @@ class com.googlecode.vicovre.player.TimeSlider {
             clip.lineTo(0, 0);
             clip.endFill();
             if (annotations[i]["text"]!=""){
-                clip.toolTip(annotations[i]);
+                clip.toolTip(annotations[i]["text"]);
             }
             clip.annotation(ann["start"]);
         }
     }
 
     public function draw() {
+
+
+        var textFormat:TextFormat = new TextFormat();
+        textFormat.font = "_sans";
+        textFormat.size = barheight / 1.5;
+        textFormat.color = textColour;
+        timeText = parent.createTextField("timeText", depth + noBars + 1,
+            0, y, width, barheight);
+        timeText.setNewTextFormat(textFormat);
+        timeText.background = false;
+        timeText.text = "00:00:00 / 00:00:00";
+        timeText._width = timeText.textWidth + 5;
+        barwidth = width - barheight - 10 - timeText._width;
+        timeText._x = barstartX + 5 + barwidth;
+
         var loader:MovieClipLoader = new MovieClipLoader();
         loader.addListener(this);
         var bary:Number = y;
@@ -296,12 +311,12 @@ class com.googlecode.vicovre.player.TimeSlider {
             bars[type].endFill();
 
             var icon = parent.createEmptyMovieClip("icon" + type, depth +
-                noBars + i + 100);
-            icon.toolTip(atype["text"]);
+                noBars + (i * 2) + 100);
             icon._x = x;
             icon._y = bary;
-            loader.loadClip(atype["icon"], icon);
-
+            icon.toolTip(atype["text"]);
+            var iconclip = icon.createEmptyMovieClip("icon", 0);
+            loader.loadClip(atype["icon"], iconclip);
             bary += barheight + 5;
         }
 
@@ -317,27 +332,11 @@ class com.googlecode.vicovre.player.TimeSlider {
         slider.endFill();
         slider._y = y - 6;
         slider._x = barstartX - (sliderWidth / 2);
-
-        var textFormat:TextFormat = new TextFormat();
-        textFormat.font = "_sans";
-        textFormat.size = barheight / 1.5;
-        textFormat.color = textColour;
-        timeText = parent.createTextField("timeText", depth + noBars + 1,
-            barstartX + barwidth + 5, y,
-            width - barwidth - barheight - 5, barheight);
-        timeText.setNewTextFormat(textFormat);
-        timeText.background = false;
-        timeText.text = "Unknown Duration";
     }
 
     public function onLoadInit(clip:MovieClip) {
         clip._width = barheight;
         clip._height = barheight;
-        for (var i:Number = 0; i < annotationTypes.length; i++) {
-            if (annotationTypes[i]["icon"] == clip._url) {
-                clip.toolTip(annotationTypes[i]["text"]);
-            }
-        }
     }
 
     public function onLoadError(clip:MovieClip, error:String) {
