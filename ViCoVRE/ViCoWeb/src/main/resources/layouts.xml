@@ -12,7 +12,7 @@
         <element name="Whiteboard" x="30" y="30" width="500" height="375"/>
         <element name="Screen" x="535" y="30" width="500" height="375" changes="true"/>
         <element name="Annotation" x="275" y="410" width="760" height="171" assignable="false"/> -->
-        <element name="Slider" x="350" y="586" width="685" height="20" assignable="false"/>
+        <element name="Slider" x="355" y="586" width="680" height="20" assignable="false"/>
         <element name="Controls" x="275" y="586" width="75" height="20" assignable="false"/>
     </layout>
 </layouts>

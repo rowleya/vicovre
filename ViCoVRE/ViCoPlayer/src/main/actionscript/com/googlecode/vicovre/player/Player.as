@@ -413,13 +413,15 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
         bufferingImage.clear();
         bufferingImage.beginFill(0x000080);
         bufferingImage.moveTo(0, 0);
-        bufferingImage.lineTo(Stage.width + 15, 0);
-        bufferingImage.lineTo(Stage.width + 15, Stage.height + 15);
-        bufferingImage.lineTo(0, Stage.height + 15);
+        bufferingImage.lineTo(Stage.width, 0);
+        bufferingImage.lineTo(Stage.width, Stage.height);
+        bufferingImage.lineTo(0, Stage.height);
         bufferingImage.endFill();
 
-        bufferingImage.text._x = ((Stage.width + 15) / 2) - 50;
-        bufferingImage.text._y = ((Stage.height + 15) / 2) - 15;
+        bufferingImage.text._x = ((layoutWidth * scale) / 2)
+            - (bufferingImage.text._width / 2);
+        bufferingImage.text._y = ((layoutHeight * scale) / 2)
+            - (bufferingImage.text._height / 2);
 
         clickToPlay.clear();
         for (var i = 0; i < videoStreams.length; i++) {
