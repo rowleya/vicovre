@@ -90,6 +90,9 @@ public class Recording implements Comparable<Recording> {
         this.folder = folder;
         this.id = id;
         this.directory = new File(folder.getFile(), id);
+        if (id == null) {
+            throw new RuntimeException("Null id recording in folder " + folder);
+        }
     }
 
     /**
