@@ -88,11 +88,16 @@ public class RecordingReader {
         File[] streamFiles = directory.listFiles(
                 new ExtensionFilter(RecordingConstants.STREAM_METADATA));
         for (File file : streamFiles) {
-            FileInputStream inputStream = new FileInputStream(file);
-            Stream stream = StreamReader.readStream(inputStream,
-                    typeRepository);
-            inputStream.close();
-            streams.add(stream);
+            try {
+                FileInputStream inputStream = new FileInputStream(file);
+                Stream stream = StreamReader.readStream(inputStream,
+                        typeRepository);
+                inputStream.close();
+                streams.add(stream);
+            } catch (Exception e) {
+                System.err.println("Warning: error reading stream " + file);
+                e.printStackTrace();
+            }
         }
         recording.setStreams(streams);
 
@@ -100,21 +105,32 @@ public class RecordingReader {
         File[] layoutFiles = directory.listFiles(
                 new ExtensionFilter(RecordingConstants.LAYOUT));
         for (File file : layoutFiles) {
-            FileInputStream inputLayout = new FileInputStream(file);
-            ReplayLayout layout = LayoutReader.readLayout(inputLayout,
-                    layoutRepository, recording);
-            inputLayout.close();
-            layouts.add(layout);
+            try {
+                FileInputStream inputLayout = new FileInputStream(file);
+                ReplayLayout layout = LayoutReader.readLayout(inputLayout,
+                        layoutRepository, recording);
+                inputLayout.close();
+                layouts.add(layout);
+            } catch (Exception e) {
+                System.err.println("Warning: error reading layout " + file);
+                e.printStackTrace();
+            }
         }
         recording.setReplayLayouts(layouts);
 
         File metadataFile = new File(directory, RecordingConstants.METADATA);
         if (metadataFile.exists()) {
-            FileInputStream inputStream = new FileInputStream(metadataFile);
-            RecordingMetadata metadata = RecordingMetadataReader.readMetadata(
-                    inputStream);
-            recording.setMetadata(metadata);
-            inputStream.close();
+            try {
+                FileInputStream inputStream = new FileInputStream(metadataFile);
+                RecordingMetadata metadata = RecordingMetadataReader.readMetadata(
+                        inputStream);
+                recording.setMetadata(metadata);
+                inputStream.close();
+            } catch (Exception e) {
+                System.err.println("Warning: error reading metadata "
+                        + metadataFile);
+                e.printStackTrace();
+            }
         }
         recording.updateTimes();
         return recording;
