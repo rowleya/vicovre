@@ -37,7 +37,10 @@ package com.googlecode.vicovre.repositories.liveAnnotation;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LiveAnnotationType {
     private String button = null;
@@ -197,5 +200,29 @@ public class LiveAnnotationType {
 
     public List<String> getConversions() {
         return conversions;
+    }
+
+    public String formatAnnotation(String formatName,
+            Map<String, String> values) {
+        String format = getFormat(formatName);
+        String newMessage = "";
+        Pattern variable = Pattern.compile("\\$\\{.*?\\}");
+        Matcher matcher = variable.matcher(format);
+
+        int lastEnd = 0;
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            newMessage += format.substring(lastEnd, start);
+            lastEnd = end;
+            String variableName = format.substring(start + 2, end - 1);
+            String value = getVariable(variableName);
+            if (value == null) {
+                value = values.get(variableName);
+            }
+            newMessage += value;
+        }
+        newMessage += format.substring(lastEnd);
+        return newMessage;
     }
 }

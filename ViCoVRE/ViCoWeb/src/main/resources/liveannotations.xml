@@ -48,8 +48,8 @@
         </textColours>
     </properties>
     <liveAnnotationType name="Question" index="2">
-        <button image="/img/question.png" visible="true" />
-        <thumbnail name="/img/small/question.png" />
+        <button image="/images/annotations/question.png" visible="true" />
+        <thumbnail name="/images/annotations/small/question.png" />
         <colour value="#61C4DC" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
@@ -59,8 +59,8 @@
         </format>
     </liveAnnotationType>
     <liveAnnotationType name="Answer" index="3">
-        <button image="/img/answer.png" visible="true" />
-        <thumbnail name="/img/small/answer.png" />
+        <button image="/images/annotations/answer.png" visible="true" />
+        <thumbnail name="/images/annotations/small/answer.png" />
         <colour value="#FFFF99" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
@@ -70,8 +70,8 @@
         </format>
     </liveAnnotationType>
     <liveAnnotationType name="Response">
-        <button image="/img/response.png" visible="inline" />
-        <thumbnail name="/img/small/response.png" />
+        <button image="/images/annotations/response.png" visible="inline" />
+        <thumbnail name="/images/annotations/small/response.png" />
         <colour value="#FFFF99" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <contains name="CrewLiveAnnotationRelatesTo" type="messageId" />
@@ -83,8 +83,8 @@
         </format>
     </liveAnnotationType>
     <liveAnnotationType name="Comment" index="4">
-        <button image="/img/comment.png" visible="true" />
-        <thumbnail name="/img/small/comment.png" />
+        <button image="/images/annotations/comment.png" visible="true" />
+        <thumbnail name="/images/annotations/small/comment.png" />
         <colour value="#FFFFFF" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
@@ -94,8 +94,8 @@
         </format>
     </liveAnnotationType>
     <liveAnnotationType name="Important-Point" index="5">
-        <button image="/img/important.png" visible="true" />
-        <thumbnail name="/img/small/important.png" />
+        <button image="/images/annotations/important.png" visible="true" />
+        <thumbnail name="/images/annotations/small/important.png" />
         <colour value="#CD3610" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
@@ -105,8 +105,8 @@
         </format>
     </liveAnnotationType>
     <liveAnnotationType name="Linked-Resource" index="6">
-        <button image="/img/link.png" visible="true" />
-        <thumbnail name="/img/small/link.png" />
+        <button image="/images/annotations/link.png" visible="true" />
+        <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <contains name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
@@ -123,8 +123,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Reference" type="Linked-Resource">
-        <button image="/img/link.png" visible="false" />
-        <thumbnail name="/img/small/link.png" />
+        <button image="/images/annotations/link.png" visible="false" />
+        <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
         <contains name="CrewLiveAnnotationComment" type="textarea" />
         <contains name="CrewLiveAnnotationTitle" type="text"/>
@@ -138,8 +138,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="URL-Resource" type="Linked-Resource">
-        <button image="/img/link.png" visible="false" />
-        <thumbnail name="/img/small/link.png" />
+        <button image="/images/annotations/link.png" visible="false" />
+        <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
         <contains name="CrewLiveAnnotationComment" type="textarea" />
         <contains name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png"/>
@@ -153,8 +153,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Person" index="7">
-        <button image="/img/person.png" visible="true" />
-        <thumbnail name="/img/small/person.png" />
+        <button image="/images/annotations/person.png" visible="true" />
+        <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <contains name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
@@ -174,8 +174,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Person2" type="Person" >
-        <button image="/img/person.png" visible="false" />
-        <thumbnail name="/img/small/person.png" />
+        <button image="/images/annotations/person.png" visible="false" />
+        <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
         <contains name="CrewLiveAnnotationComment" type="textarea" />
         <contains name="CrewLiveAnnotationTitle" type="text"/>
@@ -190,8 +190,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Person3" type="Person">
-        <button image="/img/person.png" visible="false" />
-        <thumbnail name="/img/small/person.png" />
+        <button image="/images/annotations/person.png" visible="false" />
+        <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
         <contains name="CrewLiveAnnotationComment" type="textarea" />
         <contains name="CrewLiveAnnotationTitle" type="text"/>
@@ -206,8 +206,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Person4" type="Person" >
-        <button image="/img/person.png" visible="false" />
-        <thumbnail name="/img/small/person.png" />
+        <button image="/images/annotations/person.png" visible="false" />
+        <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
         <contains name="CrewLiveAnnotationComment" type="textarea" />
         <contains name="CrewLiveAnnotationTitle" type="text" />
@@ -221,8 +221,8 @@
         </convertsTo>
     </liveAnnotationType>
     <liveAnnotationType name="Slide" index="1">
-        <button image="/img/slide.png" visible="true" />
-        <thumbnail name="/img/small/slide.png" />
+        <button image="/images/annotations/slide.png" visible="true" />
+        <thumbnail name="/images/annotations/small/slide.png" />
         <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>

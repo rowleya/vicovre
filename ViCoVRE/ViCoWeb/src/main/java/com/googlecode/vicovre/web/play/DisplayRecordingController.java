@@ -33,11 +33,14 @@
 package com.googlecode.vicovre.web.play;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.caboto.dao.AnnotationDao;
+import org.caboto.domain.Annotation;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
@@ -55,10 +58,22 @@ public class DisplayRecordingController implements Controller {
 
     private LayoutRepository layoutRepository = null;
 
+    private AnnotationDao annotationDao = null;
+
+    private String recordingUriPrefix = null;
+
     public DisplayRecordingController(RecordingDatabase database,
             LayoutRepository layoutRepository) {
+        this(database, layoutRepository, null, null);
+    }
+
+    public DisplayRecordingController(RecordingDatabase database,
+            LayoutRepository layoutRepository, AnnotationDao annotationDao,
+            String recordingUriPrefix) {
         this.database = database;
         this.layoutRepository = layoutRepository;
+        this.annotationDao = annotationDao;
+        this.recordingUriPrefix = recordingUriPrefix;
     }
 
     public ModelAndView handleRequest(HttpServletRequest request,
@@ -73,6 +88,24 @@ public class DisplayRecordingController implements Controller {
         int height = 0;
         if (folder != null) {
             recording = folder.getRecording(path.getName());
+
+            int noAnn = 0;
+            if (annotationDao != null) {
+                List<Annotation> annotations = annotationDao.getAnnotations(
+                        recordingUriPrefix + recording.getId());
+                HashMap<String, String> atypes = new HashMap<String, String>();
+                for (Annotation annotation : annotations) {
+                    if (annotation.getType().equals("LiveAnnotation")) {
+                        String type = annotation.getBody().get(
+                                "liveAnnotationType");
+                        if (!type.equals("Slide")) {
+                            atypes.put(type, type);
+                        }
+                    }
+                }
+                noAnn = atypes.size();
+            }
+
             List<ReplayLayout> replayLayouts = recording.getReplayLayouts();
             if ((replayLayouts != null) && (replayLayouts.size() > 0)) {
                 int minX = Integer.MAX_VALUE;
@@ -99,7 +132,7 @@ public class DisplayRecordingController implements Controller {
                     }
                 }
                 width = maxX;
-                height = maxY;
+                height = maxY + (noAnn * 25);
             }
         }
 

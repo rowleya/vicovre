@@ -1,0 +1,254 @@
+/**
+ * Copyright (c) 2010, University of Manchester
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1) Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2) Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3) Neither the name of the University of Manchester nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+import com.googlecode.vicovre.player.Player;
+
+/**
+ * The controls of the player
+ */
+class com.googlecode.vicovre.player.Controls {
+
+    // The player
+    private var parent:Player;
+
+    // The depth of the clips
+    private var depth:Number;
+
+    // The x coordinate
+    private var x:Number;
+
+    // The y coordinate
+    private var y:Number;
+
+    // The width
+    private var width:Number;
+
+    // The height
+    private var height:Number;
+
+    // The background colour
+    private var backgroundColour:Number;
+
+    // The border colour
+    private var borderColour:Number;
+
+    // The text colour
+    private var textColour:Number;
+
+    // The colour of the volume slider
+    private var sliderColour:Number;
+
+    // A play / pause button
+    private var playButton:MovieClip;
+
+    // A fast-forward button
+    private var ffButton:MovieClip;
+
+    // A rewind button
+    private var rwButton:MovieClip;
+
+    // The image begind the volume slider
+    private var volumeImage:MovieClip;
+
+    // A volume control slider
+    private var volumeSlider:MovieClip;
+
+    // True if the volume is changing
+    private var volumeSliding:Boolean = false;
+
+    public function Controls(parent:Player, depth:Number,
+            backgroundColour:Number, borderColour:Number, textColour:Number,
+            sliderColour:Number) {
+        this.parent = parent;
+        this.depth = depth;
+        this.backgroundColour = backgroundColour;
+        this.borderColour = borderColour;
+        this.textColour = textColour;
+        this.sliderColour = sliderColour;
+
+        playButton = parent.createEmptyMovieClip("playButton", depth);
+        volumeImage = parent.createEmptyMovieClip("volumeImage", depth + 1);
+        volumeSlider = parent.createEmptyMovieClip("volumeSlider", depth + 2);
+
+        this.onSliderPress.controls = this;
+        this.onSliderRelease.controls = this;
+        this.onSliderMove.controls = this;
+        this.onPlayPress.controls = this;
+        volumeSlider.onPress = this.onSliderPress;
+        volumeSlider.onRelease = this.onSliderRelease;
+        volumeSlider.onReleaseOutside = this.onSliderRelease;
+        volumeSlider.onMouseMove = this.onSliderMove;
+        playButton.onPress = this.onPlayPress;
+    }
+
+    public function setDims(x:Number, y:Number, width:Number, height:Number) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        draw();
+    }
+
+    public function draw():Void {
+        volumeImage.clear();
+        volumeSlider.clear();
+        playButton.clear();
+
+        var volumeWidth = width - height - 10;
+        volumeImage._x = x;
+        volumeImage._y = y;
+        volumeImage.lineStyle(1, borderColour, 100, false, "normal", "round",
+            "round", 3);
+        volumeImage.beginFill(backgroundColour);
+        volumeImage.moveTo(0, 0);
+        volumeImage.lineTo(0, height);
+        volumeImage.lineTo(volumeWidth, height);
+        volumeImage.lineTo(volumeWidth, 0);
+        volumeImage.lineTo(0, 0);
+        volumeImage.endFill();
+        volumeImage.lineStyle(1, textColour, 100, false, "normal", "round",
+            "round", 3);
+        volumeImage.beginFill(textColour);
+        volumeImage.moveTo(1, height - 1);
+        volumeImage.lineTo(volumeWidth - 1, height - 1);
+        volumeImage.lineTo(volumeWidth - 1, 1);
+        volumeImage.lineTo(1, height - 1);
+        volumeImage.endFill();
+
+        // Draw the slider
+        volumeSlider._x = (x + ((parent.getVolume() * volumeWidth) / 100)) - 3;
+        volumeSlider._y = y;
+        volumeSlider._alpha = 70;
+        volumeImage.lineStyle(1, borderColour, 100, false, "normal", "round",
+            "round", 3);
+        volumeSlider.beginFill(sliderColour);
+        volumeSlider.moveTo(0, 0);
+        volumeSlider.lineTo(0, height);
+        volumeSlider.lineTo(6, height);
+        volumeSlider.lineTo(6, 0);
+        volumeSlider.lineTo(0, 0);
+        volumeSlider.endFill();
+
+        playButton._x = x + volumeWidth + 10;
+        playButton._y = y;
+        if (parent.isPlaying()) {
+            drawPause();
+        } else {
+            drawPlay();
+        }
+    }
+
+    function drawPlay() {
+        playButton.lineStyle(1, borderColour, 100, false, "normal", "round",
+            "round", 3);
+        playButton.beginFill(backgroundColour);
+        playButton.moveTo(0, 0);
+        playButton.lineTo(0, height);
+        playButton.lineTo(height, height);
+        playButton.lineTo(height, 0);
+        playButton.lineTo(0, 0);
+        playButton.endFill();
+        playButton.beginFill(textColour);
+        playButton.moveTo(6, 6);
+        playButton.lineTo(6, height - 5);
+        playButton.lineTo(height - 5, height / 2);
+        playButton.lineTo(6, 6);
+        playButton.endFill();
+    }
+
+    function drawPause() {
+        playButton.lineStyle(1, borderColour, 100, false, "normal", "round",
+            "round", 3);
+        playButton.beginFill(backgroundColour);
+        playButton.moveTo(0, 0);
+        playButton.lineTo(0, height);
+        playButton.lineTo(height, height);
+        playButton.lineTo(height, 0);
+        playButton.lineTo(0, 0);
+        playButton.endFill();
+        playButton.beginFill(textColour);
+        playButton.moveTo(5, 5);
+        playButton.lineTo(5, height - 4);
+        playButton.lineTo((height / 2) - 1, height - 4);
+        playButton.lineTo((height / 2) - 1, 5);
+        playButton.endFill();
+        playButton.beginFill(textColour);
+        playButton.moveTo((height / 2) + 1, 5);
+        playButton.lineTo((height / 2) + 1, height - 4);
+        playButton.lineTo(height - 5, height - 4);
+        playButton.lineTo(height - 5, 5);
+        playButton.endFill();
+    }
+
+    function onSliderPress():Void {
+        var controls:Controls = arguments.callee.controls;
+        controls.volumeSliding = true;
+    }
+
+    function onSliderRelease():Void {
+        var controls:Controls = arguments.callee.controls;
+        controls.volumeSliding = false;
+    }
+
+    function onSliderMove():Void {
+        var controls:Controls = arguments.callee.controls;
+        if (controls.volumeSliding) {
+            var mouseX = controls.volumeSlider._parent._xmouse;
+            var min = controls.volumeImage._x
+                - (controls.volumeSlider._width / 2);
+            var max = controls.volumeImage._x + controls.volumeImage._width
+                - (controls.volumeSlider._width / 2);
+            if (mouseX < min) {
+                mouseX = min;
+            } else if (mouseX > max) {
+                mouseX = max;
+            }
+
+            controls.volumeSlider._x = mouseX
+            var x:Number = controls.volumeSlider._x - min;
+            var unitWidth:Number = 100 / controls.volumeImage._width;
+            var volume:Number = unitWidth * x;
+            controls.parent.setVolume(volume);
+        }
+    }
+
+    function onPlayPress():Void {
+        var controls:Controls = arguments.callee.controls;
+        if (controls.parent.isPlaying()) {
+            controls.parent.pause();
+            controls.drawPlay();
+        } else {
+            controls.parent.resume();
+            controls.drawPause();
+        }
+    }
+}
