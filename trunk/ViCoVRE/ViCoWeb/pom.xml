@@ -291,7 +291,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>2.5.6</version>
+            <version>${project.spring.version}</version>
         </dependency>
 
         <dependency>
@@ -319,7 +319,7 @@
         <dependency>
             <groupId>org.caboto</groupId>
             <artifactId>caboto</artifactId>
-            <version>0.8</version>
+            <version>${project.caboto.version}</version>
         </dependency>
     </dependencies>
 </project>
