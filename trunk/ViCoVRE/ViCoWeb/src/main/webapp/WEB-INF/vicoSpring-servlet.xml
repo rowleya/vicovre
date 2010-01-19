@@ -76,6 +76,21 @@
         </constructor-arg>
     </bean>
 
+    <!-- Annotations implementation - comment out to ignore annotations -->
+    <bean id="profileRepository" class="org.caboto.profile.ProfileRepositoryXmlImpl">
+        <constructor-arg index="0" value="profiles.xml"/>
+    </bean>
+
+    <bean id="cabotoDatabase" class="org.caboto.jena.db.impl.SDBDatabase">
+        <constructor-arg index="0" value="caboto.db"/>
+        <constructor-arg index="1" value="/caboto.properties"/>
+    </bean>
+
+   <bean id="annotationDao" class="org.caboto.dao.AnnotationDaoImpl">
+        <constructor-arg index="0" ref="profileRepository"/>
+        <constructor-arg index="1" ref="cabotoDatabase"/>
+    </bean>
+
     <bean name="/xmlrpc.do" class="com.googlecode.vicovre.web.xmlrpc.XmlRpcController">
         <constructor-arg><ref bean="xmlRpcHandlerMapping"/></constructor-arg>
     </bean>
@@ -83,6 +98,9 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="liveAnnotationTypeRepository"/></constructor-arg>
+        <!-- Comment out the following lines to ignore annotations -->
+        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
+        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
     </bean>
     <bean name="/flv.do" class="com.googlecode.vicovre.web.play.FlvController">
         <constructor-arg><ref bean="database"/></constructor-arg>
@@ -97,5 +115,8 @@
     <bean name="/**/displayRecording.do" class="com.googlecode.vicovre.web.play.DisplayRecordingController">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+        <!-- Comment out the following lines to ignore annotations -->
+        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
+        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
     </bean>
 </beans>

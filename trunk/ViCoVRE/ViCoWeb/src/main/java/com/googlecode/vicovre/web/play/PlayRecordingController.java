@@ -54,6 +54,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.caboto.dao.AnnotationDao;
+import org.caboto.domain.Annotation;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
@@ -70,6 +72,7 @@ import com.googlecode.vicovre.web.play.metadata.MetadataAnnotation;
 import com.googlecode.vicovre.web.play.metadata.MetadataAnnotationType;
 import com.googlecode.vicovre.web.play.metadata.MetadataLayout;
 import com.googlecode.vicovre.web.play.metadata.MetadataLayoutPosition;
+import com.googlecode.vicovre.web.play.metadata.TextThumbnail;
 import com.googlecode.vicovre.web.play.metadata.ThumbSorter;
 import com.googlecode.vicovre.web.play.metadata.ThumbFileSorter;
 import com.googlecode.vicovre.web.play.metadata.Thumbnail;
@@ -95,6 +98,34 @@ public class PlayRecordingController implements Controller {
     private static final int BIT_SHIFT_16 = 16;
 
     private static final int BYTE_MASK = 0xFF;
+
+    private RecordingDatabase database = null;
+
+    private LayoutRepository layoutRepository = null;
+
+    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
+
+    private AnnotationDao annotationDao = null;
+
+    private String recordingUriPrefix = null;
+
+    public PlayRecordingController(RecordingDatabase database,
+            LayoutRepository layoutRepository,
+            LiveAnnotationTypeRepository liveAnnotationTypeRepository) {
+        this(database, layoutRepository, liveAnnotationTypeRepository, null,
+                null);
+    }
+
+    public PlayRecordingController(RecordingDatabase database,
+            LayoutRepository layoutRepository,
+            LiveAnnotationTypeRepository liveAnnotationTypeRepository,
+            AnnotationDao annotationDao, String recordingUriPrefix) {
+        this.database = database;
+        this.layoutRepository = layoutRepository;
+        this.liveAnnotationTypeRepository = liveAnnotationTypeRepository;
+        this.annotationDao = annotationDao;
+        this.recordingUriPrefix = recordingUriPrefix;
+    }
 
     private Vector<Thumbnail> getSlides(String server, Recording recording,
             final String ssrc, long minStart, long maxEnd) {
@@ -255,20 +286,6 @@ public class PlayRecordingController implements Controller {
         }
     }
 
-    // The size of the buffer
-
-    private RecordingDatabase database = null;
-    private LayoutRepository layoutRepository = null;
-    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
-
-    public PlayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository,
-            LiveAnnotationTypeRepository liveAnnotationTypeRepository) {
-        this.database = database;
-        this.layoutRepository = layoutRepository;
-        this.liveAnnotationTypeRepository = liveAnnotationTypeRepository;
-    }
-
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
         Vector<MetadataAnnotation> metadataAnnotations =
@@ -397,41 +414,50 @@ public class PlayRecordingController implements Controller {
                 }
             }
 
-            /*for (Annotation annotation : annotationDao.getAnnotations(recording.getUri())) {
-                if (annotation.getType().equals("LiveAnnotation")) {
-                    CrewLiveAnnotation liveAnnotation =
-                        new CrewLiveAnnotation(liveAnnotationTypeRepository, annotation);
-                    double start = (liveAnnotation.getTimestamp() - rStTime)
-                            / CrewConstants.THOUSAND;
-                    double end = start + annLength / CrewConstants.THOUSAND;
-                    boolean addAnn = true;
-                    String aType = liveAnnotation.getAnnotationBody().get("liveAnnotationType");
-                    LiveAnnotationType latype =
-                        liveAnnotationTypeRepository.findLiveAnnotationType(aType);
-                    if (aType.equals(CrewConstants.SLIDE_TYPE)) {
-                        for (MetadataAnnotation ann : slideAnnotations) {
-                            if (ann.update(start, liveAnnotation.getTimeSliderText())) {
-                                addAnn = false;
+            if (annotationDao != null) {
+                long annLength = duration / 100;
+                for (Annotation annotation :
+                        annotationDao.getAnnotations(recordingUriPrefix
+                                + recording.getId())) {
+                    if (annotation.getType().equals("LiveAnnotation")) {
+                        double start = (annotation.getCreated().getTime()
+                                - recording.getStartTime().getTime()) / 1000;
+                        double end = start + (annLength / 1000);
+                        boolean addAnn = true;
+                        String aType = annotation.getBody().get(
+                                "liveAnnotationType");
+                        LiveAnnotationType latype =
+                            liveAnnotationTypeRepository.findLiveAnnotationType(
+                                    aType);
+                        String text = latype.formatAnnotation("player",
+                                annotation.getBody());
+                        if (latype.getName().equals("Slide")) {
+                            for (MetadataAnnotation ann : slideAnnotations) {
+                                if (ann.update(start, text)) {
+                                    addAnn = false;
+                                }
                             }
                         }
-                    }
-                    MetadataAnnotation metaAnn = new MetadataAnnotation(start, end, aType,
-                            liveAnnotation.getTimeSliderText(), latype.getColour());
-                    if (addAnn && (!metadataAnnotations.contains(metaAnn))) {
-                        metadataAnnotations.add(metaAnn);
-                    }
-                    TextThumbnail textThumb = new TextThumbnail(start, end,
-                            server + latype.getThumbnail(), liveAnnotation.getTimeSliderText(), aType);
-                    if (!thumbs.contains(textThumb)) {
-                        thumbs.add(textThumb);
-                    }
-                    MetadataAnnotationType matype = new MetadataAnnotationType(
-                            aType, server + latype.getThumbnail(), latype.getName(), latype.getIndex());
-                    if (!metadataAnnotationTypes.contains(matype)) {
-                        metadataAnnotationTypes.add(matype);
+                        MetadataAnnotation metaAnn = new MetadataAnnotation(
+                                start, end, aType, text, latype.getColour());
+                        if (addAnn && (!metadataAnnotations.contains(metaAnn))) {
+                            metadataAnnotations.add(metaAnn);
+                        }
+                        TextThumbnail textThumb = new TextThumbnail(start, end,
+                                server + latype.getThumbnail(), text, aType);
+                        if (!thumbs.contains(textThumb)) {
+                            thumbs.add(textThumb);
+                        }
+                        MetadataAnnotationType matype =
+                            new MetadataAnnotationType(aType,
+                                    server + latype.getThumbnail(),
+                                    latype.getName(), latype.getIndex());
+                        if (!metadataAnnotationTypes.contains(matype)) {
+                            metadataAnnotationTypes.add(matype);
+                        }
                     }
                 }
-            } */
+            }
         }
 
         metadataAnnotations.addAll(slideAnnotations);

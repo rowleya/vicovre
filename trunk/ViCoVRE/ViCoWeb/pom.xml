@@ -7,7 +7,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>ViCoWeb</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>ViCo Web Application</name>
     <url>http://maven.apache.org</url>
 
@@ -71,6 +71,22 @@
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-a-jar</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>ViCoWeb</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>maven-jetty-plugin</artifactId>
@@ -164,27 +180,37 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <webResources>
-                        <webResource>
-                            <directory>${basedir}/src/main/webapp/WEB-INF</directory>
-                            <includes>
-                                <include>web.xml</include>
-                                <include>vicoSpring-servlet.xml</include>
-                            </includes>
-                            <targetPath>WEB-INF</targetPath>
-                            <filtering>true</filtering>
-                        </webResource>
-                        <webResource>
-                            <directory>${basedir}/src/main/webapp/</directory>
-                            <includes>
-                                <include>gwt.html</include>
-                            </includes>
-                            <targetPath></targetPath>
-                            <filtering>true</filtering>
-                        </webResource>
-                    </webResources>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-a-war</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>war</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>ViCoVRE</finalName>
+                            <webResources>
+                                <webResource>
+                                    <directory>${basedir}/src/main/webapp/WEB-INF</directory>
+                                    <includes>
+                                        <include>web.xml</include>
+                                        <include>vicoSpring-servlet.xml</include>
+                                    </includes>
+                                    <targetPath>WEB-INF</targetPath>
+                                    <filtering>true</filtering>
+                                </webResource>
+                                <webResource>
+                                    <directory>${basedir}/src/main/webapp/</directory>
+                                    <includes>
+                                        <include>gwt.html</include>
+                                    </includes>
+                                    <targetPath></targetPath>
+                                    <filtering>true</filtering>
+                                </webResource>
+                            </webResources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -199,6 +225,11 @@
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoSecurity</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoRepositories</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -284,6 +315,11 @@
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>1.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.caboto</groupId>
+            <artifactId>caboto</artifactId>
+            <version>0.8</version>
         </dependency>
     </dependencies>
 </project>
