@@ -244,6 +244,10 @@ public class Folder implements Comparable<Folder> {
         for (File recordingFile : recordingFiles) {
             try {
                 Recording recording = getRecording(recordingFile.getName());
+                if (recording == null) {
+                    throw new Exception("Recording " + recordingFile.getName()
+                            + " not read");
+                }
                 recs.add(recording);
             } catch (Exception e) {
                 System.err.println("Warning: error reading recording "
@@ -256,7 +260,7 @@ public class Folder implements Comparable<Folder> {
     }
 
     public UnfinishedRecording getUnfinishedRecording(int id) {
-        File recordingIndex = new File(file,
+        File recordingIndex = new File(file, id +
                 RecordingConstants.UNFINISHED_RECORDING_INDEX);
         try {
             if (recordingIndex.exists()) {
@@ -288,7 +292,8 @@ public class Folder implements Comparable<Folder> {
                 input.close();
                 recs.add(recording);
             } catch (Exception e) {
-                System.err.println("Warning: error reading unfinished recording"
+                System.err.println(
+                        "Warning: error reading unfinished recording "
                         + recordingFile);
                 e.printStackTrace();
             }
