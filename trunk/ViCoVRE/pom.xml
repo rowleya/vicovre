@@ -23,6 +23,7 @@
         <module>ViCoStreamer</module>
         <module>ViCoUtils</module>
         <module>ViCoWeb</module>
+        <module>ViCoWebApp</module>
     </modules>
 
     <!-- properties -->
