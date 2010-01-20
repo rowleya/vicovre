@@ -279,21 +279,30 @@ public class RecordingDatabase {
     }
 
     private void shutdown(Folder folder) {
+        System.err.println("Shutting Down " + folder.getFile());
         for (Folder f : folder.getFolders()) {
             shutdown(f);
         }
         for (HarvestSource source : folder.getHarvestSources()) {
+            System.err.println("Shutting Down Harvest Source "
+                    + source.getFile());
             source.stopTimer();
         }
         for (UnfinishedRecording recording : folder.getUnfinishedRecordings()) {
+            System.err.println("Shutting Down Unfinished Recording "
+                    + recording.getFile());
             recording.stopTimers();
             recording.stopRecording();
         }
     }
 
     public void shutdown() {
+        System.err.println("Shutting Down Database...");
         shutdown(topLevelFolder);
+
+        System.err.println("Shutting down PlaybackManager...");
         PlaybackManager.shutdown();
+        System.err.println("Database Shutdown Complete");
     }
 
 
