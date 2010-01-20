@@ -32,14 +32,21 @@
 
 package com.googlecode.vicovre.recordings.db;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.nio.channels.FileChannel;
+import java.util.Date;
 
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.XmlIo;
@@ -55,27 +62,78 @@ public class StreamReader {
         // Does Nothing
     }
 
+
+    public static Stream readStream(File directory, String ssrc,
+            RtpTypeRepository rtpTypeRepository)
+            throws IOException, SAXException {
+        File streamFile = new File(directory, ssrc);
+        FileInputStream fileInput = new FileInputStream(streamFile);
+        DataInputStream input = new DataInputStream(fileInput);
+        FileChannel channel = fileInput.getChannel();
+        long seconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
+        long uSeconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
+        long startTime = (seconds * 1000) + (uSeconds / 1000);
+
+        File streamIndexFile = new File(directory,
+                ssrc + RecordingConstants.STREAM_INDEX);
+        FileInputStream indexFileInput = new FileInputStream(streamIndexFile);
+        DataInputStream indexInput = new DataInputStream(indexFileInput);
+        FileChannel indexChannel = indexFileInput.getChannel();
+        indexChannel.position(Long.SIZE);
+        long position = indexInput.readLong();
+        channel.position(position);
+        int type = -1;
+        int length = 0;
+        while (type != RecordingConstants.RTP_PACKET) {
+            length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+            type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+            input.readInt();
+            if (type != RecordingConstants.RTP_PACKET) {
+                channel.position(channel.position() + length);
+            }
+        }
+        byte[] data = new byte[length];
+        input.readFully(data);
+        RTPHeader header = new RTPHeader(data, 0, length);
+        int rtpType = header.getPacketType();
+
+        indexChannel.position(streamIndexFile.length() - Long.SIZE - Long.SIZE);
+        long offset = indexInput.readLong();
+
+        fileInput.close();
+        indexFileInput.close();
+
+        Stream stream = new Stream(rtpTypeRepository);
+        stream.setSsrc(ssrc);
+        stream.setStartTime(new Date(startTime));
+        stream.setEndTime(new Date(startTime + offset));
+        stream.setRtpType(rtpType);
+
+        File streamMetadata = new File(directory, ssrc
+                + RecordingConstants.STREAM_METADATA);
+        if (streamMetadata.exists()) {
+            FileInputStream metaInput = new FileInputStream(streamMetadata);
+            readStreamMetadata(metaInput, stream);
+            metaInput.close();
+        }
+
+        return stream;
+    }
+
     /**
-     * Reads a stream
+     * Reads a stream's metadata
      * @param input The stream from which to read the input
-     * @return The recording read
+     * @return The stream read
      * @throws IOException
      * @throws SAXException
      */
-    public static Stream readStream(InputStream input,
-            RtpTypeRepository typeRepository)
+    public static void readStreamMetadata(InputStream input,
+            Stream stream)
     throws SAXException, IOException {
-        Stream stream = new Stream(typeRepository);
         Node doc = XmlIo.read(input);
-        XmlIo.setString(doc, stream, "ssrc");
-        XmlIo.setDate(doc, stream, "startTime");
-        XmlIo.setDate(doc, stream, "endTime");
-        XmlIo.setLong(doc, stream, "firstTimestamp");
-        XmlIo.setLong(doc, stream, "firstTimestamp");
         XmlIo.setLong(doc, stream, "packetsSeen");
         XmlIo.setLong(doc, stream, "packetsMissed");
         XmlIo.setLong(doc, stream, "bytes");
-        stream.setRtpType(Integer.valueOf(XmlIo.readValue(doc, "rtpType")));
         XmlIo.setString(doc, stream, "cname");
         XmlIo.setString(doc, stream, "name");
         XmlIo.setString(doc, stream, "email");
@@ -83,28 +141,20 @@ public class StreamReader {
         XmlIo.setString(doc, stream, "location");
         XmlIo.setString(doc, stream, "tool");
         XmlIo.setString(doc, stream, "note");
-        return stream;
     }
 
     /**
-     * Writes a stream in a format that can be read by this reader
+     * Writes a stream's metadata in a format that can be read by this reader
      * @param stream The stream to write
      * @param output The output
      */
-    public static void writeStream(Stream stream, OutputStream output) {
+    public static void writeStreamMetadata(Stream stream, OutputStream output) {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         writer.println("<stream>");
-        XmlIo.writeValue(stream, "ssrc", writer);
-        XmlIo.writeDate(stream, "startTime", writer);
-        XmlIo.writeDate(stream, "endTime", writer);
-        XmlIo.writeValue(stream, "firstTimestamp", writer);
         XmlIo.writeValue(stream, "packetsSeen", writer);
         XmlIo.writeValue(stream, "packetsMissed", writer);
         XmlIo.writeValue(stream, "bytes", writer);
-        XmlIo.writeValue("rtpType",
-                String.valueOf(stream.getRtpType().getId()),
-                writer);
         XmlIo.writeValue(stream, "cname", writer);
         XmlIo.writeValue(stream, "name", writer);
         XmlIo.writeValue(stream, "email", writer);

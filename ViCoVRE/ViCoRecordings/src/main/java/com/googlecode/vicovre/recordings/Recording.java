@@ -164,14 +164,20 @@ public class Recording implements Comparable<Recording> {
         Date endTime = null;
         for (Stream stream : streams.values()) {
             if ((startTime == null)
-                    || stream.getStartTime().before(startTime)) {
+                    || ((stream.getStartTime() != null)
+                            && stream.getStartTime().before(startTime))) {
                 startTime = stream.getStartTime();
             }
-            if ((endTime == null) || stream.getEndTime().after(endTime)) {
+            if ((endTime == null) || ((stream.getEndTime() != null)
+                    && stream.getEndTime().after(endTime))) {
                 endTime = stream.getEndTime();
             }
         }
-        duration = endTime.getTime() - startTime.getTime();
+        if (endTime != null && startTime != null) {
+            duration = endTime.getTime() - startTime.getTime();
+        } else {
+            duration = 0;
+        }
     }
 
     /**

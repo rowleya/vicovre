@@ -188,8 +188,14 @@ public class FlvController implements Controller {
         } catch (SocketException e) {
             System.err.println("User disconnected");
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new IOException(e.getMessage());
+
+            // Handle Apache exception
+            if (e.getClass().getSimpleName().equals("ClientAbortException")) {
+                System.err.println("User disconnected");
+            } else {
+                e.printStackTrace();
+                throw new IOException(e.getMessage());
+            }
         }
         return null;
     }

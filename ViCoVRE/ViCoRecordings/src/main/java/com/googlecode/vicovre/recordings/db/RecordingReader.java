@@ -86,13 +86,14 @@ public class RecordingReader {
 
         Vector<Stream> streams = new Vector<Stream>();
         File[] streamFiles = directory.listFiles(
-                new ExtensionFilter(RecordingConstants.STREAM_METADATA));
+                new ExtensionFilter(RecordingConstants.STREAM_INDEX));
         for (File file : streamFiles) {
             try {
-                FileInputStream inputStream = new FileInputStream(file);
-                Stream stream = StreamReader.readStream(inputStream,
+                String ssrc = file.getName();
+                ssrc = ssrc.substring(0, ssrc.indexOf(
+                        RecordingConstants.STREAM_INDEX));
+                Stream stream = StreamReader.readStream(directory, ssrc,
                         typeRepository);
-                inputStream.close();
                 streams.add(stream);
             } catch (Exception e) {
                 System.err.println("Warning: error reading stream " + file);
@@ -151,7 +152,7 @@ public class RecordingReader {
             File streamOutput = new File(recording.getDirectory(),
                      stream.getSsrc() + RecordingConstants.STREAM_METADATA);
             FileOutputStream outputStream = new FileOutputStream(streamOutput);
-            StreamReader.writeStream(stream, outputStream);
+            StreamReader.writeStreamMetadata(stream, outputStream);
             outputStream.close();
         }
 
