@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<operations>
-    <operation value="Delete" />
-    <operation value="Create" />
-    <operation value="Write" />
-    <operation value="Read" />
-</operations>
