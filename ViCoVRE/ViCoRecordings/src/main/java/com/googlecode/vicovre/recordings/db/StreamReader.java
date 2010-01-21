@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.recordings.db;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -79,26 +80,33 @@ public class StreamReader {
         FileInputStream indexFileInput = new FileInputStream(streamIndexFile);
         DataInputStream indexInput = new DataInputStream(indexFileInput);
         FileChannel indexChannel = indexFileInput.getChannel();
-        indexChannel.position(Long.SIZE);
+        indexInput.readLong();
         long position = indexInput.readLong();
-        channel.position(position);
-        int type = -1;
-        int length = 0;
-        while (type != RecordingConstants.RTP_PACKET) {
-            length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
-            type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
-            input.readInt();
-            if (type != RecordingConstants.RTP_PACKET) {
-                channel.position(channel.position() + length);
-            }
-        }
-        byte[] data = new byte[length];
-        input.readFully(data);
-        RTPHeader header = new RTPHeader(data, 0, length);
-        int rtpType = header.getPacketType();
-
         indexChannel.position(streamIndexFile.length() - Long.SIZE - Long.SIZE);
         long offset = indexInput.readLong();
+
+        int type = -1;
+        int length = 0;
+        int rtpType = -1;
+        try {
+            channel.position(position);
+            while (type != RecordingConstants.RTP_PACKET) {
+                length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+                type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+                input.readInt();
+                if (type != RecordingConstants.RTP_PACKET) {
+                    channel.position(channel.position() + length);
+                }
+            }
+            byte[] data = new byte[length];
+            input.readFully(data);
+            RTPHeader header = new RTPHeader(data, 0, length);
+            rtpType = header.getPacketType();
+        } catch (EOFException e) {
+            System.err.println("End of file reading stream");
+        }
+
+
 
         fileInput.close();
         indexFileInput.close();
@@ -109,12 +117,18 @@ public class StreamReader {
         stream.setEndTime(new Date(startTime + offset));
         stream.setRtpType(rtpType);
 
-        File streamMetadata = new File(directory, ssrc
-                + RecordingConstants.STREAM_METADATA);
-        if (streamMetadata.exists()) {
-            FileInputStream metaInput = new FileInputStream(streamMetadata);
-            readStreamMetadata(metaInput, stream);
-            metaInput.close();
+        try {
+            File streamMetadata = new File(directory, ssrc
+                    + RecordingConstants.STREAM_METADATA);
+            if (streamMetadata.exists()) {
+                FileInputStream metaInput = new FileInputStream(streamMetadata);
+                readStreamMetadata(metaInput, stream);
+                metaInput.close();
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: error reading metadata for stream "
+                    + streamFile);
+            e.printStackTrace();
         }
 
         return stream;
