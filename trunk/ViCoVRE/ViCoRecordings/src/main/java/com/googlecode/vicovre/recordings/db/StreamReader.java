@@ -65,8 +65,7 @@ public class StreamReader {
 
 
     public static Stream readStream(File directory, String ssrc,
-            RtpTypeRepository rtpTypeRepository)
-            throws IOException, SAXException {
+            RtpTypeRepository rtpTypeRepository) throws IOException {
         File streamFile = new File(directory, ssrc);
         FileInputStream fileInput = new FileInputStream(streamFile);
         DataInputStream input = new DataInputStream(fileInput);
@@ -82,7 +81,7 @@ public class StreamReader {
         FileChannel indexChannel = indexFileInput.getChannel();
         indexInput.readLong();
         long position = indexInput.readLong();
-        indexChannel.position(streamIndexFile.length() - Long.SIZE - Long.SIZE);
+        indexChannel.position(streamIndexFile.length() - 8 - 8);
         long offset = indexInput.readLong();
 
         int type = -1;
