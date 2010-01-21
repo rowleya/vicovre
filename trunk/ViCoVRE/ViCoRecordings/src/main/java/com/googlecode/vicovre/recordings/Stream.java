@@ -288,6 +288,9 @@ public class Stream implements Comparable<Stream> {
      */
     public void setRtpType(Integer rtpType) {
         this.rtpType = rtpTypeRepository.findRtpType(rtpType);
+        if (this.rtpType == null) {
+            throw new RuntimeException("Missing type " + rtpType);
+        }
     }
 
     /**
