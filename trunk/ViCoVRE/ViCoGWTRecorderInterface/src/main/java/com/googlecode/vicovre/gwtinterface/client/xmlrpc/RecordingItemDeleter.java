@@ -80,7 +80,7 @@ public class RecordingItemDeleter implements AsyncCallback<Boolean>,
             XmlRpcClient client = Application.getXmlRpcClient();
             XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
                     "unfinishedRecording.deleteUnfinishedRecording",
-                    new Object[]{"", item.getId()}, this);
+                    new Object[]{item.getFolder(), item.getId()}, this);
             request.execute();
         }
     }

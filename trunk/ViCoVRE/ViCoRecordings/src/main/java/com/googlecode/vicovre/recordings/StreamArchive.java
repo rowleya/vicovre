@@ -44,6 +44,7 @@ import javax.media.format.VideoFormat;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTCPHeader;
+import com.googlecode.vicovre.media.rtp.RTCPSDES;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
@@ -56,20 +57,6 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @version 2-0-alpha
  */
 public class StreamArchive {
-
-    private static final int SDES_CNAME = 1;
-
-    private static final int SDES_NAME = 2;
-
-    private static final int SDES_EMAIL = 3;
-
-    private static final int SDES_PHONE = 4;
-
-    private static final int SDES_LOC = 5;
-
-    private static final int SDES_TOOL = 6;
-
-    private static final int SDES_NOTE = 7;
 
     // The number of bytes in a short
     private static final int BYTES_PER_SHORT = 2;
@@ -392,62 +379,29 @@ public class StreamArchive {
             break;
 
         case RTCPHeader.PT_SDES:
-
-            // Extract the CNAME and NAME from the source description
-            // block (SDES)
-            // of an RTCP packet. CNAME is the canonical name of the
-            // participant
-            // in the form <userid>@nnn.nnn.nnn.nnn. The SDES items that
-            // follow the
-            // header have the following format:
-            // 1st 8 bits: SDES item id
-            // 2nd 8 bits: item length in bytes
-            // following bits: n bytes of data
-            short length = 0;
-            int curptr = offset;
-            byte[] pSDES = packet;
-
-            while (pSDES[curptr] != 0) {
-                int id = pSDES[curptr];
-                int itemStart = curptr + RTCPHeader.SDES_LENGTH_LENGTH
-                    + RTCPHeader.SDES_TYPE_LENGTH;
-                length = pSDES[curptr + RTCPHeader.SDES_TYPE_LENGTH];
-                String value = new String(pSDES, itemStart, length);
-                switch (id) {
-                case SDES_CNAME:
-                    stream.setCname(value);
-                    break;
-
-                case SDES_NAME:
-                    stream.setName(value);
-                    break;
-
-                case SDES_EMAIL:
-                    stream.setEmail(value);
-                    break;
-
-                case SDES_PHONE:
-                    stream.setPhone(value);
-                    break;
-
-                case SDES_LOC:
-                    stream.setLocation(value);
-                    break;
-
-                case SDES_TOOL:
-                    stream.setTool(value);
-                    break;
-
-                case SDES_NOTE:
-                    stream.setNote(value);
-                    break;
-
-                default:
-                    break;
-                }
-                curptr += length + RTCPHeader.SDES_LENGTH_LENGTH
-                    + RTCPHeader.SDES_TYPE_LENGTH;
-        }
+            RTCPSDES sdes = new RTCPSDES(packet, offset,
+                    (packetHeader.getLength() + 1) * 4);
+            if (sdes.getCname() != null) {
+                stream.setCname(sdes.getCname());
+            }
+            if (sdes.getName() != null) {
+                stream.setName(sdes.getName());
+            }
+            if (sdes.getEmail() != null) {
+                stream.setEmail(sdes.getEmail());
+            }
+            if (sdes.getPhone() != null) {
+                stream.setPhone(sdes.getPhone());
+            }
+            if (sdes.getLocation() != null) {
+                stream.setLocation(sdes.getLocation());
+            }
+            if (sdes.getTool() != null) {
+                stream.setTool(sdes.getTool());
+            }
+            if (sdes.getNote() != null) {
+                stream.setNote(sdes.getNote());
+            }
         break;
 
         // Ignore SR Packets

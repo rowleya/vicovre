@@ -32,39 +32,66 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
+
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
+import com.googlecode.vicovre.gwtinterface.client.FolderCreatePopup;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
+import com.googlecode.vicovre.gwtinterface.client.MessagePopup;
+import com.googlecode.vicovre.gwtinterface.client.MessageResponse;
+import com.googlecode.vicovre.gwtinterface.client.MessageResponseHandler;
 
-public class RecordingItemPauser implements AsyncCallback<String> {
+public class FolderCreator implements AsyncCallback<Boolean>,
+        MessageResponseHandler {
 
-    private RecordingItem item = null;
+    private FolderPanel folderPanel = null;
 
-    public static void pause(RecordingItem item) {
-        new RecordingItemPauser(item);
+    private FolderCreatePopup popup = null;
+
+    private String folderPath = null;
+
+    public static void createFolder(FolderPanel folderPanel) {
+        new FolderCreator(folderPanel);
     }
 
-    private RecordingItemPauser(RecordingItem item) {
-        this.item = item;
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.pauseRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Pausing...");
-        item.setCreated(false);
-        request.execute();
+    private FolderCreator(FolderPanel folderPanel) {
+        this.folderPanel = folderPanel;
+        popup = new FolderCreatePopup(this);
+        popup.show();
     }
 
     public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Recording");
-        item.setStatus("Error: " + error.getMessage());
+        GWT.log("Error creating folder", error);
+        MessagePopup errorPopup = new MessagePopup("Error creating folder: "
+                + error.getMessage(), null, MessagePopup.ERROR,
+                MessageResponse.OK);
+        errorPopup.center();
     }
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    public void onSuccess(Boolean result) {
+        if (result) {
+            folderPanel.addFolder(folderPath);
+        } else {
+            onFailure(new Exception("Folder could not be created"));
+        }
     }
+
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.OK) {
+            folderPath = folderPanel.getCurrentFolder();
+            if (!folderPath.endsWith("/")) {
+                folderPath += "/";
+            }
+            folderPath += popup.getName();
+            XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
+            XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(
+                    xmlRpcClient, "folder.createFolder",
+                    new Object[]{folderPath}, this);
+            request.execute();
+        }
+    }
+
 }

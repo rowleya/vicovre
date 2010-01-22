@@ -51,7 +51,8 @@ public class HarvestItemUpdater implements AsyncCallback<String> {
         this.item = item;
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "harvest.harvestNow", new Object[]{"", item.getId()}, this);
+                "harvest.harvestNow", new Object[]{item.getFolder(),
+                item.getId()}, this);
         item.setStatus("Harvesting...");
         request.execute();
     }

@@ -49,7 +49,10 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
     private VerticalPanel locations = new VerticalPanel();
 
-    public HarvestPanel() {
+    private FolderPanel folderPanel = null;
+
+    public HarvestPanel(FolderPanel folderPanel) {
+        this.folderPanel = folderPanel;
         setWidth("100%");
         setHeight("100%");
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -72,11 +75,15 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            HarvestItemCreator.createHarvestItem(this);
+            HarvestItemCreator.createHarvestItem(folderPanel, this);
         }
     }
 
     public void addItem(HarvestItem item) {
         locations.add(item);
+    }
+
+    public void clear() {
+        locations.clear();
     }
 }

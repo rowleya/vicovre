@@ -120,32 +120,17 @@ public class RecordingHandler extends AbstractHandler {
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         Vector<Map<String, Object>> recs = new Vector<Map<String, Object>>();
-        getRecordings(
-                getDatabase().getTopLevelFolder().getFile().getAbsolutePath(),
-                folder, recs);
-        return recs.toArray(new Map[0]);
-    }
-
-    private void getRecordings(String topLevelPath, Folder folder,
-            Vector<Map<String, Object>> recs)
-            throws XmlRpcException {
         List<Recording> recordings = folder.getRecordings();
         for (int i = 0; i < recordings.size(); i++) {
             Recording rec = recordings.get(i);
             HashMap<String, Object> recording = new HashMap<String, Object>();
-            recording.put("folder",
-                folder.getFile().getAbsolutePath().substring(
-                    topLevelPath.length()).replace(File.separator, "/"));
             recording.put("id", rec.getId());
             recording.put("metadata", getDetails(rec.getMetadata()));
             recording.put("startTime", rec.getStartTime());
             recording.put("duration", (int) rec.getDuration());
             recs.add(recording);
         }
-
-        for (Folder subFolder : folder.getFolders()) {
-            getRecordings(topLevelPath, subFolder, recs);
-        }
+        return recs.toArray(new Map[0]);
     }
 
     public Boolean updateMetadata(String folderPath, String id,

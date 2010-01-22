@@ -43,26 +43,31 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItem;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItemPopup;
 import com.googlecode.vicovre.gwtinterface.client.HarvestPanel;
 
 public class HarvestItemLoader implements AsyncCallback<List<Object>> {
 
+    private FolderPanel folderPanel = null;
+
     private HarvestPanel panel = null;
 
     private ActionLoader loader = null;
 
-    public static void loadHarvestItems(String folder,
+    public static void loadHarvestItems(String folder, FolderPanel folderPanel,
             HarvestPanel panel, ActionLoader loader) {
         XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 xmlRpcClient, "harvest.getSources", new Object[]{folder},
-                new HarvestItemLoader(panel, loader));
+                new HarvestItemLoader(folderPanel, panel, loader));
         request.execute();
     }
 
-    private HarvestItemLoader(HarvestPanel panel, ActionLoader loader) {
+    private HarvestItemLoader(FolderPanel folderPanel, HarvestPanel panel,
+            ActionLoader loader) {
+        this.folderPanel = folderPanel;
         this.panel = panel;
         this.loader = loader;
     }
@@ -72,10 +77,10 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
         loader.itemFailed("Error loading harvest items");
     }
 
-    public static HarvestItem buildHarvestItem(Map<String, Object> item) {
+    private HarvestItem buildHarvestItem(Map<String, Object> item) {
         Integer id = (Integer) item.get("id");
         String name = (String) item.get("name");
-        HarvestItem harvestItem = new HarvestItem(id, name);
+        HarvestItem harvestItem = new HarvestItem(folderPanel, id, name);
         harvestItem.setUrl((String) item.get("url"));
         harvestItem.setFormat((String) item.get("format"));
         String frequency = (String) item.get("updateFrequency");

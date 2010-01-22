@@ -30,41 +30,41 @@
  *
  */
 
-package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
+package com.googlecode.vicovre.web.xmlrpc;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
+import java.io.File;
+import java.util.List;
+import java.util.Vector;
 
-public class RecordingItemPauser implements AsyncCallback<String> {
+import com.googlecode.vicovre.recordings.Folder;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
-    private RecordingItem item = null;
+public class FolderHandler extends AbstractHandler {
 
-    public static void pause(RecordingItem item) {
-        new RecordingItemPauser(item);
+    public FolderHandler(RecordingDatabase database) {
+        super(database);
     }
 
-    private RecordingItemPauser(RecordingItem item) {
-        this.item = item;
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.pauseRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Pausing...");
-        item.setCreated(false);
-        request.execute();
+    public String[] getFolders() {
+        Vector<String> folders = new Vector<String>();
+        Folder topLevel = getDatabase().getTopLevelFolder();
+        getFolders(topLevel.getFile().getAbsolutePath(), topLevel, folders);
+        return folders.toArray(new String[0]);
     }
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Recording");
-        item.setStatus("Error: " + error.getMessage());
+    private void getFolders(String topLevelPath, Folder folder,
+            Vector<String> folders) {
+        folders.add(folder.getFile().getAbsolutePath().substring(
+                    topLevelPath.length()).replace(File.separator, "/"));
+        List<Folder> folderList = folder.getFolders();
+        for (Folder subFolder : folderList) {
+            getFolders(topLevelPath, subFolder, folders);
+        }
     }
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    public Boolean createFolder(String path) {
+        Folder topLevel = getDatabase().getTopLevelFolder();
+        File file = new File(topLevel.getFile(), path);
+        return file.mkdirs();
     }
 }

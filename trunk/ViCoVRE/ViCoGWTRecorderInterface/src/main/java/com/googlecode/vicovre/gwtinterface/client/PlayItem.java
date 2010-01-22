@@ -75,7 +75,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private final Image PLAY = new Image("images/play.gif");
 
-    private String folder = null;
+    private FolderPanel folderPanel = null;
 
     private String id = null;
 
@@ -107,8 +107,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private PushButton playButton = new PushButton(PLAY);
 
-    public PlayItem(String folder, String id, String name) {
-        this.folder = folder;
+    public PlayItem(FolderPanel folderPanel, String id, String name) {
+        this.folderPanel = folderPanel;
         this.id = id;
         this.name.setText(name);
 
@@ -156,12 +156,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         playButton.addClickHandler(this);
     }
 
-    public String[] getFolders() {
-        return folder.split("/");
-    }
-
     public String getFolder() {
-        return folder;
+        return folderPanel.getCurrentFolder();
     }
 
     public String getId() {

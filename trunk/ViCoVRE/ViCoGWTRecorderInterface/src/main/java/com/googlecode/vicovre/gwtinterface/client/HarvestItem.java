@@ -91,7 +91,10 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private PushButton deleteButton = new PushButton(DELETE);
 
-    public HarvestItem(int id, String itemName) {
+    private FolderPanel folderPanel = null;
+
+    public HarvestItem(FolderPanel folderPanel, int id, String itemName) {
+        this.folderPanel = folderPanel;
         this.id = id;
         name.setText(itemName);
         setWidth("100%");
@@ -115,6 +118,10 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         harvestButton.addClickHandler(this);
         editButton.addClickHandler(this);
         deleteButton.addClickHandler(this);
+    }
+
+    public String getFolder() {
+        return folderPanel.getCurrentFolder();
     }
 
     public int getId() {

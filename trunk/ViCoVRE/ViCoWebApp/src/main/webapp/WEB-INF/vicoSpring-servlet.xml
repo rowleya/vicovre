@@ -57,6 +57,10 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
     </bean>
 
+    <bean id="folderHandler" class="com.googlecode.vicovre.web.xmlrpc.FolderHandler">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+
     <bean id="layoutHandler" class="com.googlecode.vicovre.web.xmlrpc.LayoutHandler">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
@@ -71,6 +75,7 @@
                 <entry key="unfinishedRecording" value-ref="unfinishedRecordingHandler"/>
                 <entry key="recording" value-ref="recordingHandler"/>
                 <entry key="playback" value-ref="playbackHandler"/>
+                <entry key="folder" value-ref="folderHandler"/>
                 <entry key="layout" value-ref="layoutHandler"/>
             </map>
         </constructor-arg>

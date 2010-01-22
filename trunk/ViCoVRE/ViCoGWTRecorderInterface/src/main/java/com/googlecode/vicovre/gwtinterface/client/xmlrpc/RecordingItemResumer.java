@@ -51,7 +51,7 @@ public class RecordingItemResumer implements AsyncCallback<String> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
                 "unfinishedRecording.resumeRecording",
-                new Object[]{"", item.getId()}, this);
+                new Object[]{item.getFolder(), item.getId()}, this);
         item.setStatus("Resuming...");
         item.setCreated(false);
         request.execute();

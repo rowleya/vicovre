@@ -31,6 +31,7 @@
     <rtptype id="77" mediaType="video" encoding="h261as/rtp" clockrate="90000"/>
     <rtptype id="96" mediaType="video" encoding="h264/rtp" clockrate="90000"/>
     <rtptype id="107" mediaType="video" encoding="h264/rtp/iocom" clockrate="60000"/>
+    <rtptype id="108" mediaType="video" encoding="h264/rtp/iocom" clockrate="60000"/>
 
     <rtptype id="84" mediaType="audio" encoding="ULAW/rtp" clockrate="16000" sampleRate="16000" sampleSize="8" bigendian="0" signed="1" channels="1"/>
     <rtptype id="112" mediaType="audio" encoding="linear" clockrate="16000" sampleRate="16000" sampleSize="16" bigendian="1" signed="1" channels="1"/>

@@ -75,6 +75,7 @@ public class HarvestSourceReader {
         XmlIo.setString(doc, harvestSource, "name");
         XmlIo.setString(doc, harvestSource, "url");
         XmlIo.setString(doc, harvestSource, "updateFrequency");
+        XmlIo.setString(doc, harvestSource, "subFolderMetadataItem");
 
         String fmt = XmlIo.readValue(doc, "format");
         HarvestFormat format = harvestFormatRepository.findFormat(fmt);
@@ -139,6 +140,7 @@ public class HarvestSourceReader {
         XmlIo.writeValue(harvestSource, "name", writer);
         XmlIo.writeValue(harvestSource, "url", writer);
         XmlIo.writeValue(harvestSource, "updateFrequency", writer);
+        XmlIo.writeValue(harvestSource, "subFolderMetadataItem", writer);
         XmlIo.writeValue("format", harvestSource.getFormat().getName(), writer);
         XmlIo.writeValue(harvestSource, "hour", writer);
         XmlIo.writeValue(harvestSource, "minute", writer);

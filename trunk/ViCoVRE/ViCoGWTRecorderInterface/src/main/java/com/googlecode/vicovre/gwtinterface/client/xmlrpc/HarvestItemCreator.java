@@ -32,7 +32,6 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
@@ -40,6 +39,7 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItem;
 import com.googlecode.vicovre.gwtinterface.client.HarvestItemPopup;
 import com.googlecode.vicovre.gwtinterface.client.HarvestPanel;
@@ -49,18 +49,25 @@ import com.googlecode.vicovre.gwtinterface.client.MessageResponseHandler;
 public class HarvestItemCreator implements AsyncCallback<Integer>,
         MessageResponseHandler {
 
+    private FolderPanel folderPanel = null;
+
+    private String folder = null;
+
     private HarvestPanel panel = null;
 
     private HarvestItem harvestItem = null;
 
     private HarvestItemPopup popup = null;
 
-    public static void createHarvestItem(HarvestPanel panel) {
-        new HarvestItemCreator(panel);
+    public static void createHarvestItem(FolderPanel folderPanel,
+            HarvestPanel panel) {
+        new HarvestItemCreator(folderPanel, panel);
     }
 
-    private HarvestItemCreator(HarvestPanel panel) {
+    private HarvestItemCreator(FolderPanel folderPanel, HarvestPanel panel) {
+        this.folderPanel = folderPanel;
         this.panel = panel;
+        this.folder = folderPanel.getCurrentFolder();
         popup = new HarvestItemPopup(this);
         popup.show();
     }
@@ -79,7 +86,7 @@ public class HarvestItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            harvestItem = new HarvestItem(0, popup.getName());
+            harvestItem = new HarvestItem(folderPanel, 0, popup.getName());
             harvestItem.handleResponse(response);
             harvestItem.setCreated(false);
             harvestItem.setStatus("Creating...");
@@ -88,7 +95,7 @@ public class HarvestItemCreator implements AsyncCallback<Integer>,
             XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
             XmlRpcRequest<Integer> request = new XmlRpcRequest<Integer>(
                     xmlRpcClient, "harvest.addHarvestSource",
-                    new Object[]{"", details}, this);
+                    new Object[]{folder, details}, this);
             request.execute();
         }
     }
