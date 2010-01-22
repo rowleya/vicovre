@@ -186,6 +186,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         if (item != null) {
             this.name.setText(item.getName());
             this.description.setText(item.getDescription());
+            this.description.setEnabled(item.getDescriptionIsEditable());
             Date startDate = item.getStartDate();
             if (startDate != null) {
                 this.startDate.setValue(startDate);
@@ -252,10 +253,6 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public String[] getAddresses() {
         return venue.getAddresses();
-    }
-
-    public void setDescriptionEditable(boolean editable) {
-        description.setEnabled(editable);
     }
 
     public void setRecording(boolean recording) {

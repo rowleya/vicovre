@@ -36,6 +36,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,6 +48,8 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.media.rtp.RTCPHeader;
+import com.googlecode.vicovre.media.rtp.RTCPSDES;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
@@ -66,59 +69,11 @@ public class StreamReader {
 
     public static Stream readStream(File directory, String ssrc,
             RtpTypeRepository rtpTypeRepository) throws IOException {
-        File streamFile = new File(directory, ssrc);
-        FileInputStream fileInput = new FileInputStream(streamFile);
-        DataInputStream input = new DataInputStream(fileInput);
-        FileChannel channel = fileInput.getChannel();
-        long seconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
-        long uSeconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
-        long startTime = (seconds * 1000) + (uSeconds / 1000);
-
-        File streamIndexFile = new File(directory,
-                ssrc + RecordingConstants.STREAM_INDEX);
-        FileInputStream indexFileInput = new FileInputStream(streamIndexFile);
-        DataInputStream indexInput = new DataInputStream(indexFileInput);
-        FileChannel indexChannel = indexFileInput.getChannel();
-        indexInput.readLong();
-        long position = indexInput.readLong();
-        indexChannel.position(streamIndexFile.length() - 8 - 8);
-        long offset = indexInput.readLong();
-
-        int type = -1;
-        int length = 0;
-        int rtpType = -1;
-        try {
-            channel.position(position);
-            while (type != RecordingConstants.RTP_PACKET) {
-                length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
-                type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
-                input.readInt();
-                if (type != RecordingConstants.RTP_PACKET) {
-                    channel.position(channel.position() + length);
-                }
-            }
-            byte[] data = new byte[length];
-            input.readFully(data);
-            RTPHeader header = new RTPHeader(data, 0, length);
-            rtpType = header.getPacketType();
-        } catch (EOFException e) {
-            System.err.println("End of file reading stream");
-        }
-
-
-
-        fileInput.close();
-        indexFileInput.close();
-
         Stream stream = new Stream(rtpTypeRepository);
-        stream.setSsrc(ssrc);
-        stream.setStartTime(new Date(startTime));
-        stream.setEndTime(new Date(startTime + offset));
-        stream.setRtpType(rtpType);
 
+        File streamMetadata = new File(directory, ssrc
+                + RecordingConstants.STREAM_METADATA);
         try {
-            File streamMetadata = new File(directory, ssrc
-                    + RecordingConstants.STREAM_METADATA);
             if (streamMetadata.exists()) {
                 FileInputStream metaInput = new FileInputStream(streamMetadata);
                 readStreamMetadata(metaInput, stream);
@@ -126,8 +81,115 @@ public class StreamReader {
             }
         } catch (Exception e) {
             System.err.println("Warning: error reading metadata for stream "
-                    + streamFile);
+                    + directory + " - " + ssrc);
             e.printStackTrace();
+        }
+
+        if ((stream.getSsrc() == null) || (stream.getStartTime() == null)
+                || (stream.getEndTime() == null)
+                || (stream.getRtpType() == null)) {
+
+            File streamFile = new File(directory, ssrc);
+            FileInputStream fileInput = new FileInputStream(streamFile);
+            DataInputStream input = new DataInputStream(fileInput);
+            FileChannel channel = fileInput.getChannel();
+            long seconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
+            long uSeconds = (input.readInt() & RTPHeader.UINT_TO_LONG_CONVERT);
+            long startTime = (seconds * 1000) + (uSeconds / 1000);
+
+            File streamIndexFile = new File(directory,
+                    ssrc + RecordingConstants.STREAM_INDEX);
+            FileInputStream indexFileInput = new FileInputStream(streamIndexFile);
+            DataInputStream indexInput = new DataInputStream(indexFileInput);
+            FileChannel indexChannel = indexFileInput.getChannel();
+            indexInput.readLong();
+            long position = indexInput.readLong();
+            indexChannel.position(streamIndexFile.length() - 8 - 8);
+            long offset = indexInput.readLong();
+
+            int type = -1;
+            int length = 0;
+            int rtpType = -1;
+            try {
+                channel.position(position);
+                while (type != RecordingConstants.RTP_PACKET) {
+                    length = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+                    type = input.readShort() & RTPHeader.USHORT_TO_INT_CONVERT;
+                    input.readInt();
+                    if (type != RecordingConstants.RTP_PACKET) {
+                        channel.position(channel.position() + length);
+                    }
+                }
+                byte[] data = new byte[length];
+                input.readFully(data);
+                RTPHeader header = new RTPHeader(data, 0, length);
+                rtpType = header.getPacketType();
+            } catch (EOFException e) {
+                System.err.println("End of file reading stream");
+            }
+
+            stream.setSsrc(ssrc);
+            stream.setStartTime(new Date(startTime));
+            stream.setEndTime(new Date(startTime + offset));
+            stream.setRtpType(rtpType);
+
+            try {
+                while (stream.getCname() == null
+                        || stream.getName() == null) {
+                    while (type != RecordingConstants.RTCP_PACKET) {
+                        length = input.readShort()
+                            & RTPHeader.USHORT_TO_INT_CONVERT;
+                        type = input.readShort()
+                            & RTPHeader.USHORT_TO_INT_CONVERT;
+                        input.readInt();
+                        if (type != RecordingConstants.RTCP_PACKET) {
+                            channel.position(channel.position() + length);
+                        }
+                    }
+                    byte[] data = new byte[length];
+                    input.readFully(data);
+
+                    RTCPHeader rtcpHeader = new RTCPHeader(data, 0, length);
+                    int rtcpPos = 0;
+                    while (rtcpHeader.getPacketType() != RTCPHeader.PT_SDES) {
+                        rtcpPos += (rtcpHeader.getLength() + 1) * 4;
+                        rtcpHeader = new RTCPHeader(data, rtcpPos,
+                                length - rtcpPos);
+                    }
+                    RTCPSDES sdes = new RTCPSDES(data,
+                            rtcpPos + RTCPHeader.SIZE, length);
+                    if (sdes.getCname() != null) {
+                        stream.setCname(sdes.getCname());
+                    }
+                    if (sdes.getName() != null) {
+                        stream.setName(sdes.getName());
+                    }
+                    if (sdes.getEmail() != null) {
+                        stream.setEmail(sdes.getEmail());
+                    }
+                    if (sdes.getPhone() != null) {
+                        stream.setPhone(sdes.getPhone());
+                    }
+                    if (sdes.getLocation() != null) {
+                        stream.setLocation(sdes.getLocation());
+                    }
+                    if (sdes.getTool() != null) {
+                        stream.setTool(sdes.getTool());
+                    }
+                    if (sdes.getNote() != null) {
+                        stream.setNote(sdes.getNote());
+                    }
+                }
+
+                FileOutputStream output = new FileOutputStream(streamMetadata);
+                writeStreamMetadata(stream, output);
+                output.close();
+            } catch (Exception e) {
+                // Do Nothing
+            }
+
+            fileInput.close();
+            indexFileInput.close();
         }
 
         return stream;
@@ -144,6 +206,11 @@ public class StreamReader {
             Stream stream)
     throws SAXException, IOException {
         Node doc = XmlIo.read(input);
+        XmlIo.setString(doc, stream, "ssrc");
+        XmlIo.setDate(doc, stream, "startTime");
+        XmlIo.setDate(doc, stream, "endTime");
+        stream.setRtpType(Integer.valueOf(XmlIo.readValue(doc, "rtpType")));
+        XmlIo.setLong(doc, stream, "firstTimestamp");
         XmlIo.setLong(doc, stream, "packetsSeen");
         XmlIo.setLong(doc, stream, "packetsMissed");
         XmlIo.setLong(doc, stream, "bytes");
@@ -165,6 +232,12 @@ public class StreamReader {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         writer.println("<stream>");
+        XmlIo.writeValue(stream, "ssrc", writer);
+        XmlIo.writeDate(stream, "startTime", writer);
+        XmlIo.writeDate(stream, "endTime", writer);
+        XmlIo.writeValue("rtpType",
+                String.valueOf(stream.getRtpType().getId()), writer);
+        XmlIo.writeValue(stream, "firstTimestamp", writer);
         XmlIo.writeValue(stream, "packetsSeen", writer);
         XmlIo.writeValue(stream, "packetsMissed", writer);
         XmlIo.writeValue(stream, "bytes", writer);

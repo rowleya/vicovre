@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
@@ -124,6 +125,8 @@ public class HarvestSource {
     private RtpTypeRepository typeRepostory = null;
 
     private Timer timer = null;
+
+    private String subFolderMetadataItem = null;
 
     private class HarvestTask extends TimerTask {
 
@@ -414,6 +417,23 @@ public class HarvestSource {
         }
     }
 
+    private String getMetadataItem(HarvestedEvent event) {
+        RecordingMetadata metadata = event.getMetadata();
+        if (metadata != null) {
+            String methodName = "get"
+                + subFolderMetadataItem.substring(0, 1).toUpperCase()
+                + subFolderMetadataItem.substring(1);
+            try {
+                Method getMethod = metadata.getClass().getMethod(methodName);
+                Object result = getMethod.invoke(metadata);
+                return result.toString();
+            } catch (Exception e) {
+                // Do Nothing
+            }
+        }
+        return null;
+    }
+
     /**
      * Harvests the source
      */
@@ -440,8 +460,22 @@ public class HarvestSource {
                 for (HarvestedItem item : items) {
                     if (item instanceof HarvestedEvent) {
                         HarvestedEvent event = (HarvestedEvent) item;
+                        Folder eventFolder = folder;
+                        if (subFolderMetadataItem != null) {
+                            String subFolder = getMetadataItem(event);
+                            if (subFolder != null) {
+                                File folderFile = new File(folder.getFile(),
+                                        subFolder);
+                                folderFile.mkdirs();
+                                Folder tmpFolder = database.getFolder(
+                                        folderFile);
+                                if (tmpFolder != null) {
+                                    eventFolder = tmpFolder;
+                                }
+                            }
+                        }
                         UnfinishedRecording recording = new UnfinishedRecording(
-                                typeRepostory, folder, database);
+                                typeRepostory, eventFolder, database);
                         recording.setMetadata(event.getMetadata());
                         recording.setStartDate(event.getStartDate());
                         recording.setStopDate(event.getEndDate());

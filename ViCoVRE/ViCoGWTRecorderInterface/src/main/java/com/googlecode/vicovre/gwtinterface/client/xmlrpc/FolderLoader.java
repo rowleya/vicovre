@@ -32,39 +32,57 @@
 
 package com.googlecode.vicovre.gwtinterface.client.xmlrpc;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
-import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
+import com.googlecode.vicovre.gwtinterface.client.PlayItem;
+import com.googlecode.vicovre.gwtinterface.client.PlayPanel;
 
-public class RecordingItemPauser implements AsyncCallback<String> {
+public class FolderLoader implements AsyncCallback<List<Object>> {
 
-    private RecordingItem item = null;
+    private FolderPanel panel = null;
 
-    public static void pause(RecordingItem item) {
-        new RecordingItemPauser(item);
-    }
+    private ActionLoader loader = null;
 
-    private RecordingItemPauser(RecordingItem item) {
-        this.item = item;
+    public static void loadFolders(FolderPanel panel,
+            ActionLoader loader) {
         XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.pauseRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Pausing...");
-        item.setCreated(false);
+        XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
+                client, "folder.getFolders",
+                new Object[]{}, new FolderLoader(panel, loader));
         request.execute();
     }
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Recording");
-        item.setStatus("Error: " + error.getMessage());
+    private FolderLoader(FolderPanel panel, ActionLoader loader) {
+        this.panel = panel;
+        this.loader = loader;
     }
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    public void onFailure(Throwable error) {
+        GWT.log("Error loading folders", error);
+        loader.itemFailed("Error loading folders");
     }
+
+    public void onSuccess(List<Object> items) {
+        for (Object object : items) {
+            String folder = (String) object;
+            panel.addFolder(folder);
+        }
+        loader.itemLoaded();
+        panel.setFolder("");
+    }
+
+
+
+
 }

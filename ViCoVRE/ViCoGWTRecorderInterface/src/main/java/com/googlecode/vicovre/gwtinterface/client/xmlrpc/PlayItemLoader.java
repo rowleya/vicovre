@@ -44,25 +44,30 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
 import com.googlecode.vicovre.gwtinterface.client.PlayItem;
 import com.googlecode.vicovre.gwtinterface.client.PlayPanel;
 
 public class PlayItemLoader implements AsyncCallback<List<Object>> {
 
+    private FolderPanel folderPanel = null;
+
     private PlayPanel panel = null;
 
     private ActionLoader loader = null;
 
-    public static void loadPlayItems(String folder, PlayPanel panel,
-            ActionLoader loader) {
+    public static void loadPlayItems(String folder, FolderPanel folderPanel,
+            PlayPanel panel, ActionLoader loader) {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
-                client, "recording.getRecordings",
-                new Object[]{folder}, new PlayItemLoader(panel, loader));
+                client, "recording.getRecordings", new Object[]{folder},
+                new PlayItemLoader(folderPanel, panel, loader));
         request.execute();
     }
 
-    private PlayItemLoader(PlayPanel panel, ActionLoader loader) {
+    private PlayItemLoader(FolderPanel folderPanel, PlayPanel panel,
+            ActionLoader loader) {
+        this.folderPanel = folderPanel;
         this.panel = panel;
         this.loader = loader;
     }
@@ -72,13 +77,12 @@ public class PlayItemLoader implements AsyncCallback<List<Object>> {
         loader.itemFailed("Error loading play items");
     }
 
-    public static PlayItem buildPlayItem(Map<String, Object> item) {
-        String folder = (String) item.get("folder");
+    private PlayItem buildPlayItem(Map<String, Object> item) {
         String id = (String) item.get("id");
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
         String name = (String) metadata.get("name");
-        PlayItem playItem = new PlayItem(folder, id, name);
+        PlayItem playItem = new PlayItem(folderPanel, id, name);
         playItem.setDescription((String) metadata.get("description"));
         playItem.setDescriptionIsEditable((Boolean)
                 metadata.get("descriptionIsEditable"));

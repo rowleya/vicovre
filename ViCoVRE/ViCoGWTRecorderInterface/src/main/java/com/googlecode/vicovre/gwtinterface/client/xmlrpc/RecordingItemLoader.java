@@ -44,26 +44,32 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.ActionLoader;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
 
 public class RecordingItemLoader implements AsyncCallback<List<Object>> {
+
+    private FolderPanel folderPanel = null;
 
     private RecordPanel panel = null;
 
     private ActionLoader loader = null;
 
     public static void loadRecordingItems(String folder,
+            FolderPanel folderPanel,
             RecordPanel panel, ActionLoader loader) {
         XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
         XmlRpcRequest<List<Object>> request = new XmlRpcRequest<List<Object>>(
                 xmlRpcClient, "unfinishedRecording.getUnfinishedRecordings",
                 new Object[]{folder},
-                new RecordingItemLoader(panel, loader));
+                new RecordingItemLoader(folderPanel, panel, loader));
         request.execute();
     }
 
-    private RecordingItemLoader(RecordPanel panel, ActionLoader loader) {
+    private RecordingItemLoader(FolderPanel folderPanel, RecordPanel panel,
+            ActionLoader loader) {
+        this.folderPanel = folderPanel;
         this.panel = panel;
         this.loader = loader;
     }
@@ -73,13 +79,13 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
         loader.itemFailed("Error loading recording items");
     }
 
-    public static RecordingItem buildRecordingItem(Map<String, Object> item) {
+    private RecordingItem buildRecordingItem(Map<String, Object> item) {
         Integer id = (Integer) item.get("id");
 
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
         String name = (String) metadata.get("name");
-        RecordingItem recordingItem = new RecordingItem(id, name);
+        RecordingItem recordingItem = new RecordingItem(folderPanel, id, name);
         recordingItem.setDescription((String) metadata.get("description"));
         recordingItem.setDescriptionIsEditable((Boolean)
                 metadata.get("descriptionIsEditable"));

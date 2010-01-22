@@ -49,7 +49,10 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     private VerticalPanel recordings = new VerticalPanel();
 
-    public RecordPanel() {
+    private FolderPanel folderPanel = null;
+
+    public RecordPanel(FolderPanel folderPanel) {
+        this.folderPanel = folderPanel;
         setWidth("100%");
         setHeight("100%");
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -76,7 +79,11 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            RecordingItemCreator.createRecordingItem(this);
+            RecordingItemCreator.createRecordingItem(folderPanel, this);
         }
+    }
+
+    public void clear() {
+        recordings.clear();
     }
 }

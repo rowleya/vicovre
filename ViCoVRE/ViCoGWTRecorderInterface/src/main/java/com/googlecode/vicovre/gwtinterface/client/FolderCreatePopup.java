@@ -38,15 +38,12 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class PlayItemEditPopup extends ModalPopup<Grid>
+public class FolderCreatePopup extends ModalPopup<Grid>
         implements ClickHandler {
 
     private TextBox name = new TextBox();
-
-    private TextArea description = new TextArea();
 
     private Button ok = new Button("OK");
 
@@ -54,24 +51,21 @@ public class PlayItemEditPopup extends ModalPopup<Grid>
 
     private MessageResponseHandler handler = null;
 
-    public PlayItemEditPopup(MessageResponseHandler handler) {
+    public FolderCreatePopup(MessageResponseHandler handler) {
         super(new Grid(3, 2));
         this.handler = handler;
         Grid grid = getWidget();
         grid.setWidget(0, 0, new Label("Name"));
         grid.setWidget(0, 1, name);
-        grid.setWidget(1, 0, new Label("Description"));
-        grid.setWidget(1, 1, description);
-        grid.setWidget(2, 0, ok);
-        grid.setWidget(2, 1, cancel);
+        grid.setWidget(1, 0, ok);
+        grid.setWidget(1, 1, cancel);
 
-        grid.getCellFormatter().setHorizontalAlignment(2, 1,
+        grid.getCellFormatter().setHorizontalAlignment(1, 1,
                 HorizontalPanel.ALIGN_RIGHT);
         grid.getColumnFormatter().setWidth(0, "150px");
         grid.getColumnFormatter().setWidth(1, "600px");
 
         name.setWidth("100%");
-        description.setWidth("100%");
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
@@ -81,20 +75,8 @@ public class PlayItemEditPopup extends ModalPopup<Grid>
         this.name.setText(name);
     }
 
-    public void setDescription(String description) {
-        this.description.setText(description);
-    }
-
-    public void setDescriptionIsEditable(boolean editable) {
-        description.setEnabled(editable);
-    }
-
     public String getName() {
         return name.getText();
-    }
-
-    public String getDescription() {
-        return description.getText();
     }
 
     public void onClick(ClickEvent event) {
@@ -108,4 +90,6 @@ public class PlayItemEditPopup extends ModalPopup<Grid>
                     this));
         }
     }
+
+
 }

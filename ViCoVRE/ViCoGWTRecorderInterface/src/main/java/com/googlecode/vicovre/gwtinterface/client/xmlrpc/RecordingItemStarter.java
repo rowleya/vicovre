@@ -51,7 +51,7 @@ public class RecordingItemStarter implements AsyncCallback<String> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
                 "unfinishedRecording.startRecording",
-                new Object[]{"", item.getId()}, this);
+                new Object[]{item.getFolder(), item.getId()}, this);
         item.setStatus("Starting...");
         item.setCreated(false);
         request.execute();

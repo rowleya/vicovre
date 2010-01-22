@@ -39,6 +39,7 @@ import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwtinterface.client.Application;
+import com.googlecode.vicovre.gwtinterface.client.FolderPanel;
 import com.googlecode.vicovre.gwtinterface.client.MessageResponse;
 import com.googlecode.vicovre.gwtinterface.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwtinterface.client.RecordPanel;
@@ -48,18 +49,25 @@ import com.googlecode.vicovre.gwtinterface.client.RecordingItemPopup;
 public class RecordingItemCreator implements AsyncCallback<Integer>,
         MessageResponseHandler {
 
+    private FolderPanel folderPanel = null;
+
+    private String folder = null;
+
     private RecordPanel panel = null;
 
     private RecordingItem item = null;
 
     private RecordingItemPopup popup = null;
 
-    public static void createRecordingItem(RecordPanel panel) {
-        new RecordingItemCreator(panel);
+    public static void createRecordingItem(FolderPanel folderPanel,
+            RecordPanel panel) {
+        new RecordingItemCreator(folderPanel, panel);
     }
 
-    private RecordingItemCreator(RecordPanel panel) {
+    private RecordingItemCreator(FolderPanel folderPanel, RecordPanel panel) {
+        this.folderPanel = folderPanel;
         this.panel = panel;
+        this.folder = folderPanel.getCurrentFolder();
         popup = new RecordingItemPopup(this);
         popup.center();
     }
@@ -78,7 +86,7 @@ public class RecordingItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            item = new RecordingItem(0, popup.getName());
+            item = new RecordingItem(folderPanel, 0, popup.getName());
             item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");
@@ -87,7 +95,7 @@ public class RecordingItemCreator implements AsyncCallback<Integer>,
             XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
             XmlRpcRequest<Integer> request = new XmlRpcRequest<Integer>(
                     xmlRpcClient, "unfinishedRecording.addUnfinishedRecording",
-                    new Object[]{"", details}, this);
+                    new Object[]{folder, details}, this);
             request.execute();
         }
     }

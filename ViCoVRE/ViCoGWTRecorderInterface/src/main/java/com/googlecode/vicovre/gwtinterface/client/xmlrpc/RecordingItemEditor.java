@@ -54,7 +54,8 @@ public class RecordingItemEditor implements AsyncCallback<Boolean> {
         XmlRpcClient client = Application.getXmlRpcClient();
         XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
                 "unfinishedRecording.updateUnfinishedRecording",
-                new Object[]{"", item.getId(), item.getDetails()}, this);
+                new Object[]{item.getFolder(), item.getId(), item.getDetails()},
+                this);
         item.setCreated(false);
         item.setStatus("Updating...");
         request.execute();

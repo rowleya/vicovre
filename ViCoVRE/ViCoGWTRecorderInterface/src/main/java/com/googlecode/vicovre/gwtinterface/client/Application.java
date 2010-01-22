@@ -40,10 +40,7 @@ import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TabPanel;
-import com.googlecode.vicovre.gwtinterface.client.xmlrpc.HarvestItemLoader;
-import com.googlecode.vicovre.gwtinterface.client.xmlrpc.PlayItemLoader;
-import com.googlecode.vicovre.gwtinterface.client.xmlrpc.RecordingItemLoader;
+import com.googlecode.vicovre.gwtinterface.client.xmlrpc.FolderLoader;
 import com.googlecode.vicovre.gwtinterface.client.xmlrpc.VenueServerLoader;
 
 public class Application implements EntryPoint {
@@ -53,10 +50,6 @@ public class Application implements EntryPoint {
     private static XmlRpcClient xmlrpcClient = null;
 
     private static Dictionary parameters = null;
-
-    private TabPanel panel = new TabPanel();
-
-    private PlayPanel playPanel = new PlayPanel();
 
     public static String getParam(String name) {
         return parameters.get(name);
@@ -70,9 +63,6 @@ public class Application implements EntryPoint {
         parameters = Dictionary.getDictionary("Parameters");
         xmlrpcClient = new XmlRpcClient(getParam(XMLRPC_SERVER));
 
-        RecordPanel recordPanel = new RecordPanel();
-        HarvestPanel harvestPanel = new HarvestPanel();
-
         DockPanel topPanel = new DockPanel();
         topPanel.setWidth("100%");
         topPanel.setHeight("100%");
@@ -82,14 +72,7 @@ public class Application implements EntryPoint {
         StatusPanel status = new StatusPanel();
         status.setWidth("95%");
 
-        panel.setWidth("95%");
-        panel.setHeight("95%");
-        panel.getDeckPanel().setHeight("100%");
-        panel.add(playPanel, "Play");
-        panel.add(recordPanel, "Record");
-        panel.add(harvestPanel, "Harvest");
-        panel.selectTab(0);
-        panel.setAnimationEnabled(true);
+        FolderPanel panel = new FolderPanel();
 
         topPanel.add(status, DockPanel.NORTH);
         topPanel.add(panel, DockPanel.CENTER);
@@ -97,14 +80,12 @@ public class Application implements EntryPoint {
         topPanel.setCellHeight(status, "50px");
         RootPanel.get().add(topPanel);
 
-        ActionLoader loader = new ActionLoader(null, 4,
+        ActionLoader loader = new ActionLoader(null, 1,
                 "Loading Application...",
                 "There was an error loading the application.\n"
                 + "Please refresh the page to try again.",
                 false, true);
         VenueServerLoader.loadVenues(loader);
-        PlayItemLoader.loadPlayItems("", playPanel, loader);
-        RecordingItemLoader.loadRecordingItems("", recordPanel, loader);
-        HarvestItemLoader.loadHarvestItems("", harvestPanel, loader);
+        FolderLoader.loadFolders(panel, loader);
     }
 }

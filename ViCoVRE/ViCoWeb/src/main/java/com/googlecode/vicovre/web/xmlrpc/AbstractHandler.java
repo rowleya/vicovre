@@ -61,7 +61,7 @@ public abstract class AbstractHandler {
             folder = database.getFolder(
                 new File(database.getTopLevelFolder().getFile(), folderPath));
             if (folder == null) {
-                throw new XmlRpcException("Unknown folder " + folder);
+                throw new XmlRpcException("Unknown folder " + folderPath);
             }
         }
         return folder;

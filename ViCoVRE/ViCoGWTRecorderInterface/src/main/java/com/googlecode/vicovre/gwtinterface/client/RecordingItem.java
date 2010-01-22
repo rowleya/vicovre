@@ -109,7 +109,10 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private int id = 0;
 
-    public RecordingItem(int id, String itemName) {
+    private FolderPanel folderPanel = null;
+
+    public RecordingItem(FolderPanel folderPanel, int id, String itemName) {
+        this.folderPanel = folderPanel;
         this.id = id;
         name.setText(itemName);
         setWidth("100%");
@@ -158,6 +161,10 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         return id;
     }
 
+    public String getFolder() {
+        return folderPanel.getCurrentFolder();
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -200,6 +207,10 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     public String getDescription() {
         return description.getHTML().replaceAll("<br/>", "\n");
+    }
+
+    public boolean getDescriptionIsEditable() {
+        return descriptionEditable;
     }
 
     public Date getStartDate() {
