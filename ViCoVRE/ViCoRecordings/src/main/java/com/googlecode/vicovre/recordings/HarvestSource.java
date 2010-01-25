@@ -349,6 +349,22 @@ public class HarvestSource {
     }
 
     /**
+     * Returns the subFolderMetadataItem
+     * @return the subFolderMetadataItem
+     */
+    public String getSubFolderMetadataItem() {
+        return subFolderMetadataItem;
+    }
+
+    /**
+     * Sets the subFolderMetadataItem
+     * @param subFolderMetadataItem the subFolderMetadataItem to set
+     */
+    public void setSubFolderMetadataItem(String subFolderMetadataItem) {
+        this.subFolderMetadataItem = subFolderMetadataItem;
+    }
+
+    /**
      * Schedules the updating of the source
      * @param database The database to put new recordings into
      */
