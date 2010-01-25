@@ -44,6 +44,7 @@ import ag3.interfaces.types.ClientProfile;
 import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.StreamDescription;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
@@ -70,10 +71,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     static {
         CONNECTION.setServerType("Multicast");
     }
-
-    private static int lastId = 0;
-
-    private final int id;
 
     private RtpTypeRepository typeRepository = null;
 
@@ -156,27 +153,24 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @param manager The manager used to start and stop the recording
      */
     public UnfinishedRecording(RtpTypeRepository typeRepository,
-            Folder folder, RecordingDatabase database) {
+            Folder folder, File file, RecordingDatabase database) {
         this.database = database;
         this.typeRepository = typeRepository;
         this.folder = folder;
-        id = lastId++;
+        this.file = file;
     }
 
     public File getFile() {
         return file;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-    }
-
     /**
-     * Gets the unique volatile id (changes on each run of service)
+     * Gets the unique id
      * @return The id
      */
-    public int getId() {
-        return id;
+    public String getId() {
+        return file.getName().substring(0, file.getName().indexOf(
+                RecordingConstants.UNFINISHED_RECORDING_INDEX));
     }
 
     /**
@@ -425,7 +419,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(UnfinishedRecording r) {
-        return id - r.id;
+        return getStartDate().compareTo(r.getStartDate());
     }
 
     public Recording getFinishedRecording() {

@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.web.xmlrpc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import ag3.interfaces.types.MulticastNetworkLocation;
 import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
@@ -107,27 +109,32 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         }
     }
 
-    public Integer addUnfinishedRecording(String folderPath,
+    public String addUnfinishedRecording(String folderPath,
             Map<String, Object> details) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
-                folder, getDatabase());
-        fillIn(recording, details);
-        RecordingMetadata metadata = new RecordingMetadata();
-        fillIn(metadata, (Map<String, Object>)
-                details.get("metadata"));
-        recording.setMetadata(metadata);
+
         try {
+            File file = File.createTempFile("recording",
+                    RecordingConstants.UNFINISHED_RECORDING_INDEX,
+                    folder.getFile());
+            UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
+                    folder, file, getDatabase());
+            fillIn(recording, details);
+            RecordingMetadata metadata = new RecordingMetadata();
+            fillIn(metadata, (Map<String, Object>)
+                    details.get("metadata"));
+            recording.setMetadata(metadata);
             getDatabase().addUnfinishedRecording(recording);
+
+            return recording.getId();
         } catch (IOException e) {
             e.printStackTrace();
             throw new XmlRpcException("Error adding recording: "
                     + e.getMessage());
         }
-        return recording.getId();
     }
 
-    public Boolean updateUnfinishedRecording(String folderPath, int id,
+    public Boolean updateUnfinishedRecording(String folderPath, String id,
             Map<String, Object> details) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
@@ -147,7 +154,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         return true;
     }
 
-    public Boolean deleteUnfinishedRecording(String folderPath, int id)
+    public Boolean deleteUnfinishedRecording(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
@@ -196,7 +203,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         return recs;
     }
 
-    public String startRecording(String folderPath, int id)
+    public String startRecording(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
@@ -207,7 +214,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         return recording.getStatus();
     }
 
-    public String stopRecording(String folderPath, int id)
+    public String stopRecording(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
@@ -218,7 +225,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         return recording.getStatus();
     }
 
-    public String pauseRecording(String folderPath, int id)
+    public String pauseRecording(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
@@ -229,7 +236,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         return recording.getStatus();
     }
 
-    public String resumeRecording(String folderPath, int id)
+    public String resumeRecording(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);

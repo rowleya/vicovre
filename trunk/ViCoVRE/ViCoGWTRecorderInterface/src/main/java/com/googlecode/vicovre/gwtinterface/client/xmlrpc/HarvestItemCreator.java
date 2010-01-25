@@ -46,7 +46,7 @@ import com.googlecode.vicovre.gwtinterface.client.HarvestPanel;
 import com.googlecode.vicovre.gwtinterface.client.MessageResponse;
 import com.googlecode.vicovre.gwtinterface.client.MessageResponseHandler;
 
-public class HarvestItemCreator implements AsyncCallback<Integer>,
+public class HarvestItemCreator implements AsyncCallback<String>,
         MessageResponseHandler {
 
     private FolderPanel folderPanel = null;
@@ -78,7 +78,7 @@ public class HarvestItemCreator implements AsyncCallback<Integer>,
         GWT.log("Error creating harvest item", error);
     }
 
-    public void onSuccess(Integer id) {
+    public void onSuccess(String id) {
         harvestItem.setId(id);
         harvestItem.setCreated(true);
         harvestItem.setStatus("OK");
@@ -86,14 +86,14 @@ public class HarvestItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            harvestItem = new HarvestItem(folderPanel, 0, popup.getName());
+            harvestItem = new HarvestItem(folderPanel, null, popup.getName());
             harvestItem.handleResponse(response);
             harvestItem.setCreated(false);
             harvestItem.setStatus("Creating...");
             panel.addItem(harvestItem);
             Map<String, Object> details = harvestItem.getDetails();
             XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
-            XmlRpcRequest<Integer> request = new XmlRpcRequest<Integer>(
+            XmlRpcRequest<String> request = new XmlRpcRequest<String>(
                     xmlRpcClient, "harvest.addHarvestSource",
                     new Object[]{folder, details}, this);
             request.execute();

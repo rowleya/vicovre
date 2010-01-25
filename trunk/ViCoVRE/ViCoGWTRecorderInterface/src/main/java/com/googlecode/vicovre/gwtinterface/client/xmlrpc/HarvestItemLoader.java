@@ -78,7 +78,7 @@ public class HarvestItemLoader implements AsyncCallback<List<Object>> {
     }
 
     private HarvestItem buildHarvestItem(Map<String, Object> item) {
-        Integer id = (Integer) item.get("id");
+        String id = (String) item.get("id");
         String name = (String) item.get("name");
         HarvestItem harvestItem = new HarvestItem(folderPanel, id, name);
         harvestItem.setUrl((String) item.get("url"));

@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.web.xmlrpc;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ import ag3.interfaces.types.MulticastNetworkLocation;
 import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -171,24 +173,24 @@ public class HarvestHandler extends AbstractHandler {
         }
     }
 
-    public Integer addHarvestSource(String folderPath,
+    public String addHarvestSource(String folderPath,
             Map<String, Object> details) throws XmlRpcException {
         Folder folder = getFolder(folderPath);
-        HarvestSource harvestSource = new HarvestSource(folder, typeRepository);
-
-        fillIn(harvestSource, details);
-
         try {
+            HarvestSource harvestSource = new HarvestSource(folder,
+                File.createTempFile("harvest",
+                        RecordingConstants.HARVEST_SOURCE, folder.getFile()),
+                        typeRepository);
             getDatabase().addHarvestSource(harvestSource);
+            return harvestSource.getId();
         } catch (IOException e) {
             e.printStackTrace();
             throw new XmlRpcException("Error adding harvest source: "
                     + e.getMessage());
         }
-        return harvestSource.getId();
     }
 
-    public Boolean updateHarvestSource(String folderPath, int id,
+    public Boolean updateHarvestSource(String folderPath, String id,
             Map<String, Object> details) throws XmlRpcException {
         System.err.println("Updating source " + id);
         Folder folder = getFolder(folderPath);
@@ -207,7 +209,7 @@ public class HarvestHandler extends AbstractHandler {
         return true;
     }
 
-    public Boolean deleteHarvestSource(String folderPath, int id)
+    public Boolean deleteHarvestSource(String folderPath, String id)
             throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         HarvestSource harvestSource = folder.getHarvestSource(id);
@@ -218,7 +220,8 @@ public class HarvestHandler extends AbstractHandler {
         return true;
     }
 
-    public String harvestNow(String folderPath, int id) throws XmlRpcException {
+    public String harvestNow(String folderPath, String id)
+            throws XmlRpcException {
         Folder folder = getFolder(folderPath);
         HarvestSource harvestSource = folder.getHarvestSource(id);
         if (harvestSource == null) {

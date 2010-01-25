@@ -57,7 +57,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private final Image DELETE = new Image("images/delete.gif");
 
-    private int id;
+    private String id = null;
 
     private Label name = new Label("");
 
@@ -93,7 +93,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private FolderPanel folderPanel = null;
 
-    public HarvestItem(FolderPanel folderPanel, int id, String itemName) {
+    public HarvestItem(FolderPanel folderPanel, String id, String itemName) {
         this.folderPanel = folderPanel;
         this.id = id;
         name.setText(itemName);
@@ -124,7 +124,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         return folderPanel.getCurrentFolder();
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -176,7 +176,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         return addresses;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.recordings.db;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -68,9 +69,10 @@ public class HarvestSourceReader {
      */
     public static HarvestSource readHarvestSource(InputStream input,
             HarvestFormatRepository harvestFormatRepository,
-            RtpTypeRepository typeRepository, Folder folder)
+            RtpTypeRepository typeRepository, Folder folder, File file)
             throws SAXException, IOException {
-        HarvestSource harvestSource = new HarvestSource(folder, typeRepository);
+        HarvestSource harvestSource = new HarvestSource(folder, file,
+                typeRepository);
         Node doc = XmlIo.read(input);
         XmlIo.setString(doc, harvestSource, "name");
         XmlIo.setString(doc, harvestSource, "url");

@@ -259,7 +259,7 @@ public class Folder implements Comparable<Folder> {
         return recs;
     }
 
-    public UnfinishedRecording getUnfinishedRecording(int id) {
+    public UnfinishedRecording getUnfinishedRecording(String id) {
         File recordingIndex = new File(file, id +
                 RecordingConstants.UNFINISHED_RECORDING_INDEX);
         try {
@@ -302,16 +302,16 @@ public class Folder implements Comparable<Folder> {
         return recs;
     }
 
-    public HarvestSource getHarvestSource(int id) {
+    public HarvestSource getHarvestSource(String id) {
         File harvestIndex = new File(file,
-                RecordingConstants.HARVEST_SOURCE);
+                id + RecordingConstants.HARVEST_SOURCE);
         try {
             if (harvestIndex.exists()) {
                 FileInputStream input = new FileInputStream(harvestIndex);
                 HarvestSource harvestSource =
                     HarvestSourceReader.readHarvestSource(input,
-                            harvestFormatRepository, typeRepository, this);
-                harvestSource.setFile(harvestIndex);
+                            harvestFormatRepository, typeRepository, this,
+                            harvestIndex);
                 input.close();
                 return harvestSource;
             }
@@ -332,8 +332,8 @@ public class Folder implements Comparable<Folder> {
                 FileInputStream input = new FileInputStream(sourceFile);
                 HarvestSource harvestSource =
                     HarvestSourceReader.readHarvestSource(input,
-                            harvestFormatRepository, typeRepository, this);
-                harvestSource.setFile(sourceFile);
+                            harvestFormatRepository, typeRepository, this,
+                            sourceFile);
                 input.close();
                 sources.add(harvestSource);
             } catch (Exception e) {

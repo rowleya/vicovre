@@ -156,12 +156,6 @@ public class RecordingDatabase {
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
-        Folder folder = harvestSource.getFolder();
-        if (harvestSource.getFile() == null) {
-            File file = File.createTempFile("harvest",
-                    RecordingConstants.HARVEST_SOURCE, folder.getFile());
-            harvestSource.setFile(file);
-        }
         File file = harvestSource.getFile();
         FileOutputStream output = new FileOutputStream(file);
         HarvestSourceReader.writeHarvestSource(harvestSource, output);
@@ -181,13 +175,6 @@ public class RecordingDatabase {
 
     public void addUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
-        Folder folder = recording.getFolder();
-        if (recording.getFile() == null) {
-            File file = File.createTempFile("recording",
-                    RecordingConstants.UNFINISHED_RECORDING_INDEX,
-                    folder.getFile());
-            recording.setFile(file);
-        }
         File file = recording.getFile();
         FileOutputStream output = new FileOutputStream(file);
         UnfinishedRecordingReader.writeRecording(recording, output);

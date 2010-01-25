@@ -74,8 +74,7 @@ public class UnfinishedRecordingReader {
             RtpTypeRepository typeRepository, RecordingDatabase database)
             throws SAXException, IOException {
         UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
-                folder, database);
-        recording.setFile(file);
+                folder, file, database);
         Node doc = XmlIo.read(input);
         XmlIo.setDate(doc, recording, "startDate");
         XmlIo.setDate(doc, recording, "stopDate");
