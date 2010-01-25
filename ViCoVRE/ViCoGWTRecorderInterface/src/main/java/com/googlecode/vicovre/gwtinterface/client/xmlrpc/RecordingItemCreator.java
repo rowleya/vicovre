@@ -46,7 +46,7 @@ import com.googlecode.vicovre.gwtinterface.client.RecordPanel;
 import com.googlecode.vicovre.gwtinterface.client.RecordingItem;
 import com.googlecode.vicovre.gwtinterface.client.RecordingItemPopup;
 
-public class RecordingItemCreator implements AsyncCallback<Integer>,
+public class RecordingItemCreator implements AsyncCallback<String>,
         MessageResponseHandler {
 
     private FolderPanel folderPanel = null;
@@ -78,7 +78,7 @@ public class RecordingItemCreator implements AsyncCallback<Integer>,
         GWT.log("Error creating recording item", error);
     }
 
-    public void onSuccess(Integer id) {
+    public void onSuccess(String id) {
         item.setId(id);
         item.setCreated(true);
         item.setStatus("Stopped");
@@ -86,14 +86,14 @@ public class RecordingItemCreator implements AsyncCallback<Integer>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            item = new RecordingItem(folderPanel, 0, popup.getName());
+            item = new RecordingItem(folderPanel, null, popup.getName());
             item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");
             panel.addItem(item);
             Map<String, Object> details = item.getDetails();
             XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
-            XmlRpcRequest<Integer> request = new XmlRpcRequest<Integer>(
+            XmlRpcRequest<String> request = new XmlRpcRequest<String>(
                     xmlRpcClient, "unfinishedRecording.addUnfinishedRecording",
                     new Object[]{folder, details}, this);
             request.execute();

@@ -44,6 +44,7 @@ import java.util.TimerTask;
 
 import ag3.interfaces.types.NetworkLocation;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
@@ -83,12 +84,6 @@ public class HarvestSource {
     private static final String MONTH_VARIABLE = "$month";
 
     private static final String YEAR_VARIABLE = "$year";
-
-    private static final Integer LAST_ID_SYNC = new Integer(0);
-
-    private static int lastId = 0;
-
-    private int id = 0;
 
     private File file = null;
 
@@ -140,16 +135,16 @@ public class HarvestSource {
 
     }
 
-    public HarvestSource(Folder folder, RtpTypeRepository typeRepository) {
-        synchronized (LAST_ID_SYNC) {
-            id = lastId++;
-        }
+    public HarvestSource(Folder folder, File file,
+            RtpTypeRepository typeRepository) {
+        this.file = file;
         this.folder = folder;
         this.typeRepostory = typeRepository;
     }
 
-    public int getId() {
-        return id;
+    public String getId() {
+        return file.getName().substring(0, file.getName().indexOf(
+                RecordingConstants.HARVEST_SOURCE));
     }
 
     public Folder getFolder() {
@@ -158,10 +153,6 @@ public class HarvestSource {
 
     public File getFile() {
         return file;
-    }
-
-    public void setFile(File file) {
-        this.file = file;
     }
 
     /**
@@ -490,8 +481,11 @@ public class HarvestSource {
                                 }
                             }
                         }
+                        File file = File.createTempFile("recording",
+                                RecordingConstants.UNFINISHED_RECORDING_INDEX,
+                                eventFolder.getFile());
                         UnfinishedRecording recording = new UnfinishedRecording(
-                                typeRepostory, eventFolder, database);
+                                typeRepostory, eventFolder, file, database);
                         recording.setMetadata(event.getMetadata());
                         recording.setStartDate(event.getStartDate());
                         recording.setStopDate(event.getEndDate());

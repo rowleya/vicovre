@@ -80,7 +80,7 @@ public class RecordingItemLoader implements AsyncCallback<List<Object>> {
     }
 
     private RecordingItem buildRecordingItem(Map<String, Object> item) {
-        Integer id = (Integer) item.get("id");
+        String id = (String) item.get("id");
 
         Map<String, Object> metadata = (Map<String, Object>)
             item.get("metadata");
