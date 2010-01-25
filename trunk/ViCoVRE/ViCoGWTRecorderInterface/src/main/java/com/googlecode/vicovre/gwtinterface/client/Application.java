@@ -62,6 +62,7 @@ public class Application implements EntryPoint {
     public void onModuleLoad() {
         parameters = Dictionary.getDictionary("Parameters");
         xmlrpcClient = new XmlRpcClient(getParam(XMLRPC_SERVER));
+        xmlrpcClient.setTimeoutMillis(120000);
 
         DockPanel topPanel = new DockPanel();
         topPanel.setWidth("100%");
