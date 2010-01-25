@@ -55,41 +55,46 @@ public class MAGICFormatReader implements HarvestFormatReader {
             Node doc = XmlIo.read(input);
             Node[] nodes = XmlIo.readNodes(doc, "magic_event");
             for (Node node : nodes) {
-                HarvestedEvent event = new HarvestedEvent();
-                event.setStartDate(DATE_FORMAT.parse(
-                        XmlIo.readContent(node, "dtstart")));
-                event.setEndDate(DATE_FORMAT.parse(
-                        XmlIo.readContent(node, "dtend")));
+                try {
+                    HarvestedEvent event = new HarvestedEvent();
+                    event.setStartDate(DATE_FORMAT.parse(
+                            XmlIo.readContent(node, "dtstart")));
+                    event.setEndDate(DATE_FORMAT.parse(
+                            XmlIo.readContent(node, "dtend")));
 
-                String type = XmlIo.readContent(node, "type");
-                MAGICMetadata metadata = null;
-                if (type.equals("regular lecture")) {
-                    MAGICLectureMetadata data = new MAGICLectureMetadata();
-                    metadata = data;
-                    data.setCourseCode(XmlIo.readContent(node,
-                            "course_code"));
-                    data.setCourseTitle(XmlIo.readContent(node,
-                            "course_title"));
-                    data.setLecturerName(XmlIo.readContent(node,
-                            "lecturer_name"));
-                } else if (type.equals("extra event")) {
-                    MAGICExtraEventMetadata data =
-                        new MAGICExtraEventMetadata();
-                    metadata = data;
-                    data.setOrganiserName(XmlIo.readContent(node,
-                            "orgainser_name"));
-                    data.setSpeakerName(XmlIo.readContent(node,
-                            "speaker_name"));
-                } else {
-                    throw new IOException("Unknown event type " + type);
-                }
-                metadata.setType(type);
-                metadata.setName(XmlIo.readContent(node, "summary"));
-                metadata.setUrl(XmlIo.readContent(node, "url"));
-                metadata.setLocation(XmlIo.readContent(node, "location"));
-                event.setMetadata(metadata);
-                if (event.getEndDate().getTime() > System.currentTimeMillis()) {
-                    events.add(event);
+                    String type = XmlIo.readContent(node, "type");
+                    MAGICMetadata metadata = null;
+                    if (type.equals("regular lecture")) {
+                        MAGICLectureMetadata data = new MAGICLectureMetadata();
+                        metadata = data;
+                        data.setCourseCode(XmlIo.readContent(node,
+                                "course_code"));
+                        data.setCourseTitle(XmlIo.readContent(node,
+                                "course_title"));
+                        data.setLecturerName(XmlIo.readContent(node,
+                                "lecturer_name"));
+                    } else if (type.equals("extra event")) {
+                        MAGICExtraEventMetadata data =
+                            new MAGICExtraEventMetadata();
+                        metadata = data;
+                        data.setOrganiserName(XmlIo.readContent(node,
+                                "orgainser_name"));
+                        data.setSpeakerName(XmlIo.readContent(node,
+                                "speaker_name"));
+                    } else {
+                        throw new IOException("Unknown event type " + type);
+                    }
+                    metadata.setType(type);
+                    metadata.setName(XmlIo.readContent(node, "summary"));
+                    metadata.setUrl(XmlIo.readContent(node, "url"));
+                    metadata.setLocation(XmlIo.readContent(node, "location"));
+                    event.setMetadata(metadata);
+                    if (event.getEndDate().getTime() > System.currentTimeMillis()) {
+                        events.add(event);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Warning: error reading metadata");
+                    e.printStackTrace();
                 }
             }
             return events.toArray(new HarvestedEvent[0]);
