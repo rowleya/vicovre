@@ -362,12 +362,8 @@ int FFMpegJ::decode(JNIEnv *env, jobject input, jobject output) {
             firstSequence = sequence;
             lastSequence = firstSequence;
             for (int i = 0; i < 1024; i++) {
-                if (!rtpPacketCreated[i]) {
-                    fprintf(stderr, "Deleting packet\n");
-                    fflush(stderr);
+                if (rtpPacketCreated[i]) {
                     delete rtpPackets[i];
-                    fprintf(stderr, "Deleted packet\n");
-                    fflush(stderr);
                 }
                 rtpPacketCreated[i] = false;
             }
@@ -376,8 +372,6 @@ int FFMpegJ::decode(JNIEnv *env, jobject input, jobject output) {
         if (index < 0) {
             index = ((0xFFFF - firstSequence) + sequence);
         }
-        fprintf(stderr, "Creating RTP Packet\n");
-        fflush(stderr);
         rtpPackets[index] = new AVPacket;
         rtpPacketCreated[index] = true;
         AVPacket *rtpPacket = rtpPackets[index];
