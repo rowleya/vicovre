@@ -156,6 +156,8 @@ public class RecordingDatabase {
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
+        Folder folder = harvestSource.getFolder();
+        folder.addHarvestSource(harvestSource);
         File file = harvestSource.getFile();
         FileOutputStream output = new FileOutputStream(file);
         HarvestSourceReader.writeHarvestSource(harvestSource, output);
@@ -164,6 +166,8 @@ public class RecordingDatabase {
     }
 
     public void deleteHarvestSource(HarvestSource harvestSource) {
+        Folder folder = harvestSource.getFolder();
+        folder.deleteHarvestSource(harvestSource.getId());
         File file = harvestSource.getFile();
         file.delete();
     }
@@ -175,6 +179,8 @@ public class RecordingDatabase {
 
     public void addUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
+        Folder folder = recording.getFolder();
+        folder.addUnfinishedRecording(recording);
         File file = recording.getFile();
         FileOutputStream output = new FileOutputStream(file);
         UnfinishedRecordingReader.writeRecording(recording, output);
@@ -202,6 +208,8 @@ public class RecordingDatabase {
 
     public void addRecording(Recording recording)
             throws IOException {
+        Folder folder = getFolder(recording.getDirectory().getParentFile());
+        folder.addRecording(recording);
         recording.getDirectory().mkdirs();
         FileOutputStream output = new FileOutputStream(
                 new File(recording.getDirectory(),
@@ -223,6 +231,8 @@ public class RecordingDatabase {
     }
 
     public void deleteRecording(Recording recording) {
+        Folder folder = getFolder(recording.getDirectory().getParentFile());
+        folder.deleteRecording(recording.getId());
         deleteDirectory(recording.getDirectory());
     }
 

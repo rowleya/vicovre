@@ -47,10 +47,8 @@ public class LiveAnnotationType {
     private String buttonVisible = "false";
     private String thumbnail = null;
     private String colour = null;
-    private HashMap<String, String> textContent = new HashMap<String, String>();
-    private List<String> containedFields = new Vector<String>();
-    private HashMap<String, String> variables = new HashMap<String, String>();
-
+    private HashMap<String, HashMap<String, String>> fieldAttributes =
+        new HashMap<String, HashMap<String,String>>();
     private HashMap<String, String> formats = new HashMap<String, String>();
     private List<String> conversions = new Vector<String>();
     private String name;
@@ -101,73 +99,42 @@ public class LiveAnnotationType {
         return null;
     }
 
-    public void setContains(String name, String type) {
-        textContent.put(name, type);
-        containedFields.add(name);
+    public void setFieldAttribute(String name, String attribute, String value) {
+        HashMap<String, String> attributes = fieldAttributes.get(name);
+        if (attributes == null) {
+            attributes = new HashMap<String, String>();
+        }
+        attributes.put(attribute, value);
+        fieldAttributes.put(name, attributes);
     }
 
-    public HashMap<String, String> getContent() {
-        return textContent;
+    public List<String> getFields() {
+        return new Vector<String>(fieldAttributes.keySet());
     }
 
-    public String getContentJS() {
+    public String getFieldsJS() {
         String out = "{";
         String delim = "";
-        Iterator<String> keys = textContent.keySet().iterator();
-        while (keys.hasNext()) {
+        for (String name : fieldAttributes.keySet()) {
             out += delim;
-            String key = keys.next();
-            out += "'" + key + "':'" + textContent.get(key) + "'";
-            delim = ",";
+            out += name + ": {";
+            HashMap<String, String> attributes = fieldAttributes.get(name);
+            String attrDelim = "";
+            for (String attribute : attributes.keySet()) {
+                out += attrDelim;
+                out += attribute + ":" + "'" + attributes.get(attribute)
+                    + "'";
+                attrDelim = ", ";
+            }
+            out += "}";
+            delim = ", ";
         }
         out += "}";
-        return out;
-    }
-
-    public List<String> getContainedFields() {
-        return containedFields;
-    }
-
-    public String getContainedFieldsJS() {
-        String out = "new Array(";
-        String delim = "";
-        for (int i = 0; i < containedFields.size(); i++) {
-            out += delim;
-            out += "'" + containedFields.get(i) + "'";
-            delim = ",";
-        }
-        out += ")";
         return out;
     }
 
     public String getThumbnail() {
         return thumbnail;
-    }
-
-    public void setVariable(String name, String value) {
-        variables.put(name, value);
-    }
-
-    public String getVariable(String name) {
-        return variables.get(name);
-    }
-
-    public HashMap<String, String> getVariables() {
-        return variables;
-    }
-
-    public String getVariablesJS() {
-        String out = "{";
-        String delim = "";
-        Iterator<String> keys = variables.keySet().iterator();
-        while (keys.hasNext()) {
-            out += delim;
-            String key = keys.next();
-            out += "'" + key + "':'" + variables.get(key) + "'";
-            delim = ",";
-        }
-        out += "}";
-        return out;
     }
 
     public void setFormat(String name, String value) {
@@ -216,11 +183,7 @@ public class LiveAnnotationType {
             newMessage += format.substring(lastEnd, start);
             lastEnd = end;
             String variableName = format.substring(start + 2, end - 1);
-            String value = getVariable(variableName);
-            if (value == null) {
-                value = values.get(variableName);
-            }
-            newMessage += value;
+            newMessage += values.get(variableName);
         }
         newMessage += format.substring(lastEnd);
         return newMessage;

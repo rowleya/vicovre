@@ -80,10 +80,10 @@ import javax.swing.JScrollPane;
 
 import ag3.interfaces.types.ClientProfile;
 
-import com.googlecode.vicovre.media.config.Config;
 import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
+import com.googlecode.vicovre.utils.Config;
 import com.lti.civil.CaptureException;
 import com.lti.civil.CaptureSystem;
 import com.lti.civil.CaptureSystemFactory;
@@ -197,7 +197,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
     public LocalDevicePanel(JDialog parent,
             RTPType[] videoTypes, RTPType[] audioTypes,
             boolean allowTypeSelection,
-            RTPConnector videoConnector,  RTPConnector audioConnector,
+            RTPConnector videoConnector, RTPConnector audioConnector,
             ClientProfile profile, String tool) {
         this.parent = parent;
         this.videoConnector = videoConnector;

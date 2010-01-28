@@ -74,11 +74,13 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import org.xml.sax.SAXException;
 
-import com.googlecode.vicovre.media.config.Config;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
 import com.googlecode.vicovre.media.rtp.AGController;
+import com.googlecode.vicovre.media.rtp.RTCPPacketSink;
+import com.googlecode.vicovre.media.rtp.RTPPacketSink;
 import com.googlecode.vicovre.media.rtp.StreamListener;
 import com.googlecode.vicovre.media.rtp.UnsupportedEncryptionException;
+import com.googlecode.vicovre.utils.Config;
 
 import ag3.bridge.RegistryClient;
 import ag3.interfaces.VenueServer;
@@ -931,6 +933,18 @@ public class AccessGridPanel extends JPanel implements ActionListener,
 
     public BridgeDescription getBridge() {
         return (BridgeDescription) accessGridBridge.getSelectedItem();
+    }
+
+    public void setRtpSink(RTPPacketSink rtpSink) {
+        if (agController != null) {
+            agController.setRTPSink(rtpSink);
+        }
+    }
+
+    public void setRtcpSink(RTCPPacketSink rtcpSink) {
+        if (agController != null) {
+            agController.setRTCPSink(rtcpSink);
+        }
     }
 }
 

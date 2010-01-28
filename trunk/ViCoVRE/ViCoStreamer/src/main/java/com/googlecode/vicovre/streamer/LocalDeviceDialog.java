@@ -51,13 +51,13 @@ import javax.swing.JPanel;
 
 import ag3.interfaces.types.ClientProfile;
 
-import com.googlecode.vicovre.media.config.Config;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.media.rtp.JoinListener;
 import com.googlecode.vicovre.media.rtp.SendOnlyRTPSocketAdapter;
 import com.googlecode.vicovre.media.ui.LocalDevicePanel;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
+import com.googlecode.vicovre.utils.Config;
 
 public class LocalDeviceDialog extends JDialog implements ActionListener,
         LocalStreamListener, JoinListener {

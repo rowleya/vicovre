@@ -191,6 +191,10 @@ public class AudioDevice implements ControllerListener {
             NoDataSourceException, NoProcessorException,
             CannotRealizeException, LineUnavailableException {
 
+        if (started) {
+            return;
+        }
+
         if (dataSource == null) {
             test();
         }
@@ -383,6 +387,12 @@ public class AudioDevice implements ControllerListener {
             sendStream.start();
             processor.start();
             started = true;
+        } else {
+            if (listener != null) {
+                listener.removeLocalAudio(cloneEffect);
+                listener.addLocalAudio(name + " - " + line, cloneEffect,
+                        volumeControls.get(line), sendStream.getSSRC());
+            }
         }
     }
 

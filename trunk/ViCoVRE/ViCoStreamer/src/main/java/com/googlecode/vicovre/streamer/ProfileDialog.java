@@ -47,7 +47,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.googlecode.vicovre.media.config.Config;
+import com.googlecode.vicovre.utils.Config;
 
 public class ProfileDialog extends JDialog implements ActionListener {
 
