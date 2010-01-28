@@ -55,7 +55,8 @@ public class ListRecordingsController implements Controller {
             HttpServletResponse response) throws Exception {
 
         File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI());
+                request.getRequestURI().substring(
+                        request.getContextPath().length()));
         path = path.getParentFile();
 
         Folder folder = database.getFolder(path);
