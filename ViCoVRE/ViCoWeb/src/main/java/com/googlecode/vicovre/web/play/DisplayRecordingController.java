@@ -79,7 +79,8 @@ public class DisplayRecordingController implements Controller {
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
         File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI());
+                request.getRequestURI().substring(
+                        request.getContextPath().length()));
         path = path.getParentFile();
 
         Folder folder = database.getFolder(path.getParentFile());
