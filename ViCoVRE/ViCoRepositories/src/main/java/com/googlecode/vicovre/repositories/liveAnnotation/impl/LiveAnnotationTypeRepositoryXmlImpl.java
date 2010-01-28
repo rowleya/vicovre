@@ -135,20 +135,14 @@ public class LiveAnnotationTypeRepositoryXmlImpl implements
                 liveAnnotationType.setColour(value);
             }
 
-            Node[] contains = XmlIo.readNodes(types[i], "contains");
-            for (Node contain : contains) {
-                String contained = XmlIo.readAttr(contain, "name", null);
-                String containedType = XmlIo.readAttr(contain, "type", null);
-                if (containedType != null) {
-                    liveAnnotationType.setContains(contained, containedType);
-                }
-                String[] attrs = XmlIo.readAttrs(contain);
+            Node[] fields = XmlIo.readNodes(types[i], "field");
+            for (Node field : fields) {
+                String fieldName = XmlIo.readAttr(field, "name", null);
+                String[] attrs = XmlIo.readAttrs(field);
                 for (String attr : attrs) {
-                    if (!attr.equals("name") && !attr.equals("type")) {
-                        String value = XmlIo.readAttr(contain, attr, null);
-                        liveAnnotationType.setContains(contained + "." + attr,
-                                value);
-                    }
+                    String value = XmlIo.readAttr(field, attr, null);
+                    liveAnnotationType.setFieldAttribute(
+                            fieldName, attr, value);
                 }
             }
 

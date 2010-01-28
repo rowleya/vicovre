@@ -48,8 +48,8 @@ import ag3.interfaces.types.BridgeDescription;
 import ag3.interfaces.types.Capability;
 import ag3.interfaces.types.ClientProfile;
 
-import com.googlecode.vicovre.media.config.Config;
 import com.googlecode.vicovre.media.ui.AccessGridPanel;
+import com.googlecode.vicovre.utils.Config;
 
 public class VenueDialog extends JDialog implements ActionListener {
 

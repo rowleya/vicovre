@@ -60,7 +60,6 @@ import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
 import com.googlecode.vicovre.media.Misc;
-import com.googlecode.vicovre.media.config.Config;
 import com.googlecode.vicovre.media.rtp.AGController;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.media.rtp.UnsupportedEncryptionException;
@@ -68,6 +67,7 @@ import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
 import com.googlecode.vicovre.streamer.display.DisplayPanel;
+import com.googlecode.vicovre.utils.Config;
 
 /**
  * The main class of the streamer

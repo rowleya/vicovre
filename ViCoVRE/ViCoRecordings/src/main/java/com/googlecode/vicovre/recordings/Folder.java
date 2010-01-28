@@ -328,6 +328,30 @@ public class Folder implements Comparable<Folder> {
         return defaultLayouts;
     }
 
+    public void addRecording(Recording recording) {
+        recordings.put(recording.getId(), recording);
+    }
+
+    public void addUnfinishedRecording(UnfinishedRecording recording) {
+        unfinishedRecordings.put(recording.getId(), recording);
+    }
+
+    public void addHarvestSource(HarvestSource harvestSource) {
+        harvestSources.put(harvestSource.getId(), harvestSource);
+    }
+
+    public void deleteRecording(String id) {
+        recordings.remove(id);
+    }
+
+    public void deleteUnfinishedRecording(String id) {
+        unfinishedRecordings.remove(id);
+    }
+
+    public void deleteHarvestSource(String id) {
+        harvestSources.remove(id);
+    }
+
     public boolean equals(Folder folder) {
         return file.equals(folder.file);
     }

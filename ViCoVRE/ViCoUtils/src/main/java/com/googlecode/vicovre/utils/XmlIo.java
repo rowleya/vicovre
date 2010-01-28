@@ -223,7 +223,7 @@ public abstract class XmlIo {
         NamedNodeMap attr = doc.getAttributes();
         Vector<String> values = new Vector<String>();
         for (int i = 0; i < attr.getLength(); i++) {
-            values.add(attr.item(i).getTextContent());
+            values.add(attr.item(i).getLocalName());
         }
         return values.toArray(new String[0]);
     }

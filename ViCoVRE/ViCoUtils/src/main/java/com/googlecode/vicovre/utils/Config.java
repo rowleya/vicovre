@@ -32,7 +32,7 @@
  *
  */
 
-package com.googlecode.vicovre.media.config;
+package com.googlecode.vicovre.utils;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -78,8 +79,8 @@ public class Config extends DefaultHandler {
     private static final String NOT_ALLOWED_ERROR =
         " not allowed at this point";
 
-    // The service tag
-    private static final String SERVICE_TAG = "service";
+    // The config tag
+    private static final String CONFIG_TAG = "config";
 
     // The xml parser to use
     private static final String XML_PARSER_IMPLEMENTATION =
@@ -88,8 +89,8 @@ public class Config extends DefaultHandler {
     // The reader of the XML
     private XMLReader parser = null;
 
-    // True if we are in the service tag in the document
-    private boolean inService = false;
+    // True if we are in the config tag in the document
+    private boolean inConfig = false;
 
     // True if we are in the param tag in the document
     private boolean inParam = false;
@@ -145,15 +146,15 @@ public class Config extends DefaultHandler {
      */
     public void startElement(String namespaceURI, String localName,
                 String qualifiedName, Attributes atts) throws SAXException {
-        if (!inService) {
-            if (localName.equals(SERVICE_TAG)) {
-                inService = true;
+        if (!inConfig) {
+            if (localName.equals(CONFIG_TAG)) {
+                inConfig = true;
                 currentParameters = new HashMap<String, Vector<String>>();
             } else {
                 throw new SAXException(localName
                         + NOT_ALLOWED_ERROR);
             }
-        } else if (inService) {
+        } else if (inConfig) {
             if (localName.equals(PARAM_TAG)) {
                 currentParamName = atts.getValue("", NAME_ATTRIBUTE);
                 if (currentParamName == null) {
@@ -178,8 +179,8 @@ public class Config extends DefaultHandler {
      */
     public void endElement(String namespaceURI, String localName,
             String qualifiedName) throws SAXException {
-        if (inService && localName.equals(SERVICE_TAG)) {
-            inService = false;
+        if (inConfig && localName.equals(CONFIG_TAG)) {
+            inConfig = false;
         } else if (inParam && localName.equals(PARAM_TAG)) {
             if (currentParameters.containsKey(currentParamName)) {
                 Vector<String> values = currentParameters.get(
@@ -298,7 +299,7 @@ public class Config extends DefaultHandler {
         PrintWriter writer = new PrintWriter(new FileWriter(filename));
         Iterator<String> iterator = currentParameters.keySet().iterator();
         writer.println("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-        writer.println(TAG_START + SERVICE_TAG + TAG_END);
+        writer.println(TAG_START + CONFIG_TAG + TAG_END);
         while (iterator.hasNext()) {
             String name = iterator.next();
             Vector<String> values = currentParameters.get(name);
@@ -306,11 +307,11 @@ public class Config extends DefaultHandler {
                 String value = values.get(i);
                 writer.print(TAG_START + PARAM_TAG + " " + NAME_ATTRIBUTE
                         + "=\"" + name + "\"" + TAG_END);
-                writer.print(value);
+                writer.print(StringEscapeUtils.escapeXml(value));
                 writer.println(TAG_END_START + PARAM_TAG + TAG_END);
             }
         }
-        writer.println(TAG_END_START + SERVICE_TAG + TAG_END);
+        writer.println(TAG_END_START + CONFIG_TAG + TAG_END);
         writer.close();
     }
 }

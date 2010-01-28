@@ -12,14 +12,18 @@
 
     <!-- modules -->
     <modules>
+        <module>ViCoAnnotations</module>
         <module>ViCoCodecs</module>
         <module>ViCoGWTRecorderInterface</module>
+        <module>ViCoGWTAnnotationsInterface</module>
+        <module>ViCoLiveAnnotations</module>
         <module>ViCoMedia</module>
         <module>ViCoPlayer</module>
         <module>ViCoRecorder</module>
         <module>ViCoRecordings</module>
         <module>ViCoRepositories</module>
         <module>ViCoSecurity</module>
+        <module>ViCoSharedResources</module>
         <module>ViCoStreamer</module>
         <module>ViCoUtils</module>
         <module>ViCoWeb</module>
