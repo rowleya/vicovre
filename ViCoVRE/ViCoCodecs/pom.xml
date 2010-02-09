@@ -24,6 +24,7 @@
         <module>ViCoCodecsH264</module>
         <module>ViCoCodecsLinear</module>
         <module>ViCoCodecsULaw</module>
+        <module>ViCoCodecsVic</module>
     </modules>
     <dependencies>
         <dependency>
