@@ -121,6 +121,8 @@ public class HarvestSource {
 
     private Timer timer = null;
 
+    private Timer retryTimer = null;
+
     private String subFolderMetadataItem = null;
 
     private class HarvestTask extends TimerTask {
@@ -130,7 +132,7 @@ public class HarvestSource {
          * @see java.util.TimerTask#run()
          */
         public void run() {
-            harvest();
+            harvest(false);
         }
 
     }
@@ -422,6 +424,10 @@ public class HarvestSource {
             timer.cancel();
             timer = null;
         }
+        if (retryTimer != null) {
+            retryTimer.cancel();
+            retryTimer = null;
+        }
     }
 
     private String getMetadataItem(HarvestedEvent event) {
@@ -444,7 +450,7 @@ public class HarvestSource {
     /**
      * Harvests the source
      */
-    public void harvest() {
+    public void harvest(boolean manual) {
         scheduleTimer(database, typeRepostory);
         String url = this.url;
         Date now = new Date();
@@ -504,6 +510,14 @@ public class HarvestSource {
         } catch (Exception e) {
             e.printStackTrace();
             status = "Failed: " + e.getMessage();
+            if (!manual) {
+                Calendar first = Calendar.getInstance();
+                first.add(Calendar.MINUTE, 5);
+                retryTimer = new Timer();
+                retryTimer.schedule(new HarvestTask(), first.getTimeInMillis());
+                System.err.println(
+                        "Harvest failed, will retry in five minutes");
+            }
         }
     }
 }
