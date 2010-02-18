@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <codecs>
-    <!--<codec>
-        <class>com.googlecode.vicovre.codecs.h264.JavaDepacketizer</class>
-    </codec>-->
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>
@@ -16,10 +13,13 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.FLV1Encoder</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.h261.H261ASDecoder</class>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.JPEGDecoder</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.h261.H261Decoder</class>
+        <class>com.googlecode.vicovre.codecs.vic.NativeEncoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.vic.NativeDecoder</class>
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.linear.RateConverter</class>

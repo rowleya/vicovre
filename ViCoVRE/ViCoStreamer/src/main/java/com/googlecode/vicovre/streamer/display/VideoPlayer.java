@@ -97,7 +97,7 @@ class VideoPlayer implements ControllerListener {
      * @throws NoPlayerException
      */
     public VideoPlayer(DataSource ds, int previewwidth, int previewheight)
-            throws IOException, NoPlayerException {
+            throws NoPlayerException {
         this.previewwidth = previewwidth;
         this.previewheight = previewheight;
 
@@ -105,57 +105,10 @@ class VideoPlayer implements ControllerListener {
             ((PushBufferDataSource) ds).getStreams();
         renderer = new RGBRenderer(new Effect[0]);
         renderer.setDataSource(ds, 0);
-        renderer.setInputFormat(datastreams[0].getFormat());
-
-        // Configure the player
-        /*player = javax.media.Manager.createProcessor(ds);
-        player.addControllerListener(this);
-        player.configure();
-        processorFailed = false;
-        while (!processorFailed && (player.getState() < Processor.Configured)) {
-            synchronized (stateLock) {
-                try {
-                    stateLock.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
+        if (renderer.setInputFormat(datastreams[0].getFormat()) == null) {
+            throw new NoPlayerException("Unsupported format "
+                    + datastreams[0].getFormat());
         }
-        if (processorFailed) {
-            throw new NoPlayerException(CONTROLLER_ERROR);
-        }
-        player.setContentDescriptor(null);
-
-        // Set the format of the transmission
-        TrackControl[] tracks = player.getTrackControls();
-        for (int i = 0; i < tracks.length; i++) {
-            Format f = tracks[i].getFormat();
-            if (tracks[i].isEnabled() && (f instanceof VideoFormat)) {
-                if (renderer != null) {
-                    try {
-                        tracks[i].setRenderer(renderer);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        // Realise the processor
-        player.realize();
-        processorFailed = false;
-        while (!processorFailed && (player.getState() < Processor.Realized)) {
-            synchronized (stateLock) {
-                try {
-                    stateLock.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-        }
-        if (processorFailed) {
-            throw new NoPlayerException(CONTROLLER_ERROR);
-        } */
         renderer.getComponent().setVisible(false);
     }
 

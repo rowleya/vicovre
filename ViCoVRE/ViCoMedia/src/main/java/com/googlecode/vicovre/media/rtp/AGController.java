@@ -220,6 +220,13 @@ public class AGController {
         }
     }
 
+    public void setLocationCapabilities(NetworkLocation location,
+            Capability[] capabilites) {
+        for (Capability capability : capabilites) {
+            locations.put(capability, location);
+        }
+    }
+
     public void connectToLocation(NetworkLocation location)
         throws ClassNotFoundException, InstantiationException,
         IllegalAccessException, IOException, UnsupportedEncryptionException {

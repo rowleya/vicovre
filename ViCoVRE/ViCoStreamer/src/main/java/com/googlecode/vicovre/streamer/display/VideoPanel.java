@@ -460,6 +460,10 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
             previewComp.setSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
         }
 
+        if (player == null) {
+            return;
+        }
+
         // Format and display the bitrate
         NumberFormat format = NumberFormat.getInstance();
         BitRateControl brc = (BitRateControl) player
