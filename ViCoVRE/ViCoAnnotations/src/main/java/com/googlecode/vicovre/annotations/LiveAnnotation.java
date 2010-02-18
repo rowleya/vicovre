@@ -35,173 +35,116 @@
 package com.googlecode.vicovre.annotations;
 
 import java.lang.reflect.Method;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
 
-public class LiveAnnotation implements LiveAnnotationEvent {
+public class LiveAnnotation {
+
+    public static final String PUBLIC = "public";
+
+    public static final String PRIVATE = "private";
 
     private Map<String, String> body = new HashMap<String, String>();
-    private Date date;
-    private String edits = "";
-    private String type = "";
-    private String source;
-    private String privacy = "public";
-    private String annotator = "";
-    private String annotationId = "";
-    private Object client = null;
-    private boolean isAnnotation = true;
 
-    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
+    private long timestamp = 0;
 
-    public Object getClient() {
-        return client;
-    }
+    private String type = null;
 
-    public void setClient(Object client) {
-        this.client = client;
-    }
+    private String author = null;
 
-    private String checkType() {
-        String retType = body.get("liveAnnotationType");
-        LiveAnnotationType laType = liveAnnotationTypeRepository
-                .findLiveAnnotationType(retType);
-        if (laType == null) {
-            throw new RuntimeException("unknown liveAnnotationType " + retType);
+    private String privacy = PUBLIC;
+
+    private String id = null;
+
+    private LiveAnnotationType liveAnnotationType = null;
+
+    public LiveAnnotation(
+            LiveAnnotationTypeRepository liveAnnotationTypeRepository,
+            Map<String, List<String>> parameters) {
+        type = parameters.get("type").get(0);
+        author = parameters.get("author").get(0);
+        if (parameters.get("privacy") != null) {
+            privacy = parameters.get("privacy").get(0);
         }
 
-        if (annotationId.length() == 0) {
-            annotationId = date.getTime() + "_" + UUID.randomUUID().toString();
+        if (parameters.get("timestamp") != null) {
+            String timestampString = parameters.get("timestamp").get(0);
+            timestamp = Long.parseLong(timestampString);
+        } else {
+            timestamp = System.currentTimeMillis();
         }
 
-        Iterator<String> fields = laType.getFields().iterator();
+        if (parameters.get("id") != null) {
+            id = parameters.get("id").get(0);
+        } else {
+            id = timestamp + "_" + UUID.randomUUID().toString();
+        }
+
+        liveAnnotationType =
+            liveAnnotationTypeRepository.findLiveAnnotationType(type);
+
+        List<String> bodyItems = liveAnnotationType.getFields();
         int noMissing = 0;
-        while (fields.hasNext()) {
-            if (body.get(fields.next()) == null) {
-                noMissing++;
+        for (String item : bodyItems) {
+            String value = parameters.get(item).get(0);
+            if (value != null) {
+                body.put(item, value);
+            } else {
+                noMissing += 1;
             }
         }
-        if (noMissing == 0) {
-            return retType;
-        }
-        List<String> betterMatch = laType.getConversions();
-        Iterator<String> matches = betterMatch.iterator();
-        while (matches.hasNext()) {
-            int missing = 0;
-            String typeName = matches.next();
-            fields = liveAnnotationTypeRepository.findLiveAnnotationType(
-                    typeName).getFields().iterator();
-            while (fields.hasNext()) {
-                if (body.get(fields.next()) == null) {
-                    missing++;
+
+        if (noMissing > 0) {
+            int minMissing = noMissing;
+            List<String> convertableTypes = liveAnnotationType.getConversions();
+            for (int i = 0; (i < convertableTypes.size())
+                    && (noMissing > 0); i++) {
+                String convertableType = convertableTypes.get(i);
+                LiveAnnotationType conversion =
+                    liveAnnotationTypeRepository.findLiveAnnotationType(
+                            convertableType);
+                noMissing = 0;
+                for (String item : conversion.getFields()) {
+                    if (!body.containsKey(item)) {
+                        noMissing += 1;
+                    }
+                }
+                if (noMissing < minMissing) {
+                    minMissing = noMissing;
+                    type = convertableType;
+                    liveAnnotationType = conversion;
                 }
             }
-            if (missing < noMissing) {
-                noMissing = missing;
-                retType = typeName;
-            }
-            if (noMissing == 0) {
-                return retType;
-            }
         }
-        return retType;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public LiveAnnotation(LiveAnnotationType liveAnnotationType) {
+        this.liveAnnotationType = liveAnnotationType;
+        this.type = liveAnnotationType.getName();
     }
 
-    public void setDate(long timestamp) {
-        this.date = new Date(timestamp);
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public void setBody(HashMap<String, String> body) {
-        this.body = body;
-    }
-
-    public void setText(String message) {
-        this.body.put("CrewLiveAnnotationComment", message);
-    }
-
-    public void setLiveAnnotationType(String type) {
-        setType(type);
-    }
-
-    public void setType(String type) {
-        this.body.put("liveAnnotationType", type);
-        this.type = type;
-    }
-
-    public void setName(String name) {
-        this.body.put("CrewLiveAnnotationTitle", name);
-    }
-
-    public void setAnnotationId(String annotationId) {
-        this.annotationId = annotationId;
+    public void setAuthor(String source) {
+        this.author = source;
     }
 
     public void setPrivacy(String privacy) {
         this.privacy = privacy;
     }
 
-    public void setUrl(String url) {
-        this.body.put("CrewLiveAnnotationUrl", url);
-    }
-
-    public void setAuthor(String source) {
-        this.source = source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public void setAnnotator(String annotator) {
-        this.annotator = annotator;
-    }
-
-    public void setEmail(String email) {
-        this.body.put("CrewLiveAnnotationEmail", email);
-    }
-
-    public LiveAnnotation(String messageId) {
-        this.annotationId = messageId;
-    }
-
-    public void setCrewAnnotation(Attributes attr) {
-        String name, qname;
-        for (int i = 0; i < attr.getLength(); i++) {
-            qname = attr.getQName(i);
-            name = "set" + qname.substring(0, 1).toUpperCase()
-                    + qname.substring(1);
-            try {
-                Method meth = getClass().getMethod(name, String.class);
-                meth.invoke(this, new Object[] {attr.getValue(i)});
-            } catch (Exception e) {
-                System.err.println("no method: " + name);
-                // e.printStackTrace();
-            }
-        }
-    }
-
-    public void setAnnotation(String annotation) {
-        // do nothing
-    }
-
-    public void setCrewLiveAnnotation(String annBody) {
-        // do nothing
+    public void setTimestamp(String timestamp) {
+        this.timestamp = Long.parseLong(timestamp);
     }
 
     public void setValueOf(String name, String value) {
@@ -217,161 +160,55 @@ public class LiveAnnotation implements LiveAnnotationEvent {
         }
     }
 
-    public void setTimestamp(Attributes attr) {
-        setDate(Long.valueOf(attr.getValue("value")));
+    public String getId() {
+        return id;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 
     public long getTimestamp() {
-        return date.getTime();
+        return timestamp;
     }
 
     public String getPrivacy() {
         return privacy;
     }
 
-    public LiveAnnotation(
-            LiveAnnotationTypeRepository liveAnnotationTypeRepository,
-            String xml) {
-        this.liveAnnotationTypeRepository = liveAnnotationTypeRepository;
-        try {
-            LiveAnnotationParser annp = new LiveAnnotationParser(this);
-            annp.parse(xml);
-        } catch (SAXException e) {
-            e.printStackTrace();
-        }
-        checkType();
-    }
-
-    public LiveAnnotation(
-            LiveAnnotationTypeRepository liveAnnotationTypeRepository,
-            HashMap<String, String> parameters) {
-        this.liveAnnotationTypeRepository = liveAnnotationTypeRepository;
-        this.type = parameters.get("liveAnnotationType");
-        this.body.put("liveAnnotationType", type);
-        this.privacy = parameters.get("privacy");
-        this.edits = parameters.get("edits");
-        this.source = parameters.get("source");
-        this.date = new Date();
-        /*
-         * if (annotationId.length()==0){
-         * annotationId=date.getTime()+"_"+UUID.randomUUID().toString(); }
-         */String timeStamp = parameters.get("timeStamp");
-        if (timeStamp != null) {
-            this.date = new Date(Long.valueOf(timeStamp));
-        }
-        Iterator<String> bodyitems = liveAnnotationTypeRepository.findLiveAnnotationType(
-                type).getFields().iterator();
-        while (bodyitems.hasNext()) {
-            String part = bodyitems.next();
-            String value = parameters.get(part);
-            if (value != null) {
-                this.body.put(part, value);
-            }
-        }
-        checkType();
-        // System.out.println(formatAnnotation(liveAnnotationTypeRepository.
-        // findLiveAnnotationType(type).getFormat("input")));
-
-    }
-
     public String getThumbnail() {
-        return liveAnnotationTypeRepository.findLiveAnnotationType(type).getThumbnail();
-    }
-
-    public String getMessage(String messg) {
-        int lastEnd, start, end;
-        String newMessage = "";
-        Pattern url = Pattern.compile("(^|[ \t\r\n])((ftp|http|https|"
-                + "gopher|mailto|news|nntp|telnet|wais|file|prospero|"
-                + "aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%"
-                + "[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!"
-                + "*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))");
-        Matcher matcher = url.matcher(messg);
-        lastEnd = 0;
-        while (matcher.find()) {
-            start = matcher.start();
-            if (start != 0) {
-                start += 1;
-            }
-            end = matcher.end();
-            newMessage += messg.substring(lastEnd, start);
-            lastEnd = end;
-            newMessage += "<a href='" + messg.substring(start, end) + "' target='_blank'>";
-            newMessage += messg.substring(start, end);
-            newMessage += "</a>";
-        }
-        newMessage += messg.substring(lastEnd);
-        return newMessage;
-    }
-
-    public boolean isAnnotation() {
-        return isAnnotation;
-    }
-
-    public String getAuthor() {
-        return escapeRdf(source);
+        return liveAnnotationType.getThumbnail();
     }
 
     public String toXml() {
         String out = "<annotation>";
-        out += "<annotationId>" + StringEscapeUtils.escapeXml(annotationId)
-                + "</annotationId>";
-        if (edits != "") {
-            out += "<edits>" + edits + "</edits>";
-        }
-        out += "<author>" + StringEscapeUtils.escapeXml(source) + "</author>";
-        out += "<privacy>" + StringEscapeUtils.escapeXml(privacy)
-                + "</privacy>";
-        out += "<timestamp value=\"" + date.getTime() + "\">" + date.toString()
-                + "</timestamp>";
-        out += "<crewLiveAnnotation>";
+        out += "<type>" + type + "</type>";
+        out += "<id>" + StringEscapeUtils.escapeXml(id) + "</id>";
+        out += "<author>" + StringEscapeUtils.escapeXml(author) + "</author>";
+        out += "<privacy>" + privacy + "</privacy>";
+        out += "<timestamp>" + timestamp + "</timestamp>";
         Iterator<String> bodyKeys = body.keySet().iterator();
         while (bodyKeys.hasNext()) {
             String key = bodyKeys.next();
-            out += "<" + key + ">" + StringEscapeUtils.escapeXml(
-                    body.get(key).replaceAll("\n", " "))
+            out += "<" + key + ">"
+                    + StringEscapeUtils.escapeXml(
+                            body.get(key).replaceAll("\n", " "))
                     + "</" + key + ">";
         }
-        out += "</crewLiveAnnotation>";
         out += "</annotation>";
         return out;
     }
 
-    public Date getDate() {
-        return date;
-    }
-
-    private String escapeRdf(String in) {
-        if (in == null) {
-            return " ";
-        }
-        return StringEscapeUtils.escapeXml(in);
-    }
-
     public String getToolText() {
-        LiveAnnotationType laType =
-            liveAnnotationTypeRepository.findLiveAnnotationType(checkType());
-        return laType.formatAnnotation("input", body);
+        return liveAnnotationType.formatAnnotation("input", body);
     }
 
-    public Map<String, String> getAnnotationBody() {
-        return body;
-    }
-
-    public String getIdent() {
-        return annotator;
-    }
-
-    public String getAnnotationId() {
-        return annotationId;
-    }
-
-    public boolean equals(Object other) {
-        return annotationId.equals(((LiveAnnotation) other).getAnnotationId());
+    public boolean equals(LiveAnnotation annotation) {
+        return id.equals(annotation.id);
     }
 
     public int hashCode() {
-        return annotationId.hashCode();
+        return id.hashCode();
     }
 
 }

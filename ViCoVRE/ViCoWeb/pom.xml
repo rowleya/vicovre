@@ -47,7 +47,7 @@
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
-            <artifactId>ViCoCodecsH261</artifactId>
+            <artifactId>ViCoCodecsVic</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

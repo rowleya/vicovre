@@ -51,7 +51,7 @@
         <button image="/images/annotations/question.png" visible="true" />
         <thumbnail name="/images/annotations/small/question.png" />
         <colour value="#61C4DC" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>
             <player>${CrewLiveAnnotationComment}</player>
@@ -62,7 +62,7 @@
         <button image="/images/annotations/answer.png" visible="true" />
         <thumbnail name="/images/annotations/small/answer.png" />
         <colour value="#FFFF99" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>
             <player>${CrewLiveAnnotationComment}</player>
@@ -73,8 +73,8 @@
         <button image="/images/annotations/response.png" visible="inline" />
         <thumbnail name="/images/annotations/small/response.png" />
         <colour value="#FFFF99" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
-        <contains name="CrewLiveAnnotationRelatesTo" type="messageId" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationRelatesTo" type="messageId" />
         <format>
             <relatesTo>${CrewLiveAnnotationRelatesTo}</relatesTo>
             <input>${CrewLiveAnnotationComment}</input>
@@ -86,7 +86,7 @@
         <button image="/images/annotations/comment.png" visible="true" />
         <thumbnail name="/images/annotations/small/comment.png" />
         <colour value="#FFFFFF" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>
             <player>${CrewLiveAnnotationComment}</player>
@@ -97,7 +97,7 @@
         <button image="/images/annotations/important.png" visible="true" />
         <thumbnail name="/images/annotations/small/important.png" />
         <colour value="#CD3610" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>
             <player>${CrewLiveAnnotationComment}</player>
@@ -108,9 +108,9 @@
         <button image="/images/annotations/link.png" visible="true" />
         <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
-        <contains name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
-        <contains name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png" displayname="Url" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
+        <field name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png" displayname="Url" />
         <format>
             <input>&lt;a href="${CrewLiveAnnotationUrl}"&gt;${CrewLiveAnnotationTitle} (&lt;img src="${CrewLiveAnnotationUrl.image}" /&gt; ${CrewLiveAnnotationUrl})&lt;/a&gt; ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt;&lt;br/&gt;&lt;font color="#0000ff"&gt;${CrewLiveAnnotationUrl}&lt;/font&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -126,8 +126,8 @@
         <button image="/images/annotations/link.png" visible="false" />
         <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" />
-        <contains name="CrewLiveAnnotationTitle" type="text"/>
+        <field name="CrewLiveAnnotationComment" type="textarea" />
+        <field name="CrewLiveAnnotationTitle" type="text"/>
         <format>
             <input>&lt;em&gt;${CrewLiveAnnotationTitle}&lt;/em&gt; ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -141,8 +141,8 @@
         <button image="/images/annotations/link.png" visible="false" />
         <thumbnail name="/images/annotations/small/link.png" />
         <colour value="#5CD43A" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" />
-        <contains name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png"/>
+        <field name="CrewLiveAnnotationComment" type="textarea" />
+        <field name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png"/>
         <format>
             <input>&lt;a href="${CrewLiveAnnotationUrl}"&gt;${CrewLiveAnnotationUrl}&lt;/a&gt; ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;&lt;font color="#0000ff"&gt;${CrewLiveAnnotationUrl}&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -156,10 +156,10 @@
         <button image="/images/annotations/person.png" visible="true" />
         <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
-        <contains name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
-        <contains name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png" displayname="Url" />
-        <contains name="CrewLiveAnnotationEmail" type="text" image="/img/small/email.png" displayname="Email" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationTitle" type="text" displayname="Name" />
+        <field name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png" displayname="Url" />
+        <field name="CrewLiveAnnotationEmail" type="text" image="/img/small/email.png" displayname="Email" />
         <format>
             <input>${CrewLiveAnnotationTitle} (&lt;a href="mailto:${CrewLiveAnnotationEmail}"&gt;&lt;img src="${CrewLiveAnnotationEmail.image}"&gt; ${CrewLiveAnnotationEmail} /&lt;/a&gt;, &lt;a href="${CrewLiveAnnotationUrl}"&gt;&lt;img src="${CrewLiveAnnotationUrl.image}" /&gt; ${CrewLiveAnnotationUrl}&lt;/a&gt;) ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt;&lt;br/&gt;&lt;font color="#0000ff"&gt;${CrewLiveAnnotationUrl}&lt;br/&gt;${CrewLiveAnnotationEmail}&lt;/font&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -177,9 +177,9 @@
         <button image="/images/annotations/person.png" visible="false" />
         <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" />
-        <contains name="CrewLiveAnnotationTitle" type="text"/>
-        <contains name="CrewLiveAnnotationEmail" type="text" image="/img/small/email.png"/>
+        <field name="CrewLiveAnnotationComment" type="textarea" />
+        <field name="CrewLiveAnnotationTitle" type="text"/>
+        <field name="CrewLiveAnnotationEmail" type="text" image="/img/small/email.png"/>
         <format>
             <input>${CrewLiveAnnotationTitle} (&lt;a href="mailto:${CrewLiveAnnotationEmail}"&gt;&lt;img src="${CrewLiveAnnotationEmail.image}" /&gt; ${CrewLiveAnnotationEmail}&lt;/a&gt;) ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt;&lt;br/&gt;&lt;font color="#0000ff"&gt;${CrewLiveAnnotationEmail}&lt;/font&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -193,9 +193,9 @@
         <button image="/images/annotations/person.png" visible="false" />
         <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" />
-        <contains name="CrewLiveAnnotationTitle" type="text"/>
-        <contains name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png"/>
+        <field name="CrewLiveAnnotationComment" type="textarea" />
+        <field name="CrewLiveAnnotationTitle" type="text"/>
+        <field name="CrewLiveAnnotationUrl" type="text" image="/img/small/link.png"/>
         <format>
             <input>${CrewLiveAnnotationTitle} (&lt;a href="${CrewLiveAnnotationUrl}"&gt;&lt;img src="${CrewLiveAnnotationUrl.image}" /&gt; ${CrewLiveAnnotationUrl}&lt;/a&gt;) ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt;&lt;br/&gt;&lt;font color="#0000ff"&gt;${CrewLiveAnnotationUrl}&lt;/font&gt;&lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -209,8 +209,8 @@
         <button image="/images/annotations/person.png" visible="false" />
         <thumbnail name="/images/annotations/small/person.png" />
         <colour value="#CDA781" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" />
-        <contains name="CrewLiveAnnotationTitle" type="text" />
+        <field name="CrewLiveAnnotationComment" type="textarea" />
+        <field name="CrewLiveAnnotationTitle" type="text" />
         <format>
             <input>&lt;em&gt;${CrewLiveAnnotationTitle}&lt;/em&gt; ${CrewLiveAnnotationComment}</input>
             <player>&lt;b&gt;${CrewLiveAnnotationTitle}&lt;/b&gt; &lt;br/&gt;${CrewLiveAnnotationComment}</player>
@@ -223,7 +223,7 @@
     <liveAnnotationType name="Slide" index="1">
         <button image="/images/annotations/slide.png" visible="true" />
         <thumbnail name="/images/annotations/small/slide.png" />
-        <contains name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
+        <field name="CrewLiveAnnotationComment" type="textarea" displayname="Comment" />
         <format>
             <input>${CrewLiveAnnotationComment}</input>
             <player>${CrewLiveAnnotationComment}</player>

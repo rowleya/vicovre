@@ -34,44 +34,86 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-import java.util.Iterator;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Vector;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import javax.swing.Timer;
+
 
 import com.googlecode.vicovre.annotations.LiveAnnotation;
-import com.googlecode.vicovre.annotations.LiveAnnotationClient;
-import com.googlecode.vicovre.annotations.LiveAnnotationEvent;
 
-public class Client {
-
-    private LinkedList<LiveAnnotationEvent> queue =
-        new LinkedList<LiveAnnotationEvent>();
-
-    private boolean done = false;
-
-    private LiveAnnotationClient clientDetails = null;
+public class Client implements ActionListener {
 
     private static final int WAIT_TIME = 10000;
 
-    private Server annotationServer = null;
+    private String name = null;
+
+    private String email = null;
+
+    private LinkedList<Message> queue = new LinkedList<Message>();
+
+    private boolean done = false;
+
+    private Server server = null;
+
+    private Integer storeSync = new Integer(0);
+
+    private PrintWriter storeWriter = null;
+
+    private Timer timer = null;
 
     /**
      * Creates a new Client
      *
      */
-    public Client(Server server, String name, String email) {
-        annotationServer = server;
-        this.clientDetails = new LiveAnnotationClient(name, email);
-        if (annotationServer != null) {
-            annotationServer.addClient(this);
+    protected Client(Server server, File storeDirectory, String name,
+            String email) {
+        this.server = server;
+        this.name = name;
+        this.email = email;
+        if (storeDirectory != null) {
+            try {
+                this.storeWriter = new PrintWriter(
+                        getStoreFile(storeDirectory));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        timer = new Timer(WAIT_TIME * 2, this);
+        timer.start();
+    }
+
+    private File getStoreFile(File storeDirectory) {
+        File file = new File(storeDirectory,
+                email.replace("@", "_at_") + "_annotations.xml");
+        file.getParentFile().mkdirs();
+        return file;
+    }
+
+    protected void setStoreDirectory(File storeDirectory) {
+        synchronized (storeSync) {
+            if (storeDirectory != null) {
+                try {
+                    this.storeWriter = new PrintWriter(
+                            getStoreFile(storeDirectory));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                this.storeWriter = null;
+            }
         }
     }
 
     // Gets all the messages in the queue
-    private LiveAnnotationEvent getAnnotation() {
-        LiveAnnotationEvent annotation = null;
+    public Message getNextMessage() {
+        timer.restart();
+        Message annotation = new NoMessage();
         synchronized (queue) {
             if (!done && queue.isEmpty()) {
                 try {
@@ -88,19 +130,19 @@ public class Client {
     }
 
     // Adds a message to the queue
-    public void addAnnotation(LiveAnnotationEvent annotation) {
+    public void addMessage(Message message) {
         synchronized (queue) {
-            queue.addLast(annotation);
+            queue.addLast(message);
             queue.notifyAll();
         }
     }
 
-    public String getClientUserName() {
-        return clientDetails.getName();
+    public String getName() {
+        return name;
     }
 
-    public LiveAnnotationClient getClientDetails() {
-        return clientDetails;
+    public String getEmail() {
+        return email;
     }
 
     public Vector<String> getSessions() {
@@ -109,53 +151,31 @@ public class Client {
     }
 
     /**
-     * Waits until the messages are available and then gets them
-     *
-     * @return The messages in the queue
-     */
-    public String getMessage() {
-        Client client = null;
-        String out = "<type>None</type>";
-        LiveAnnotationEvent ann = getAnnotation();
-        if (ann != null) {
-            out = "<type>" + ann.getClass().getSimpleName() + "</type>";
-            out += "<displayName>" + ann.getIdent() + "</displayName>";
-            if (ann.getClass() == LiveAnnotation.class) {
-                client = (Client) ((LiveAnnotation) ann).getClient();
-                out += "<messageId>"
-                        + ((LiveAnnotation) ann).getAnnotationId()
-                        + "</messageId>";
-                if (client == this) {
-                    out += "<submittingClient>true</submittingClient>";
-                }
-                try {
-                    out += "<crew_annotation>" + StringEscapeUtils.escapeXml(
-                                ((LiveAnnotation) ann).getToolText()) + "</crew_annotation>";
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            out += "<colour>" + annotationServer.getColour(ann.getIdent()) + "</colour>";
-            out += ann.toXml();
-        }
-        return out;
-    }
-
-    /**
      * Closes the connection to the server
      */
     public void close() {
+        timer.stop();
         done = true;
-        clientDetails.setEvent("remove");
-        annotationServer.addAnnotation(clientDetails);
-        annotationServer.close(this);
+        synchronized (storeSync) {
+            if (storeWriter != null) {
+                storeWriter.close();
+            }
+        }
+        server.deleteClient(this);
     }
 
     public void setMessage(LiveAnnotation annotation) {
-        annotation.setAnnotator(clientDetails.getName());
-        annotation.setAuthor(clientDetails.getEmail());
-        annotation.setClient(this);
-        annotationServer.addAnnotation(annotation);
+        annotation.setAuthor(email);
+        synchronized (storeSync) {
+            if (storeWriter != null) {
+                storeWriter.println(annotation.toXml());
+            }
+        }
+        server.addMessage(new AddAnnotationMessage(this, annotation));
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        close();
     }
 
 }

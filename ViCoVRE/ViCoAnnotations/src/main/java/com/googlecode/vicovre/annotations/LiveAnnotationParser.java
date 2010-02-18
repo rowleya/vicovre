@@ -35,6 +35,7 @@
 package com.googlecode.vicovre.annotations;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 
 import javax.xml.parsers.SAXParser;
@@ -53,20 +54,25 @@ public class LiveAnnotationParser extends DefaultHandler {
 
     private LiveAnnotation annotation = null;
 
-    public void parse(String xml) throws SAXException {
+    public void parse(String xml) {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         String txt = xml;
-        SAXParser saxParser;
         try {
-            saxParser = factory.newSAXParser();
+            SAXParser saxParser = factory.newSAXParser();
             saxParser.parse(new ByteArrayInputStream(txt.getBytes()), this);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public LiveAnnotationParser(LiveAnnotation ann) throws SAXException {
-        annotation = ann;
+    public void parse(InputStream inputStream) {
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        try {
+            SAXParser saxParser = factory.newSAXParser();
+            saxParser.parse(inputStream, this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void characters(char[] buf, int offset, int len) throws SAXException {
@@ -80,7 +86,8 @@ public class LiveAnnotationParser extends DefaultHandler {
             Attributes attr) {
         Class< ? > cls = annotation.getClass();
         if (attr.getLength() != 0) {
-            String name = "set" + qname.substring(0, 1).toUpperCase() + qname.substring(1);
+            String name = "set" + qname.substring(0, 1).toUpperCase()
+                + qname.substring(1);
             try {
                 Method meth = cls.getMethod(name, Attributes.class);
                 meth.invoke(annotation, new Object[] {attr});

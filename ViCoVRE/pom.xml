@@ -14,8 +14,7 @@
     <modules>
         <module>ViCoAnnotations</module>
         <module>ViCoCodecs</module>
-        <module>ViCoGWTRecorderInterface</module>
-        <module>ViCoGWTAnnotationsInterface</module>
+        <module>ViCoGWT</module>
         <module>ViCoLiveAnnotations</module>
         <module>ViCoMedia</module>
         <module>ViCoPlayer</module>
@@ -86,6 +85,11 @@
         <repository>
             <id>ilrt-maven-repo</id>
             <url>http://maven.ilrt.bris.ac.uk/</url>
+        </repository>
+        <repository>
+           <id>maven-restlet</id>
+           <name>Public online Restlet repository</name>
+           <url>http://maven.restlet.org</url>
         </repository>
         <repository>
             <id>manchester.repo</id>
