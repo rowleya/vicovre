@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+    <bean id="liveAnnotationTypeRepository" class="com.googlecode.vicovre.repositories.liveAnnotation.impl.LiveAnnotationTypeRepositoryXmlImpl">
+        <constructor-arg><value>/liveannotations.xml</value></constructor-arg>
+    </bean>
+
+    <bean id="server" class="com.googlecode.vicovre.annotations.live.Server" destroy-method="closeAll">
+        <constructor-arg><ref bean="liveAnnotationTypeRepository"/></constructor-arg>
+    </bean>
+</beans>

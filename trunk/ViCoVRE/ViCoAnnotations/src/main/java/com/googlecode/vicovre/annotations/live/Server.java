@@ -35,205 +35,135 @@
 package com.googlecode.vicovre.annotations.live;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Vector;
 
-import com.googlecode.vicovre.annotations.LiveAnnotation;
-import com.googlecode.vicovre.annotations.LiveAnnotationClient;
-import com.googlecode.vicovre.annotations.LiveAnnotationEvent;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
 
 public class Server extends Thread {
 
-    private static final String ROOM_COLOR = "#00CC00";
+    private LinkedList<Message> queue = new LinkedList<Message>();
 
-    private LinkedList<LiveAnnotationEvent> annotationQueue =
-        new LinkedList<LiveAnnotationEvent>();
+    private LinkedList<Message> history = new LinkedList<Message>();
 
-    private Integer outFileSync = new Integer(0);
+    private HashMap<String, Client> clients = new HashMap<String, Client>();
 
-    private PrintWriter outFile = null;
+    private HashSet<String> usernames = new HashSet<String>();
 
-    private LinkedList<Client> clients = new LinkedList<Client>();
+    private File storeDirectory = null;
 
-    private LinkedList<LiveAnnotationEvent> history =
-        new LinkedList<LiveAnnotationEvent>();
-
-    private LiveAnnotationTypeRepository liveAnnotationTypes = null;
-
-    private String[] colours = null;
-
-    private int currentColour = 0;
-
-    private HashMap<String, String> userColours = new HashMap<String, String>();
+    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
 
     private boolean done = false;
 
     public Server(LiveAnnotationTypeRepository liveAnnotationTypes) {
-        this.liveAnnotationTypes = liveAnnotationTypes;
-        this.colours =
-            liveAnnotationTypes.getProperties().getTextColours().toArray(
-                    new String[0]);
-        userColours.put("", ROOM_COLOR);
+        this.liveAnnotationTypeRepository = liveAnnotationTypes;
         Runtime.getRuntime().addShutdownHook(new DoShutdown());
+        start();
     }
 
     public LiveAnnotationTypeRepository getLiveAnnotationTypeRepository() {
-        return liveAnnotationTypes;
+        return liveAnnotationTypeRepository;
     }
 
-    public String getColour(String from) {
-        String colour = (String) userColours.get(from);
-        if (colour == null) {
-            currentColour = (currentColour + 1) % colours.length;
-            colour = colours[currentColour];
-            userColours.put(from, colour);
-        }
-        return colour;
-    }
-
-    public void setAnnotationFile(String filename) {
-        synchronized (outFileSync) {
-            if (outFile != null) {
-                outFile.close();
-            }
-            File dumpFile = new File(filename);
-            try {
-                if (dumpFile.getParentFile() != null) {
-                    dumpFile.getParentFile().mkdirs();
-                }
-                dumpFile.createNewFile();
-                outFile = new PrintWriter(new FileWriter(filename, true));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    public void setStoreDirectory(File storeDirectory) {
+        this.storeDirectory = storeDirectory;
     }
 
     public void run() {
         done = false;
         while (!done) {
-            processAnnotations(false);
+            processMessages();
         }
     }
 
-    public void addClient(Client client) {
+    public Client createClient(String name, String email)
+            throws NameInUseException {
+        Client client = new Client(this, storeDirectory, name, email);
         synchronized (clients) {
-            clients.add(client);
-            addAnnotation(client.getClientDetails());
+            if (clients.containsKey(email)) {
+                throw new NameInUseException();
+            }
+            if (usernames.contains(name)) {
+                throw new NameInUseException();
+            }
+            clients.put(email, client);
+            usernames.add(name);
+            addMessage(new AddUserMessage(client));
             synchronized (history) {
-                for (LiveAnnotationEvent annotation : history) {
-                    client.addAnnotation(annotation);
+                for (Message annotation : history) {
+                    client.addMessage(annotation);
                 }
             }
         }
+        return client;
     }
 
-    public void close(Client client) {
+    public void deleteClient(Client client) {
         synchronized (clients) {
-            clients.remove(client);
+            clients.remove(client.getEmail());
+            usernames.remove(client.getName());
         }
-        LiveAnnotationClient details = client.getClientDetails();
-        details.setEvent("remove");
-        addAnnotation(details);
+        addMessage(new DeleteUserMessage(client));
     }
 
     public void closeAll() {
-        System.out.println("closeAll");
-        synchronized (annotationQueue) {
+        synchronized (queue) {
             done = true;
-            annotationQueue.notifyAll();
+            queue.notifyAll();
             synchronized (clients) {
-                Vector<Client> clientList = new Vector<Client>(clients);
-                Iterator<Client> iter = clientList.iterator();
-                while  (iter.hasNext()) {
-                    iter.next().close();
+                for (Client client : clients.values()) {
+                    client.close();
                 }
             }
         }
     }
 
-    public void addAnnotation(LiveAnnotationEvent annotation) {
-        synchronized (annotationQueue) {
+    public void addMessage(Message message) {
+        synchronized (queue) {
             if (!done) {
-                annotationQueue.addLast(annotation);
-                annotationQueue.notifyAll();
+                queue.addLast(message);
+                queue.notifyAll();
             }
         }
     }
 
-    private void processAnnotations(boolean clientsChanged) {
-        LiveAnnotationEvent annotation = null;
-        Client clientToSend = null;
-        synchronized (annotationQueue) {
-           if (!done && annotationQueue.isEmpty()) {
+    private void processMessages() {
+        Message message = null;
+        synchronized (queue) {
+           if (!done && queue.isEmpty()) {
                 try {
-                    annotationQueue.wait();
+                    queue.wait();
                 } catch (InterruptedException e) {
                     // Do Nothing
                 }
             }
-            if (!annotationQueue.isEmpty()) {
-                annotation = annotationQueue.removeFirst();
+            if (!queue.isEmpty()) {
+                message = queue.removeFirst();
             }
-            annotationQueue.notifyAll();
+            queue.notifyAll();
         }
-        if (annotation != null) {
-            if (annotation.getClass() == LiveAnnotation.class) {
-                    storeAnnotation((LiveAnnotation) annotation);
-                    if (((LiveAnnotation)
-                            annotation).getPrivacy().equals("private")) {
-                        clientToSend = (Client) ((LiveAnnotation)
-                                annotation).getClient();
-                    }
-            }
-            if (clientToSend != null) {
+        if (message != null) {
+            if (message.isPrivate()) {
                 synchronized (clients) {
-                    clientToSend.addAnnotation(annotation);
+                    message.getClient().addMessage(message);
                 }
             } else {
                 synchronized (history) {
-                    history.add(annotation);
+                    history.add(message);
                 }
                 synchronized (clients) {
-                    Iterator<Client> iter = clients.iterator();
-                    while  (iter.hasNext()) {
-                        iter.next().addAnnotation(annotation);
+                    for (Client client : clients.values()) {
+                        client.addMessage(message);
                     }
                 }
             }
         }
     }
 
-    public LinkedList<LiveAnnotationEvent> getHistory() {
+    public LinkedList<Message> getHistory() {
         return history;
-    }
-
-    public LiveAnnotationEvent getFromHistory(String messageId) {
-        LiveAnnotation compareTo = new LiveAnnotation(messageId);
-        ListIterator<LiveAnnotationEvent> historyIter =
-            history.listIterator(history.size() - 1);
-        while (historyIter.hasPrevious()) {
-            LiveAnnotationEvent ann = historyIter.previous();
-            if (ann.equals(compareTo)) {
-                return ann;
-            }
-        }
-        return null;
-    }
-
-    private void storeAnnotation(LiveAnnotation annotation) {
-        synchronized (outFileSync) {
-            if (outFile != null) {
-                outFile.println(annotation.toXml());
-                outFile.flush();
-            }
-        }
     }
 
     private class DoShutdown extends Thread {

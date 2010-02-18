@@ -39,7 +39,6 @@ import info.clearthought.layout.TableLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -264,7 +263,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private File annotationDirectory = null;
 
-    private File notRecordingAnnotationsFile = null;
+    private File notRecordingAnnotationsDir = null;
 
     private boolean databaseLoaded = false;
 
@@ -477,10 +476,10 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 webapp.getServletContext().getAttribute("server");
             annotationDirectory = new File(dataDirectory, "annotations");
             annotationDirectory.mkdirs();
-            notRecordingAnnotationsFile = new File(annotationDirectory,
-                    "notrecorded.xml");
-            liveAnnotationsServer.setAnnotationFile(
-                    notRecordingAnnotationsFile.getAbsolutePath());
+            notRecordingAnnotationsDir = new File(annotationDirectory,
+                    "notrecorded");
+            liveAnnotationsServer.setStoreDirectory(
+                    notRecordingAnnotationsDir);
             progress.dispose();
         } catch (Throwable e) {
             progress.dispose();
@@ -689,10 +688,9 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void startRecording() {
         archiveManager = new RecordArchiveManager(typeRepository,
                 recordingDatabase.getTopLevelFolder());
-        File annotationFile = new File(annotationDirectory,
-                archiveManager.getRecording().getId() + ".xml");
-        liveAnnotationsServer.setAnnotationFile(
-                annotationFile.getAbsolutePath());
+        File annotationDir = new File(annotationDirectory,
+                archiveManager.getRecording().getId());
+        liveAnnotationsServer.setStoreDirectory(annotationDir);
         archiveManager.enableRecording();
         recordingSource.setArchiveManager(archiveManager);
         recordButton.setText("Stop Recording");
@@ -705,8 +703,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         try {
             archiveManager.disableRecording();
             archiveManager.terminate();
-            liveAnnotationsServer.setAnnotationFile(
-                    notRecordingAnnotationsFile.getAbsolutePath());
+            liveAnnotationsServer.setStoreDirectory(
+                    notRecordingAnnotationsDir);
             recordingSource.setArchiveManager(null);
             isRecordedCanvas.setTick(true);
             recordButton.setText("Start Recording");
@@ -781,9 +779,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     public void addLocalVideo(String name, DataSource dataSource, long ssrc)
             throws IOException {
         System.err.println("Adding local video");
-        if (ssrc < 0) {
-            ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
-        }
         PushBufferStream[] datastreams =
             ((PushBufferDataSource) dataSource).getStreams();
         RGBRenderer previewRenderer = new RGBRenderer(new Effect[]{});

@@ -112,6 +112,14 @@ public class LiveAnnotationType {
         return new Vector<String>(fieldAttributes.keySet());
     }
 
+    public List<String> getFieldAttributes(String field) {
+        return new Vector<String>(fieldAttributes.get(field).keySet());
+    }
+
+    public String getFieldAttribute(String field, String attribute) {
+        return fieldAttributes.get(field).get(attribute);
+    }
+
     public String getFieldsJS() {
         String out = "{";
         String delim = "";
