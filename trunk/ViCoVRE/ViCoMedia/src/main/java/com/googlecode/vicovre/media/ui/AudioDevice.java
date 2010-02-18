@@ -378,10 +378,14 @@ public class AudioDevice implements ControllerListener {
      */
     public void start(LocalStreamListener listener, String line)
             throws NoPlayerException, CannotRealizeException, IOException {
+        long ssrc = sendStream.getSSRC();
+        if (ssrc < 0) {
+            ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
+        }
         if (!started) {
             if (listener != null) {
                 listener.addLocalAudio(name + " - " + line, cloneEffect,
-                    volumeControls.get(line), sendStream.getSSRC());
+                    volumeControls.get(line), ssrc);
             }
             dataSource.connect();
             sendStream.start();
@@ -391,7 +395,7 @@ public class AudioDevice implements ControllerListener {
             if (listener != null) {
                 listener.removeLocalAudio(cloneEffect);
                 listener.addLocalAudio(name + " - " + line, cloneEffect,
-                        volumeControls.get(line), sendStream.getSSRC());
+                        volumeControls.get(line), ssrc);
             }
         }
     }

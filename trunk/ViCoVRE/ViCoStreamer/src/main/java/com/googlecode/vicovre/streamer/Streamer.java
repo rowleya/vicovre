@@ -209,6 +209,8 @@ public class Streamer extends JFrame implements ActionListener {
         location.setHost(address);
         location.setPort(port);
 
+        agController.setLocationCapabilities(location,
+                new Capability[]{VIDEO_CAPABILITY, AUDIO_CAPABILITY});
         agController.connectToLocation(location);
         System.err.println("Connecting to " + location);
     }

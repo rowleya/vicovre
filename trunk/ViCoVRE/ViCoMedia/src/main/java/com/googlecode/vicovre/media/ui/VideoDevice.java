@@ -337,8 +337,11 @@ public class VideoDevice implements ControllerListener,
         if (!deviceStarted && prepared) {
             this.listener = listener;
             if (listener != null) {
-                listener.addLocalVideo(device.getName(), cloneEffect,
-                        sendStream.getSSRC());
+                long ssrc = sendStream.getSSRC();
+                if (ssrc < 0) {
+                    ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
+                }
+                listener.addLocalVideo(device.getName(), cloneEffect, ssrc);
             }
             dataSource.connect();
             sendStream.start();
