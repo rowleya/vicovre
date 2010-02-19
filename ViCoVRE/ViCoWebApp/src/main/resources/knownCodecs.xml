@@ -16,6 +16,9 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.JPEGDecoder</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.SWScaleCodec</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.vic.NativeEncoder</class>
     </codec>
     <codec>
@@ -23,12 +26,6 @@
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.linear.RateConverter</class>
-    </codec>
-    <codec>
-        <class>com.googlecode.vicovre.codecs.colourspace.YUV420RGB32Converter</class>
-    </codec>
-    <codec>
-        <class>com.sun.media.codec.video.colorspace.JavaRGBToYUV</class>
     </codec>
     <codec>
         <class>com.sun.media.codec.audio.ulaw.DePacketizer</class>
