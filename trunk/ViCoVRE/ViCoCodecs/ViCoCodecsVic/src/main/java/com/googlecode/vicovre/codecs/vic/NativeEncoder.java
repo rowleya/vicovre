@@ -70,6 +70,9 @@ public class NativeEncoder implements Codec {
     int sequenceNo = 0;
 
     public Format[] getSupportedInputFormats() {
+        if (codec != -1) {
+            return new Format[]{CODECS[codec].getOutputFormat()};
+        }
         Format[] formats = new Format[CODECS.length];
         for (int i = 0; i < CODECS.length; i++) {
             formats[i] = CODECS[i].getOutputFormat();
@@ -85,12 +88,19 @@ public class NativeEncoder implements Codec {
             }
             return formats;
         }
+        if (codec != -1) {
+            if (CODECS[codec].getOutputFormat().matches(input)) {
+                return new Format[]{CODECS[codec].getInputFormat()};
+            }
+            return new Format[0];
+        }
         Vector<Format> outputFormats = new Vector<Format>();
         for (int i = 0; i < CODECS.length; i++) {
             if (CODECS[i].getOutputFormat().matches(input)) {
                 outputFormats.add(CODECS[i].getInputFormat());
             }
         }
+        System.err.println("For input " + input + " outputs = " + outputFormats);
         return outputFormats.toArray(new Format[0]);
     }
 
