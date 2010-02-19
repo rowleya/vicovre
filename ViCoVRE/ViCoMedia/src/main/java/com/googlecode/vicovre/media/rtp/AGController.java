@@ -357,6 +357,10 @@ public class AGController {
                 if (ctl != null) {
                     Format format = ctl.getFormat();
                     long realSsrc = event.getReceiveStream().getSSRC();
+                    if (realSsrc < 0) {
+                        realSsrc = realSsrc
+                            + (((long) Integer.MAX_VALUE + 1) * 2);
+                    }
                     if (!ssrcMap.containsKey(realSsrc)) {
                         long ssrc = getNewSsrc(realSsrc);
                         ssrcMap.put(realSsrc, ssrc);
@@ -388,6 +392,10 @@ public class AGController {
                     if (ctl != null) {
                         Format format = ctl.getFormat();
                         long realSsrc = event.getReceiveStream().getSSRC();
+                        if (realSsrc < 0) {
+                            realSsrc = realSsrc
+                                + (((long) Integer.MAX_VALUE + 1) * 2);
+                        }
                         long ssrc = ssrcMap.get(realSsrc);
                         streams.remove(realSsrc);
                         if (format instanceof VideoFormat) {
@@ -421,6 +429,10 @@ public class AGController {
                 }
                 if ((report != null) && (report.getParticipant() != null)) {
                     long realSsrc = report.getSSRC();
+                    if (realSsrc < 0) {
+                        realSsrc = realSsrc
+                            + (((long) Integer.MAX_VALUE + 1) * 2);
+                    }
                     if (ssrcMap.containsKey(realSsrc)) {
                         long ssrc = ssrcMap.get(realSsrc);
                         Vector< ? > sdes =
