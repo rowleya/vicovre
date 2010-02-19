@@ -47,4 +47,15 @@ public class H261Decoder extends FFMPEGDecoder {
     public H261Decoder() {
         super(VideoFormat.H261);
     }
+
+    /**
+     * {@inheritDoc}
+     * @see com.googlecode.vicovre.codecs.ffmpeg.FFMPEGCodec#getContext()
+     */
+    public CodecContext getContext() {
+        CodecContext context = new CodecContext();
+        getCodecContext(context);
+        context.setFlags(context.getFlags() | CodecContext.CODEC_FLAG_TRUNCATED);
+        return context;
+    }
 }
