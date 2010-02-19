@@ -13,6 +13,9 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.H264RTPDecoder</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.SWScaleCodec</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.vic.NativeEncoder</class>
     </codec>
     <codec>
@@ -26,15 +29,6 @@
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.linear.RateConverter</class>
-    </codec>
-    <codec>
-        <class>com.googlecode.vicovre.codecs.colourspace.YUV420RGB32Converter</class>
-    </codec>
-    <codec>
-        <class>com.googlecode.vicovre.codecs.colourspace.YUV422RGB32Converter</class>
-    </codec>
-    <codec>
-        <class>com.sun.media.codec.video.colorspace.JavaRGBToYUV</class>
     </codec>
     <codec>
         <class>com.ibm.media.codec.audio.ulaw.JavaEncoder</class>

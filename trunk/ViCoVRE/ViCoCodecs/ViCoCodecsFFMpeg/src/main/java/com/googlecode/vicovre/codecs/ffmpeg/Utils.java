@@ -1237,7 +1237,7 @@ public class Utils {
      * @return the set of formats supported
      */
     public static VideoFormat[] getVideoFormats(Dimension size,
-            int frameRate) {
+            float frameRate) {
         Vector<VideoFormat> formats = new Vector<VideoFormat>();
         for (PixelFormat i : PixelFormat.values()) {
             VideoFormat format = getVideoFormat(i, size, frameRate);

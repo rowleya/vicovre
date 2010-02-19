@@ -94,7 +94,7 @@
         </sequential>
     </macrodef>
 
-    <import file="os.xml"/>
+    <import file="../../../../../VicoCodecsCommons/src/main/native/resources/os.xml"/>
 
     <exec executable="pwd" osfamily="windows" outputproperty="msys.path"/>
 
