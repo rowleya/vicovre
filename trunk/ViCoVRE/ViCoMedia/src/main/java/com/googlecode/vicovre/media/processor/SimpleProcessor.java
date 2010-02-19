@@ -312,11 +312,13 @@ public class SimpleProcessor {
         HashMap<String, Boolean> searched = new HashMap<String, Boolean>();
         Codecs codecList = null;
         boolean forward = false;
+        System.err.println("Finding codecs from " + inputFormat + " to "
+                + outputFormat);
         if ((outputFormat instanceof RGBFormat)
                 || (outputFormat instanceof YUVFormat)
                 || (outputFormat instanceof AudioFormat)
-                || (!(inputFormat instanceof RGBFormat))
-                || (!(inputFormat instanceof YUVFormat))) {
+                || ((!(inputFormat instanceof RGBFormat))
+                && (!(inputFormat instanceof YUVFormat)))) {
             codecList = search(inputFormat, outputFormat, searched, true);
             forward = true;
         } else {
@@ -600,6 +602,8 @@ public class SimpleProcessor {
                         searchCodecs.outputFormatList.addFirst(out);
                         return searchCodecs;
                     }
+                    System.err.println("Immediate codec " + codecClassName
+                            + " failed");
                 } catch (Exception e) {
                     System.err.println("Warning: " + e.getMessage());
                 }
@@ -612,7 +616,8 @@ public class SimpleProcessor {
             codecsFromHere = PlugInManager.getPlugInList(null, output,
                     PlugInManager.CODEC);
         }
-        System.err.println("Trying codecs " + codecsFromHere);
+        System.err.println("Trying codecs " + codecsFromHere
+                + (forward? " forwards" : " backwards"));
         for (int i = 0; i < codecsFromHere.size(); i++) {
             String codecClassName = (String) codecsFromHere.get(i);
             if (!searched.containsKey(codecClassName)) {
