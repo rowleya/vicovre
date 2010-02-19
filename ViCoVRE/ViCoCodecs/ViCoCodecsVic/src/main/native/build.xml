@@ -3,7 +3,7 @@
     <property name="mingw.path" value="C:\mingw"/>
     <property environment="getenv"/>
 
-    <import file="os.xml"/>
+    <import file="../../../../ViCoCodecsCommons/src/main/native/resources/os.xml"/>
 
     <macrodef name="build">
         <attribute name="cc"/>
@@ -26,7 +26,7 @@
                 <arg line="-I"/><arg file="src/vic/codec/p64"/>
                 <arg line="-I"/><arg file="src/vic/net"/>
                 <arg line="-I"/><arg file="src/vic/rtp"/>
-                <arg line="-g"/>
+                <arg line="-O3"/>
                 <ccopts/>
                 <arg line="-o"/>
                 <arg file="../resources/native/@{output}"/>
