@@ -1,0 +1,84 @@
+<project name="os">
+    <condition property="os.isWindows32">
+        <or>
+            <os family="windows" arch="x86"/>
+            <os family="windows" arch="i386"/>
+        </or>
+    </condition>
+    <condition property="os.isWindows64">
+        <or>
+            <os family="windows" arch="amd64"/>
+            <os family="windows" arch="x86_64"/>
+        </or>
+    </condition>
+    <condition property="os.isWindows">
+        <or>
+            <isset property="os.isWindows32"/>
+            <isset property="os.isWindows64"/>
+        </or>
+    </condition>
+    <condition property="os.isMac32">
+        <or>
+            <os family="mac" arch="x86"/>
+            <os family="mac" arch="i386"/>
+        </or>
+    </condition>
+    <condition property="os.isMac64">
+        <or>
+            <os family="mac" arch="amd64"/>
+            <os family="mac" arch="x86_64"/>
+        </or>
+    </condition>
+    <condition property="os.isMac">
+        <or>
+            <isset property="os.isMac32"/>
+            <isset property="os.isMac64"/>
+        </or>
+    </condition>
+    <condition property="os.isUnix32">
+        <and>
+            <or>
+                <os family="unix" arch="x86"/>
+                <os family="unix" arch="i386"/>
+            </or>
+            <not>
+                <os family="mac"/>
+            </not>
+        </and>
+    </condition>
+    <condition property="os.isUnix64">
+        <and>
+            <or>
+                <os family="unix" arch="amd64"/>
+                <os family="unix" arch="x86_64"/>
+            </or>
+            <not>
+                <os family="mac"/>
+            </not>
+        </and>
+    </condition>
+    <condition property="os.isUnix">
+        <or>
+            <isset property="os.isUnix32"/>
+            <isset property="os.isUnix64"/>
+        </or>
+    </condition>
+    <echo message="Windows 32?:     ${os.isWindows32}"/>
+    <echo message="Windows 64?:     ${os.isWindows64}"/>
+    <echo message="Mac 32?:         ${os.isMac32}"/>
+    <echo message="Mac 64?:         ${os.isMac64}"/>
+    <echo message="Unix 32?:        ${os.isUnix32}"/>
+    <echo message="Unix 64?:        ${os.isUnix64}"/>
+    <echo message="basedir:         ${basedir}"/>
+    <fail message="Operating System Unsupported">
+        <condition>
+            <not>
+                <or>
+                    <isset property="os.isWindows"/>
+                    <isset property="os.isMac"/>
+                    <isset property="os.isUnix"/>
+                </or>
+            </not>
+        </condition>
+    </fail>
+</project>
