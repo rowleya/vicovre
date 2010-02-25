@@ -1,0 +1,35 @@
+#summary Description of the REST interface for sending streams to ViCo.
+
+= Introduction =
+
+This page details the REST interface for sending video streams to ViCo.  These streams can be an actual video format e.g. an avi file, or a series of images, or a combination of items e.g. a series of video streams and audio streams.
+
+= Details =
+
+|| *HTTP Method* || *URL Format* || *Return Content Types (Default first)* || || * Return Codes * || *Description* ||
+|| GET || {{{http://<url>/import/create}}} || *text/plain*, text/xml || 200 (OK), 503 (Unable to create new session) || Gets a new ID for the import from the server ||
+|| POST || {{{http://<url>/import/<id>}}} || None || 200 (OK), 415 (Unsupported media type) || Sends an item to the session with the given {{{<id>}}} ||
+
+== Content Type ==
+The POST request expects uploads to use the *multipart/form-data* content type.  The item to be uploaded should be sent with the headers:
+{{{
+Content-Disposition: form-data; name="streamid"
+Content-Type: <mime-type>
+}}}
+where {{{<mime-type>}}} is the content-type being uploaded.
+
+== Multiple Item Import ==
+When multiple items are to be uploaded, each can be given a stream id to identify it from the other items.  The stream id is optional - if missed out a stream id of 0 is assumed.  The stream id should be encoded as an element of the multipart/form-data content before the item being sent with the headers:
+{{{
+Content-Disposition: form-data; name="streamid"
+Content-Type: text/plain
+}}}
+
+== Image Stream Upload ==
+When the item to upload is an image from a series of images, the content-type should be 
+Including the following fields (as form-data elements as above) will help ViCo work out the details for playback, but all fields are optional:
+|| *Field* || *Description* ||
+|| timestamp || The time at which the image should be displayed.  This is relative to other timestamps.  The default is the relative time at which the image was received. ||
+|| timeclock || The ticks per second of the timestamp clock.  The default is 1000 (i.e. the clock is in milliseconds). ||
+|| frame || The number of the frame.  The default is to start with a frame number of 0 and increment by 1 for each image received. ||
+|| inter || "true" or "false".  Indicates that the image is a difference image from the image before.  The default is "false". ||
