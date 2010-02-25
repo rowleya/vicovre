@@ -9,6 +9,7 @@ This page details the REST interface for sending video streams to ViCo.  These s
 || *HTTP Method* || *URL Format* || *Return Content Types (Default first)* || || * Return Codes * || *Description* ||
 || GET || {{{http://<url>/import/create}}} || *text/plain*, text/xml || 200 (OK), 503 (Unable to create new session) || Gets a new ID for the import from the server ||
 || POST || {{{http://<url>/import/<id>}}} || None || 200 (OK), 415 (Unsupported media type) || Sends an item to the session with the given {{{<id>}}} ||
+|| DELETE || {{{http://<url>/import/<id>}}} || None || 200 (OK) || Stops the session specified.  Future requests to the session will fail. || 
 
 == Content Type ==
 The POST request expects uploads to use the *multipart/form-data* content type.  The item to be uploaded should be sent with the headers:
