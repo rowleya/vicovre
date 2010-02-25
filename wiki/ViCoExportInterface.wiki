@@ -2,12 +2,10 @@
 
 = Introduction =
 
-Add your content here.
-
+This page details the REST interface for exporting video from ViCo.  This can be to an actual video format e.g. an avi file or an flv file, or it can be via an RTP stream to a unicast or multicast address.
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+|| *HTTP Method* || *URL Format* || *Return Content Types (Default first)* || || * Return Codes * || *Description* ||
+|| GET || {{{http://<url>/import/<id>?}}} || *text/plain*, text/xml || 200 (OK), 503 (Unable to create new session) || Gets a new ID for the import from the server ||
+|| POST || {{{http://<url>/import/<id>}}} || None || 200 (OK), 415 (Unsupported media type) || Sends an item to the session with the given {{{<id>}}} ||
