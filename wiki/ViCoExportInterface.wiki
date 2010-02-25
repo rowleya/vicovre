@@ -1,4 +1,4 @@
-#summary The REST interface for exporting video from ViCo
+#summary Description of the REST interface for exporting video from ViCo
 
 = Introduction =
 
