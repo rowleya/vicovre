@@ -7,14 +7,21 @@ This page details the REST interface for sending video streams to ViCo.  These s
 = Details =
 
 || *HTTP Method* || *URL Format* || *Return Content Types (Default first)* || || * Return Codes * || *Description* ||
-|| GET || {{{http://<url>/import/create}}} || *text/plain*, text/xml || 200 (OK), 503 (Unable to create new session) || Gets a new ID for the import from the server ||
+|| GET || {{{http://<url>/import/create[?live=true]}}} || *text/plain*, text/xml || 200 (OK), 503 (Unable to create new session) || Gets a new ID for the import from the server ||
 || POST || {{{http://<url>/import/<id>}}} || None || 200 (OK), 415 (Unsupported media type) || Sends an item to the session with the given {{{<id>}}} ||
 || DELETE || {{{http://<url>/import/<id>}}} || None || 200 (OK) || Stops the session specified.  Future requests to the session will fail. || 
 
+== Live Sessions ==
+ViCo never stores items on disk - they are all held in memory for processing.
+
+A live session implies that the server should continuously read the stream and discard items when no-one is using the export service.
+
+In contrast, a non-live session will block on upload (i.e. it won't read the uploaded data) until someone is using the export service for the session.  As soon as someone uses the export service, the read will start.  Note that this can result in a time-out of the client performing the upload.
+
 == Content Type ==
-The POST request expects uploads to use the *multipart/form-data* content type.  The item to be uploaded should be sent with the headers:
+The POST request expects uploads to use the *multipart/form-data* content type.  The item to be imported should be sent with the headers:
 {{{
-Content-Disposition: form-data; name="streamid"
+Content-Disposition: form-data; name="item"
 Content-Type: <mime-type>
 }}}
 where {{{<mime-type>}}} is the content-type being uploaded.
