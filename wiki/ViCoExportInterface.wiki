@@ -8,7 +8,7 @@ This page details the REST interface for exporting video from ViCo.  This can be
 
 || *HTTP Method* || *URL Format* || *Return Content Types* || *Return Codes* || *Description* ||
 || GET || {{{http://<url>/export/<id>?<file-parameters>}}} || Varies || 200 (OK) || Downloads a file of the session from the server.  The {{{<file-parameters>>>}}} (see below) determine the content type ||
-|| POST || {{{http://<url>/export/<id>?<stream-parameters}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the session from the server.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
+|| POST || {{{http://<url>/export/<id>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the session from the server.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
 
 == File Parameters ==
 The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
