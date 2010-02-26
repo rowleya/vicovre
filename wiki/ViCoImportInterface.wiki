@@ -2,7 +2,7 @@
 
 = Introduction =
 
-This page details the REST interface for sending video streams to ViCo.  These streams can be an actual video format e.g. an avi file, or a series of images, or a combination of items e.g. a series of video streams and audio streams.
+This page details the REST interface for sending video streams to !ViCo.  These streams can be an actual video format e.g. an avi file, or a series of images, or a combination of items e.g. a series of video streams and audio streams.
 
 = Details =
 
@@ -12,7 +12,7 @@ This page details the REST interface for sending video streams to ViCo.  These s
 || DELETE || {{{http://<url>/import/<id>}}} || None || 200 (OK) || Stops the session specified.  Future requests to the session will fail. || 
 
 == Live Sessions ==
-ViCo never stores items on disk - they are all held in memory for processing.
+!ViCo never stores items on disk - they are all held in memory for processing.
 
 A live session implies that the server should continuously read the stream and discard items when no-one is using the export service.
 
@@ -35,7 +35,7 @@ Content-Type: text/plain
 
 == Image Stream Upload ==
 When the item to upload is an image from a series of images, the content-type should be 
-Including the following fields (as form-data elements as above) will help ViCo work out the details for playback, but all fields are optional:
+Including the following fields (as form-data elements as above) will help !ViCo work out the details for playback, but all fields are optional:
 || *Field* || *Description* ||
 || timestamp || The time at which the image should be displayed.  This is relative to other timestamps.  The default is the relative time at which the image was received. ||
 || timeclock || The ticks per second of the timestamp clock.  The default is 1000 (i.e. the clock is in milliseconds). ||
