@@ -2,7 +2,7 @@
 
 = Introduction =
 
-This page details the REST interface for exporting video from ViCo.  This can be to an actual video format e.g. an avi file or an flv file, or it can be via an RTP stream to a unicast or multicast address.
+This page details the REST interface for exporting video from !ViCo.  This can be to an actual video format e.g. an avi file or an flv file, or it can be via an RTP stream to a unicast or multicast address.
 
 = Details =
 
