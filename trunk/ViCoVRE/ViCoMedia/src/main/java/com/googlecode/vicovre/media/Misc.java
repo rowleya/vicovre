@@ -62,6 +62,9 @@ public class Misc {
 
     private static final Vector<String> KNOWN_CODECS = new Vector<String>();
 
+    private static final Vector<String> KNOWN_DEMULTIPLEXERS =
+        new Vector<String>();
+
     private static boolean codecsConfigured = false;
 
     private Misc() {
@@ -91,7 +94,10 @@ public class Misc {
             throws IOException, SAXException {
         codecsConfigured = true;
         KNOWN_CODECS.clear();
+        KNOWN_DEMULTIPLEXERS.clear();
         PlugInManager.setPlugInList(KNOWN_CODECS, PlugInManager.CODEC);
+        PlugInManager.setPlugInList(KNOWN_DEMULTIPLEXERS,
+                PlugInManager.DEMULTIPLEXER);
         KnownCodecsParser parser = new KnownCodecsParser(codecConfigFile);
         for (String codec : parser.getCodecs()) {
             try {
@@ -100,8 +106,13 @@ public class Misc {
                 e.printStackTrace();
             }
         }
-        Vector<String> codecs = PlugInManager.getPlugInList(null, null,
-                PlugInManager.CODEC);
+        for (String demultiplexer : parser.getDemultiplexers()) {
+            try {
+                addDemultiplexer(demultiplexer);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -185,8 +196,7 @@ public class Misc {
     public static PlugIn loadPlugin(String className)
            throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        Class<? extends PlugIn> pluginClass = (Class<? extends PlugIn>)
-            Class.forName(className);
+        Class<?> pluginClass = Class.forName(className);
         return loadPlugin(pluginClass);
     }
 
@@ -197,10 +207,15 @@ public class Misc {
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    public static PlugIn loadPlugin(Class<? extends PlugIn> pluginClass)
+    public static PlugIn loadPlugin(Class<?> pluginClass)
             throws InstantiationException, IllegalAccessException {
-        PlugIn plugin = pluginClass.newInstance();
-        return plugin;
+        Object object = pluginClass.newInstance();
+        if (object instanceof PlugIn) {
+            PlugIn plugin = (PlugIn) object;
+            return plugin;
+        }
+        throw new InstantiationException(
+                "Class " + pluginClass + " is not a PlugIn");
     }
 
     /**

@@ -149,6 +149,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                         inputBuffer.setOffset(0);
                         inputBuffer.setLength(bytesRead);
                         handleBuffer(inputBuffer);
+                    } else {
+                        inputBuffer.setEOM(true);
+                        inputBuffer.setDiscard(true);
+                        handleBuffer(inputBuffer);
                     }
                 } catch (IOException e) {
                     //e.printStackTrace();
@@ -207,6 +211,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                 inputBuffer.setData(data);
                 inputBuffer.setOffset(0);
                 inputBuffer.setLength(bytesRead);
+                handleBuffer(inputBuffer);
+            } else {
+                inputBuffer.setEOM(true);
+                inputBuffer.setDiscard(true);
                 handleBuffer(inputBuffer);
             }
         } catch (IOException e) {

@@ -124,4 +124,13 @@ public enum PixelFormat {
     public PixFmtInfo getInfo() {
         return info;
     }
+
+    public static PixelFormat find(int id) {
+        for (PixelFormat fmt : values()) {
+            if (id == fmt.getId()) {
+                return fmt;
+            }
+        }
+        return PIX_FMT_NONE;
+    }
 }
