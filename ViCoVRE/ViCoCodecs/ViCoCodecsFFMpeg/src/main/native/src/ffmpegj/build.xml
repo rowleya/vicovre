@@ -20,11 +20,12 @@
             <exec dir="." executable="@{cc}" failonerror="true">
                 <envopts/>
                 <includes/>
-                <arg line="-O3"/>
+                <arg line="-g"/>
                 <ccopts/>
                 <arg line="-o"/>
                 <arg file="../../../resources/native/@{output}"/>
                 <arg file="${ant.project.name}.cpp"/>
+                <arg file="demuxer.cpp"/>
                 <libdirs/>
                 <arg line="-lavcodec" />
                 <arg line="-lavformat" />

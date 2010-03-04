@@ -55,6 +55,10 @@ import org.xml.sax.helpers.XMLReaderFactory;
  *
  *         </codec>
  *         ...
+ *         <demultiplexer>
+ *             <class>name-of-class</class>
+ *             <nativeLib>name-of-required-native-library</nativeLib>
+ *         </demultiplexer>
  *
  *     </codecs>
  *
@@ -74,6 +78,8 @@ public class KnownCodecsParser extends DefaultHandler {
 
     private boolean inCodec = false;
 
+    private boolean inDemultiplexer = false;
+
     private boolean inClass = false;
 
     private boolean inNativeLib = false;
@@ -81,6 +87,8 @@ public class KnownCodecsParser extends DefaultHandler {
     private String chars = "";
 
     private Vector<String> knownCodecs = new Vector<String>();
+
+    private Vector<String> knownDemultiplexers = new Vector<String>();
 
     private Vector<String> requiredLibraries = new Vector<String>();
 
@@ -112,9 +120,11 @@ public class KnownCodecsParser extends DefaultHandler {
             } else {
                 throw new SAXException(localName + " not allowed here");
             }
-        } else if (!inCodec) {
+        } else if (!inCodec && !inDemultiplexer) {
             if (localName.equals("codec")) {
                 inCodec = true;
+            } else if (localName.equals("demultiplexer")) {
+                inDemultiplexer = true;
             } else {
                 throw new SAXException(localName + " not allowed here");
             }
@@ -147,8 +157,11 @@ public class KnownCodecsParser extends DefaultHandler {
     public void endElement(String uri, String localName, String name)
             throws SAXException {
         if (inClass && localName.equals("class")) {
-            if (!knownCodecs.contains(chars)) {
+            if (inCodec && !knownCodecs.contains(chars)) {
                 knownCodecs.add(chars);
+            } else if (inDemultiplexer
+                    && !knownDemultiplexers.contains(chars)) {
+                knownDemultiplexers.add(chars);
             }
             inClass = false;
         } else if (inNativeLib && localName.equals("nativeLib")) {
@@ -158,6 +171,8 @@ public class KnownCodecsParser extends DefaultHandler {
             inNativeLib = false;
         } else if (inCodec && localName.equals("codec")) {
             inCodec = false;
+        } else if (inDemultiplexer && localName.equals("demultiplexer")) {
+            inDemultiplexer = false;
         } else if (inCodecs && localName.equals("codecs")) {
             inCodecs = false;
         } else {
@@ -172,6 +187,14 @@ public class KnownCodecsParser extends DefaultHandler {
      */
     public Vector<String> getCodecs() {
         return knownCodecs;
+    }
+
+    /**
+     * Gets the known demultiplexers
+     * @return The known demultiplexers
+     */
+    public Vector<String> getDemultiplexers() {
+        return knownDemultiplexers;
     }
 
     /**

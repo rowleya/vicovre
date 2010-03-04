@@ -60,6 +60,10 @@ public class SWScaleCodec implements Codec {
 
     private short[] shortdata = null;
 
+    private Dimension inSize = null;
+
+    private float inFrameRate = -1;
+
     private Dimension outSize = null;
 
     public Format[] getSupportedInputFormats() {
@@ -128,6 +132,8 @@ public class SWScaleCodec implements Codec {
     public Format setInputFormat(Format input) {
         pixelFormatIn = Utils.getPixFormat((VideoFormat) input);
         if (pixelFormatIn != PixelFormat.PIX_FMT_NONE) {
+            inSize = ((VideoFormat) input).getSize();
+            inFrameRate = ((VideoFormat) input).getFrameRate();
             return input;
         }
         return null;
@@ -137,8 +143,11 @@ public class SWScaleCodec implements Codec {
         VideoFormat vf = (VideoFormat) output;
         pixelFormatOut = Utils.getPixFormat(vf);
         outSize = vf.getSize();
+        if (outSize == null) {
+            outSize = inSize;
+        }
         if (pixelFormatOut != PixelFormat.PIX_FMT_NONE) {
-            return output;
+            return Utils.getVideoFormat(pixelFormatOut, outSize, inFrameRate);
         }
         return null;
     }
