@@ -32,6 +32,7 @@ When multiple items are to be uploaded, each can be given a stream id to identif
 Content-Disposition: form-data; name="streamid"
 Content-Type: text/plain
 }}}
+Note that only one item for each stream can be imported at a time.  Should a second upload start before the first has finished, the second will block until the stream becomes free.
 
 == Image Stream Upload ==
 When the item to upload is an image from a series of images, the content-type should be 
