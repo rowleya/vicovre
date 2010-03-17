@@ -101,12 +101,13 @@ public class SWScaleCodec implements Codec {
             outputFormat = Utils.getVideoFormat(pixelFormatOut,
                     outSize, inFormat.getFrameRate());
             if (outputFormat.getDataType() == Format.byteArray) {
-                bytedata = new byte[outputFormat.getMaxDataLength()];
+                bytedata = new byte[outputFormat.getMaxDataLength() * 2];
             } else if (outputFormat.getDataType() == Format.intArray) {
-                intdata = new int[outputFormat.getMaxDataLength()];
+                intdata = new int[outputFormat.getMaxDataLength() * 2];
             } else if (outputFormat.getDataType() == Format.shortArray) {
-                shortdata = new short[outputFormat.getMaxDataLength()];
+                shortdata = new short[outputFormat.getMaxDataLength() * 2];
             }
+
             ref = openCodec(pixelFormatIn.getId(), inSize.width, inSize.height,
                     pixelFormatOut.getId(), outSize.width, outSize.height);
         }
