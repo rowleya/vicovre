@@ -20,7 +20,7 @@
             <exec dir="." executable="@{cc}" failonerror="true">
                 <envopts/>
                 <includes/>
-                <arg line="-g"/>
+                <arg line="-O3"/>
                 <ccopts/>
                 <arg line="-o"/>
                 <arg file="../../../resources/native/@{output}"/>

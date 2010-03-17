@@ -48,10 +48,12 @@ import javax.media.format.VideoFormat;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.Positionable;
+import javax.media.protocol.Seekable;
 
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+import com.googlecode.vicovre.media.processor.DataSink;
 
 public class FFMPEGDemuxer implements Demultiplexer {
 
@@ -101,6 +103,8 @@ public class FFMPEGDemuxer implements Demultiplexer {
 
     private boolean finishedProbe = false;
 
+    private boolean seekable = false;
+
     public Time getDuration() {
         return duration;
     }
@@ -129,16 +133,16 @@ public class FFMPEGDemuxer implements Demultiplexer {
     }
 
     public boolean isPositionable() {
-        return dataSource instanceof Positionable;
+        return seekable;
     }
 
     public boolean isRandomAccess() {
-        return isPositionable();
+        return seekable;
     }
 
     public Time setPosition(Time time, int rounding) {
-        if (dataSource instanceof Positionable) {
-            return ((Positionable) dataSource).setPosition(time, rounding);
+        if (seekable) {
+            return new Time(seek(ref, time.getNanoseconds(), rounding));
         }
         return currentTime;
     }
@@ -147,7 +151,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
         System.err.println("Initializing");
         String url = dataSource.getLocator().getURL().toExternalForm();
         System.err.println("URL = " + url);
-        ref = init(url, 10000);
+        ref = init(url, 10000, seekable);
         inited = true;
         if (ref <= 0) {
             throw new IOException("Could not initialize demuxer");
@@ -175,7 +179,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
                 FFMPEGTrack track = new FFMPEGTrack(this, i, format,
                         new Time(start), new Time(length), outputSize);
                 tracksToLoad.add(track);
-                System.err.println("Source " + i + " format = " + track.getFormat());
+                System.err.println("Source " + i + " video format = " + track.getFormat());
             } else if (codecType == CodecType.CODEC_TYPE_AUDIO.ordinal()) {
                 long start = getStartTime(ref, i);
                 long length = getStreamDuration(ref, i);
@@ -195,7 +199,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
                 FFMPEGTrack track = new FFMPEGTrack(this, i, format,
                         new Time(start), new Time(length), outputSize);
                 tracksToLoad.add(track);
-                System.err.println("Source " + i + " format = " + track.getFormat());
+                System.err.println("Source " + i + " audio format = " + track.getFormat());
             }
         }
         tracks = tracksToLoad.toArray(new FFMPEGTrack[0]);
@@ -252,6 +256,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
         this.dataSource = dataSource;
         dataSink = new DemuxerDataSink(this, dataSource, 0);
         dataSink.start();
+        seekable = dataSink.isSeekable();
     }
 
     protected void handleBuffer(Buffer buffer) {
@@ -286,9 +291,12 @@ public class FFMPEGDemuxer implements Demultiplexer {
             if (bufferToRead != null) {
                 if (bufferToRead.getLength() == 0) {
                     if (!finishedProbe) {
+                        bufferToRead.setOffset(bufferToReadOffset);
+                        bufferToRead.setLength(bufferToReadLength);
                         preBuffers.addLast((Buffer) bufferToRead.clone());
                     }
                     if (bufferToRead.isEOM()) {
+                        System.err.println("End of media");
                         endOfDataSource = true;
                     }
                     if (finishedProbe && !preBuffers.isEmpty()) {
@@ -301,6 +309,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
             }
 
             if (endOfDataSource) {
+                System.err.println("Seen end of media");
                 return null;
             }
 
@@ -314,6 +323,7 @@ public class FFMPEGDemuxer implements Demultiplexer {
             if (!done) {
                 if (bufferToRead.isEOM()) {
                     if (bufferToRead.isDiscard()) {
+                        System.err.println("End of media 2");
                         endOfDataSource = true;
                         return null;
                     }
@@ -333,6 +343,22 @@ public class FFMPEGDemuxer implements Demultiplexer {
             }
         }
         return null;
+    }
+
+    protected long seek(long position, int whence) {
+        if (isPositionable()) {
+            synchronized (bufferSync) {
+                long pos = dataSink.seek(position, whence);
+                if ((bufferToRead != null)
+                        && (whence != DataSink.AV_SEEK_SIZE)) {
+                    bufferToRead = null;
+                    bufferSync.notifyAll();
+                }
+                endOfDataSource = false;
+                return pos;
+            }
+        }
+        return -1;
     }
 
     protected boolean isEndOfSource() {
@@ -364,11 +390,12 @@ public class FFMPEGDemuxer implements Demultiplexer {
         return getOutputSize(ref, stream);
     }
 
-    protected synchronized boolean readNextFrame(Buffer output, int stream) {
+    protected synchronized int readNextFrame(Buffer output, int stream) {
         return readNextFrame(ref, output, stream);
     }
 
-    private native long init(String filename, int bufferSize);
+    private native long init(String filename, int bufferSize,
+            boolean seekable);
 
     private native int getNoStreams(long ref);
 
@@ -404,7 +431,9 @@ public class FFMPEGDemuxer implements Demultiplexer {
 
     private native int getAudioSampleRate(long ref, int stream);
 
-    private native boolean readNextFrame(long ref, Buffer output, int stream);
+    private native int readNextFrame(long ref, Buffer output, int stream);
+
+    private native long seek(long ref, long position, int rounding);
 
     private native void dispose(long ref);
 }

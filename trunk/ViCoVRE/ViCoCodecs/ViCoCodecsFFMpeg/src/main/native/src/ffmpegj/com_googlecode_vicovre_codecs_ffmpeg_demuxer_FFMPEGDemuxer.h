@@ -11,10 +11,10 @@ extern "C" {
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer
  * Method:    init
- * Signature: (Ljava/lang/String;I)J
+ * Signature: (Ljava/lang/String;IZ)J
  */
 JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer_init
-  (JNIEnv *, jobject, jstring, jint);
+  (JNIEnv *, jobject, jstring, jint, jboolean);
 
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer
@@ -147,10 +147,18 @@ JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGD
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer
  * Method:    readNextFrame
- * Signature: (JLjavax/media/Buffer;I)Z
+ * Signature: (JLjavax/media/Buffer;I)I
  */
-JNIEXPORT jboolean JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer_readNextFrame
+JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer_readNextFrame
   (JNIEnv *, jobject, jlong, jobject, jint);
+
+/*
+ * Class:     com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer
+ * Method:    seek
+ * Signature: (JJI)J
+ */
+JNIEXPORT jlong JNICALL Java_com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer_seek
+  (JNIEnv *, jobject, jlong, jlong, jint);
 
 /*
  * Class:     com_googlecode_vicovre_codecs_ffmpeg_demuxer_FFMPEGDemuxer

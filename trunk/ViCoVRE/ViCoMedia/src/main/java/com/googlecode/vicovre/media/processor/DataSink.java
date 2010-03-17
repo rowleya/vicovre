@@ -47,6 +47,8 @@ import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
 import javax.media.protocol.PushDataSource;
 import javax.media.protocol.PushSourceStream;
+import javax.media.protocol.Seekable;
+import javax.media.protocol.SourceStream;
 import javax.media.protocol.SourceTransferHandler;
 
 /**
@@ -55,6 +57,14 @@ import javax.media.protocol.SourceTransferHandler;
  */
 public abstract class DataSink extends Thread implements SourceTransferHandler,
         BufferTransferHandler {
+
+    public static final int SEEK_SET = 0;
+
+    public static final int SEEK_CUR = 1;
+
+    public static final int SEEK_END = 2;
+
+    public static final int AV_SEEK_SIZE = 3;
 
     private static final int DATA_LENGTH = 10000;
 
@@ -67,6 +77,8 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
     private Buffer inputBuffer = new Buffer();
 
     private byte[] data = new byte[DATA_LENGTH];
+
+    private long length = SourceStream.LENGTH_UNKNOWN;
 
     /**
      * A DataSink for a track
@@ -93,6 +105,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             PushBufferStream[] streams = ((PushBufferDataSource)
                     dataSource).getStreams();
             streams[track].setTransferHandler(this);
+            length = streams[track].getContentLength();
             try {
                 dataSource.start();
             } catch (IOException e) {
@@ -102,6 +115,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             PushSourceStream[] streams = ((PushDataSource)
                     dataSource).getStreams();
             streams[track].setTransferHandler(this);
+            length = streams[track].getContentLength();
             try {
                 dataSource.start();
             } catch (IOException e) {
@@ -116,11 +130,14 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             PullBufferStream[] streams = ((PullBufferDataSource)
                     dataSource).getStreams();
             PullBufferStream stream = streams[track];
-            while (!stream.endOfStream() && !done) {
+            length = streams[track].getContentLength();
+            while (!done) {
                 try {
                     inputBuffer.setData(null);
                     inputBuffer.setLength(0);
                     inputBuffer.setOffset(0);
+                    inputBuffer.setEOM(false);
+                    inputBuffer.setDiscard(false);
                     stream.read(inputBuffer);
                     handleBuffer(inputBuffer);
                 } catch (IOException e) {
@@ -140,14 +157,16 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             PullSourceStream[] streams = ((PullDataSource)
                     dataSource).getStreams();
             PullSourceStream stream = streams[track];
-            int bytesRead = 0;
-            while (!stream.endOfStream() && !done && (bytesRead != -1)) {
+            length = streams[track].getContentLength();
+            while (!done) {
                 try {
-                    bytesRead = stream.read(data, 0, data.length);
+                    int bytesRead = stream.read(data, 0, data.length);
                     if (bytesRead != -1) {
                         inputBuffer.setData(data);
                         inputBuffer.setOffset(0);
                         inputBuffer.setLength(bytesRead);
+                        inputBuffer.setEOM(false);
+                        inputBuffer.setDiscard(false);
                         handleBuffer(inputBuffer);
                     } else {
                         inputBuffer.setEOM(true);
@@ -155,7 +174,6 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                         handleBuffer(inputBuffer);
                     }
                 } catch (IOException e) {
-                    //e.printStackTrace();
                     close();
                 }
             }
@@ -252,5 +270,72 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      */
     public boolean isDone() {
         return done;
+    }
+
+    public boolean isSeekable() {
+        if (dataSource instanceof PushBufferDataSource) {
+            PushBufferStream[] streams = ((PushBufferDataSource)
+                    dataSource).getStreams();
+            return streams[track] instanceof Seekable;
+        } else if (dataSource instanceof PushDataSource) {
+            PushSourceStream[] streams = ((PushDataSource)
+                    dataSource).getStreams();
+            return streams[track] instanceof Seekable;
+        } else if (dataSource instanceof PullBufferDataSource) {
+            PullBufferStream[] streams = ((PullBufferDataSource)
+                    dataSource).getStreams();
+            return streams[track] instanceof Seekable;
+        } else if (dataSource instanceof PullDataSource) {
+            PullSourceStream[] streams = ((PullDataSource)
+                    dataSource).getStreams();
+            return streams[track] instanceof Seekable;
+        }
+        return false;
+    }
+
+    public long seek(long position, int whence) {
+        Seekable seekable = null;
+        SourceStream stream = null;
+        if (dataSource instanceof PushBufferDataSource) {
+            PushBufferStream[] streams = ((PushBufferDataSource)
+                    dataSource).getStreams();
+            stream = streams[track];
+        } else if (dataSource instanceof PushDataSource) {
+            PushSourceStream[] streams = ((PushDataSource)
+                    dataSource).getStreams();
+            stream = streams[track];
+        } else if (dataSource instanceof PullBufferDataSource) {
+            PullBufferStream[] streams = ((PullBufferDataSource)
+                    dataSource).getStreams();
+            stream = streams[track];
+        } else if (dataSource instanceof PullDataSource) {
+            PullSourceStream[] streams = ((PullDataSource)
+                    dataSource).getStreams();
+            stream = streams[track];
+        }
+        if (stream instanceof Seekable) {
+            seekable = (Seekable) stream;
+        }
+        if (seekable == null) {
+            return -1;
+        }
+        long pos = position;
+        if (whence == SEEK_CUR) {
+            pos += seekable.tell();
+        } else if (whence == SEEK_END) {
+            if (length == SourceStream.LENGTH_UNKNOWN) {
+                return -1;
+            }
+            pos += length;
+        } else if (whence == AV_SEEK_SIZE) {
+            if (length == SourceStream.LENGTH_UNKNOWN) {
+                return -1;
+            }
+            return length;
+        } else if (whence != SEEK_SET) {
+            return -1;
+        }
+        pos = seekable.seek(pos);
+        return pos;
     }
 }

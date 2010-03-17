@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <codecs>
+    <demultiplexer>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.demuxer.FFMPEGDemuxer</class>
+    </demultiplexer>
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>

@@ -47,7 +47,11 @@ import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 public class FFMPEGTrack implements Track, FormatControl {
 
-    private static final int READ_AHEAD = 100;
+    protected static final int EOF_ERROR = -1;
+
+    protected static final int NO_FRAME_ERROR = -2;
+
+    protected static final int UNKNOWN_ERROR = -3;
 
     private FFMPEGDemuxer parent = null;
 
@@ -62,8 +66,6 @@ public class FFMPEGTrack implements Track, FormatControl {
     private boolean enabled = true;
 
     private Time duration = DURATION_UNKNOWN;
-
-    private TrackListener trackListener = null;
 
     private int outputSize = 0;
 
@@ -101,6 +103,9 @@ public class FFMPEGTrack implements Track, FormatControl {
     }
 
     public int mapTimeToFrame(Time time) {
+        if (time.getNanoseconds() == 0) {
+            return 0;
+        }
         return FRAME_UNKNOWN;
     }
 
@@ -111,9 +116,9 @@ public class FFMPEGTrack implements Track, FormatControl {
             buffer.setData(data);
             buffer.setOffset(0);
             buffer.setLength(data.length);
-            System.err.println("Reading frame from track " + track);
-            if (!parent.readNextFrame(buffer, track)) {
-                if (parent.isEndOfSource()) {
+            int error = parent.readNextFrame(buffer, track);
+            if (error != 0) {
+                if (parent.isEndOfSource() || (error == EOF_ERROR)) {
                     buffer.setEOM(true);
                 }
                 buffer.setDiscard(true);
@@ -128,7 +133,7 @@ public class FFMPEGTrack implements Track, FormatControl {
     }
 
     public void setTrackListener(TrackListener trackListener) {
-        this.trackListener = trackListener;
+        // Does Nothing
     }
 
     public Time getDuration() {
