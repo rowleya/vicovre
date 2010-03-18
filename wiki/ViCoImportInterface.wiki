@@ -14,9 +14,9 @@ This page details the REST interface for sending video streams to !ViCo.  These 
 == Live Sessions ==
 !ViCo never stores items on disk - they are all held in memory for processing.
 
-A live session implies that the server should continuously read the stream and discard items when no-one is using the export service.
+A live session implies that the server should continuously read the stream and discard items when no-one is using the export service.  It also suggests that multiple users can read the session using different formats.
 
-In contrast, a non-live session will block on upload (i.e. it won't read the uploaded data) until someone is using the export service for the session.  As soon as someone uses the export service, the read will start, and will only stop when all the data has been converted and read by the export service.  Note that this can result in a time-out of the client performing the upload.
+In contrast, a non-live session will block on upload (i.e. it won't read the uploaded data) until someone is using the export service for the session.  As soon as someone uses the export service, the read will start, and will only stop when all the data has been converted and read by the export service.  Note that this can result in a time-out of the client performing the upload.  Only one user will be able to use the export service.
 
 == Content Type ==
 The POST request expects uploads to use the *multipart/form-data* content type.  The item to be imported should be sent with the headers:
