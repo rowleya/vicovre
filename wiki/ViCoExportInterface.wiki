@@ -29,4 +29,6 @@ The following can be specified as query parameters (i.e. {{{<parameter>=<value>}
 || {{{<streamid>}}}ypos || Specifies the y coordinate of the stream in the output, assuming the stream is an video stream (otherwise it is ignored). If {{{<streamid>}}} is omitted, the last streamid specified will be assumed. ||
 
 == Image Output Format ==
-When an image output format is chosen, only video streams will be included in the output.  Audio streams will be ignored.  In a live session, the image will represent the current state of the
+When an image output format is chosen, only video streams will be included in the output.  Audio streams will be ignored.  In a live session, the image will represent the video at the point of the request.  It is recommended that requests of this kind combine with the image change requests to determine when the image has changed sufficiently to be shown to the user.
+
+== Stream Parameters ==
