@@ -8,6 +8,7 @@ This page details the REST interface for exporting video from !ViCo.  This can b
 
 || *HTTP Method* || *URL Format* || *Return Content Types* || *Return Codes* || *Description* ||
 || GET || {{{http://<url>/export/<id>?<file-parameters>}}} || Varies || 200 (OK) || Downloads a file of the session from the server.  The {{{<file-parameters>}}} (see below) determine the content type ||
+|| GET || {{{http://<url>/export/<id>/changed}}} || text/xml || 200 (OK) || Indicates if a live stream has changed.  If it has, the return will be {{{<changes><changed>true</changed></changes>}}}, otherwise it will be {{{<changes><changed>true</changed></changes>}}}.  This may block for up to 10 seconds before returning.  This is useful for receiving a live stream via images. ||
 || POST || {{{http://<url>/export/<id>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the session from the server.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
 
 == Requested Content Type ==
@@ -18,13 +19,14 @@ The export can contain multiple audio and video streams.  When multiple audio st
 
 == File Parameters ==
 The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
-|| *Parameter* || *Description* ||
-|| format || The content-type to be sent.  Specifies the output format. ||
-|| live || "true" or "false".  Specifies that the start position should be the current data being uploaded for the session. ||
-|| streamid || Specifies that the given stream will be included in the resulting file.   Where multiple streams are specified, the streams will be drawn in this order (so later streams will be drawn over earlier streams where they overlap). ||
+|| *Parameter* || *Description* |||
 || videocodec || Specifies the codec to use for the video streams.  If omitted, a default codec will be selected based on the content type requested. ||
 || audiocodec || Specifies the codec to use for the audio streams.  If omitted, a default codec will be selected based on the content type requested. ||
+|| streamid || Specifies that the given stream will be included in the resulting file.   Where multiple streams are specified, the streams will be drawn in this order (so later streams will be drawn over earlier streams where they overlap). ||
 || {{{<streamid>}}}width || Specifies the width to be used for the given stream, assuming the stream is a video stream (otherwise it is ignored).  If {{{<streamid>}}} is omitted, the last streamid specified will be assumed. ||
 || {{{<streamid>}}}height || Specifies the height to be used for the given stream, assuming the stream is an video stream (otherwise it is ignored). If {{{<streamid>}}} is omitted, the last streamid specified will be assumed. ||
 || {{{<streamid>}}}xpos || Specifies the x coordinate of the stream in the output, assuming the stream is an video stream (otherwise it is ignored). If {{{<streamid>}}} is omitted, the last streamid specified will be assumed. ||
 || {{{<streamid>}}}ypos || Specifies the y coordinate of the stream in the output, assuming the stream is an video stream (otherwise it is ignored). If {{{<streamid>}}} is omitted, the last streamid specified will be assumed. ||
+
+== Image Output Format ==
+When an image output format is chosen, only video streams will be included in the output.  Audio streams will be ignored.  In a live session, the image will represent the current state of the
