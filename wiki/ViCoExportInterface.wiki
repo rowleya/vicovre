@@ -19,7 +19,7 @@ The export can contain multiple audio and video streams.  When multiple audio st
 
 == File Parameters ==
 The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
-|| *Parameter* || *Description* |||
+|| *Parameter* || *Description* ||
 || videocodec || Specifies the codec to use for the video streams.  If omitted, a default codec will be selected based on the content type requested. ||
 || audiocodec || Specifies the codec to use for the audio streams.  If omitted, a default codec will be selected based on the content type requested. ||
 || streamid || Specifies that the given stream will be included in the resulting file.   Where multiple streams are specified, the streams will be drawn in this order (so later streams will be drawn over earlier streams where they overlap). ||
