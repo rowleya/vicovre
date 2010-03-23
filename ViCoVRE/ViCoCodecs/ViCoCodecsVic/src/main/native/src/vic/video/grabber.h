@@ -58,6 +58,7 @@ class Grabber {
     void set_size(int w, int h);
     inline int getInW() {return inw_;}
     inline int getInH() {return inh_;}
+    void reset();
  protected:
     /* hooks for conditional replenishment algorithm */
     void crinit(int w, int h);

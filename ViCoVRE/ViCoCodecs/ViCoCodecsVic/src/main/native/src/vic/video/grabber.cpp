@@ -67,6 +67,11 @@ void Grabber::crinit(int w, int h)
         crvec_[i] = CR_MOTION|CR_SEND;
 }
 
+void Grabber::reset() {
+    for (int i = 0; i < nblk_; ++i)
+        crvec_[i] = CR_MOTION|CR_SEND;
+}
+
 /* must call after set_size_xxx */
 void Grabber::allocref()
 {

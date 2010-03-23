@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.codecs.vic;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Vector;
@@ -43,9 +44,10 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
+import com.googlecode.vicovre.codecs.controls.FrameFillControl;
 import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
 
-public class NativeDecoder implements Codec {
+public class NativeDecoder implements Codec, FrameFillControl {
 
     private static final VicCodec[] CODECS = new VicCodec[]{
         new VicCodec("JpegDecoder", new VideoFormat("JPEG/RTP"),
@@ -64,6 +66,8 @@ public class NativeDecoder implements Codec {
     private YUVFormat outputFormat = null;
 
     byte[] buffer = null;
+
+    byte[] frame = null;
 
     public Format[] getSupportedInputFormats() {
         Format[] formats = new Format[CODECS.length];
@@ -139,6 +143,11 @@ public class NativeDecoder implements Codec {
     public int process(Buffer input, Buffer output) {
         if (outputFormat == null) {
             decodeHeader(ref, input);
+        }
+        if (frame != null) {
+            System.arraycopy(frame, 0, buffer, 0,
+                    Math.min(frame.length, buffer.length));
+            frame = null;
         }
         output.setData(buffer);
         output.setFormat(outputFormat);
@@ -225,6 +234,14 @@ public class NativeDecoder implements Codec {
         Arrays.fill(buffer, (byte) 0x80);
     }
 
+    public void fillFrame(byte[] frame) {
+        this.frame = frame;
+    }
+
+    public Component getControlComponent() {
+        return null;
+    }
+
     private native long openCodec(int id);
 
     private native void decodeHeader(long ref, Buffer input);
@@ -232,5 +249,6 @@ public class NativeDecoder implements Codec {
     private native int decode(long ref, Buffer input, Buffer output);
 
     private native void closeCodec(long ref);
+
 
 }
