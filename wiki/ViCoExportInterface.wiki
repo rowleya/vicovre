@@ -8,7 +8,7 @@ This page details the REST interface for exporting video from !ViCo.  This can b
 
 || *HTTP Method* || *URL Format* || *Return Content Types* || *Return Codes* || *Description* ||
 || GET || {{{http://<url>/export/<id>?<file-parameters>}}} || Varies || 200 (OK) || Downloads a file of the session from the server.  The {{{<file-parameters>}}} (see below) determine the content type ||
-|| GET || {{{http://<url>/export/<id>/changed}}} || text/xml || 200 (OK) || Indicates if a live stream has changed.  If it has, the return will be {{{<changes><changed>true</changed></changes>}}}, otherwise it will be {{{<changes><changed>true</changed></changes>}}}.  This may block for up to 10 seconds before returning.  This is useful for receiving a live stream via images. ||
+|| GET || {{{http://<url>/export/<id>/changed[?changeid=<cid>]}}} || text/xml || 200 (OK) || Indicates if a live stream has changed.  If it has, the return will be {{{<changes><changed>true</changed><changeid><cid></changeid></changes>}}}, otherwise it will be {{{<changes><changed>false</changed><changeid><cid></changeid></changes>}}}.  This may block for up to 10 seconds before returning.  This is useful for receiving a live stream via images.  If the change id {{{<cid>}}} is not specified, one will be assigned and returned.  This allows multiple users to determine if the stream has changed for them since the last call to the uri. ||
 || POST || {{{http://<url>/export/<id>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the session from the server.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
 
 == Requested Content Type ==
