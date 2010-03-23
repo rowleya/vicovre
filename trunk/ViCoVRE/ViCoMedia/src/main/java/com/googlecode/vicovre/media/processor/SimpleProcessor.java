@@ -225,7 +225,8 @@ public class SimpleProcessor {
     /**
      * Creates a new SimpleProcessor
      * @param inputFormat The input format
-     * @param outputFormat The desired output format
+     * @param outputFormat The desired output format or null to specify that the
+     *                     output should be LINEAR Audio, or YUV or RGB Video
      * @throws UnsupportedFormatException
      */
     public SimpleProcessor(Format inputFormat, Format outputFormat)
@@ -314,7 +315,8 @@ public class SimpleProcessor {
         boolean forward = false;
         System.err.println("Finding codecs from " + inputFormat + " to "
                 + outputFormat);
-        if ((outputFormat instanceof RGBFormat)
+        if ((outputFormat == null)
+                || (outputFormat instanceof RGBFormat)
                 || (outputFormat instanceof YUVFormat)
                 || (outputFormat instanceof AudioFormat)
                 || ((!(inputFormat instanceof RGBFormat))
@@ -539,15 +541,42 @@ public class SimpleProcessor {
 
     private Codecs search(Format input, Format output,
             HashMap<String, Boolean> searched, boolean forward) {
-        if (input.matches(output)) {
+        if (((output == null)
+                    && (input.matches(new RGBFormat())
+                    || input.matches(new YUVFormat())))
+                || input.matches(output)) {
             Codecs searchCodecs = new Codecs();
             searchCodecs.codecList.addFirst(new CopyCodec());
             searchCodecs.inputFormatList.addFirst(input);
             searchCodecs.outputFormatList.addFirst(input);
             return searchCodecs;
         }
-        Vector< ? > codecsFromHere = PlugInManager.getPlugInList(
-                input, output, PlugInManager.CODEC);
+        Vector< ? > codecsFromHere = null;
+        if (output == null) {
+            if (input instanceof AudioFormat) {
+                codecsFromHere = PlugInManager.getPlugInList(input,
+                        new AudioFormat(AudioFormat.LINEAR),
+                        PlugInManager.CODEC);
+                if (!codecsFromHere.isEmpty()) {
+                    output = new AudioFormat(AudioFormat.LINEAR);
+                }
+            } else {
+                codecsFromHere = PlugInManager.getPlugInList(input,
+                        new RGBFormat(), PlugInManager.CODEC);
+                if (!codecsFromHere.isEmpty()) {
+                    output = new RGBFormat();
+                } else {
+                    codecsFromHere = PlugInManager.getPlugInList(input,
+                            new YUVFormat(), PlugInManager.CODEC);
+                    if (!codecsFromHere.isEmpty()) {
+                        output = new YUVFormat();
+                    }
+                }
+            }
+        } else {
+            codecsFromHere = PlugInManager.getPlugInList(
+                    input, output, PlugInManager.CODEC);
+        }
         if (!codecsFromHere.isEmpty()) {
             System.err.println("Trying immediate codecs " + codecsFromHere);
             Codecs searchCodecs = new Codecs();
