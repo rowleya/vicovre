@@ -14,6 +14,7 @@ class VicEncoder {
         void setSize(int w, int h);
         int encode(JNIEnv *env, jobject input, jobject output,
                 jintArray frameOffsets, jintArray frameLengths);
+        void keyFrame();
     private:
         TransmitterModule* codec_;
         Grabber *grabber_;
@@ -68,11 +69,19 @@ JNIEXPORT jint JNICALL
 }
 
 JNIEXPORT void JNICALL
+        Java_com_googlecode_vicovre_codecs_vic_NativeEncoder_keyFrame(
+            JNIEnv * env, jobject obj, jlong ref) {
+    VicEncoder *encoder = (VicEncoder *) jlong2ptr(ref);
+    encoder->keyFrame();
+}
+
+JNIEXPORT void JNICALL
         Java_com_googlecode_vicovre_codecs_vic_NativeEncoder_closeCodec(
             JNIEnv * env, jobject obj, jlong ref) {
     VicEncoder *encoder = (VicEncoder *) jlong2ptr(ref);
     delete encoder;
 }
+
 
 VicEncoder::VicEncoder(JNIEnv *env, int codec) {
     grabber_ = new Grabber();
@@ -140,6 +149,10 @@ VicEncoder::~VicEncoder() {
 void VicEncoder::setSize(int w, int h) {
     grabber_->set_size(w, h);
     codec_->size(w, h);
+}
+
+void VicEncoder::keyFrame() {
+    grabber_->reset();
 }
 
 int VicEncoder::encode(JNIEnv *env, jobject input, jobject output,

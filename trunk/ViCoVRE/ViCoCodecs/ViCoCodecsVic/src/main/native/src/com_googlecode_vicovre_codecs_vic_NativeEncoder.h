@@ -34,6 +34,14 @@ JNIEXPORT jint JNICALL Java_com_googlecode_vicovre_codecs_vic_NativeEncoder_enco
 
 /*
  * Class:     com_googlecode_vicovre_codecs_vic_NativeEncoder
+ * Method:    keyFrame
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_googlecode_vicovre_codecs_vic_NativeEncoder_keyFrame
+  (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     com_googlecode_vicovre_codecs_vic_NativeEncoder
  * Method:    closeCodec
  * Signature: (J)V
  */

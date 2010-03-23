@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.codecs.vic;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Vector;
@@ -40,12 +41,15 @@ import javax.media.Buffer;
 import javax.media.Codec;
 import javax.media.Format;
 import javax.media.ResourceUnavailableException;
+import javax.media.control.KeyFrameControl;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
+import com.googlecode.vicovre.codecs.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
 
-public class NativeEncoder implements Codec {
+public class NativeEncoder implements Codec,
+        KeyFrameControl, KeyFrameForceControl {
 
     private static final VicCodec[] CODECS = new VicCodec[]{
         new VicCodec("JpegEncoder", new VideoFormat("JPEG/RTP"),
@@ -61,13 +65,17 @@ public class NativeEncoder implements Codec {
 
     private int codec = -1;
 
-    byte[] buffer = null;
+    private byte[] buffer = null;
 
-    int[] frameOffsets = null;
+    private int[] frameOffsets = null;
 
-    int[] frameLengths = null;
+    private int[] frameLengths = null;
 
-    int sequenceNo = 0;
+    private int sequenceNo = 0;
+
+    private int framesBetweenKey = 250;
+
+    private int framesSinceLastKey = 0;
 
     public Format[] getSupportedInputFormats() {
         if (codec != -1) {
@@ -119,6 +127,10 @@ public class NativeEncoder implements Codec {
             output.setData(buffer);
             output.setOffset(0);
             output.setLength(buffer.length);
+            if (framesSinceLastKey == framesBetweenKey) {
+                keyFrame(ref);
+                framesSinceLastKey = 0;
+            }
             encode(ref, input, output, frameOffsets, frameLengths);
         }
         int frameNo = input.getOffset();
@@ -200,11 +212,54 @@ public class NativeEncoder implements Codec {
     }
 
     public Object getControl(String className) {
+        if (className.equals(KeyFrameControl.class.getName())
+                || className.equals(KeyFrameForceControl.class.getName())) {
+            return this;
+        }
         return null;
     }
 
     public Object[] getControls() {
-        return new Object[0];
+        return new Object[]{this};
+    }
+
+
+    /**
+     *
+     * @see javax.media.control.KeyFrameControl#getKeyFrameInterval()
+     */
+    public int getKeyFrameInterval() {
+        return framesBetweenKey;
+    }
+
+    /**
+     *
+     * @see javax.media.control.KeyFrameControl#getPreferredKeyFrameInterval()
+     */
+    public int getPreferredKeyFrameInterval() {
+        return 250;
+    }
+
+    /**
+     *
+     * @see javax.media.control.KeyFrameControl#setKeyFrameInterval(int)
+     */
+    public int setKeyFrameInterval(int frames) {
+        framesBetweenKey = frames;
+        return frames;
+    }
+
+    /**
+     *
+     * @see com.googlecode.vicovre.codecs.controls.KeyFrameForceControl#
+     *     nextFrameKey()
+     */
+    public void nextFrameKey() {
+        framesSinceLastKey = framesBetweenKey;
+    }
+
+    public Component getControlComponent() {
+        return null;
     }
 
     private native long openCodec(int id);
@@ -213,6 +268,8 @@ public class NativeEncoder implements Codec {
 
     private native int encode(long ref, Buffer input, Buffer output,
             int[] frameOffsets, int[] frameLengths);
+
+    private native void keyFrame(long ref);
 
     private native void closeCodec(long ref);
 
