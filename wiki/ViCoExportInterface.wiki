@@ -10,7 +10,7 @@ This page details the REST interface for exporting video from !ViCo.  This can b
 || GET || {{{http://<url>/export/<id>/list}}} || text/xml || 200 (OK) || Gets a description of the streams in the session. ||
 || GET || {{{http://<url>/export/<id>?<file-parameters>}}} || Varies || 200 (OK) || Downloads a file of the session from the server.  The {{{<file-parameters>}}} (see below) determine the content type ||
 || GET || {{{http://<url>/export/<id>/changed[?changeid=<cid>]}}} || text/xml || 200 (OK) || Indicates if a live stream has changed.  If it has, the return will be {{{<changes><changed>true</changed><changeid><cid></changeid></changes>}}}, otherwise it will be {{{<changes><changed>false</changed><changeid><cid></changeid></changes>}}}.  This may block for up to 10 seconds before returning.  This is useful for receiving a live stream via images.  If the change id {{{<cid>}}} is not specified, one will be assigned and returned.  This allows multiple users to determine if the stream has changed for them since the last call to the uri. ||
-|| POST || {{{http://<url>/export/<id>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the session from the server.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
+|| POST || {{{http://<url>/export/<id>/<streamid>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the stream with id <streamid> from the server using RTP.  The {{{<stream-parameters>}}} (see below) determine what is sent where. ||
 
 == Stream Listing ==
 The xml returned for the streams will be as follows:
@@ -74,3 +74,13 @@ The following can be specified as query parameters (i.e. {{{<parameter>=<value>}
 When an image output format is chosen, only video streams will be included in the output.  Audio streams will be ignored.  In a live session, the image will represent the video at the point of the request.  It is recommended that requests of this kind combine with the image change requests to determine when the image has changed sufficiently to be shown to the user.
 
 == Stream Parameters ==
+The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
+|| *Parameter* || *Description* ||
+|| codec || The codec to use to send the stream. ||
+|| name || The name to give the stream when sending.  This is optional. ||
+|| note || The note to attach to the stream.  This is optional. ||
+|| width || The width with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
+|| height || The height with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
+|| address || The IP address (unicast or multicast) to which the stream should be sent. ||
+|| port || The UDP port number to which the stream should be sent. ||
+|| ttl || The TTL with which to send a multicast stream.  If not specified, 127 will be used. ||
