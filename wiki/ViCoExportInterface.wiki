@@ -90,7 +90,8 @@ In a non-live session, an image will be taken for each frame of the video.  The 
 The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
 || *Parameter* || *Description* ||
 || substreamid || The substream to send.  If not specified, the first substream will be used. ||
-|| codec || The codec to use to send the stream. ||
+|| rtptype || The RTP type to use to send the stream.  If not specified, a default type will be used depending on if the stream is video or audio. ||
+|| ag || If true, the Access Grid-compatible formats will be used.  If false or omitted, other default formats will be used. ||
 || name || The name to give the stream when sending.  This is optional. ||
 || note || The note to attach to the stream.  This is optional. ||
 || width || The width with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
