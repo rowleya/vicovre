@@ -96,6 +96,7 @@ The following can be specified as query parameters (i.e. {{{<parameter>=<value>}
 || note || The note to attach to the stream.  This is optional. ||
 || width || The width with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
 || height || The height with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
+|| venue || The URL of an Access Grid Toolkit v3 Virtual Venue to send the stream to. ||
 || address || The IP address (unicast or multicast) to which the stream should be sent. ||
 || port || The UDP port number to which the stream should be sent. ||
 || ttl || The TTL with which to send a multicast stream.  If not specified, 127 will be used. ||
