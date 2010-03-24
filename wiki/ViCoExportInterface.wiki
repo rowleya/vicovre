@@ -94,8 +94,8 @@ The following can be specified as query parameters (i.e. {{{<parameter>=<value>}
 || ag || If true, the Access Grid-compatible formats will be used.  If false or omitted, other default formats will be used. ||
 || name || The name to give the stream when sending.  This is optional. ||
 || note || The note to attach to the stream.  This is optional. ||
-|| width || The width with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
-|| height || The height with which to send the stream.  If the stream is not a video stream, this will be ignored. ||
+|| width || The width with which to send the stream.  If the stream is not a video stream, this will be ignored.  Both height and width must be specified if one is, but if neither are specified, the stream will be sent with a default height and width. ||
+|| height || The height with which to send the stream.  If the stream is not a video stream, this will be ignored.  Both height and width must be specified if one is, but if neither are specified, the stream will be sent with a default height and width. ||
 || venue || The URL of an Access Grid Toolkit v3 Virtual Venue to send the stream to. ||
 || address || The IP address (unicast or multicast) to which the stream should be sent. ||
 || port || The UDP port number to which the stream should be sent. ||
