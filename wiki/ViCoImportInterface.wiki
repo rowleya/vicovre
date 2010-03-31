@@ -43,3 +43,10 @@ Including the following fields (as form-data elements as above) will help !ViCo 
 || timeclock || The ticks per second of the timestamp clock.  The default is 1000 (i.e. the clock is in milliseconds). ||
 || frame || The number of the frame.  The default is to start with a frame number of 0 and increment by 1 for each image received. ||
 || inter || "true" or "false".  Indicates that the image is a difference image from the image before.  The default is "false". ||
+
+== Stream Parameters ==
+When importing an AG or RTP session, the following parameters are supported:
+|| *Parameter* || *Description* ||
+|| venue || The Access Grid v3 virtual venue to receive streams from. ||
+|| address || The multicast or unicast address to receive streams from. ||
+|| port || The port number to listen on for streams when using an address. ||
