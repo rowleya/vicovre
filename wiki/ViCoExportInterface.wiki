@@ -9,7 +9,7 @@ This page details the REST interface for exporting video from !ViCo.  This can b
 || *HTTP Method* || *URL Format* || *Return Content Types* || *Return Codes* || *Description* ||
 || GET || {{{http://<url>/export/<id>/list}}} || text/xml || 200 (OK) || Gets a description of the streams in the session. ||
 || GET || {{{http://<url>/export/<id>?<file-parameters>}}} || Varies || 200 (OK) || Downloads a file of the session from the server.  The {{{<file-parameters>}}} (see below) determine the content type ||
-|| GET || {{{http://<url>/export/<id>/changed[?changeid=<cid>&waitTime=<time>]}}} || text/xml || 200 (OK) || Indicates if a live stream has changed.  If it has, the return will be {{{<changes><changed>true</changed><changeid><cid></changeid></changes>}}}, otherwise it will be {{{<changes><changed>false</changed><changeid><cid></changeid></changes>}}}.  This may block for up to {{{<time>}}} milliseconds before returning (default is 10000).  This is useful for receiving a live stream via images.  If the change id {{{<cid>}}} is not specified, one will be assigned and returned.  This allows multiple users to determine if the stream has changed for them since the last call to the uri. ||
+|| GET || {{{http://<url>/export/<id>/changed[?changeid=<cid>&waitTime=<time>]}}} || text/xml || 200 (OK) || Indicates if a live stream has changed. ||
 || POST || {{{http://<url>/export/<id>/<streamid>?<stream-parameters>}}} || None || 200 (OK), 503 (Unsupported media format) || Sends the stream with id {{{<streamid>}}} from the server using RTP.  If successful, the response will contain a Location header with the {{{<sendid>}}} for the session in it.  The {{{<stream-parameters>}}} (see below) determine what is sent where.  Note that in a ||
 || DELETE || {{{http://<url>/export/<id>/<streamid>/<sendid>}}} || None || 200 (OK) || Stops the sending of the stream identified by {{{<sendid>}}} ||
 
@@ -59,6 +59,28 @@ The xml returned for the streams will be as follows:
     </stream>
     ...
 </streams>
+}}}
+
+== Changes ==
+This is useful for receiving a live stream via images.  The following parameters can be specified:
+|| *Parameter* || *Description* ||
+|| substream || The substream to detect the changes of.  If not specified, the first substream will be used. ||
+|| changeid || This will be returned in the first response (see below), and should be used in all subsequent requests for changes of this stream and substream (otherwise it will always return true and a new id). ||
+|| waitTime || The maximum amount of time (in milliseconds) to wait before returning.  If a change is detected before this time, the service will return immediately, otherwise, it will return false at the end of the time.  This allows an instant response to changes.  If not specified, the waitTime will be 10000 milliseconds. ||
+
+If the stream has changed, the return will be:
+{{{
+<changes>
+    <changed>true</changed>
+    <changeid>...</changeid>
+</changes>
+}}}
+otherwise it will be:
+{{{
+<changes>
+    <changed>false</changed>
+    <changeid>...</changeid>
+</changes>
 }}}
 
 == Requested Content Type ==
