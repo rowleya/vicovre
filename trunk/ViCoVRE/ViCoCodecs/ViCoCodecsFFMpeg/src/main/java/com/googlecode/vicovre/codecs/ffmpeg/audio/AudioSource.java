@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.media.audio;
+package com.googlecode.vicovre.codecs.ffmpeg.audio;
 
 import java.io.IOException;
 

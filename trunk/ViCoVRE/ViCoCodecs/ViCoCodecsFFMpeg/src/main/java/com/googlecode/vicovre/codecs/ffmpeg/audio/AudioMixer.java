@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.googlecode.vicovre.media.audio;
+package com.googlecode.vicovre.codecs.ffmpeg.audio;
 
 import java.io.IOException;
 
@@ -39,7 +39,6 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 import javax.media.format.UnsupportedFormatException;
 
-import com.googlecode.vicovre.codecs.ffmpeg.audio.ResampleCodec;
 import com.googlecode.vicovre.media.MemeticFileReader;
 
 /**
