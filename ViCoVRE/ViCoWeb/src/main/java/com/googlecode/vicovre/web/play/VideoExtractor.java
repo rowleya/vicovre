@@ -48,10 +48,10 @@ import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.util.ImageToBuffer;
 
+import com.googlecode.vicovre.codecs.ffmpeg.audio.AudioMixer;
 import com.googlecode.vicovre.codecs.flv.JavaMultiplexer;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.Misc;
-import com.googlecode.vicovre.media.audio.AudioMixer;
 import com.googlecode.vicovre.media.controls.FrameFillControl;
 import com.googlecode.vicovre.media.processor.OutputStreamDataSink;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
