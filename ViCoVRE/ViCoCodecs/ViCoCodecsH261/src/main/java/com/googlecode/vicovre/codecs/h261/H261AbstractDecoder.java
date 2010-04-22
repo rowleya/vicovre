@@ -34,12 +34,12 @@ package com.googlecode.vicovre.codecs.h261;
 
 import javax.media.Codec;
 
-import com.googlecode.vicovre.codecs.controls.FrameFillControl;
 import com.googlecode.vicovre.codecs.utils.BitInputStream;
 import com.googlecode.vicovre.codecs.utils.DCT;
 import com.googlecode.vicovre.codecs.utils.QuickArray;
 import com.googlecode.vicovre.codecs.utils.QuickArrayAbstract;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
+import com.googlecode.vicovre.media.controls.FrameFillControl;
 
 /**
  * Common H261 Decoding functions

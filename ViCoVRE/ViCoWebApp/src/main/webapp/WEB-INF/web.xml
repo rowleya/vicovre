@@ -3,6 +3,15 @@
 
     <display-name>ViCo Web</display-name>
 
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/vicoSpring-context.xml</param-value>
+    </context-param>
+
+    <listener>
+         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
     <!-- <filter>
         <filter-name>security</filter-name>
         <filter-class>com.googlecode.vicovre.security.servlet.SecurityFilter</filter-class>
@@ -26,9 +35,23 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+        <servlet-name>Jersey Spring Web Application</servlet-name>
+        <servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>com.googlecode.vicovre.web.rest</param-value>
+        </init-param>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>vicoSpring</servlet-name>
         <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>Jersey Spring Web Application</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
     <!-- <filter-mapping>

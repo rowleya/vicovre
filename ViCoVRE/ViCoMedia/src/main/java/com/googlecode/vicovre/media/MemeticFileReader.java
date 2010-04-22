@@ -142,7 +142,7 @@ public class MemeticFileReader {
         this.filename = filename;
         this.typeRepository = typeRepository;
         if (!new File(filename).isFile()) {
-            return;
+            throw new IOException("File " + filename + " is not a file");
         }
         fileInput = new FileInputStream(filename);
         input = new DataInputStream(fileInput);

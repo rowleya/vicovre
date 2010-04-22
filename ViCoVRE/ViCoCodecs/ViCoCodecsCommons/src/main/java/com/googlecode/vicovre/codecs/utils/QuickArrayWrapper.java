@@ -51,6 +51,8 @@ public class QuickArrayWrapper extends QuickArrayAbstract {
 
     private long length = 0;
 
+    private long elementSize = 0;
+
     /**
      * Creates a new QuickArrayWrapper
      * @param data The array to wrap
@@ -74,12 +76,13 @@ public class QuickArrayWrapper extends QuickArrayAbstract {
             dataOffset = getUnsafe().objectFieldOffset(
                 QuickArrayWrapper.class.getDeclaredField("data"));
             arrayOffset = getUnsafe().arrayBaseOffset(data.getClass()) + offset;
+            elementSize = getUnsafe().arrayIndexScale(data.getClass());
         } catch (Exception e) {
             throw new QuickArrayException(e);
         }
 
         this.data = data;
-        this.length = length;
+        this.length = length * elementSize;
     }
 
     protected long getDataAddress() {

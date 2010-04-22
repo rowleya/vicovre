@@ -42,11 +42,11 @@ import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
 
-import com.googlecode.vicovre.codecs.controls.FrameFillControl;
 import com.googlecode.vicovre.codecs.utils.BitInputStream;
 import com.googlecode.vicovre.codecs.utils.QuickArray;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
+import com.googlecode.vicovre.media.controls.FrameFillControl;
 
 /**
  * A decoder for H261AS
@@ -418,7 +418,7 @@ public class H261ASDecoder extends H261AbstractDecoder
 
     /**
      *
-     * @see com.googlecode.vicovre.codecs.controls.FrameFillControl#fillFrame(
+     * @see com.googlecode.vicovre.media.controls.FrameFillControl#fillFrame(
      *     byte[])
      */
     public void fillFrame(byte[] frameData) {

@@ -32,15 +32,17 @@
 
 package com.googlecode.vicovre.streamer.display;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
+import javax.swing.BoxLayout;
 
 /**
  * A window containing a video player
@@ -80,66 +82,52 @@ class VideoWindow extends Frame {
     // The width to add for key '6'
     private static final int POSITIVE_MULTIPLIER_HEIGHT = 96;
 
-    // The player contained in the window
-    private VideoPlayer player;
+    // The player visual component
+    private Component playerComponent;
+
+    // The default size of the video
+    private Dimension videoSize;
 
     // The panel to which the video belongs
     private VideoPanel panel;
 
-    // The width offset of the panel
-    private int woff = 0;
-
-    // The height offset of the panel
-    private int hoff = 0;
-
-    // The preferred size of the video format
-    private Dimension preferredSize =
-        new Dimension(DEFAULT_WIDTH, DEFAULT_WIDTH);
-
     // The key listener
     private KeyListener keylistener = null;
+
+    // True until the player has been visible at least once
+    private boolean firstVisible = true;
 
     /**
      * Creates a new VideoWindow
      *
      * @param name
      *            The title of the window
-     * @param p
-     *            The player to play video with
      * @param panel
      *            The panel that owns the window
      */
-    public VideoWindow(String name, VideoPlayer p, VideoPanel panel) {
+    public VideoWindow(String name, VideoPanel panel) {
 
         // Set the title of the window
         super(name);
 
         // Set the other variables
-        player = p;
         this.panel = panel;
+
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         // Set up listeners for the window closing and the keys being pressed
         addWindowListener(new FrameAdapter(this));
         keylistener = new KeyPress(this);
 
-        // Show the window in its default state
-        pack();
-
-        // Get the default offsets for the window (title bar etc)
-        Insets i = getInsets();
-        woff = i.left + i.right;
-        hoff = i.top + i.bottom;
-
-        // Set the window preferred size
-        preferredSize = player.getVisualComponent()
-                .getPreferredSize();
-        setPreferredSize(preferredSize);
-
-        // Add the player to the window
-        add(player.getVisualComponent());
-
-        keyPressed('m');
         DesktopContainer.getInstance().add(this);
+    }
+
+    protected void setPlayer(VideoPlayer player) {
+        playerComponent = player.getVisualComponent();
+        videoSize = playerComponent.getPreferredSize();
+        add(playerComponent, 0);
+        setPreferredSize(getDefaultSize());
+        keyPressed('m');
     }
 
     /**
@@ -155,12 +143,18 @@ class VideoWindow extends Frame {
      */
     public void setVisible(boolean visible) {
         super.setVisible(visible);
-        player.getVisualComponent().setVisible(visible);
+        if (playerComponent != null) {
+            playerComponent.setVisible(visible);
+        }
         if (!visible) {
             processWindowEvent(new WindowEvent(this,
                     WindowEvent.WINDOW_CLOSED));
             removeKeyListener(keylistener);
         } else {
+            if (firstVisible) {
+                keyPressed('m');
+                firstVisible = false;
+            }
             processWindowEvent(new WindowEvent(this,
                     WindowEvent.WINDOW_OPENED));
             addKeyListener(keylistener);
@@ -188,6 +182,13 @@ class VideoWindow extends Frame {
         }
     }
 
+    public Dimension getDefaultSize() {
+        if (playerComponent == null) {
+            return new Dimension(DEFAULT_WIDTH, DEFAULT_WIDTH);
+        }
+        return videoSize;
+    }
+
     /**
      * Handles the pressing of a key
      *
@@ -195,7 +196,7 @@ class VideoWindow extends Frame {
      *            The key that was pressed
      */
     public void keyPressed(char key) {
-        Dimension size = preferredSize;
+        Dimension size = getDefaultSize();
 
         // Calculate the default height and width
         int width = DEFAULT_WIDTH;
@@ -205,25 +206,24 @@ class VideoWindow extends Frame {
         // Resize the window depending on the key
         // Size of transmitting stream
         if ((key == 'D') || (key == 'd')) {
-            setSize((int) size.getWidth() + woff, (int) size.getHeight()
-                    + hoff);
+            setPlayerSize(size.width, size.height);
         }
 
         // Small size
         if ((key == 'S') || (key == 's')) {
-            setSize((width / SMALL_SIZE_DIVIDER) + woff,
-                    (height / SMALL_SIZE_DIVIDER) + hoff);
+            setPlayerSize((width / SMALL_SIZE_DIVIDER),
+                    (height / SMALL_SIZE_DIVIDER));
         }
 
         // Medium size
         if ((key == 'M') || (key == 'm')) {
-            setSize((width) + woff, (height) + hoff);
+            setPlayerSize(width, height);
         }
 
         // Large size
         if ((key == 'L') || (key == 'l')) {
-            setSize((width * LARGE_SIZE_MULTIPLIER) + woff,
-                    (height * LARGE_SIZE_MULTIPLIER) + hoff);
+            setPlayerSize((width * LARGE_SIZE_MULTIPLIER),
+                    (height * LARGE_SIZE_MULTIPLIER));
         }
 
         // Size between very small and very large (2 = small, 5 = medium, 8 =
@@ -236,69 +236,18 @@ class VideoWindow extends Frame {
                     : POSITIVE_MULTIPLIER_HEIGHT;
             width = (width + (wdiff * value));
             height = (height + (hdiff * value));
-            setSize(width + woff, height + hoff);
+            setPlayerSize(width, height);
         }
     }
 
-    /**
-     *
-     * @see java.awt.Component#setSize(int, int)
-     */
-    public void setSize(int width, int height) {
-        super.setSize(width, height);
-        player.getVisualComponent().setSize(width - woff, height - hoff);
-    }
-
-    /**
-     *
-     * @see java.awt.Component#setSize(java.awt.Dimension)
-     */
-    public void setSize(Dimension size) {
-        setSize(size.width, size.height);
-    }
-
-    /**
-     *
-     * @see java.awt.Component#setBounds(int, int, int, int)
-     */
-    public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, y, width, height);
-        if (player != null) {
-            player.getVisualComponent().setSize(width - woff, height - hoff);
+    private void setPlayerSize(int width, int height) {
+        if (playerComponent != null) {
+            playerComponent.setPreferredSize(new Dimension(width, height));
         }
-    }
-
-    /**
-     *
-     * @see java.awt.Component#setBounds(java.awt.Rectangle)
-     */
-    public void setBounds(Rectangle bounds) {
-        setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
-    }
-
-    /**
-     * Restarts playback of the given stream
-     *
-     * @param p
-     *            the player to use
-     */
-    public void restart(VideoPlayer p) {
-        removeAll();
-        add(p.getVisualComponent());
-        pack();
-
-        // Get the default offsets for the window (title bar etc)
         Insets i = getInsets();
-        woff = i.left + i.right;
-        hoff = i.top + i.bottom;
-
-        // Set the window preferred size
-        preferredSize = p.getVisualComponent().getPreferredSize();
-        preferredSize.width += woff;
-        preferredSize.height += hoff;
-        setPreferredSize(preferredSize);
-        setSize(getSize());
-        player = p;
+        int woff = i.left + i.right;
+        int hoff = i.top + i.bottom;
+        setSize(width + woff, height + hoff);
     }
 
     /**

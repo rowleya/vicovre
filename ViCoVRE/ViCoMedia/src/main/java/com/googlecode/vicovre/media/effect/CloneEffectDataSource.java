@@ -30,17 +30,63 @@
  *
  */
 
-package com.googlecode.vicovre.codecs.controls;
+package com.googlecode.vicovre.media.effect;
 
-/**
- * An interface to force a key frame to be generated in a codec
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public interface KeyFrameForceControl {
+import java.io.IOException;
 
-    /**
-     * Tells the codec that the next frame should be a key frame
-     */
-    void nextFrameKey();
+import javax.media.Time;
+import javax.media.protocol.PushBufferDataSource;
+import javax.media.protocol.PushBufferStream;
+
+public class CloneEffectDataSource extends PushBufferDataSource {
+
+    private CloneEffect[] streams = null;
+
+    public CloneEffectDataSource(int noStreams) {
+        streams = new CloneEffect[noStreams];
+        for (int i = 0; i < noStreams; i++) {
+            streams[i] = new CloneEffect();
+        }
+    }
+
+    public CloneEffect getCloneEffect(int i) {
+        return streams[i];
+    }
+
+    public PushBufferStream[] getStreams() {
+        return streams;
+    }
+
+    public void connect() throws IOException {
+        // Does Nothing
+    }
+
+    public void disconnect() {
+        // Does Nothing
+    }
+
+    public String getContentType() {
+        return null;
+    }
+
+    public Object getControl(String className) {
+        return null;
+    }
+
+    public Object[] getControls() {
+        return new Object[0];
+    }
+
+    public Time getDuration() {
+        return DURATION_UNBOUNDED;
+    }
+
+    public void start() throws IOException {
+        // Does Nothing
+    }
+
+    public void stop() throws IOException {
+        // Does Nothing
+    }
+
 }

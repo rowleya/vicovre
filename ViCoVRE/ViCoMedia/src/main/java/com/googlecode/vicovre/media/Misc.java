@@ -47,6 +47,8 @@ import javax.media.Format;
 import javax.media.PlugIn;
 import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
+import javax.media.protocol.ContentDescriptor;
+import javax.media.protocol.DataSource;
 import javax.media.rtp.rtcp.SourceDescription;
 
 import org.xml.sax.SAXException;
@@ -103,6 +105,8 @@ public class Misc {
             try {
                 addCodec(codec);
             } catch (Exception e) {
+                System.err.println("Warning: could not load codec "
+                        + codec + ": " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -110,7 +114,8 @@ public class Misc {
             try {
                 addDemultiplexer(demultiplexer);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Warning: could not load demultiplexer "
+                        + demultiplexer + ": " + e.getMessage());
             }
         }
     }
@@ -166,6 +171,32 @@ public class Misc {
                 demux.getSupportedInputContentDescriptors(),
                 null,
                 PlugInManager.DEMULTIPLEXER);
+    }
+
+    public static void prependDemultiplexer(
+            Class<? extends Demultiplexer> demuxClass)
+            throws InstantiationException,
+            IllegalAccessException {
+        Demultiplexer demux = (Demultiplexer) loadPlugin(demuxClass);
+        Vector<String> plugins = (Vector<String>) PlugInManager.getPlugInList(
+                null, null, PlugInManager.DEMULTIPLEXER);
+        PlugInManager.setPlugInList(new Vector(), PlugInManager.DEMULTIPLEXER);
+        PlugInManager.addPlugIn(demux.getClass().getCanonicalName(),
+                demux.getSupportedInputContentDescriptors(),
+                null,
+                PlugInManager.DEMULTIPLEXER);
+        for (String demuxerClass : plugins) {
+            try {
+                Demultiplexer demuxer = (Demultiplexer)
+                    loadPlugin(demuxerClass);
+                PlugInManager.addPlugIn(demuxerClass,
+                        demuxer.getSupportedInputContentDescriptors(),
+                        null, PlugInManager.DEMULTIPLEXER);
+            } catch (Exception e) {
+                // Do Nothing
+            }
+
+        }
     }
 
     /**
@@ -296,5 +327,25 @@ public class Misc {
                     note, 3, false));
         }
         return sdes.toArray(new SourceDescription[0]);
+    }
+
+    public static Demultiplexer findDemultiplexer(DataSource ds) {
+        Vector<?> demuxers = PlugInManager.getPlugInList(
+                new ContentDescriptor(ds.getContentType()),
+                null, PlugInManager.DEMULTIPLEXER);
+        Demultiplexer demuxer = null;
+        for (int i = 0; (i < demuxers.size()) && (demuxer == null); i++) {
+            try {
+                String demuxerClassName = (String) demuxers.get(i);
+                Class<?> demuxerClass = Class.forName(demuxerClassName);
+                Demultiplexer demuxerInstance =
+                    (Demultiplexer) demuxerClass.newInstance();
+                demuxerInstance.setSource(ds);
+                demuxer = demuxerInstance;
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }
+        return demuxer;
     }
 }

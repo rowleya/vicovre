@@ -171,6 +171,7 @@
                             <includes>
                                 <include>web.xml</include>
                                 <include>vicoSpring-servlet.xml</include>
+                                <include>vicoSpring-context.xml</include>
                             </includes>
                             <targetPath>WEB-INF</targetPath>
                             <filtering>true</filtering>

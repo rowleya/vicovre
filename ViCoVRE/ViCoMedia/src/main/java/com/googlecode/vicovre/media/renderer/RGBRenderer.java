@@ -353,6 +353,10 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         }
     }
 
+    public boolean firstFrameSeen() {
+        return firstFrameSeen;
+    }
+
     /**
      * Gets the video renderer for the preview
      * @return the preview video renderer

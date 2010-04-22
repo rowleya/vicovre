@@ -24,6 +24,7 @@ import com.googlecode.vicovre.codecs.utils.QuickArray;
 import com.googlecode.vicovre.codecs.utils.QuickArrayAbstract;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
+import com.googlecode.vicovre.media.Bits;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 
 /**
@@ -51,9 +52,6 @@ public class ChangeDetection implements Renderer {
     // The name of the effect
     private static final String NAME = "Change Detection Effect";
 
-    // The percentage change between two frames that indicates a scene change
-    private static final int SCENE_CHANGE_PERCENT_THRESHOLD = 5;
-
     // The input/output format
     private RGBFormat format = null;
 
@@ -62,6 +60,9 @@ public class ChangeDetection implements Renderer {
 
     // The last buffer stored
     private Buffer lastBuffer = null;
+
+    // The data type of the input
+    private Class<?> dataType = null;
 
     // The pixel stride of the input
     private int pixelStride = 0;
@@ -77,6 +78,15 @@ public class ChangeDetection implements Renderer {
 
     // The green mask of the input
     private int greenMask = 0;
+
+    // The red shift of the input
+    private int redShift = 0;
+
+    // The blue shift of the input
+    private int blueShift = 0;
+
+    // The green shift of the input
+    private int greenShift = 0;
 
     // The yuv format
     private YUVFormat yuvFormat = null;
@@ -102,14 +112,22 @@ public class ChangeDetection implements Renderer {
 
     private int threshold = 400;
 
-    private int sceneChangeThreshold = 90;
+    private boolean firstScene = true;
+
+    private double firstSceneChangeThreshold = 0.90;
+
+    private double sceneChangeThreshold = 0.05;
 
     private long lastUpdateTime = -1;
 
     private SimpleProcessor toRGB = null;
 
+    private Dimension size = null;
+
+    private boolean immediatelyNotifyChange = false;
+
     // The listeners to screen change events
-    private Vector < CaptureChangeListener > screenListeners =
+    private Vector<CaptureChangeListener> screenListeners =
         new Vector<CaptureChangeListener>();
 
     /**
@@ -124,7 +142,32 @@ public class ChangeDetection implements Renderer {
                     Format.NOT_SPECIFIED, Format.NOT_SPECIFIED,
                     3, Format.NOT_SPECIFIED, Format.FALSE,
                     Format.NOT_SPECIFIED),
+            new RGBFormat(null, Format.NOT_SPECIFIED, Format.intArray,
+                    Format.NOT_SPECIFIED, 32, Format.NOT_SPECIFIED,
+                    Format.NOT_SPECIFIED, Format.NOT_SPECIFIED,
+                    1, Format.NOT_SPECIFIED, Format.FALSE,
+                    Format.NOT_SPECIFIED)
         };
+    }
+
+    public void setThreshold(int threshold) {
+        this.threshold = threshold;
+    }
+
+    public void setFirstSceneChangeThreshold(double firstSceneChangeThreshold) {
+        this.firstSceneChangeThreshold = firstSceneChangeThreshold;
+    }
+
+    public void setSceneChangeThreshold(double sceneChangeThreshold) {
+        this.sceneChangeThreshold = sceneChangeThreshold;
+    }
+
+    public int getNBlocks() {
+        return nblk;
+    }
+
+    public void setImmediatlyNotifyChange(boolean immediatelyNotifyChange) {
+        this.immediatelyNotifyChange = immediatelyNotifyChange;
     }
 
     /**
@@ -149,8 +192,8 @@ public class ChangeDetection implements Renderer {
         int crv = 0;
         int pos = 0;
         int stride = width;
-        stride = (stride << 4) - stride;
         for (int y = 0; y < blkh; y++) {
+            int lineStart = pos;
             for (int x = 0; x < blkw; x++) {
                 if (crvec[crv++] == 1) {
                     if (yuvFormat == null) {
@@ -162,7 +205,7 @@ public class ChangeDetection implements Renderer {
                 }
                 pos += 16;
             }
-            pos += stride;
+            pos = lineStart + (stride * 16);
         }
     }
 
@@ -174,9 +217,19 @@ public class ChangeDetection implements Renderer {
         int posIn = (y * lineStride) + (x * pixelStride);
 
         for (int i = 0; i < 16; i++) {
-            int r = inBuf.getByte(posIn + redMask - 1) & BYTE_TO_INT_MASK;
-            int g = inBuf.getByte(posIn + greenMask - 1) & BYTE_TO_INT_MASK;
-            int b = inBuf.getByte(posIn + blueMask - 1) & BYTE_TO_INT_MASK;
+            int r = 0;
+            int g = 0;
+            int b = 0;
+            if (dataType.equals(Format.byteArray)) {
+                r = inBuf.getByte(posIn + redMask - 1) & BYTE_TO_INT_MASK;
+                g = inBuf.getByte(posIn + greenMask - 1) & BYTE_TO_INT_MASK;
+                b = inBuf.getByte(posIn + blueMask - 1) & BYTE_TO_INT_MASK;
+            } else if (dataType.equals(Format.intArray)) {
+                int rgb = inBuf.getInt(posIn);
+                r = (rgb & redMask) >> redShift;
+                g = (rgb & greenMask) >> greenShift;
+                b = (rgb & blueMask) >> blueShift;
+            }
 
             int yVal = (int) (CCITT_Y_RED_MULTIPLIER * r)
                   + (int) (CCITT_Y_GREEN_MULTIPLIER * g)
@@ -201,18 +254,9 @@ public class ChangeDetection implements Renderer {
      * @see javax.media.Renderer#process(javax.media.Buffer)
      */
     public int process(Buffer bufIn) {
-        if (nblk <= 0) {
+        if (crvec == null) {
             setInputFormat(bufIn.getFormat());
-            Dimension size = null;
-            if (format != null) {
-                size = format.getSize();
-            } else {
-                size = yuvFormat.getSize();
-            }
-            this.width = size.width;
-            blkw = size.width >> 4;
-            blkh = size.height >> 4;
-            nblk = blkw * blkh;
+
             try {
                 refbuf = new QuickArray(byte[].class, size.width * size.height);
                 refbuf.clear();
@@ -228,7 +272,6 @@ public class ChangeDetection implements Renderer {
             crvec = new int[nblk];
             lastBuffer = null;
         }
-        lock();
         scan = (scan + 3) & 7;
         Object inObject = bufIn.getData();
         if (inObject == null) {
@@ -250,6 +293,8 @@ public class ChangeDetection implements Renderer {
             e.printStackTrace();
             return BUFFER_PROCESSED_FAILED;
         }
+
+        lock();
         int db = scan * ds;
         int rb = scan * rs;
         int w = blkw;
@@ -372,50 +417,74 @@ public class ChangeDetection implements Renderer {
             rb = nrb + (rs << 4);
             crv = ncrv + w;
         }
-        int diffCount = 0;
+        double diffCount = 0;
         for (int i = 0; i < nblk; i++) {
             diffCount += crvec[i];
         }
-        if (((diffCount * 100) / nblk) > sceneChangeThreshold) {
-            sceneChangeThreshold = SCENE_CHANGE_PERCENT_THRESHOLD;
+        double fDiff = (diffCount / nblk);
+        if ((firstScene && (fDiff >= firstSceneChangeThreshold))
+                || (!firstScene && (fDiff >= sceneChangeThreshold))) {
+            firstScene = false;
             lastUpdateTime = bufIn.getTimeStamp();
             saveblks(in);
-            for (int i = 0; i < nblk; ++i) {
+            for (int i = 0; i < nblk; i++) {
                 crvec[i] = 0;
             }
+            if (immediatelyNotifyChange) {
+                notifyChange(bufIn);
+            }
         } else if (lastUpdateTime != -1) {
-            if (yuvFormat != null) {
-                if (toRGB == null) {
-                    Dimension size = yuvFormat.getSize();
-                    format = new RGBFormat(size, size.width * size.height,
-                            Format.intArray,
-                            Format.NOT_SPECIFIED, 32, 0x00FF0000,
-                            0x0000FF00, 0x000000FF,
-                            3, size.width, Format.FALSE,
-                            Format.NOT_SPECIFIED);
-                    try {
-                        toRGB = new SimpleProcessor(yuvFormat, format);
-                    } catch (UnsupportedFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            if (toRGB != null) {
-                toRGB.process(bufIn);
-                lastBuffer = toRGB.getOutputBuffer();
-            } else {
-                lastBuffer = bufIn;
-            }
-            for (int i = 0; i < screenListeners.size(); i++) {
-                final CaptureChangeListener listener = screenListeners.get(i);
-                listener.captureDone(lastUpdateTime);
-            }
-            lastUpdateTime = -1;
+            notifyChange(bufIn);
         }
 
         release();
         return BUFFER_PROCESSED_OK;
     }
+
+    private void notifyChange(Buffer bufIn) {
+        if (yuvFormat != null) {
+            if (toRGB == null) {
+                Dimension size = yuvFormat.getSize();
+                format = new RGBFormat(size, size.width * size.height,
+                        Format.intArray,
+                        Format.NOT_SPECIFIED, 32, 0x00FF0000,
+                        0x0000FF00, 0x000000FF,
+                        3, size.width, Format.FALSE,
+                        Format.NOT_SPECIFIED);
+                try {
+                    toRGB = new SimpleProcessor(yuvFormat, format);
+                } catch (UnsupportedFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (toRGB != null) {
+            toRGB.process(bufIn);
+            lastBuffer = toRGB.getOutputBuffer();
+        } else {
+            lastBuffer = bufIn;
+        }
+        for (int i = 0; i < screenListeners.size(); i++) {
+            final CaptureChangeListener listener = screenListeners.get(i);
+            listener.captureDone(lastUpdateTime);
+        }
+        lastUpdateTime = -1;
+    }
+
+    private void setSize() {
+        if (format != null) {
+            size = format.getSize();
+        } else {
+            size = yuvFormat.getSize();
+        }
+        if (size != null) {
+            this.width = size.width;
+            blkw = size.width >> 4;
+            blkh = size.height >> 4;
+            nblk = blkw * blkh;
+        }
+    }
+
     /**
      * @see javax.media.Codec#setInputFormat(javax.media.Format)
      */
@@ -427,11 +496,20 @@ public class ChangeDetection implements Renderer {
             redMask = format.getRedMask();
             blueMask = format.getBlueMask();
             greenMask = format.getGreenMask();
+            dataType = format.getDataType();
+            if (dataType.equals(Format.intArray)) {
+                redShift = Bits.getShift(redMask);
+                blueShift = Bits.getShift(blueMask);
+                greenShift = Bits.getShift(greenMask);
+            }
+            setSize();
             return input;
         } else if (input instanceof YUVFormat) {
             yuvFormat = (YUVFormat) input;
+            setSize();
             return input;
         }
+
         return null;
     }
 
@@ -560,6 +638,9 @@ public class ChangeDetection implements Renderer {
     public void addScreenListener(CaptureChangeListener listener) {
         if (!screenListeners.contains(listener)) {
             screenListeners.add(listener);
+            if (hasImage()) {
+                listener.captureDone(lastUpdateTime);
+            }
         }
     }
 
@@ -585,5 +666,9 @@ public class ChangeDetection implements Renderer {
      */
     public void stop() {
         // Does Nothing
+    }
+
+    public boolean hasImage() {
+        return lastBuffer != null;
     }
 }

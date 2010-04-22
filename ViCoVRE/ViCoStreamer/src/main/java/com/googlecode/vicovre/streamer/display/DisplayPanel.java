@@ -50,11 +50,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
+import com.googlecode.vicovre.media.controls.PlayControl;
 import com.googlecode.vicovre.media.rtp.StreamListener;
+import com.googlecode.vicovre.media.ui.FileListener;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
 
 public class DisplayPanel extends JPanel implements StreamListener,
-        LocalStreamListener {
+        LocalStreamListener, FileListener {
 
     private JSplitPane splitPane = null;
 
@@ -279,5 +281,28 @@ public class DisplayPanel extends JPanel implements StreamListener,
             }
         }
         validate();
+    }
+
+    public void addFile(String name, DataSource dataSource, long[] ssrcs,
+            PlayControl control) {
+        synchronized (localSsrcs) {
+            for (long ssrc : ssrcs) {
+                localSsrcs.add(ssrc);
+            }
+        }
+        VideoPanel panel = new FilePanel(dataSource, "", control);
+        synchronized (localVideoPanels) {
+            panel.setName(name);
+            localVideoPanels.put(dataSource, panel);
+            localStreams.add(panel);
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(new UpdateTask(panel), 0, 1000);
+            localTimers.put(dataSource, timer);
+        }
+        validate();
+    }
+
+    public void removeFile(DataSource dataSource) {
+        removeLocalVideo(dataSource);
     }
 }

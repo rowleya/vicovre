@@ -190,7 +190,6 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
         try {
             player = new VideoPlayer(ds, PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
-
             if (!muteNow) {
                 player.start();
                 mute.setSelected(false);
@@ -278,22 +277,21 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
             previewComp = player.getPreviewComponent();
             preview.add(previewComp);
             previewComp.setSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
-            final VideoPanel panel = this;
 
-            Thread firstFrameThread = new Thread() {
+            video = createVideoWindow(name.getText(), this);
+            video.setVisible(false);
+
+            // Make the preview clickable
+            preview.addMouseListener(this);
+            previewComp.addMouseListener(this);
+
+            Thread playerAddThread = new Thread() {
                 public void run() {
-
                     player.waitForFirstFrame();
-
-                    video = new VideoWindow(name.getText(), player, panel);
-                    video.setVisible(false);
-
-                    // Make the preview clickable
-                    preview.addMouseListener(panel);
-                    previewComp.addMouseListener(panel);
+                    video.setPlayer(player);
                 }
             };
-            firstFrameThread.start();
+            playerAddThread.start();
         } else {
             JLabel errorLabel = new JLabel("<html><p>Error decoding stream: "
                     + error + "</p></html>");
@@ -505,6 +503,10 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
      */
     public int compareTo(VideoPanel panel) {
         return getCNAME().compareTo(panel.getCNAME());
+    }
+
+    protected VideoWindow createVideoWindow(String name, VideoPanel panel) {
+        return new VideoWindow(name, panel);
     }
 
     /**

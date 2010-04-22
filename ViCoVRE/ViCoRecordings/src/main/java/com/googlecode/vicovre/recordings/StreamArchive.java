@@ -352,16 +352,7 @@ public class StreamArchive {
         }
     }
 
-    /**
-     * Handles an RTCP Sub-packet
-     *
-     * @param packetHeader
-     *            The header of the packet
-     * @param packet
-     *            The data of the packet
-     * @param offset The offset where the data starts
-     */
-    private void processSubpacket(RTCPHeader packetHeader, byte[] packet,
+    public void processSubpacket(RTCPHeader packetHeader, byte[] packet,
             int offset) {
 
         // If there is a file error, stop

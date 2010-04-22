@@ -45,8 +45,8 @@ import javax.media.control.KeyFrameControl;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
-import com.googlecode.vicovre.codecs.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 
 public class NativeEncoder implements Codec,
         KeyFrameControl, KeyFrameForceControl {
@@ -251,7 +251,7 @@ public class NativeEncoder implements Codec,
 
     /**
      *
-     * @see com.googlecode.vicovre.codecs.controls.KeyFrameForceControl#
+     * @see com.googlecode.vicovre.media.controls.KeyFrameForceControl#
      *     nextFrameKey()
      */
     public void nextFrameKey() {

@@ -88,6 +88,10 @@ public class SimpleProcessor {
 
     private boolean closed = false;
 
+    private boolean firstFrameProcessed = false;
+
+    private Integer firstFrameSync = new Integer(0);
+
     private class CodecIterator {
 
         private ListIterator<Codec> codecIterator = null;
@@ -356,6 +360,18 @@ public class SimpleProcessor {
         }
     }
 
+    public void waitForFirstFrame() {
+        synchronized (firstFrameSync) {
+            while (!firstFrameProcessed) {
+                try {
+                    firstFrameSync.wait();
+                } catch (InterruptedException e) {
+                    // Does Nothing
+                }
+            }
+        }
+    }
+
     public boolean insertEffect(Effect effect) {
         CodecIterator iterator = new CodecIterator(codecs, inputFormats,
                 outputFormats, outputBuffers, null);
@@ -502,21 +518,34 @@ public class SimpleProcessor {
                             return PlugIn.BUFFER_PROCESSED_FAILED;
                         }
                         iterator.previous();
-                    } else if (render && (renderer != null)
-                            && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                        if (render(iterator)
-                                == PlugIn.BUFFER_PROCESSED_FAILED) {
-                            return PlugIn.BUFFER_PROCESSED_FAILED;
+                    } else {
+                        if (!firstFrameProcessed) {
+                            synchronized (firstFrameSync) {
+                                firstFrameProcessed = true;
+                                firstFrameSync.notifyAll();
+                            }
                         }
-                    } else if (render && (multiplexer != null)
-                            && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                        return multiplex();
-                    } else if (render && (thread != null)
-                            && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                            || (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                        thread.finishedProcessing();
+                        if (render && (renderer != null)
+                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
+                                || (status ==
+                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            if (render(iterator)
+                                    == PlugIn.BUFFER_PROCESSED_FAILED) {
+                                return PlugIn.BUFFER_PROCESSED_FAILED;
+                            }
+                        } else if (render && (multiplexer != null)
+                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
+                                || (status ==
+                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            if (multiplex() == PlugIn.BUFFER_PROCESSED_FAILED) {
+                                return PlugIn.BUFFER_PROCESSED_FAILED;
+                            }
+                        } else if (render && (thread != null)
+                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
+                                || (status ==
+                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
+                            thread.finishedProcessing();
+                        }
                     }
                 }
 
@@ -639,6 +668,7 @@ public class SimpleProcessor {
             }
         }
         if (forward) {
+            System.err.println("Trying to decode " + input);
             codecsFromHere = PlugInManager.getPlugInList(input, null,
                     PlugInManager.CODEC);
         } else {
@@ -650,6 +680,7 @@ public class SimpleProcessor {
         for (int i = 0; i < codecsFromHere.size(); i++) {
             String codecClassName = (String) codecsFromHere.get(i);
             if (!searched.containsKey(codecClassName)) {
+                System.err.println("Trying codec " + codecClassName);
                 searched.put(codecClassName, true);
                 try {
                     Codec codec = (Codec) Misc.loadPlugin(codecClassName);
@@ -678,6 +709,7 @@ public class SimpleProcessor {
                         Format fmt = null;
                         if (forward) {
                             fmt = codec.setOutputFormat(formats[j]);
+                            System.err.println("Trying format " + fmt + " output from codec " + codecClassName);
                         } else {
                             fmt = codec.setInputFormat(formats[j]);
                         }
@@ -706,6 +738,7 @@ public class SimpleProcessor {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                searched.remove(codecClassName);
             }
         }
 
@@ -747,7 +780,9 @@ public class SimpleProcessor {
         if (thread == null) {
             thread = new ProcessingThread(ds, track, this);
         }
+        System.err.println("Starting processing for " + ds.getClass());
         thread.start();
+        thread.waitForStart();
     }
 
     /**

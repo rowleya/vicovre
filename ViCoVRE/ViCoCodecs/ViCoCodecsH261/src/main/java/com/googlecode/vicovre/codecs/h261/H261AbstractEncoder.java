@@ -45,13 +45,13 @@ import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
-import com.googlecode.vicovre.codecs.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.codecs.utils.BitOutputStream;
 import com.googlecode.vicovre.codecs.utils.ConditionalReplenishment;
 import com.googlecode.vicovre.codecs.utils.DCT;
 import com.googlecode.vicovre.codecs.utils.QuickArray;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 import com.googlecode.vicovre.codecs.utils.QuickArrayWrapper;
+import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 
 /**
  * @author Andrew G D Rowley
@@ -701,7 +701,7 @@ public abstract class H261AbstractEncoder implements Codec,
 
     /**
      *
-     * @see com.googlecode.vicovre.codecs.controls.KeyFrameForceControl#
+     * @see com.googlecode.vicovre.media.controls.KeyFrameForceControl#
      *     nextFrameKey()
      */
     public void nextFrameKey() {

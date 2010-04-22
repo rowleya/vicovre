@@ -207,6 +207,7 @@ public abstract class QuickArrayAbstract {
     public void copy(QuickArrayAbstract in, int inOffset, int offset,
             int length) {
         if (DEBUG) {
+            in.check(inOffset, length);
             check(offset, length);
         }
         unsafe.copyMemory(in.getDataAddress() + inOffset,

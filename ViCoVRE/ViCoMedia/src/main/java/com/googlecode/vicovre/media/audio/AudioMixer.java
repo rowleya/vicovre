@@ -35,9 +35,11 @@ import java.io.IOException;
 
 import javax.media.Buffer;
 import javax.media.Format;
+import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 import javax.media.format.UnsupportedFormatException;
 
+import com.googlecode.vicovre.codecs.ffmpeg.audio.ResampleCodec;
 import com.googlecode.vicovre.media.MemeticFileReader;
 
 /**
@@ -48,7 +50,7 @@ import com.googlecode.vicovre.media.MemeticFileReader;
  */
 public class AudioMixer {
 
-    private static final double GAIN = 0.0015;
+    private static final double GAIN = 0.1000;
 
     private static final int SAMPLES_PER_BUFFER = 882;
 
@@ -64,7 +66,7 @@ public class AudioMixer {
             AudioFormat.SIGNED);
 
     private static final int MAX_SAMPLE =
-        (1 << (FORMAT.getSampleSizeInBits()));
+        (1 << (FORMAT.getSampleSizeInBits() - 1)) - 1;
 
     private AudioSource[] sources = null;
 
@@ -76,13 +78,20 @@ public class AudioMixer {
 
     private byte[] data = new byte[SAMPLES_PER_BUFFER * 2];
 
+    private ResampleCodec[] resample = null;
+
+    private AudioFormat[] resampleInFormat = null;
+
+    private int[] sourceSamplesPerBuffer = null;
+
     /**
      * Creates a new AudioMixer
      * @param sources The linear audio sources to mix
      * @throws UnsupportedFormatException
+     * @throws ResourceUnavailableException
      */
     public AudioMixer(MemeticFileReader[] sources)
-            throws UnsupportedFormatException {
+            throws UnsupportedFormatException, ResourceUnavailableException {
         this.sources = new AudioSource[sources.length];
         minStartTime = Long.MAX_VALUE;
         for (MemeticFileReader source : sources) {
@@ -90,9 +99,27 @@ public class AudioMixer {
                 minStartTime = source.getStartTime();
             }
         }
+
+        resample = new ResampleCodec[sources.length];
+        sourceSamplesPerBuffer = new int[sources.length];
+        resampleInFormat = new AudioFormat[sources.length];
         for (int i = 0; i < sources.length; i++) {
-            this.sources[i] = new AudioSource(sources[i], FORMAT, minStartTime);
+            this.sources[i] = new AudioSource(sources[i], minStartTime);
+            double sampleRate = this.sources[i].getSampleRate();
+            if (sampleRate != FORMAT.getSampleRate()) {
+                resample[i] = new ResampleCodec();
+                resampleInFormat[i] = new AudioFormat(
+                        FORMAT.getEncoding(), sampleRate,
+                        FORMAT.getSampleSizeInBits(), FORMAT.getChannels(),
+                        FORMAT.getEndian(), FORMAT.getSigned());
+                resample[i].setInputFormat(resampleInFormat[i]);
+                resample[i].setOutputFormat(FORMAT);
+                resample[i].open();
+            }
+            sourceSamplesPerBuffer[i] = (int) ((SAMPLES_PER_BUFFER * sampleRate)
+                    / SAMPLE_RATE);
         }
+
     }
 
     public void streamSeek(long offset) throws IOException {
@@ -137,10 +164,74 @@ public class AudioMixer {
         }
 
         for (int i = 0; i < sources.length; i++) {
-            for (int j = 0; j < SAMPLES_PER_BUFFER; j++) {
-                if (!sources[i].isFinished()) {
-                    double sample = sources[i].readNextSample();
-                    samples[j] = (samples[j] + sample);
+            if (resample[i] != null) {
+                /*double ratio = sources[i].getSampleRate() / FORMAT.getSampleRate();
+                double sum = 1.0;
+                double sample = 0.0;
+                byte[] sourceSamples = new byte[sourceSamplesPerBuffer[i] * 2];
+                int sno = 0;
+                for (int j = 0; j < SAMPLES_PER_BUFFER; j++) {
+                    if (sum >= 1.0) {
+                        double dsample = sources[i].readNextSample();
+                        int samp = (int) (dsample * MAX_SAMPLE);
+                        System.err.println("samp = " + samp);
+                        for (int k = sno * 2; k <= ((sno * 2) + 1); k++) {
+                            sourceSamples[k] = (byte) (samp & 0xFF);
+                            System.err.println(k + " " + sourceSamples[k]);
+                            samp >>= Byte.SIZE;
+                        }
+                        int samp2 = 0;
+                        for (int k = 0; k < 2; k++) {
+                            System.err.println(((sno * 2) + k) + " " + sourceSamples[(sno * 2) + k]);
+                            int shift = k * Byte.SIZE;
+                            samp2 |= (sourceSamples[(sno * 2) + k] & 0xFF) << shift;
+                        }
+                        int shift = Integer.SIZE - FORMAT.getSampleSizeInBits();
+                        samp2 <<= shift;
+                        samp2 >>= shift;
+                        System.err.println("samp2 = " + samp2);
+                        sample = (double) samp2 / MAX_SAMPLE;
+                        sum -= 1.0;
+                        sno += 1;
+                    }
+                    samples[j] += sample;
+                    sum += ratio;
+                } */
+
+                byte[] sourceSamples = new byte[sourceSamplesPerBuffer[i] * 2];
+                for (int j = 0; j < sourceSamplesPerBuffer[i]; j++) {
+                    double dsample = sources[i].readNextSample();
+                    int sample = (int) (dsample * MAX_SAMPLE);
+                    for (int k = j * 2; k <= ((j * 2) + 1); k++) {
+                        sourceSamples[k] = (byte) (sample & 0xFF);
+                        sample >>= Byte.SIZE;
+                    }
+                }
+                Buffer input = new Buffer();
+                input.setData(sourceSamples);
+                input.setFormat(resampleInFormat[i]);
+                input.setOffset(0);
+                input.setLength(sourceSamples.length);
+                Buffer output = new Buffer();
+                resample[i].process(input, output);
+                byte[] outputData = (byte[]) output.getData();
+                for (int j = 0; j < SAMPLES_PER_BUFFER; j++) {
+                    int sample = 0;
+                    for (int k = 0; k < 2; k++) {
+                        int shift = k * Byte.SIZE;
+                        sample |= (outputData[(j * 2) + k] & 0xFF) << shift;
+                    }
+                    int shift = Integer.SIZE - FORMAT.getSampleSizeInBits();
+                    sample <<= shift;
+                    sample >>= shift;
+                    samples[j] = (samples[j] + ((double) sample / MAX_SAMPLE));
+                }
+            } else {
+                for (int j = 0; j < SAMPLES_PER_BUFFER; j++) {
+                    if (!sources[i].isFinished()) {
+                        double sample = sources[i].readNextSample();
+                        samples[j] = (samples[j] + sample);
+                    }
                 }
             }
         }
@@ -149,12 +240,15 @@ public class AudioMixer {
         for (int i = 0; i < SAMPLES_PER_BUFFER; i++) {
             energy += samples[i] * samples[i];
         }
-        double k = Math.sqrt((GAIN * SAMPLES_PER_BUFFER) / energy);
+        double k = 1.0;
+        if (energy > 20) {
+            k = Math.sqrt(GAIN * SAMPLES_PER_BUFFER / energy);
+        }
 
         for (int i = 0; i < SAMPLES_PER_BUFFER; i++) {
             samples[i] *= k;
-            if (samples[i] > 1) {
-                samples[i] = 1;
+            if (samples[i] > 1.0) {
+                samples[i] = 1.0;
             }
             if (samples[i] < -1.0) {
                 samples[i] = -1.0;
