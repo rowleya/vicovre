@@ -138,6 +138,11 @@
             <artifactId>ViCoUtils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <artifactItem>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoSharedResources</artifactId>
+            <version>${project.version}</version>
+        </artifactItem>
 
         <!-- Codec Dependencies -->
         <dependency>
