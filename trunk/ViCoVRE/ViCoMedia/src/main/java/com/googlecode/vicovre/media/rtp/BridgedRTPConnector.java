@@ -383,6 +383,10 @@ public class BridgedRTPConnector implements RTPConnector {
                     ssrc = header.getSsrc();
                 }
                 NetworkLocation location = streamLocationMap.get(ssrc);
+                if ((location == null) && (locations != null)
+                        && (locations.length > 0)) {
+                    location = locations[0];
+                }
                 if (location != null) {
                     DatagramPacket packet = new DatagramPacket(data, offset,
                             length);

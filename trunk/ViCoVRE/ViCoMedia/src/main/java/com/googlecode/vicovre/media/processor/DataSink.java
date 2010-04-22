@@ -80,6 +80,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
     private long length = SourceStream.LENGTH_UNKNOWN;
 
+    private boolean started = false;
+
+    private Integer startSync = new Integer(0);
+
     /**
      * A DataSink for a track
      *
@@ -89,6 +93,20 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
     public DataSink(DataSource dataSource, int track) {
         this.dataSource = dataSource;
         this.track = track;
+    }
+
+    protected void waitForStart() {
+        synchronized (startSync) {
+            synchronized (this) {
+                while (!started && !done) {
+                    try {
+                        startSync.wait();
+                    } catch (InterruptedException e) {
+                        // Does Nothing
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -111,6 +129,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            synchronized (startSync) {
+                started = true;
+                startSync.notifyAll();
+            }
         } else if (dataSource instanceof PushDataSource) {
             PushSourceStream[] streams = ((PushDataSource)
                     dataSource).getStreams();
@@ -121,11 +143,19 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            synchronized (startSync) {
+                started = true;
+                startSync.notifyAll();
+            }
         } else if (dataSource instanceof PullBufferDataSource) {
             try {
                 dataSource.start();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+            synchronized (startSync) {
+                started = true;
+                startSync.notifyAll();
             }
             PullBufferStream[] streams = ((PullBufferDataSource)
                     dataSource).getStreams();
@@ -154,6 +184,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            synchronized (startSync) {
+                started = true;
+                startSync.notifyAll();
+            }
             PullSourceStream[] streams = ((PullDataSource)
                     dataSource).getStreams();
             PullSourceStream stream = streams[track];
@@ -181,6 +215,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         synchronized (this) {
             done = true;
             notifyAll();
+
+            synchronized (startSync) {
+                startSync.notifyAll();
+            }
         }
         System.err.println("End of thread");
     }
@@ -193,6 +231,9 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         synchronized (this) {
             done = true;
             notifyAll();
+            synchronized (startSync) {
+                startSync.notifyAll();
+            }
         }
         if (dataSource instanceof PushBufferDataSource) {
             PushBufferStream[] streams = ((PushBufferDataSource)

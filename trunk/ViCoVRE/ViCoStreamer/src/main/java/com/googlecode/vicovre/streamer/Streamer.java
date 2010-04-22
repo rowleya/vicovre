@@ -40,10 +40,14 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.util.Vector;
 
+import javax.media.format.AudioFormat;
+import javax.media.format.VideoFormat;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -63,6 +67,7 @@ import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.rtp.AGController;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.media.rtp.UnsupportedEncryptionException;
+import com.googlecode.vicovre.media.ui.FileDevice;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
@@ -99,6 +104,8 @@ public class Streamer extends JFrame implements ActionListener {
 
     private JButton devicesButton = new JButton("Send...");
 
+    private JButton fileButton = new JButton("Send File...");
+
     private JButton profileButton = new JButton("Profile...");
 
     private ProfileDialog profileDialog = new ProfileDialog(this);
@@ -110,6 +117,8 @@ public class Streamer extends JFrame implements ActionListener {
     private Config config = null;
 
     private RtpTypeRepository types = null;
+
+    private Vector<FileDevice> fileDevices = new Vector<FileDevice>();
 
     public Streamer() throws SAXException, IOException,
             ParserConfigurationException {
@@ -140,6 +149,8 @@ public class Streamer extends JFrame implements ActionListener {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
         buttonPanel.add(devicesButton);
         buttonPanel.add(Box.createHorizontalGlue());
+        buttonPanel.add(fileButton);
+        buttonPanel.add(Box.createHorizontalGlue());
         buttonPanel.add(profileButton);
         add(buttonPanel);
 
@@ -149,6 +160,7 @@ public class Streamer extends JFrame implements ActionListener {
         devicesButton.setEnabled(false);
         devicesButton.addActionListener(this);
         profileButton.addActionListener(this);
+        fileButton.addActionListener(this);
     }
 
     public void init() {
@@ -256,6 +268,9 @@ public class Streamer extends JFrame implements ActionListener {
 
     public void close() {
         localDeviceDialog.stopDevices();
+        for (FileDevice fileDevice : fileDevices) {
+            fileDevice.stop();
+        }
         System.exit(0);
     }
 
@@ -267,6 +282,35 @@ public class Streamer extends JFrame implements ActionListener {
                 editProfile();
             } catch (IOException e1) {
                 e1.printStackTrace();
+            }
+        } else if (e.getSource().equals(fileButton)) {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                FileDevice fileDevice = new FileDevice(file.getAbsolutePath(),
+                        clientProfile, "ViCoStreamer");
+                try {
+                    BridgedRTPConnector audioConnector =
+                        agController.getConnectorForCapability(
+                                AUDIO_CAPABILITY);
+                    BridgedRTPConnector videoConnector =
+                        agController.getConnectorForCapability(
+                                VIDEO_CAPABILITY);
+
+                    RTPType videoRtpType = types.findRtpType(VIDEO_TYPES[0]);
+                    RTPType audioRtpType = types.findRtpType(AUDIO_TYPES[0]);
+                    fileDevice.prepare(videoConnector, audioConnector,
+                            (VideoFormat) videoRtpType.getFormat(),
+                            (AudioFormat) audioRtpType.getFormat(),
+                            videoRtpType.getId(), audioRtpType.getId());
+                    fileDevice.start(displayPanel);
+                    fileDevices.add(fileDevice);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error streaming file: "
+                            + e1.getMessage(), "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }

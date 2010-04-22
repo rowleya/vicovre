@@ -48,11 +48,11 @@ import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.util.ImageToBuffer;
 
-import com.googlecode.vicovre.codecs.controls.FrameFillControl;
 import com.googlecode.vicovre.codecs.flv.JavaMultiplexer;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.audio.AudioMixer;
+import com.googlecode.vicovre.media.controls.FrameFillControl;
 import com.googlecode.vicovre.media.processor.OutputStreamDataSink;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
@@ -383,14 +383,14 @@ public class VideoExtractor {
 
     public static void main(String[] args) throws Exception {
         if (!Misc.isCodecsConfigured()) {
-            Misc.configureCodecs("/codecs.xml");
+            Misc.configureCodecs("/knownCodecs.xml");
         }
         VideoExtractor extractor = new VideoExtractor(
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
-            "VicoWeb/target/recordings/2009-10-08_090000-002983902/2792696808",
+            "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/2792696808",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
             /*new String[]{
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/548913710",
@@ -400,19 +400,19 @@ public class VideoExtractor {
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/66893508",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/163114337"
                     }, */
-            //new String[]{"VicoWeb/target/recordings/2009-10-08_090000-002983902/124113515"},
-            null,
+            new String[]{"../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/124113515"},
+            //null,
             /*new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",}, */
             new String[]{
-                    "VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
-                    "VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160"
+                    "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/1911227824",
+                    "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/1254543160"
             },
             new Dimension(640, 480),
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream("test.flv");
-        extractor.transferToStream(testout, 0, 0, 600000, null);
+        extractor.transferToStream(testout, 600000, 0, 600000, null);
     }
 }

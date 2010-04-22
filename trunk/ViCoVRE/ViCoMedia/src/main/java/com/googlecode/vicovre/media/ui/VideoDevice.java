@@ -62,8 +62,8 @@ import javax.media.rtp.SendStream;
 
 import ag3.interfaces.types.ClientProfile;
 
-import com.googlecode.vicovre.codecs.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.media.effect.CloneEffect;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 

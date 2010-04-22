@@ -30,20 +30,47 @@
  *
  */
 
-package com.googlecode.vicovre.codecs.controls;
+package com.googlecode.vicovre.web.convert;
 
-import javax.media.Control;
+public class ChangeListener {
 
-/**
- * An interface for filling frames
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public interface FrameFillControl extends Control {
+    private Integer changeSync = new Integer(0);
 
-    /**
-     * Indicates that a frame should be filled with the given array
-     * @param frame The frame to fill with
-     */
-    void fillFrame(byte[] frame);
+    private boolean changed = false;
+
+    private String id = null;
+
+    public ChangeListener(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public boolean waitForChange(int milliseconds) {
+        synchronized (changeSync) {
+            if (!changed) {
+                try {
+                    changeSync.wait(milliseconds);
+                } catch (InterruptedException e) {
+                    // Do Nothing
+                }
+            }
+            if (changed) {
+                changed = false;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public void markChanged() {
+        synchronized (changeSync) {
+            System.err.println("Change marked " + id);
+            changed = true;
+            changeSync.notifyAll();
+        }
+    }
+
 }

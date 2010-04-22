@@ -37,16 +37,14 @@ import java.awt.Rectangle;
 import java.io.IOException;
 
 import javax.media.Control;
-import javax.media.ControllerClosedEvent;
-import javax.media.ControllerEvent;
-import javax.media.ControllerListener;
 import javax.media.Effect;
 import javax.media.Format;
 import javax.media.NoPlayerException;
-import javax.media.Processor;
-import javax.media.control.TrackControl;
+import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
+import javax.media.protocol.PullBufferDataSource;
+import javax.media.protocol.PullBufferStream;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
 import javax.media.renderer.VideoRenderer;
@@ -60,23 +58,13 @@ import com.googlecode.vicovre.media.renderer.RGBRenderer;
  * @author Andrew G D Rowley
  * @version 1-1-alpha2
  */
-class VideoPlayer implements ControllerListener {
-
-    // The error to send when the controller has an error
-    private static final String CONTROLLER_ERROR =
-        "Controller would not configure";
-
-    // True if the processor fails to realise
-    private boolean processorFailed = false;
-
-    // An object to allow locking
-    private Integer stateLock = new Integer(0);
-
-    // The processing player
-    //private Processor player;
+class VideoPlayer {
 
     // The renderer
     private RGBRenderer renderer;
+
+    // The audio player (if needed)
+    private AudioPlayer player;
 
     // The preview width
     private int previewwidth = 0;
@@ -101,15 +89,60 @@ class VideoPlayer implements ControllerListener {
         this.previewwidth = previewwidth;
         this.previewheight = previewheight;
 
-        PushBufferStream[] datastreams =
-            ((PushBufferDataSource) ds).getStreams();
-        renderer = new RGBRenderer(new Effect[0]);
-        renderer.setDataSource(ds, 0);
-        if (renderer.setInputFormat(datastreams[0].getFormat()) == null) {
-            throw new NoPlayerException("Unsupported format "
-                    + datastreams[0].getFormat());
+        int videoTrack = -1;
+        int audioTrack = -1;
+        Format videoFormat = null;
+        Format audioFormat = null;
+
+        if (ds instanceof PushBufferDataSource) {
+
+            PushBufferStream[] datastreams =
+                ((PushBufferDataSource) ds).getStreams();
+
+            for (int i = 0; i < datastreams.length; i++) {
+                Format format = datastreams[i].getFormat();
+                if (format instanceof VideoFormat) {
+                    if (videoTrack == -1) {
+                        videoTrack = i;
+                        videoFormat = format;
+                    }
+                } else if (datastreams[i].getFormat() instanceof AudioFormat) {
+                    if (audioTrack == -1) {
+                        audioTrack = i;
+                        audioFormat = format;
+                    }
+                }
+            }
+        } else if (ds instanceof PullBufferDataSource) {
+            PullBufferStream[] datastreams =
+                ((PullBufferDataSource) ds).getStreams();
+            for (int i = 0; i < datastreams.length; i++) {
+                Format format = datastreams[i].getFormat();
+                if (format instanceof VideoFormat) {
+                    if (videoTrack == -1) {
+                        videoTrack = i;
+                        videoFormat = format;
+                    }
+                } else if (datastreams[i].getFormat() instanceof AudioFormat) {
+                    if (audioTrack == -1) {
+                        audioTrack = i;
+                        audioFormat = format;
+                    }
+                }
+            }
         }
-        renderer.getComponent().setVisible(false);
+
+        if (videoTrack != -1) {
+            renderer = new RGBRenderer(new Effect[0]);
+            renderer.setDataSource(ds, videoTrack);
+            if (renderer.setInputFormat(videoFormat) == null) {
+                throw new NoPlayerException("Unsupported format "
+                        + videoFormat);
+            }
+            renderer.getComponent().setVisible(false);
+        }
+        if (audioTrack != -1) {
+        }
     }
 
     /**
@@ -117,15 +150,6 @@ class VideoPlayer implements ControllerListener {
      * @return The preview graphical component
      */
     public Component getPreviewComponent() {
-        /*while (player.getState() < Processor.Realized) {
-            synchronized (stateLock) {
-                try {
-                    stateLock.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-        } */
         VideoRenderer preview = renderer.getPreviewRenderer();
         Component comp = null;
         if (preview != null) {
@@ -143,15 +167,6 @@ class VideoPlayer implements ControllerListener {
      * @return the graphical component for the video
      */
     public Component getVisualComponent() {
-        /*while (player.getState() < Processor.Realized) {
-            synchronized (stateLock) {
-                try {
-                    stateLock.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-        } */
         return renderer.getComponent();
     }
 
@@ -170,14 +185,24 @@ class VideoPlayer implements ControllerListener {
      * Starts the playback
      */
     public void start() {
-        renderer.start();
+        if (renderer != null) {
+            renderer.start();
+        }
+        if (player != null) {
+            player.start();
+        }
     }
 
     /**
      * Stops the playback
      */
     public void stop() {
-        renderer.stop();
+        if (renderer != null) {
+            renderer.stop();
+        }
+        if (player != null) {
+            player.stop();
+        }
     }
 
     /**
@@ -187,22 +212,7 @@ class VideoPlayer implements ControllerListener {
         renderer.waitForFirstFrame();
     }
 
-    /**
-     * @see javax.media.ControllerListener
-     *     #controllerUpdate(javax.media.ControllerEvent)
-     */
-    public synchronized void controllerUpdate(ControllerEvent ce) {
-
-        // If there was an error during configure or
-        // realize, the processor will be closed
-        if (ce instanceof ControllerClosedEvent) {
-            processorFailed = true;
-        }
-
-        // All controller events, send a notification
-        // to the waiting thread in waitForState method.
-        synchronized (stateLock) {
-            stateLock.notifyAll();
-        }
+    public boolean firstFrameSeen() {
+        return renderer.firstFrameSeen();
     }
 }

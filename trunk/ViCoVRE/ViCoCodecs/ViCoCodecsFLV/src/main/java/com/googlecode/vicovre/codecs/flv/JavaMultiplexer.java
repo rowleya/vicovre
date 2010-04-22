@@ -35,7 +35,6 @@ package com.googlecode.vicovre.codecs.flv;
 import java.awt.Dimension;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
 
 import javax.media.Buffer;
 import javax.media.Format;
@@ -101,6 +100,8 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     private static final int FLV_AUDIO_IMA = 0x10;
 
+    private static final int FLV_AUDIO_MP3 = 0x20;
+
     private static final int FLV_AUDIO_TAG = 0x8;
 
     private static final int NANO_TO_MILLIS = 1000000;
@@ -131,6 +132,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     private final Format[] supportedFormats = new Format[]{
         new VideoFormat("flv1"),
+        new AudioFormat(AudioFormat.MPEGLAYER3),
         new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 16, 1),
         new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 16, 1),
         new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_11000_HZ, 16, 1),
@@ -190,9 +192,6 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     // The offset of the timestamps
     private long timestampOffset = 0;
-
-    // The last video buffer seen
-    private Buffer lastVideoBuffer = null;
 
     /**
      * Sets the offset to add to timestamps
@@ -494,11 +493,11 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
         out.write(high8Bits((int) timestamp));
         out.write(intTo24Bits(0));
         int audioHeader = 0;
-        if (format.getEncoding().equals(
-                AudioFormat.IMA4)) {
+        if (format.getEncoding().equals(AudioFormat.IMA4)) {
             audioHeader |= FLV_AUDIO_IMA;
-        } else if (format.getEncoding().equals(
-                AudioFormat.LINEAR)) {
+        } else if (format.getEncoding().equals(AudioFormat.MPEGLAYER3)) {
+            audioHeader |= FLV_AUDIO_MP3;
+        } else if (format.getEncoding().equals(AudioFormat.LINEAR)) {
             audioHeader |= 0;
         }
         switch ((int) format.getSampleRate()) {

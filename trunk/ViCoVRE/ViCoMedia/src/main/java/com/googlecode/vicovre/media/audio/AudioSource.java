@@ -53,8 +53,6 @@ public class AudioSource {
 
     private long offsetShift = 0;
 
-    private double ratio = 0;
-
     private double msPerRead = 0;
 
     private long sourceOffset = 0;
@@ -75,10 +73,8 @@ public class AudioSource {
 
     private int samplePosition = 0;
 
-    private double sum = 0;
-
-    public AudioSource(MemeticFileReader source, AudioFormat convertFormat,
-            long minStartTime) throws UnsupportedFormatException {
+    public AudioSource(MemeticFileReader source, long minStartTime)
+            throws UnsupportedFormatException {
         this.source = source;
         this.startTime = source.getStartTime();
         this.offsetShift = startTime - minStartTime;
@@ -88,8 +84,7 @@ public class AudioSource {
                     new AudioFormat(AudioFormat.LINEAR));
             format = (AudioFormat) processor.getOutputFormat();
         }
-        this.ratio = format.getSampleRate() / convertFormat.getSampleRate();
-        this.msPerRead = 1000.0 / convertFormat.getSampleRate();
+        this.msPerRead = 1000.0 / format.getSampleRate();
         this.sampleSizeInBytes = format.getSampleSizeInBits() / Byte.SIZE;
         this.maxSample = (1 << format.getSampleSizeInBits() - 1) - 1;
     }
@@ -106,6 +101,26 @@ public class AudioSource {
 
     public void setTimestampOffset(long timestampOffset) {
         source.setTimestampOffset(timestampOffset);
+    }
+
+    private void readBuffer() throws IOException {
+        isFinished = !source.readNextPacket();
+        if (!isFinished) {
+            buffer = source.getBuffer();
+            if (processor != null) {
+                processor.process(buffer);
+                buffer = processor.getOutputBuffer();
+                format = (AudioFormat) buffer.getFormat();
+            }
+            bufferStartOffset = sourceOffset
+                + (source.getTimestamp() / 1000000);
+            long samplesInBuffer = buffer.getLength()
+                / sampleSizeInBytes;
+            double durationInMs = (1000.0 * samplesInBuffer)
+                / format.getSampleRate();
+            bufferEndOffset = bufferStartOffset + durationInMs;
+            samplePosition = buffer.getOffset();
+        }
     }
 
     private double readSample(int position) {
@@ -126,7 +141,6 @@ public class AudioSource {
         } else {
             sample -= maxSample;
         }
-
         return (double) sample / maxSample;
     }
 
@@ -134,42 +148,13 @@ public class AudioSource {
         currentOffset += msPerRead;
         if (!isFinished && ((buffer == null)
                 || (currentOffset > bufferEndOffset))) {
-            isFinished = !source.readNextPacket();
-            if (!isFinished) {
-                buffer = source.getBuffer();
-                if (processor != null) {
-                    processor.process(buffer);
-                    buffer = processor.getOutputBuffer();
-                    format = (AudioFormat) buffer.getFormat();
-                }
-                bufferStartOffset = sourceOffset
-                    + (source.getTimestamp() / 1000000);
-                long samplesInBuffer = buffer.getLength()
-                    / sampleSizeInBytes;
-                double durationInMs = (1000.0 * samplesInBuffer)
-                    / format.getSampleRate();
-                bufferEndOffset = bufferStartOffset + durationInMs;
-                samplePosition = buffer.getOffset();
-            }
+            readBuffer();
         }
         if (isFinished || (currentOffset < bufferStartOffset)) {
             return 0;
         }
         double sample = readSample(samplePosition);
-        if ((samplePosition + 1) < (buffer.getLength() + buffer.getOffset())) {
-            double nextSample = readSample(samplePosition + sampleSizeInBytes);
-            sample = (sample * (1.0 - sum)) + (nextSample * sum);
-        }
-
-        sum += ratio;
-        if (sum > 1.0) {
-            sum -= 1.0;
-            if ((samplePosition  + 1)
-                    < (buffer.getOffset() + buffer.getLength())) {
-                samplePosition += sampleSizeInBytes;
-            }
-        }
-
+        samplePosition += sampleSizeInBytes;
         return sample;
     }
 
@@ -181,6 +166,10 @@ public class AudioSource {
 
     public boolean isFinished() {
         return isFinished;
+    }
+
+    public double getSampleRate() {
+        return format.getSampleRate();
     }
 
 }

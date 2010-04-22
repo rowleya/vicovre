@@ -30,70 +30,35 @@
  *
  */
 
-package com.googlecode.vicovre.codecs.utils;
+package com.googlecode.vicovre.web.convert;
 
-/**
- * Useful functions for dealing with bits
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class Bits {
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.Vector;
 
-    private Bits() {
-        // Does Nothing
+public class ConvertSessionManager {
+
+    private HashMap<String, ConvertSession> sessions =
+        new HashMap<String, ConvertSession>();
+
+    public String createSession(boolean live) {
+        String id = UUID.randomUUID().toString();
+        ConvertSession session = new ConvertSession(live);
+        sessions.put(id, session);
+        return id;
     }
 
-    /**
-     * Returns the bit shift for a given mask
-     *
-     * @param mask
-     *            The mask to get the shift of
-     * @return The number of bits to shift
-     */
-    public static int getShift(int mask) {
-        int shift = 0;
-        while ((mask & 0x1) == 0) {
-            mask = mask >> 1;
-            shift++;
-        }
-        return shift;
+    public ConvertSession getSession(String id) {
+        return sessions.get(id);
     }
 
-    /**
-     * Returns the number of bits for the given mask
-     *
-     * @param mask
-     *            The mask to get the bits for
-     * @param shift
-     *            The shift to get for the mask
-     * @return The number of bits in the mask
-     */
-    public static int getBitCount(int mask, int shift) {
-        int bits = 0;
-        mask = mask >> shift;
-        while ((mask & 0x1) == 1) {
-            mask = mask >> 1;
-            bits++;
-        }
-        return bits;
+    public void deleteSession(String id) {
+        sessions.remove(id);
     }
 
-    /**
-     * Converts a number to a string in binary
-     * @param c The number to convert
-     * @param len The length to display
-     * @return The string
-     */
-    public static String toBinaryString(int c, int len) {
-        String s = "";
-        for (int i = len - 1; i >= 0; i--) {
-            if ((c & (1 << i)) > 0) {
-                s += "1";
-            } else {
-                s += "0";
-            }
-        }
-        return s;
+    public List<String> getSessions() {
+        return new Vector<String>(sessions.keySet());
     }
+
 }

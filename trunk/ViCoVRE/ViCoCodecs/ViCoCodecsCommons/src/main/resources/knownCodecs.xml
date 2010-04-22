@@ -22,6 +22,9 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.SWScaleCodec</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.audio.MP3Encoder</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.vic.NativeEncoder</class>
     </codec>
     <codec>
@@ -35,5 +38,14 @@
     </codec>
     <codec>
         <class>com.ibm.media.codec.audio.ulaw.JavaDecoder</class>
+    </codec>
+    <codec>
+        <class>com.ibm.media.codec.audio.ulaw.JavaEncoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.ulaw.Packetizer</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.linear.Packetizer</class>
     </codec>
 </codecs>

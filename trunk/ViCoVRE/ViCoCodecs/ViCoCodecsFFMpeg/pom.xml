@@ -21,5 +21,10 @@
             <artifactId>ViCoCodecsCommons</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoMedia</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
