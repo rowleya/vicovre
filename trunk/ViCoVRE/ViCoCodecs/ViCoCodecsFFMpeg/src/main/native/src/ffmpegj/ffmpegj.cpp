@@ -546,13 +546,15 @@ int FFMpegJ::encode(JNIEnv *env, jobject input, jobject output) {
     env->CallVoidMethod(output, setLengthMethod, bytesProcessed);
     env->CallVoidMethod(output, setSequenceNumberMethod, frameCount);
 
-    if (bytesProcessed < inlength) {
+    /*if (bytesProcessed < inlength) {
+        fprintf(stderr, "%i of %i bytes processed\n", bytesProcessed, inlength);
+        fflush(stderr);
         env->CallVoidMethod(input, setOffsetMethod,
             inoffset + bytesProcessed);
         env->CallVoidMethod(input, setLengthMethod,
             inlength - bytesProcessed);
         return INPUT_BUFFER_NOT_CONSUMED;
-    }
+    } */
     return BUFFER_PROCESSED_OK;
 }
 

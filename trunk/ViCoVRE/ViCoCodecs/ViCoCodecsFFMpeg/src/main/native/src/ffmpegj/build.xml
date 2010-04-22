@@ -26,6 +26,8 @@
                 <arg file="../../../resources/native/@{output}"/>
                 <arg file="${ant.project.name}.cpp"/>
                 <arg file="demuxer.cpp"/>
+                <arg file="audio.cpp"/>
+                <arg file="resample.cpp"/>
                 <libdirs/>
                 <arg line="-lavcodec" />
                 <arg line="-lavformat" />
