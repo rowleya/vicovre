@@ -47,8 +47,6 @@ import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
-import javax.media.protocol.Positionable;
-import javax.media.protocol.Seekable;
 
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
@@ -89,8 +87,6 @@ public class FFMPEGDemuxer implements Demultiplexer {
 
     private DemuxerDataSink dataSink = null;
 
-    private Time currentTime = new Time(0);
-
     private Time duration = DURATION_UNKNOWN;
 
     private FFMPEGTrack[] tracks = new FFMPEGTrack[0];
@@ -105,12 +101,19 @@ public class FFMPEGDemuxer implements Demultiplexer {
 
     private boolean seekable = false;
 
+    private Integer seekSync = new Integer(0);
+
     public Time getDuration() {
         return duration;
     }
 
     public Time getMediaTime() {
-        return currentTime;
+        long minTime = Long.MAX_VALUE;
+        for (int i = 0; i < tracks.length; i++) {
+            minTime = Math.min(tracks[i].getLastReadTime().getNanoseconds(),
+                    minTime);
+        }
+        return new Time(minTime);
     }
 
     public ContentDescriptor[] getSupportedInputContentDescriptors() {
@@ -142,9 +145,12 @@ public class FFMPEGDemuxer implements Demultiplexer {
 
     public Time setPosition(Time time, int rounding) {
         if (seekable) {
-            return new Time(seek(ref, time.getNanoseconds(), rounding));
+            synchronized (seekSync) {
+                long actualTime = seek(ref, time.getNanoseconds(), rounding);
+                return new Time(actualTime);
+            }
         }
-        return currentTime;
+        return getMediaTime();
     }
 
     private void init() throws IOException {
@@ -280,8 +286,10 @@ public class FFMPEGDemuxer implements Demultiplexer {
     protected void finishedProbe() {
         synchronized (bufferSync) {
             finishedProbe = true;
-            bufferToRead.setOffset(bufferToReadOffset);
-            bufferToRead.setLength(bufferToReadLength);
+            if (bufferToRead != null) {
+                bufferToRead.setOffset(bufferToReadOffset);
+                bufferToRead.setLength(bufferToReadLength);
+            }
             endOfDataSource = false;
         }
     }
@@ -391,7 +399,9 @@ public class FFMPEGDemuxer implements Demultiplexer {
     }
 
     protected synchronized int readNextFrame(Buffer output, int stream) {
-        return readNextFrame(ref, output, stream);
+        synchronized (seekSync) {
+            return readNextFrame(ref, output, stream);
+        }
     }
 
     private native long init(String filename, int bufferSize,

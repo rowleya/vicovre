@@ -73,6 +73,8 @@ public class FFMPEGTrack implements Track, FormatControl {
 
     private byte[] data = null;
 
+    private Time lastReadTime = new Time(0);
+
     protected FFMPEGTrack(FFMPEGDemuxer parent, int track, Format format,
             Time startTime, Time duration, int maxDataLength) {
         this.parent = parent;
@@ -117,15 +119,21 @@ public class FFMPEGTrack implements Track, FormatControl {
             buffer.setOffset(0);
             buffer.setLength(data.length);
             int error = parent.readNextFrame(buffer, track);
-            if (error != 0) {
+            if (error < 0) {
                 if (parent.isEndOfSource() || (error == EOF_ERROR)) {
                     buffer.setEOM(true);
                 }
                 buffer.setDiscard(true);
+            } else {
+                lastReadTime = new Time(buffer.getTimeStamp());
             }
         } else {
             buffer.setDiscard(true);
         }
+    }
+
+    protected Time getLastReadTime() {
+        return lastReadTime;
     }
 
     public void setEnabled(boolean enabled) {
