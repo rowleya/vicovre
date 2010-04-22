@@ -4,6 +4,8 @@
     <property file="versions.properties"/>
     <property environment="getenv" />
 
+    <import file="../../../../../VicoCodecsCommons/src/main/native/resources/os.xml"/>
+
     <macrodef name="configure">
         <attribute name="library"/>
         <attribute name="ldflags" default=""/>
@@ -93,8 +95,6 @@
             </make>
         </sequential>
     </macrodef>
-
-    <import file="../../../../../VicoCodecsCommons/src/main/native/resources/os.xml"/>
 
     <exec executable="pwd" osfamily="windows" outputproperty="msys.path"/>
 
@@ -570,6 +570,7 @@
                     <arg value="--enable-libxvid"/>
                     <arg value="--disable-shared" />
                     <arg value="--enable-static" />
+                    <arg value="--disable-debug" />
                     <configureopts/>
                 </confopts>
             </configureandmake>
