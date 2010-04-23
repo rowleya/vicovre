@@ -157,7 +157,12 @@ public class RecordingHandler extends AbstractHandler {
         if (recording == null) {
             throw new XmlRpcException("Recording " + id + " not found");
         }
-        getDatabase().deleteRecording(recording);
+        try {
+            getDatabase().deleteRecording(recording);
+        } catch (IOException e) {
+            throw new XmlRpcException("Could not delete recording: "
+                    + e.getMessage());
+        }
         return true;
     }
 }

@@ -33,7 +33,6 @@
 package com.googlecode.vicovre.gwt.recorder.client;
 
 import java.util.HashMap;
-import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -50,7 +49,6 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.FolderCreator;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemCreator;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemLoader;

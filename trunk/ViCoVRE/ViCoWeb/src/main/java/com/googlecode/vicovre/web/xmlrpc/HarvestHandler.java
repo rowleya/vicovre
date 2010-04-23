@@ -216,7 +216,12 @@ public class HarvestHandler extends AbstractHandler {
         if (harvestSource == null) {
             throw new XmlRpcException("Unknown id " + id);
         }
-        getDatabase().deleteHarvestSource(harvestSource);
+        try {
+            getDatabase().deleteHarvestSource(harvestSource);
+        } catch (IOException e) {
+            throw new XmlRpcException("Error deleting harvest source: "
+                    + e.getMessage());
+        }
         return true;
     }
 

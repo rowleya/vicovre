@@ -39,6 +39,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
+import org.apache.xmlrpc.server.XmlRpcServerConfig;
+import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.XmlRpcServletServer;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
@@ -48,6 +50,9 @@ public class XmlRpcController implements Controller {
     private XmlRpcServletServer server = new XmlRpcServletServer();
 
     public XmlRpcController(XmlRpcHandlerMapping mapping) {
+        XmlRpcServerConfigImpl config = new XmlRpcServerConfigImpl();
+        config.setEnabledForExceptions(true);
+        server.setConfig(config);
         server.setHandlerMapping(mapping);
     }
 

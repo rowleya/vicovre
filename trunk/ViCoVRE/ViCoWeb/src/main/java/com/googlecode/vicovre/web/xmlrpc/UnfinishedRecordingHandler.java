@@ -161,7 +161,12 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         if (recording == null) {
             throw new XmlRpcException("Unknown id " + id);
         }
-        getDatabase().deleteUnfinishedRecording(recording);
+        try {
+            getDatabase().deleteUnfinishedRecording(recording);
+        } catch (IOException e) {
+            throw new XmlRpcException("Could not delete recording: "
+                    + e.getMessage());
+        }
         return true;
     }
 

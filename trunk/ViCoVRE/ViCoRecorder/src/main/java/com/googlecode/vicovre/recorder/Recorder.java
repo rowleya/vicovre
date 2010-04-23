@@ -495,7 +495,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void loadDatabase() {
         try {
             recordingDatabase = new RecordingDatabase(dataDirectory,
-                    typeRepository, layoutRepository, null);
+                    typeRepository, layoutRepository, null, false);
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null,

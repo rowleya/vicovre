@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
 
@@ -70,6 +71,8 @@ public class Folder implements Comparable<Folder> {
     private HashMap<String, Recording> recordings =
         new HashMap<String, Recording>();
 
+    private HashSet<File> recordingsLoaded = new HashSet<File>();
+
     private HashMap<String, HarvestSource> harvestSources =
         new HashMap<String, HarvestSource>();
 
@@ -84,6 +87,8 @@ public class Folder implements Comparable<Folder> {
 
     private RecordingDatabase database = null;
 
+    private boolean readOnly = false;
+
     /**
      * Creates a folder
      * @param file The real folder
@@ -91,16 +96,19 @@ public class Folder implements Comparable<Folder> {
     public Folder(File file, RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository,
-            RecordingDatabase database) {
+            RecordingDatabase database, boolean readOnly) {
         this.file = file;
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
         this.database = database;
+        this.readOnly = readOnly;
 
         readRecordings();
-        readUnfinishedRecordings();
-        readHarvestSources();
+        if (!readOnly) {
+            readUnfinishedRecordings();
+            readHarvestSources();
+        }
     }
 
     /**
@@ -197,7 +205,8 @@ public class Folder implements Comparable<Folder> {
         File[] files = file.listFiles(new FolderFilter(false));
         for (File folderFile : files) {
             Folder folder = new Folder(folderFile, typeRepository,
-                    layoutRepository, harvestFormatRepository, database);
+                    layoutRepository, harvestFormatRepository, database,
+                    readOnly);
             folders.add(folder);
         }
         Collections.sort(folders);
@@ -218,6 +227,7 @@ public class Folder implements Comparable<Folder> {
      * @return the recordings
      */
     public List<Recording> getRecordings() {
+        readRecordings();
         List<Recording> recs = new Vector<Recording>(recordings.values());
         Collections.sort(recs);
         return recs;
@@ -227,16 +237,19 @@ public class Folder implements Comparable<Folder> {
         File[] recordingFiles = file.listFiles(new FolderFilter(true));
         for (File recordingFile : recordingFiles) {
             try {
-                FileInputStream input = new FileInputStream(
+                if (!recordingsLoaded.contains(recordingFile)) {
+                    FileInputStream input = new FileInputStream(
                         new File(recordingFile,
                                 RecordingConstants.RECORDING_INDEX));
-                Recording recording = RecordingReader.readRecording(input,
-                        this, typeRepository, layoutRepository);
-                if (recording == null) {
-                    throw new Exception("Recording " + recordingFile.getName()
-                            + " could not be read");
+                    Recording recording = RecordingReader.readRecording(input,
+                            this, typeRepository, layoutRepository);
+                    if (recording == null) {
+                        throw new Exception("Recording "
+                                + recordingFile.getName()
+                                + " could not be read");
+                    }
+                    recordings.put(recording.getId(), recording);
                 }
-                recordings.put(recording.getId(), recording);
             } catch (Exception e) {
                 System.err.println("Warning: error reading recording "
                         + recordingFile);
@@ -329,27 +342,39 @@ public class Folder implements Comparable<Folder> {
     }
 
     public void addRecording(Recording recording) {
-        recordings.put(recording.getId(), recording);
+        if (!readOnly) {
+            recordings.put(recording.getId(), recording);
+        }
     }
 
     public void addUnfinishedRecording(UnfinishedRecording recording) {
-        unfinishedRecordings.put(recording.getId(), recording);
+        if (!readOnly) {
+            unfinishedRecordings.put(recording.getId(), recording);
+        }
     }
 
     public void addHarvestSource(HarvestSource harvestSource) {
-        harvestSources.put(harvestSource.getId(), harvestSource);
+        if (!readOnly) {
+            harvestSources.put(harvestSource.getId(), harvestSource);
+        }
     }
 
     public void deleteRecording(String id) {
-        recordings.remove(id);
+        if (!readOnly) {
+            recordings.remove(id);
+        }
     }
 
     public void deleteUnfinishedRecording(String id) {
-        unfinishedRecordings.remove(id);
+        if (!readOnly) {
+            unfinishedRecordings.remove(id);
+        }
     }
 
     public void deleteHarvestSource(String id) {
-        harvestSources.remove(id);
+        if (!readOnly) {
+            harvestSources.remove(id);
+        }
     }
 
     public boolean equals(Folder folder) {
