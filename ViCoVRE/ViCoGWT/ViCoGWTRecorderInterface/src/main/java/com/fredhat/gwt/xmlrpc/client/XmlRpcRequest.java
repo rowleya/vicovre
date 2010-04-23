@@ -22,6 +22,7 @@ package com.fredhat.gwt.xmlrpc.client;
 
 import java.util.*;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.*;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.xml.client.*;
@@ -104,6 +105,7 @@ public class XmlRpcRequest<T> implements Cloneable {
             requestBuilder.setPassword(client.getPassword());
 
         try {
+            GWT.log("Request: " + request.toString(), null);
             requestBuilder.sendRequest(request.toString(), new RequestCallback(){
                 public void onResponseReceived(Request req, Response res) {
                     if (res.getStatusCode() != 200) {
@@ -172,8 +174,7 @@ public class XmlRpcRequest<T> implements Cloneable {
         Element valueElem = doc.createElement("value");
 
         if (param == null) {
-            Element nilElem = doc.createElement("nil");
-            valueElem.appendChild(nilElem);
+            // Do Nothing
         } else if (param instanceof Integer) {
             Element intElem = doc.createElement("int");
             intElem.appendChild(doc.createTextNode(param.toString()));

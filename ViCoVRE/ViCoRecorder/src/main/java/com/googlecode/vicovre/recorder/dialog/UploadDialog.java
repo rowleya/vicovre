@@ -374,7 +374,11 @@ public class UploadDialog extends JDialog implements ActionListener,
                     recordingModel.deleteRecordings(recordings);
                     for (Recording recording : recordings) {
                         if (recording != null) {
-                            database.deleteRecording(recording);
+                            try {
+                                database.deleteRecording(recording);
+                            } catch (IOException error) {
+                                error.printStackTrace();
+                            }
                         }
                     }
                 }

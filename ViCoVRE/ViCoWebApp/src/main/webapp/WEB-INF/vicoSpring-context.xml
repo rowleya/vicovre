@@ -23,6 +23,7 @@
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
+        <constructor-arg><value>${recording.readOnly}</value></constructor-arg>
     </bean>
 
     <bean id="convertSessionManager" class="com.googlecode.vicovre.web.convert.ConvertSessionManager">

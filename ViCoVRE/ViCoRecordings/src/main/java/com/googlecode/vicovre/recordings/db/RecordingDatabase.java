@@ -75,6 +75,8 @@ public class RecordingDatabase {
 
     private HarvestFormatRepository harvestFormatRepository = null;
 
+    private boolean readOnly = false;
+
     /**
      * Creates a Database
      * @param directory The directory containing the database
@@ -85,15 +87,16 @@ public class RecordingDatabase {
      */
     public RecordingDatabase(String directory, RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
-            HarvestFormatRepository harvestFormatRepository)
+            HarvestFormatRepository harvestFormatRepository, boolean readOnly)
             throws SAXException, IOException {
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
+        this.readOnly = readOnly;
         File topLevel = new File(directory);
         topLevel.mkdirs();
         topLevelFolder = new Folder(topLevel, typeRepository, layoutRepository,
-                harvestFormatRepository, this);
+                harvestFormatRepository, this, readOnly);
         traverseFolders(topLevelFolder);
 
         File venueServerFile = new File(topLevel, VENUE_SERVER_FILE);
@@ -128,20 +131,23 @@ public class RecordingDatabase {
     }
 
     public void addVenueServer(String url) {
-        synchronized (knownVenueServers) {
-            try {
-                if (!knownVenueServers.contains(url)) {
-                    knownVenueServers.add(url);
-                    File venueServerFile = new File(topLevelFolder.getFile(),
-                            VENUE_SERVER_FILE);
-                    FileOutputStream output = new FileOutputStream(
-                            venueServerFile);
-                    VenueServerReader.writeVenueServers(
+        if (!readOnly) {
+            synchronized (knownVenueServers) {
+                try {
+                    if (!knownVenueServers.contains(url)) {
+                        knownVenueServers.add(url);
+                        File venueServerFile = new File(
+                                topLevelFolder.getFile(),
+                                VENUE_SERVER_FILE);
+                        FileOutputStream output = new FileOutputStream(
+                                venueServerFile);
+                        VenueServerReader.writeVenueServers(
                             knownVenueServers.toArray(new String[0]), output);
-                    output.close();
+                        output.close();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
         }
     }
@@ -156,6 +162,9 @@ public class RecordingDatabase {
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         Folder folder = harvestSource.getFolder();
         folder.addHarvestSource(harvestSource);
         File file = harvestSource.getFile();
@@ -165,7 +174,11 @@ public class RecordingDatabase {
         harvestSource.scheduleTimer(this, typeRepository);
     }
 
-    public void deleteHarvestSource(HarvestSource harvestSource) {
+    public void deleteHarvestSource(HarvestSource harvestSource)
+            throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         Folder folder = harvestSource.getFolder();
         folder.deleteHarvestSource(harvestSource.getId());
         File file = harvestSource.getFile();
@@ -174,11 +187,17 @@ public class RecordingDatabase {
 
     public void updateHarvestSource(HarvestSource harvestSource)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         addHarvestSource(harvestSource);
     }
 
     public void addUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         Folder folder = recording.getFolder();
         folder.addUnfinishedRecording(recording);
         File file = recording.getFile();
@@ -188,7 +207,11 @@ public class RecordingDatabase {
         recording.updateTimers();
     }
 
-    public void deleteUnfinishedRecording(UnfinishedRecording recording) {
+    public void deleteUnfinishedRecording(UnfinishedRecording recording)
+            throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         recording.stopRecording();
         Folder folder = recording.getFolder();
         File file = recording.getFile();
@@ -203,11 +226,17 @@ public class RecordingDatabase {
 
     public void updateUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         addUnfinishedRecording(recording);
     }
 
     public void addRecording(Recording recording)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         Folder folder = getFolder(recording.getDirectory().getParentFile());
         folder.addRecording(recording);
         recording.getDirectory().mkdirs();
@@ -230,7 +259,10 @@ public class RecordingDatabase {
         directory.delete();
     }
 
-    public void deleteRecording(Recording recording) {
+    public void deleteRecording(Recording recording) throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         Folder folder = getFolder(recording.getDirectory().getParentFile());
         folder.deleteRecording(recording.getId());
         deleteDirectory(recording.getDirectory());
@@ -238,6 +270,9 @@ public class RecordingDatabase {
 
     public void updateRecordingMetadata(Recording recording)
             throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         File metadataFile = new File(recording.getDirectory(),
                 RecordingConstants.METADATA);
         FileOutputStream outputStream = new FileOutputStream(metadataFile);
@@ -247,6 +282,9 @@ public class RecordingDatabase {
     }
 
     public void updateRecordingLayouts(Recording recording) throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
         for (ReplayLayout layout : recording.getReplayLayouts()) {
             File layoutOutput = new File(recording.getDirectory(),
                     layout.getName() + RecordingConstants.LAYOUT);
@@ -265,9 +303,14 @@ public class RecordingDatabase {
             if (path.exists() && path.isDirectory()) {
                 File recordingIndex = new File(path,
                         RecordingConstants.RECORDING_INDEX);
-                if (!recordingIndex.exists()) {
+                File unfinishedRecordingIndex = new File(path.getParentFile(),
+                        path.getName()
+                        + RecordingConstants.UNFINISHED_RECORDING_INDEX);
+
+                if (!recordingIndex.exists()
+                        && !unfinishedRecordingIndex.exists()) {
                     folder = new Folder(path, typeRepository, layoutRepository,
-                        harvestFormatRepository, this);
+                        harvestFormatRepository, this, readOnly);
                     folderCache.put(path, folder);
                 }
             }
