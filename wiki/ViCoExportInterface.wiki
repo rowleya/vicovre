@@ -26,11 +26,12 @@ The xml returned for the streams will be as follows:
 
         // One for each sub-stream
         <substream>
-
-            <id>...</id>
         
             // If the stream is an audio stream:
             <audio>
+                
+                // The id of the substream
+                <id>...</id>
                 
                 // The sample rate of the audio in samples per second
                 <samplerate>...</samplerate>
@@ -45,6 +46,9 @@ The xml returned for the streams will be as follows:
     
             // If the stream is a video stream:
             <video>
+
+                // The id of the substream
+                <id>...</id>
                 
                 // The width of the video in pixels
                 <width>...</width>
