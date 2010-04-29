@@ -23,43 +23,42 @@ The xml returned for the streams will be as follows:
 
         // The id of the stream
         <id>...</id>
-
-        // One for each sub-stream
-        <substream>
         
-            // If the stream is an audio stream:
-            <audio>
-                
-                // The id of the substream
-                <id>...</id>
-                
-                // The sample rate of the audio in samples per second
-                <samplerate>...</samplerate>
+        // If the stream has an audio sub-stream (one for each substream):
+        <audio>
+            
+            // The id of the substream
+            <id>...</id>
+            
+            // The sample rate of the audio in samples per second
+            <samplerate>...</samplerate>
+                 
+            // The sample size of the audio in bits
+            <samplesize>...</samplesize>
     
-                // The sample size of the audio in bits
-                <samplesize>...</samplesize>
-    
-                // The number of channels of audio contained in the stream
-                <channels>...</channels>
-    
-            </audio>
-    
-            // If the stream is a video stream:
-            <video>
+            // The number of channels of audio contained in the stream
+            <channels>...</channels>
 
-                // The id of the substream
-                <id>...</id>
-                
-                // The width of the video in pixels
-                <width>...</width>
-                
-                // The height of the video in pixels
-                <height>...</height>
-    
-            </video>
+        </audio>
 
-        </substream>
+        ...
+
+        // If the stream has a video sub-stream (one for each substream):
+        <video>
     
+             // The id of the substream
+            <id>...</id>
+            
+            // The width of the video in pixels
+            <width>...</width>
+            
+            // The height of the video in pixels
+            <height>...</height>
+
+        </video>
+
+        ...
+
     </stream>
     ...
 </streams>
