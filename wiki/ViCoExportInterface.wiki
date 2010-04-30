@@ -114,7 +114,7 @@ In a non-live session, an image will be taken for each frame of the video.  The 
 == Stream Parameters ==
 The following can be specified as query parameters (i.e. {{{<parameter>=<value>}}}) of the url:
 || *Parameter* || *Description* ||
-|| substreamid || The substream to send.  If not specified, the first substream will be used. ||
+|| substreamid || The substream to send.  If not specified, the first audio and first video substreams will be sent if available ||
 || rtptype || The RTP type to use to send the stream.  If not specified, a default type will be used depending on if the stream is video or audio. ||
 || ag || If true, the Access Grid-compatible formats will be used.  If false or omitted, other default formats will be used. ||
 || name || The name to give the stream when sending.  This is optional. ||
