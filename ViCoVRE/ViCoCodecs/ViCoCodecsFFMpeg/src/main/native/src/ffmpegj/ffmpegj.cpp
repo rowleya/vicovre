@@ -337,21 +337,6 @@ int FFMpegJ::decode(JNIEnv *env, jobject input, jobject output) {
     uint8_t *inbytes = in + inoffset;
     int insize = inlength;
 
-    /*if (parser != NULL) {
-        uint8_t *data = NULL;
-        int size = 0;
-        int consumed = av_parser_parse(parser, codecContext, &data, &size,
-                in + inoffset, inlength, 0, 0);
-        if (size <= 0) {
-            env->ReleasePrimitiveArrayCritical((jarray) indata, in, 0);
-            env->ReleasePrimitiveArrayCritical((jarray) outdata, out, 0);
-            return OUTPUT_BUFFER_NOT_FILLED;
-        } else {
-            inbytes = data;
-            insize = size;
-        }
-    } */
-
     if (rtpHandler != NULL) {
         if (abs(lastSequence - sequence) > 5) {
             firstSequence = -1;
@@ -547,8 +532,6 @@ int FFMpegJ::encode(JNIEnv *env, jobject input, jobject output) {
     env->CallVoidMethod(output, setSequenceNumberMethod, frameCount);
 
     /*if (bytesProcessed < inlength) {
-        fprintf(stderr, "%i of %i bytes processed\n", bytesProcessed, inlength);
-        fflush(stderr);
         env->CallVoidMethod(input, setOffsetMethod,
             inoffset + bytesProcessed);
         env->CallVoidMethod(input, setLengthMethod,
