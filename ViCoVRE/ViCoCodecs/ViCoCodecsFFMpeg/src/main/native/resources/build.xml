@@ -4,7 +4,7 @@
     <property file="versions.properties"/>
     <property environment="getenv" />
 
-    <import file="../../../../../VicoCodecsCommons/src/main/native/resources/os.xml"/>
+    <import file="../../../../../ViCoCodecsCommons/src/main/native/resources/os.xml"/>
 
     <macrodef name="configure">
         <attribute name="library"/>
