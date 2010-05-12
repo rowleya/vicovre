@@ -3,20 +3,29 @@
     <demultiplexer>
         <class>com.googlecode.vicovre.codecs.ffmpeg.demuxer.FFMPEGDemuxer</class>
     </demultiplexer>
+    <demultiplexer>
+        <class>com.sun.media.parser.RawBufferParser</class>
+    </demultiplexer>
+    <demultiplexer>
+        <class>com.sun.media.parser.RawStreamParser</class>
+    </demultiplexer>
+    <demultiplexer>
+        <class>com.sun.media.parser.RawPullBufferParser</class>
+    </demultiplexer>
+    <demultiplexer>
+        <class>com.sun.media.parser.RawPullStreamParser</class>
+    </demultiplexer>
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.H264Decoder</class>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.H264Decoder</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.H264RTPDecoder</class>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.H264RTPDecoder</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.FLV1Encoder</class>
-    </codec>
-    <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.JPEGDecoder</class>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.FLV1Encoder</class>
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.SWScaleCodec</class>
