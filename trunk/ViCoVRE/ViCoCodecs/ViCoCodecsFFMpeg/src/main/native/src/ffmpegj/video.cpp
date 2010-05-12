@@ -23,9 +23,7 @@ public:
         int decode(JNIEnv *env, jobject input, jobject output);
 
     private:
-        int initRtp(const char *rtpSdpString);
         int decodeVideo(JNIEnv *env, jobject input);
-        int decodeRtp(uint8_t **inbytes, int *insize, int sequence, int flags);
 
         jint BUFFER_PROCESSED_OK;
         jint BUFFER_PROCESSED_FAILED;
@@ -78,7 +76,6 @@ public:
         jmethodID setPixelFormatMethod;
 
         jmethodID setOutputDataSizeMethod;
-        jmethodID getRtpSdpStringMethod;
 
         AVCodec *codec;
         AVCodecContext *codecContext;
@@ -95,16 +92,6 @@ public:
         int outputWidth;
         int outputHeight;
         PixelFormat pixelFormat;
-
-        RTPDynamicProtocolHandler *rtpHandler;
-        PayloadContext *rtpPayloadContext;
-        AVFormatContext *rtpFormatContext;
-        AVStream *rtpStream;
-        long lastSequence;
-        long firstSequence;
-        AVPacket *rtpPackets[1024];
-        bool rtpPacketCreated[1024];
-        uint8_t rtpData[1024*1600];
 };
 
 JNIEXPORT jlong JNICALL
@@ -210,8 +197,6 @@ Video::Video(JNIEnv *env) {
 
     setOutputDataSizeMethod = env->GetMethodID(contextClass,
                 "setOutputDataSize", "(I)V");
-    getRtpSdpStringMethod = env->GetMethodID(contextClass,
-                "getRtpSdpString", "()Ljava/lang/String;");
 
     jclass plugin = env->FindClass("javax/media/PlugIn");
     jfieldID ok = env->GetStaticFieldID(plugin, "BUFFER_PROCESSED_OK", "I");
@@ -287,42 +272,6 @@ void Video::fillInCodecContext(JNIEnv *env, jobject context) {
     env->CallVoidMethod(context, setBitRateMethod, codecContext->bit_rate);
 }
 
-int Video::initRtp(const char *rtpSdp) {
-    rtpHandler = RTPFirstDynamicPayloadHandler;
-    while (rtpHandler != NULL) {
-        if (rtpHandler->codec_id == codecContext->codec_id) {
-            break;
-        }
-        rtpHandler = rtpHandler->next;
-    }
-    if (rtpHandler != NULL) {
-        rtpPayloadContext = rtpHandler->open();
-        rtpFormatContext = avformat_alloc_context();
-        rtpStream = av_new_stream(rtpFormatContext, 0);
-        rtpStream->codec = codecContext;
-
-        char *sdpLine = NULL;
-        const char *rtpSdpp = rtpSdp;
-        int nChar;
-        while ((nChar = strcspn(rtpSdpp, "\n")) != 0) {
-            sdpLine = (char*) realloc((void*) sdpLine, nChar + 1);
-            memset(sdpLine, '\0', nChar + 1);
-            strncpy(sdpLine, rtpSdpp, nChar);
-            rtpSdpp += nChar + 1;
-            rtpHandler->parse_sdp_a_line(rtpFormatContext, 0,
-                    rtpPayloadContext, sdpLine);
-        }
-        for (int i = 0; i < 1024; i++) {
-            rtpPackets[i] = NULL;
-            rtpPacketCreated[i] = false;
-        }
-        return 0;
-    }
-    fprintf(stderr, "Error setting up rtp handler\n");
-    fflush(stderr);
-    return -1;
-}
-
 int Video::init(JNIEnv *env, jobject context) {
     codecContext->flags = env->CallIntMethod(context, getFlagsMethod);
     codecContext->flags2 = env->CallIntMethod(context, getFlags2Method);
@@ -375,17 +324,6 @@ int Video::init(JNIEnv *env, jobject context) {
                     SWS_BICUBIC, NULL, NULL, NULL);
             return outputWidth * outputHeight * 4;
         } else {
-            jstring jrtpSdpString = (jstring) env->CallObjectMethod(context,
-                    getRtpSdpStringMethod);
-            if (jrtpSdpString != NULL) {
-                const char *rtpSdp = env->GetStringUTFChars(jrtpSdpString,
-                        NULL);
-                int rtpResult = initRtp(rtpSdp);
-                env->ReleaseStringUTFChars(jrtpSdpString, rtpSdp);
-                if (rtpResult < 0) {
-                    return rtpResult;
-                }
-            }
             return 0;
         }
     }
@@ -421,71 +359,6 @@ int Video::encode(JNIEnv *env, jobject input, jobject output) {
     return BUFFER_PROCESSED_OK;
 }
 
-int Video::decodeRtp(uint8_t **inbytes, int *insize, int sequence, int flags) {
-    if (abs(lastSequence - sequence) > 5) {
-        firstSequence = -1;
-    }
-    lastSequence = sequence;
-
-    if (firstSequence == -1) {
-        firstSequence = sequence;
-        lastSequence = firstSequence;
-        for (int i = 0; i < 1024; i++) {
-            if (rtpPacketCreated[i]) {
-                delete rtpPackets[i];
-            }
-            rtpPacketCreated[i] = false;
-        }
-    }
-    int index = sequence - firstSequence;
-    if (index < 0) {
-        index = ((0xFFFF - firstSequence) + sequence);
-    }
-    rtpPackets[index] = new AVPacket;
-    rtpPacketCreated[index] = true;
-    AVPacket *rtpPacket = rtpPackets[index];
-
-    uint32_t timestamp;
-    int rtpFlags = 0;
-    if (flags & FLAG_KEY_FRAME) {
-        rtpFlags |= RTP_FLAG_KEY;
-    }
-    if (flags & FLAG_RTP_MARKER) {
-        rtpFlags |= RTP_FLAG_MARKER;
-    }
-    int result = rtpHandler->parse_packet(rtpFormatContext,
-            rtpPayloadContext, rtpStream, rtpPacket, &timestamp, *inbytes,
-            *insize, rtpFlags);
-    if (result < 0) {
-        return OUTPUT_BUFFER_NOT_FILLED;
-    } else {
-        if ((flags & FLAG_RTP_MARKER) == 0) {
-            return OUTPUT_BUFFER_NOT_FILLED;
-        }
-
-        firstSequence = -1;
-
-        int noPackets = index + 1;
-        int totalSize = 0;
-        for (int i = 0; i < noPackets; i++) {
-            if (rtpPackets[i] == NULL) {
-                return OUTPUT_BUFFER_NOT_FILLED;
-            }
-            totalSize += rtpPackets[i]->size;
-        }
-
-        uint8_t *dest = rtpData;
-        for (int i = 0; i < noPackets; i++) {
-            memcpy(dest, rtpPackets[i]->data, rtpPackets[i]->size);
-            dest += rtpPackets[i]->size;
-        }
-
-        *inbytes = rtpData;
-        *insize = totalSize;
-        return BUFFER_PROCESSED_OK;
-    }
-}
-
 int Video::decodeVideo(JNIEnv *env, jobject input) {
     jobject indata = env->CallObjectMethod(input, getDataMethod);
     int inoffset = env->CallIntMethod(input, getOffsetMethod);
@@ -496,23 +369,11 @@ int Video::decodeVideo(JNIEnv *env, jobject input) {
     uint8_t *in = (uint8_t *) env->GetPrimitiveArrayCritical(
                 (jarray) indata, 0);
 
-    uint8_t *inbytes = in + inoffset;
-    int insize = inlength;
-    int result = BUFFER_PROCESSED_OK;
-    if (rtpHandler != NULL) {
-        result = decodeRtp(&inbytes, &insize, sequence, flags);
-    }
-
     int bytesProcessed = 0;
     int frameFinished = 0;
-    if (result == BUFFER_PROCESSED_OK) {
-        bytesProcessed = avcodec_decode_video(codecContext, scaleFrame,
-            &frameFinished, inbytes, insize);
-    }
+    bytesProcessed = avcodec_decode_video(codecContext, scaleFrame,
+        &frameFinished, in + inoffset, inlength);
     env->ReleasePrimitiveArrayCritical((jarray) indata, in, 0);
-    if (result != BUFFER_PROCESSED_OK) {
-        return result;
-    }
 
     if (bytesProcessed > 0) {
         if (frameFinished > 0) {

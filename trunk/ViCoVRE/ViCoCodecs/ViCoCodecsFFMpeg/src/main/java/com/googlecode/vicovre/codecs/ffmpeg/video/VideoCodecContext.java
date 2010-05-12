@@ -102,8 +102,6 @@ public class VideoCodecContext {
 
     private int outputDataSize = 0;
 
-    private String rtpSdpString = null;
-
     /**
      * Returns the flags.
      * @return the flags
@@ -359,21 +357,5 @@ public class VideoCodecContext {
      */
     public void setOutputDataSize(int outputDataSize) {
         this.outputDataSize = outputDataSize;
-    }
-
-    /**
-     * Gets the RTP SDP String
-     * @return The RTP SDP String
-     */
-    public String getRtpSdpString() {
-        return rtpSdpString;
-    }
-
-    /**
-     * Sets the rtpSdpString
-     * @param rtpSdpString
-     */
-    public void setRtpSdpString(String rtpSdpString) {
-        this.rtpSdpString = rtpSdpString;
     }
 }
