@@ -18,11 +18,11 @@
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>
-    <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.video.H264Decoder</class>
+     <codec>
+        <class>com.googlecode.vicovre.codecs.h264.JavaDepacketizer</class>
     </codec>
     <codec>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.video.H264RTPDecoder</class>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.H264Decoder</class>
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.video.FLV1Encoder</class>
