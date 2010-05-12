@@ -32,9 +32,6 @@
 
 package com.googlecode.vicovre.codecs.ffmpeg.audio;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-
 public class AudioCodecContext {
 
     private int channels = 1;
