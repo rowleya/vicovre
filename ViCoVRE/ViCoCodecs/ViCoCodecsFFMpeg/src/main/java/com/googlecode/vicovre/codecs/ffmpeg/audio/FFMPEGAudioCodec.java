@@ -47,13 +47,14 @@ public abstract class FFMPEGAudioCodec implements Codec {
 
     private final int codecId;
 
-    private final AudioFormat[] inputFormats = new AudioFormat[]{
+    private static final AudioFormat DECODED_FORMAT =
             new AudioFormat(AudioFormat.LINEAR, -1, 16, -1,
                     ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
                             ? AudioFormat.BIG_ENDIAN
                             : AudioFormat.LITTLE_ENDIAN,
-                    AudioFormat.SIGNED)
-    };
+                    AudioFormat.SIGNED);
+
+    private final AudioFormat[] inputFormats;
 
     private final AudioFormat[] outputFormats;
 
@@ -84,9 +85,15 @@ public abstract class FFMPEGAudioCodec implements Codec {
     private int sequenceNumber = 0;
 
     protected FFMPEGAudioCodec(int codecId,
-            AudioFormat[] outputFormats, boolean encode) {
+            AudioFormat[] encodedFormats, boolean encode) {
         this.codecId = codecId;
-        this.outputFormats = outputFormats;
+        if (encode) {
+             this.outputFormats = encodedFormats;
+             this.inputFormats = new AudioFormat[]{DECODED_FORMAT};
+        } else {
+            this.inputFormats = encodedFormats;
+            this.outputFormats = new AudioFormat[]{DECODED_FORMAT};
+        }
         this.encode = encode;
     }
 
@@ -122,7 +129,7 @@ public abstract class FFMPEGAudioCodec implements Codec {
         if (data == null) {
             inputFormat = (AudioFormat) input.getFormat();
             outputFormat = new AudioFormat(outputFormat.getEncoding(),
-                    inputFormat.getSampleRate(), 16, inputFormat.getChannels());
+                inputFormat.getSampleRate(), 16, inputFormat.getChannels());
             AudioCodecContext context = getContext();
             int dataSize = init(ref, context);
             if (dataSize < 0) {
@@ -212,12 +219,16 @@ public abstract class FFMPEGAudioCodec implements Codec {
     }
 
     public String getName() {
-        return "FFMPEGAudioEncoder";
+        return "FFMPEGAudioCodec";
     }
 
     public void open() throws ResourceUnavailableException {
         NativeLoader.loadLibrary(getClass(), "ffmpegj");
         ref = open(encode, codecId, logLevel);
+        if (ref <= 0) {
+            throw new ResourceUnavailableException("Could not open codec: "
+                    + ref);
+        }
     }
 
     public void reset() {
