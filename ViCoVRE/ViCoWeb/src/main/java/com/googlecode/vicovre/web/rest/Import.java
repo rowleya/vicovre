@@ -80,8 +80,9 @@ public class Import {
     @Produces("text/plain")
     public Response createSession(
             @DefaultValue("false") @QueryParam("live") boolean live,
+            @DefaultValue("") @QueryParam("name") String name,
             @Context UriInfo uriInfo) {
-        String id = convertSessionManager.createSession(live);
+        String id = convertSessionManager.createSession(live, name);
         String url = uriInfo.getBaseUri() + "import/" + id;
         return Response.ok(url).cacheControl(getNoCache()).build();
     }
@@ -119,7 +120,6 @@ public class Import {
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        System.err.println("Importing to session " + id);
         String streamId = "0";
         long timestamp = System.currentTimeMillis();
         long timeclock = 1000;
@@ -136,20 +136,15 @@ public class Import {
             String name = item.getFieldName();
             if (name.equals("streamid")) {
                 streamId = Streams.asString(item.openStream());
-                System.err.println("Stream id = " + streamId);
             } else if (name.equals("timestamp")) {
                 timestamp = Long.parseLong(Streams.asString(item.openStream()));
-                System.err.println("Timestamp = " + timestamp);
             } else if (name.equals("timeclock")) {
                 timeclock = Long.parseLong(Streams.asString(item.openStream()));
-                System.err.println("Timeclock = " + timeclock);
             } else if (name.equals("frame")) {
                 frame = Long.parseLong(Streams.asString(item.openStream()));
-                System.err.println("Frame = " + frame);
             } else if (name.equals("inter")) {
                 inter = Boolean.parseBoolean(Streams.asString(
                         item.openStream()));
-                System.err.println("Inter = " + inter);
             } else if (name.equals("item")) {
                 contentType = item.getContentType();
                 if (item.getHeaders() != null) {

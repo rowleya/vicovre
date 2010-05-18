@@ -93,6 +93,46 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo.webstart</groupId>
+                <artifactId>webstart-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jnlp</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jnlp>
+                        <outputFile>streamer.jnlp</outputFile>
+                        <mainClass>com.googlecode.vicovre.streamer.Streamer</mainClass>
+                    </jnlp>
+                    <sign>
+                        <keystore>keystore</keystore>
+                        <keypass>password</keypass>
+                        <storepass>password</storepass>
+                        <alias>cert</alias>
+                        <validity>180</validity>
+
+                        <dnameCn>com.googlecode.vicovre</dnameCn>
+                        <dnameOu>vicovre</dnameOu>
+                        <dnameO>Streamer</dnameO>
+                        <dnameL>Nowhere</dnameL>
+                        <dnameC>GB</dnameC>
+
+                        <verify>true</verify>
+
+                        <keystoreConfig>
+                            <delete>false</delete>
+                            <gen>true</gen>
+                        </keystoreConfig>
+                    </sign>
+
+                    <verbose>false</verbose>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>

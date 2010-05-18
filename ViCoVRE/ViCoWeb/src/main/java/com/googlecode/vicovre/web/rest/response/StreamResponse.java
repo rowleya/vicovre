@@ -30,55 +30,55 @@
  *
  */
 
-package com.googlecode.vicovre.web.rest;
+package com.googlecode.vicovre.web.rest.response;
 
-import java.awt.Dimension;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Vector;
 
 import javax.media.Format;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 
-import com.googlecode.vicovre.web.convert.ChangeResponse;
+import com.googlecode.vicovre.web.convert.ImportStream;
 
-@Provider
-@Produces("text/xml")
-public class ChangeResponseXMLWriter
-    implements MessageBodyWriter<ChangeResponse> {
+@XmlRootElement(name="stream")
+public class StreamResponse {
 
-    public long getSize(ChangeResponse response, Class<?> type,
-            Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
+    private String id = null;
+
+    private List<AVStreamResponse> substreams = new Vector<AVStreamResponse>();
+
+    public StreamResponse() {
+        // Does Nothing
     }
 
-    public boolean isWriteable(Class<?> type, Type genericType,
-            Annotation[] annotations, MediaType mediaType) {
-        return ChangeResponse.class.isAssignableFrom(type);
+    public StreamResponse(String id, ImportStream stream) {
+        this.id = id;
+        for (int i = 0; i < stream.getNoStreams(); i++) {
+            Format format = stream.getFormat(i);
+            if (format instanceof AudioFormat) {
+                substreams.add(new AudioStreamResponse(String.valueOf(i),
+                        (AudioFormat) format));
+            } else if (format instanceof VideoFormat) {
+                substreams.add(new VideoStreamResponse(String.valueOf(i),
+                        (VideoFormat) format));
+            }
+        }
     }
 
-    public void writeTo(ChangeResponse response, Class<?> type,
-            Type genericType, Annotation[] annotations, MediaType mediaType,
-            MultivaluedMap<String, Object> headerMap, OutputStream entityStream)
-            throws IOException, WebApplicationException {
-        PrintWriter writer = new PrintWriter(entityStream);
-        writer.println(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
-        writer.println("<changes>");
-        writer.println("<changed>" + response.getChanged() + "</changed>");
-        writer.println("<changeid>" + response.getId() + "</changeid>");
-        writer.println("</changes>");
-        writer.flush();
-        writer.close();
+    @XmlElement(name="id")
+    public String getId() {
+        return id;
     }
 
+    @XmlElements({
+        @XmlElement(name="audio", type=AudioStreamResponse.class),
+        @XmlElement(name="video", type=VideoStreamResponse.class)
+    })
+    public List<AVStreamResponse> getSubstreams() {
+        return substreams;
+    }
 }

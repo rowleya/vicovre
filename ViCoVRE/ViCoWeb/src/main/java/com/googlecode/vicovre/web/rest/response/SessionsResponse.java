@@ -30,52 +30,30 @@
  *
  */
 
-package com.googlecode.vicovre.web.rest;
+package com.googlecode.vicovre.web.rest.response;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import java.util.List;
 
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import com.googlecode.vicovre.web.convert.ConvertSessionManager;
 
-@Provider
-@Produces("text/xml")
-public class ConvertSessionManagerXMLWriter
-    implements MessageBodyWriter<ConvertSessionManager> {
+@XmlRootElement(name="sessions")
+public class SessionsResponse {
 
-    public long getSize(ConvertSessionManager manager, Class<?> type,
-            Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
+    private ConvertSessionManager manager = null;
+
+    public SessionsResponse() {
+        // Does Nothing
     }
 
-    public boolean isWriteable(Class<?> type, Type genericType,
-            Annotation[] annotations, MediaType mediaType) {
-        return ConvertSessionManager.class.isAssignableFrom(type);
+    public SessionsResponse(ConvertSessionManager manager) {
+        this.manager = manager;
     }
 
-    public void writeTo(ConvertSessionManager manager, Class<?> type,
-            Type genericType, Annotation[] annotations, MediaType mediaType,
-            MultivaluedMap<String, Object> headerMap, OutputStream entityStream)
-            throws IOException, WebApplicationException {
-        PrintWriter writer = new PrintWriter(entityStream);
-        writer.println(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
-        writer.println("<sessions>");
-        for (String session : manager.getSessions()) {
-            writer.println("<session id=\"" + session + "\"/>");
-        }
-        writer.println("</sessions>");
-        writer.flush();
-        writer.close();
+    @XmlElement(name="session")
+    public List<String> getSessions() {
+        return manager.getSessions();
     }
-
 }

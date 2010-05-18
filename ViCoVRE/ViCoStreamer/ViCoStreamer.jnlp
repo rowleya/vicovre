@@ -1,0 +1,16 @@
+<jnlp spec="1.0+" codebase="http://personalpages.manchester.ac.uk/staff/Andrew.Rowley">
+    <information>
+        <title>ViCoStreamer</title>
+        <description>ViCoStreamer</description>
+        <vendor>University of Manchester</vendor>
+        <offline-allowed/>
+    </information>
+    <security>
+        <all-permissions/>
+    </security>
+    <resources>
+        <j2se version="1.5.0+" java-vm-args="-Xmx512M"/>
+        <jar href="ViCoStreamer.one-jar-signed.jar"/>
+    </resources>
+    <application-desc main-class="com.simontuffs.onejar.Boot"/>
+</jnlp>

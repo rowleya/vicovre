@@ -178,7 +178,7 @@ public class TransmitStream {
         DataSource data = processor.getDataOutput(dataSource, stream);
         sendStream = rtpManager.createSendStream(data, 0);
         sendStream.setSourceDescription(Misc.createSourceDescription(
-                clientProfile, note, null));
+                clientProfile, note, "ViCoVRE"));
 
         sendStream.start();
         processor.start(dataSource, stream);

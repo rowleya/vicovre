@@ -52,6 +52,8 @@ public class ConvertSession {
 
     private boolean live = false;
 
+    private String name = null;
+
     private HashMap<String, ImportStream> importStreams =
         new HashMap<String, ImportStream>();
 
@@ -61,8 +63,9 @@ public class ConvertSession {
     private Vector<StreamReceiver> receiveStreams =
         new Vector<StreamReceiver>();
 
-    public ConvertSession(boolean live) {
+    public ConvertSession(boolean live, String name) {
         this.live = live;
+        this.name = name;
     }
 
     public List<String> getStreamIds() {
@@ -188,6 +191,10 @@ public class ConvertSession {
             throw new FileNotFoundException();
         }
         return stream.getChangeListener(substream, changeId);
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void close() {

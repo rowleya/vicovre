@@ -1,0 +1,9 @@
+/** Add css rules here for your application. */
+
+button {
+  display: block;
+}
+
+.widePanel {
+  width: 100%
+}

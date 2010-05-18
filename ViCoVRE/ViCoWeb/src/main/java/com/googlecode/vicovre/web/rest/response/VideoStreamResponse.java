@@ -30,25 +30,39 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client;
+package com.googlecode.vicovre.web.rest.response;
 
-public class Venue {
+import java.awt.Dimension;
 
-    private String name = null;
+import javax.media.format.VideoFormat;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-    private String url = null;
+@XmlRootElement(name="video")
+public class VideoStreamResponse extends AVStreamResponse {
 
-    public Venue(String name, String url) {
-        this.name = name;
-        this.url = url;
+    private int width = 0;
+
+    private int height = 0;
+
+    public VideoStreamResponse() {
+        super(null);
     }
 
-    public String getName() {
-        return name;
+    public VideoStreamResponse(String id, VideoFormat format) {
+        super(id);
+        Dimension size = format.getSize();
+        this.width = size.width;
+        this.height = size.height;
     }
 
-    public String getUrl() {
-        return url;
+    @XmlElement(name="width")
+    public int getWidth() {
+        return width;
     }
 
+    @XmlElement(name="height")
+    public int getHeight() {
+        return height;
+    }
 }

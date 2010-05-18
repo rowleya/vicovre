@@ -1181,6 +1181,14 @@ public class Utils {
             "gray", 1, false, 8, 1, 1, 1, 1, Format.byteArray);
     }
 
+    public static VideoFormat getVideoFormat(PixelFormat pixFmt,
+            Dimension size, float frameRate) {
+        int endian =
+            ByteOrder.BIG_ENDIAN.equals(ByteOrder.nativeOrder())
+                ? RGBFormat.BIG_ENDIAN : RGBFormat.LITTLE_ENDIAN;
+        return getVideoFormat(pixFmt, size, frameRate, endian);
+    }
+
     /**
      * Gets a JMF format from a FFMPEG format
      * @param pixFmt The FFMPEG format identifier
@@ -1189,15 +1197,12 @@ public class Utils {
      * @return A JMF VideoFormat or null if incompatible
      */
     public static VideoFormat getVideoFormat(PixelFormat pixFmt,
-            Dimension size, float frameRate) {
+            Dimension size, float frameRate, int endian) {
         if ((pixFmt.getId() < 0) || (PIXFMTINFO[pixFmt.getId()] == null)) {
             return null;
         }
 
         VideoFormat result = null;
-        final int endian =
-            ByteOrder.BIG_ENDIAN.equals(ByteOrder.nativeOrder())
-                ? RGBFormat.BIG_ENDIAN : RGBFormat.LITTLE_ENDIAN;
         final YUVPixFmtInfo yuvinfo;
         final RGBPixFmtInfo rgbinfo;
 

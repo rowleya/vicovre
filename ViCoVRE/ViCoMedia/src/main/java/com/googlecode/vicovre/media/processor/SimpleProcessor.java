@@ -606,8 +606,9 @@ public class SimpleProcessor {
             codecsFromHere = PlugInManager.getPlugInList(
                     input, output, PlugInManager.CODEC);
         }
+        System.err.println(input + " --> " + output);
+        System.err.println("Trying immediate codecs " + codecsFromHere);
         if (!codecsFromHere.isEmpty()) {
-            System.err.println("Trying immediate codecs " + codecsFromHere);
             Codecs searchCodecs = new Codecs();
             for (int i = 0; i < codecsFromHere.size(); i++) {
                 String codecClassName = (String) codecsFromHere.get(i);
@@ -672,6 +673,7 @@ public class SimpleProcessor {
             codecsFromHere = PlugInManager.getPlugInList(input, null,
                     PlugInManager.CODEC);
         } else {
+            System.err.println("Trying to encode " + output);
             codecsFromHere = PlugInManager.getPlugInList(null, output,
                     PlugInManager.CODEC);
         }
@@ -780,9 +782,9 @@ public class SimpleProcessor {
         if (thread == null) {
             thread = new ProcessingThread(ds, track, this);
         }
-        System.err.println("Starting processing for " + ds.getClass());
         thread.start();
         thread.waitForStart();
+        System.err.println("Starting processing for " + ds.getClass());
     }
 
     /**

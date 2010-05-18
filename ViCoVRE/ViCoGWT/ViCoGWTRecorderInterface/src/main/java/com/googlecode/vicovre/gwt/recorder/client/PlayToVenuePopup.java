@@ -43,10 +43,12 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemChangeState;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemSeek;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemTimeUpdate;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemToVenue;
+import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
 
 public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         implements SlideChangeHandler, ClickHandler {
@@ -63,7 +65,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
 
     private PlayItem item = null;
 
-    private VenuePanel venue = new VenuePanel();
+    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
 
     private ToggleButton playButton = new ToggleButton(PLAY, PAUSE);
 

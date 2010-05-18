@@ -39,7 +39,6 @@ import java.util.UUID;
 
 import javax.media.Demultiplexer;
 import javax.media.Format;
-import javax.media.Manager;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
@@ -47,10 +46,8 @@ import javax.media.protocol.PullBufferDataSource;
 import javax.media.protocol.PullBufferStream;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
-import javax.media.protocol.SourceCloneable;
 
 import com.googlecode.vicovre.media.Misc;
-import com.googlecode.vicovre.media.screencapture.CaptureChangeListener;
 
 public class ImportStream  {
 
@@ -63,8 +60,6 @@ public class ImportStream  {
     private Demultiplexer demuxer = null;
 
     private LiveDataSource liveDataSource = null;
-
-    private SourceCloneable clonable = null;
 
     private Integer lockSync = new Integer(0);
 
@@ -206,15 +201,10 @@ public class ImportStream  {
     }
 
     public DataSource getDataSource() {
-        if (clonable == null) {
-            if (live) {
-                clonable = (SourceCloneable) Manager.createCloneableDataSource(
-                        liveDataSource);
-            }
-            clonable = (SourceCloneable) Manager.createCloneableDataSource(
-                    dataSource);
+        if (live) {
+            return liveDataSource;
         }
-        return clonable.createClone();
+        return dataSource;
     }
 
     public void close() {

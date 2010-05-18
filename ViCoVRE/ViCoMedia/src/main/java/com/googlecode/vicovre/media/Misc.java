@@ -131,6 +131,7 @@ public class Misc {
             throws ClassNotFoundException, InstantiationException,
             IllegalAccessException {
         Codec codec = (Codec) loadPlugin(codecClassName);
+
         PlugInManager.addPlugIn(codec.getClass().getCanonicalName(),
                 codec.getSupportedInputFormats(),
                 codec.getSupportedOutputFormats(null),
