@@ -90,14 +90,16 @@
            <id>maven-restlet</id>
            <name>Public online Restlet repository</name>
            <url>http://maven.restlet.org</url>
+           <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
         <repository>
             <id>manchester.repo</id>
             <url>http://memetic.ag.manchester.ac.uk:8081/nexus/content/repositories/manchester.repo/</url>
-        </repository>
-        <repository>
-            <id>manchester.dev.repo</id>
-            <url>http://memetic.ag.manchester.ac.uk:8081/nexus/content/repositories/manchester.dev.repo/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

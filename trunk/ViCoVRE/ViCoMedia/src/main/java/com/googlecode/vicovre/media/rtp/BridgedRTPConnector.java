@@ -385,7 +385,12 @@ public class BridgedRTPConnector implements RTPConnector {
                 NetworkLocation location = streamLocationMap.get(ssrc);
                 if ((location == null) && (locations != null)
                         && (locations.length > 0)) {
-                    location = locations[0];
+                    if (isRtp) {
+                        location = locations[0];
+                    } else {
+                        location = getRtcpLocation(locations[0]);
+                    }
+
                 }
                 if (location != null) {
                     DatagramPacket packet = new DatagramPacket(data, offset,

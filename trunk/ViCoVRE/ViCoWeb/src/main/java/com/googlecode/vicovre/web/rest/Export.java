@@ -46,15 +46,18 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.web.convert.ChangeListener;
-import com.googlecode.vicovre.web.convert.ChangeResponse;
 import com.googlecode.vicovre.web.convert.ConvertSession;
 import com.googlecode.vicovre.web.convert.ConvertSessionManager;
+import com.googlecode.vicovre.web.rest.response.ChangeResponse;
+import com.googlecode.vicovre.web.rest.response.SessionResponse;
+import com.googlecode.vicovre.web.rest.response.SessionsResponse;
 import com.sun.jersey.spi.inject.Inject;
 
 @Path("/export")
@@ -87,25 +90,27 @@ public class Export {
 
     @GET
     @Path("/list")
-    @Produces("text/xml")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Response listSessions() {
-        return Response.ok(convertSessionManager).build();
+        return Response.ok(new SessionsResponse(
+                convertSessionManager)).cacheControl(getNoCache()).build();
     }
 
     @GET
     @Path("/{id}/list")
-    @Produces("text/xml")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Response listStreams(@PathParam("id") String id) {
         ConvertSession session = convertSessionManager.getSession(id);
         if (session == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
-        return Response.ok(session).build();
+        return Response.ok(new SessionResponse(session)).cacheControl(
+                getNoCache()).build();
     }
 
     @GET
     @Path("/{id}/{streamid}/changed")
-    @Produces("text/xml")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Response hasChanged(@PathParam("id") String id,
             @PathParam("streamid") String streamId,
             @DefaultValue("0") @QueryParam("substream") int substream,
@@ -144,6 +149,14 @@ public class Export {
         if (session == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
+
+        if (name.equals("")) {
+            name = session.getName();
+        }
+        if (note.equals("")) {
+            note = streamId;
+        }
+        System.err.println("Name = " + name + " note = " + note);
 
         int rtpType = rtpTypeNo;
         if (rtpType == -1) {

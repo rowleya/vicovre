@@ -30,25 +30,25 @@
  *
  */
 
-package com.googlecode.vicovre.web.convert;
+package com.googlecode.vicovre.gwt.client;
 
-public class ChangeResponse {
+public class Venue {
 
-    private String id;
+    private String name = null;
 
-    private boolean changed;
+    private String url = null;
 
-    public ChangeResponse(String id, boolean changed) {
-        this.id = id;
-        this.changed = changed;
+    public Venue(String name, String url) {
+        this.name = name;
+        this.url = url;
     }
 
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    public String getChanged() {
-        return String.valueOf(changed);
+    public String getUrl() {
+        return url;
     }
 
 }

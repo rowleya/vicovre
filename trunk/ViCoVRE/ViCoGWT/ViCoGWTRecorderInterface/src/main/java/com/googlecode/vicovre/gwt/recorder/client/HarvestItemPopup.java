@@ -49,6 +49,8 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.client.VenuePanel;
+import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
 
 public class HarvestItemPopup extends ModalPopup<Grid>
         implements ClickHandler, ChangeHandler {
@@ -91,7 +93,7 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private TimeBox time = new TimeBox(5, 5);
 
-    private VenuePanel venue = new VenuePanel();
+    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
 
     private Button ok = new Button("OK");
 

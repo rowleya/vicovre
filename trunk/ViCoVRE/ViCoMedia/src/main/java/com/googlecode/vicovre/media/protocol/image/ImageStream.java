@@ -63,7 +63,7 @@ public class ImageStream implements PushBufferStream {
 
     private RGBFormat format = new RGBFormat(null, -1, Format.intArray, -1,
             BITS, RED, GREEN, BLUE, 1, -1, VideoFormat.FALSE,
-            RGBFormat.BIG_ENDIAN);
+            RGBFormat.LITTLE_ENDIAN);
 
     private int[] data = new int[0];
 
@@ -81,36 +81,38 @@ public class ImageStream implements PushBufferStream {
 
     public void readImage(InputStream input, long timestamp,
             long sequence) throws IOException, UnsupportedFormatException {
-        System.err.println("readImage");
         synchronized (imageSync) {
-            System.err.println("Live? " + live + " image = " + image);
-            while (!live && (image != null)) {
+
+            while (!live && (image != null) && (handler != null)) {
                 try {
-                    System.err.println("Waiting for image to be read");
                     imageSync.wait();
                 } catch (InterruptedException e) {
                     // Does Nothing
                 }
             }
-            System.err.println("Reading imageio");
             image = ImageIO.read(input);
-            System.err.println("Finished reading image: " + image);
             if (image == null) {
                 throw new UnsupportedFormatException(null);
             }
+            Dimension size = new Dimension(image.getWidth(), image.getHeight());
+            if ((size.width % 16) != 0) {
+                size.width += 16 - (size.width % 16);
+            }
+            if ((size.height % 16) != 0) {
+                size.height += 16 - (size.height % 16);
+            }
             format = new RGBFormat(
-                    new Dimension(image.getWidth(), image.getHeight()),
-                    image.getWidth() * image.getHeight(),
+                    size, size.width * size.height,
                     Format.intArray, -1, BITS, RED, GREEN, BLUE, 1,
-                    image.getWidth(), Format.FALSE, RGBFormat.BIG_ENDIAN);
+                    image.getWidth(), Format.FALSE, RGBFormat.LITTLE_ENDIAN);
             if (data.length < format.getMaxDataLength()) {
                 data = new int[format.getMaxDataLength()];
             }
             this.timestamp = timestamp;
             this.sequence = sequence;
-            System.err.println("Transferring data");
-            handler.transferData(this);
-            System.err.println("Transfer complete");
+            if (handler != null) {
+                handler.transferData(this);
+            }
             imageSync.notifyAll();
         }
     }
@@ -120,7 +122,6 @@ public class ImageStream implements PushBufferStream {
     }
 
     public void read(Buffer buffer) throws IOException {
-        System.err.println("Reading buffer");
         synchronized (imageSync) {
             image.getRGB(0, 0, image.getWidth(), image.getHeight(), data, 0,
                     image.getWidth());
@@ -134,11 +135,15 @@ public class ImageStream implements PushBufferStream {
             image = null;
             imageSync.notifyAll();
         }
-        System.err.println("Buffer read");
     }
 
     public void setTransferHandler(BufferTransferHandler transferHandler) {
-        this.handler = transferHandler;
+        synchronized (imageSync) {
+            this.handler = transferHandler;
+            if (image != null) {
+                handler.transferData(this);
+            }
+        }
     }
 
     public boolean endOfStream() {

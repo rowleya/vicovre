@@ -51,6 +51,8 @@ import com.google.gwt.user.datepicker.client.DateBox;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.VenuePanel;
+import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
 
 public class RecordingItemPopup extends ModalPopup<Grid>
         implements ValueChangeHandler<Boolean>, ClickHandler {
@@ -63,7 +65,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private TextArea description = new TextArea();
 
-    private VenuePanel venue = new VenuePanel();
+    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
 
     private RadioButton manualStart = null;
 

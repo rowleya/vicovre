@@ -49,6 +49,8 @@ public class LiveDataSource extends PullBufferDataSource {
 
     private LiveDataStream[] streams = null;
 
+    private boolean started = false;
+
     public LiveDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         int noStreams = 0;
@@ -96,14 +98,20 @@ public class LiveDataSource extends PullBufferDataSource {
     }
 
     public void start() throws IOException {
-        for (LiveDataStream stream : streams) {
-            stream.start();
+        if (!started) {
+            started = true;
+            for (LiveDataStream stream : streams) {
+                stream.start();
+            }
         }
     }
 
     public void stop() throws IOException {
-        for (LiveDataStream stream : streams) {
-            stream.close();
+        if (started) {
+            started = false;
+            for (LiveDataStream stream : streams) {
+                stream.close();
+            }
         }
     }
 

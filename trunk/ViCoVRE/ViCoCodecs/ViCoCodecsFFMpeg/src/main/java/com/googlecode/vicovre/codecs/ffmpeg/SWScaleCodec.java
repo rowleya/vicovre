@@ -113,13 +113,13 @@ public class SWScaleCodec implements Codec {
         }
         if (outputFormat.getDataType() == Format.byteArray) {
             output.setData(bytedata);
-            output.setLength(bytedata.length);
+            output.setLength(bytedata.length / 2);
         } else if (outputFormat.getDataType() == Format.intArray) {
             output.setData(intdata);
-            output.setLength(intdata.length);
+            output.setLength(intdata.length / 2);
         } else if (outputFormat.getDataType() == Format.shortArray) {
             output.setData(shortdata);
-            output.setLength(shortdata.length);
+            output.setLength(shortdata.length / 2);
         }
 
         output.setOffset(0);

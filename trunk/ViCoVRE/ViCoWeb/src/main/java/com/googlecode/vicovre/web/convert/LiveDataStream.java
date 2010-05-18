@@ -34,6 +34,7 @@ package com.googlecode.vicovre.web.convert;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.media.Buffer;
@@ -54,6 +55,12 @@ public class LiveDataStream extends DataSink implements PullBufferStream {
 
     private Integer bufferSync = new Integer(0);
 
+    private int readLocks = 0;
+
+    private boolean writeLock = false;
+
+    private HashMap<Long, Boolean> hasChanged = new HashMap<Long, Boolean>();
+
     private Buffer currentBuffer = null;
 
     private SimpleProcessor processor = null;
@@ -73,32 +80,76 @@ public class LiveDataStream extends DataSink implements PullBufferStream {
         return outputFormat;
     }
 
-    public void read(Buffer buffer) throws IOException {
+    private void getReadLock() {
         synchronized (bufferSync) {
-            while (currentBuffer == null) {
+            long id = Thread.currentThread().getId();
+            if (!hasChanged.containsKey(id)) {
+                hasChanged.put(id, true);
+            }
+            while (writeLock || !hasChanged.get(id)) {
+                try {
+                    bufferSync.wait();
+                } catch (InterruptedException e) {
+                    // Do Nothing
+                }
+            }
+            readLocks += 1;
+        }
+    }
+
+    private void releaseReadLock() {
+        synchronized (bufferSync) {
+            readLocks -= 1;
+            long id = Thread.currentThread().getId();
+            hasChanged.put(id, false);
+            bufferSync.notifyAll();
+        }
+    }
+
+    private void getWriteLock() {
+        synchronized (bufferSync) {
+            while ((readLocks > 0) || writeLock) {
                 try {
                     bufferSync.wait();
                 } catch (InterruptedException e) {
                     // Does Nothing
                 }
             }
-
-            buffer.copy(currentBuffer);
-            Object data = currentBuffer.getData();
-            if (data instanceof byte[]) {
-                buffer.setData(((byte[]) data).clone());
-            } else if (data instanceof int[]) {
-                buffer.setData(((int[]) data).clone());
-            } else if (data instanceof short[]) {
-                buffer.setData(((short[]) data).clone());
-            }
-            currentBuffer = null;
+            writeLock = true;
         }
+    }
+
+    private void releaseWriteLock() {
+        synchronized (bufferSync) {
+            writeLock = false;
+            for (long id : hasChanged.keySet()) {
+                hasChanged.put(id, true);
+            }
+            bufferSync.notifyAll();
+        }
+    }
+
+    public void read(Buffer buffer) throws IOException {
+        getReadLock();
+        buffer.copy(currentBuffer);
+        Object data = currentBuffer.getData();
+        if (data instanceof byte[]) {
+            buffer.setData(((byte[]) data).clone());
+        } else if (data instanceof int[]) {
+            buffer.setData(((int[]) data).clone());
+        } else if (data instanceof short[]) {
+            buffer.setData(((short[]) data).clone());
+        }
+        releaseReadLock();
     }
 
     public boolean willReadBlock() {
         synchronized (bufferSync) {
-            return currentBuffer == null;
+            long id = Thread.currentThread().getId();
+            if (hasChanged.containsKey(id)) {
+                return !hasChanged.get(id);
+            }
+            return false;
         }
     }
 
@@ -123,6 +174,7 @@ public class LiveDataStream extends DataSink implements PullBufferStream {
     }
 
     public void handleBuffer(Buffer buffer) throws IOException {
+        System.err.println("Handling live buffer");
         if (processor == null) {
             try {
                 Format inputFormat = buffer.getFormat();
@@ -146,25 +198,19 @@ public class LiveDataStream extends DataSink implements PullBufferStream {
             }
         }
 
-        synchronized (bufferSync) {
-            int result = 0;
-            do {
-                result = processor.process(buffer);
-                if ((result == PlugIn.BUFFER_PROCESSED_OK)
-                        || (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
-                    currentBuffer = processor.getOutputBuffer();
-                    if (changeDetection != null) {
-                        changeDetection.process(currentBuffer);
-                    }
-                    bufferSync.notifyAll();
-                    try {
-                        bufferSync.wait(1);
-                    } catch (InterruptedException e) {
-                        // Does Nothing
-                    }
+        int result = 0;
+        do {
+            getWriteLock();
+            result = processor.process(buffer);
+            if ((result == PlugIn.BUFFER_PROCESSED_OK)
+                    || (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                currentBuffer = processor.getOutputBuffer();
+                if (changeDetection != null) {
+                    changeDetection.process(currentBuffer);
                 }
-            } while (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED);
-        }
+            }
+            releaseWriteLock();
+        } while (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED);
     }
 
     public void addCaptureChangeListener(CaptureChangeListener listener) {

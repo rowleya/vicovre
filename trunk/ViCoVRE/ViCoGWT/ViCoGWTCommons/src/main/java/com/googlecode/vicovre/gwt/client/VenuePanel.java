@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client;
+package com.googlecode.vicovre.gwt.client;
 
 import java.util.HashSet;
 
@@ -47,10 +47,6 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoader;
 
 public class VenuePanel extends VerticalPanel
         implements ValueChangeHandler<Boolean>, ClickHandler,
@@ -90,6 +86,8 @@ public class VenuePanel extends VerticalPanel
 
     private String venueSelected = null;
 
+    private VenueLoader loader = null;
+
     public static void addVenueServer(String uri) {
         if (!VENUE_SERVER_URLS.contains(uri)) {
             VENUE_SERVERS.add(uri);
@@ -97,7 +95,9 @@ public class VenuePanel extends VerticalPanel
         }
     }
 
-    public VenuePanel() {
+    public VenuePanel(VenueLoader loader) {
+        this.loader = loader;
+
         venueSelect.setText("Use venue server: ");
         manualSelect.setText("Manually enter addresses: ");
 
@@ -190,7 +190,7 @@ public class VenuePanel extends VerticalPanel
     }
 
     private void loadVenuesFromServer() {
-        VenueLoader.loadVenues(this);
+        loader.loadVenues(this);
     }
 
     public void onClick(ClickEvent event) {

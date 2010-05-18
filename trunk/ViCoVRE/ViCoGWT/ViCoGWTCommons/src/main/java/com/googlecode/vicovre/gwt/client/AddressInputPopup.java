@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client;
+package com.googlecode.vicovre.gwt.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -38,9 +38,6 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 
 public class AddressInputPopup extends ModalPopup<Grid>
         implements ClickHandler {

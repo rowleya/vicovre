@@ -18,9 +18,10 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>1.1</version>
+                <version>1.2</version>
                 <configuration>
-                    <runTarget>com.googlecode.vicovre.gwt.recorder.Application/Application.html</runTarget>
+                    <noServer>true</noServer>
+                    <runTarget>http://localhost:9090/gwt.html</runTarget>
                 </configuration>
                 <executions>
                     <execution>

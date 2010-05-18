@@ -42,9 +42,9 @@ public class ConvertSessionManager {
     private HashMap<String, ConvertSession> sessions =
         new HashMap<String, ConvertSession>();
 
-    public String createSession(boolean live) {
+    public String createSession(boolean live, String name) {
         String id = UUID.randomUUID().toString();
-        ConvertSession session = new ConvertSession(live);
+        ConvertSession session = new ConvertSession(live, name);
         sessions.put(id, session);
         return id;
     }
