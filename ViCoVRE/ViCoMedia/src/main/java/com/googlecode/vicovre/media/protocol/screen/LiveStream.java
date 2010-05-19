@@ -96,7 +96,7 @@ public class LiveStream implements PushBufferStream, Runnable,
     private static final int BYTES_PER_PIXEL = 3;
 
     // The default frame rate
-    private static final float DEFAULT_FRAME_RATE = 5f;
+    private static final float DEFAULT_FRAME_RATE = 10f;
 
     // The line change value
     private static final int LINECHANGE = 5;
@@ -199,6 +199,18 @@ public class LiveStream implements PushBufferStream, Runnable,
     // A Timer to time events with
     private Timer timer = null;
 
+    private boolean bufferFilling = false;
+
+    private Integer bufferFillSync = new Integer(0);
+
+    private NativeCapture nativeCapture = null;
+
+    private byte[][] nativeData = null;
+
+    private int currentNativeBuffer = 0;
+
+    private Integer nativeBufferSync = new Integer(0);
+
     /**
      * Creates a new Stream for sending screens
      *
@@ -214,28 +226,44 @@ public class LiveStream implements PushBufferStream, Runnable,
             System.err.println(e);
         }
 
-        // Get the size to send
-        size = new Dimension(width, height);
-
-        // Setup the format
-        maxDataLength = size.width * size.height;
-        format = new RGBFormat(size, maxDataLength, Format.intArray, frameRate,
-                BITS_PER_PIXEL, RED_MASK, GREEN_MASK, BLUE_MASK, 1, size.width,
-                VideoFormat.FALSE,
-                Format.NOT_SPECIFIED);
-
-        // generate the data
-        data = new int[maxDataLength];
-        image = new BufferedImage(size.width, size.height,
-                BufferedImage.TYPE_INT_RGB);
-
-
-        // Create the screen capturer
         try {
-            robot = new Robot();
-        } catch (AWTException awe) {
-            throw new RuntimeException(awe.getMessage());
+            nativeCapture = new NativeCapture(x, y, width, height);
+            size = new Dimension(width, height);
+            maxDataLength = size.width * size.height * 3;
+            format = new RGBFormat(size, maxDataLength, Format.byteArray,
+                    frameRate, 24, 3, 2, 1, 3, size.width * 3,
+                    VideoFormat.FALSE,
+                    Format.NOT_SPECIFIED);
+            nativeData = new byte[10][maxDataLength];
+            System.err.println("Using native capture system");
+        } catch (UnsatisfiedLinkError e) {
+            e.printStackTrace();
+            // Get the size to send
+            size = new Dimension(width, height);
+
+            // Setup the format
+            maxDataLength = size.width * size.height;
+            format = new RGBFormat(size, maxDataLength, Format.intArray,
+                    frameRate, BITS_PER_PIXEL, RED_MASK,
+                    GREEN_MASK, BLUE_MASK, 1, size.width,
+                    VideoFormat.FALSE,
+                    Format.NOT_SPECIFIED);
+
+            // generate the data
+            data = new int[maxDataLength];
+            image = new BufferedImage(size.width, size.height,
+                    BufferedImage.TYPE_INT_RGB);
+
+
+            // Create the screen capturer
+            try {
+                robot = new Robot();
+            } catch (AWTException awe) {
+                throw new RuntimeException(awe.getMessage());
+            }
         }
+
+
     }
 
     // Works out what is to be send
@@ -334,65 +362,89 @@ public class LiveStream implements PushBufferStream, Runnable,
     }
 
     private void fillBuffer() {
-
-        // Capture the screen, one line in every 5 interlaced
-        int startno = seqNo % LINECHANGE;
-        int lines = 1;
-
-        // Go through the lines of the screen
-        for (int i = startno; i < (height - y); i += LINECHANGE) {
-
-            // If there are not enough lines, capture what you can
-            while (i + lines > height) {
-                lines--;
+        synchronized (bufferFillSync) {
+            if (bufferFilling) {
+                return;
             }
-            if (lines > 0) {
-
-                // Create the screen capture of the line (avoids jumpyness)
-                BufferedImage bi = robot.createScreenCapture(new Rectangle(x, y
-                        + i, width, lines));
-
-                // Get the RGB data from the capture
-                bi.getRGB(0, 0, size.width, lines, data, i * width, size.width);
-
-                // Store the line in the whole image
-                image.setRGB(0, i, size.width, lines, data,
-                        i * width, size.width);
-            }
+            bufferFilling = true;
         }
 
-        // Get the mouse pointer location
-        try {
-            Point pnt = MouseInfo.getPointerInfo().getLocation();
-            if ((Math.abs(mousex - pnt.x) > MOUSE_MOVE_ALLOWED)
-                    || (Math.abs(mousey - pnt.y) > MOUSE_MOVE_ALLOWED)
-                    || ((System.currentTimeMillis() - lastMouseMoveTime)
-                            < MOUSE_SAME_TIME)) {
-                if ((mousex != pnt.x) || (mousey != pnt.y)) {
-                    lastMouseMoveTime = System.currentTimeMillis();
-                }
-                mousex = pnt.x;
-                mousey = pnt.y;
+        if (nativeCapture != null) {
+            int current = 0;
+            synchronized (nativeBufferSync) {
+                current = (currentNativeBuffer + 1) % nativeData.length;
+            }
+            nativeCapture.captureScreen(nativeData[current]);
+            synchronized (nativeBufferSync) {
+                currentNativeBuffer = current;
+            }
+        } else {
 
-                // If the mouse is in the capture area, add the mouse pointer
-                if ((mousex > x) && ((mousex + MOUSE_WIDTH) < (x + width))
-                        && (mousey > y)
-                        && ((mousey + MOUSE_HEIGHT) < (y + height))) {
-                    for (int j = 0; j < MOUSE_HEIGHT; j++) {
-                        for (int i = 0; i < MOUSE_WIDTH; i++) {
-                            int ypos = (mousey - y + j);
-                            int xpos = (mousex - x + i);
-                            int pos = (ypos * width) + xpos;
-                            int mousepos = ((j * MOUSE_WIDTH) + i);
-                            if (MOUSE[mousepos] != Color.GREEN.getRGB()) {
-                                data[pos] = MOUSE[mousepos];
+            // Capture the screen, one line in every 5 interlaced
+            int startno = seqNo % LINECHANGE;
+            int lines = 1;
+
+            // Go through the lines of the screen
+            for (int i = startno; i < (height - y); i += LINECHANGE) {
+
+                // If there are not enough lines, capture what you can
+                while (i + lines > height) {
+                    lines--;
+                }
+                if (lines > 0) {
+
+                    // Create the screen capture of the line (avoids jumpyness)
+                    BufferedImage bi = robot.createScreenCapture(
+                            new Rectangle(x, y + i, width, lines));
+
+                    // Get the RGB data from the capture
+                    bi.getRGB(0, 0, size.width, lines, data, i * width,
+                            size.width);
+
+                    // Store the line in the whole image
+                    image.setRGB(0, i, size.width, lines, data,
+                            i * width, size.width);
+                }
+            }
+
+            // Get the mouse pointer location
+            try {
+                Point pnt = MouseInfo.getPointerInfo().getLocation();
+                if ((Math.abs(mousex - pnt.x) > MOUSE_MOVE_ALLOWED)
+                        || (Math.abs(mousey - pnt.y) > MOUSE_MOVE_ALLOWED)
+                        || ((System.currentTimeMillis() - lastMouseMoveTime)
+                                < MOUSE_SAME_TIME)) {
+                    if ((mousex != pnt.x) || (mousey != pnt.y)) {
+                        lastMouseMoveTime = System.currentTimeMillis();
+                    }
+                    mousex = pnt.x;
+                    mousey = pnt.y;
+
+                    // If the mouse is in the capture area,
+                    // add the mouse pointer
+                    if ((mousex > x) && ((mousex + MOUSE_WIDTH) < (x + width))
+                            && (mousey > y)
+                            && ((mousey + MOUSE_HEIGHT) < (y + height))) {
+                        for (int j = 0; j < MOUSE_HEIGHT; j++) {
+                            for (int i = 0; i < MOUSE_WIDTH; i++) {
+                                int ypos = (mousey - y + j);
+                                int xpos = (mousex - x + i);
+                                int pos = (ypos * width) + xpos;
+                                int mousepos = ((j * MOUSE_WIDTH) + i);
+                                if (MOUSE[mousepos] != Color.GREEN.getRGB()) {
+                                    data[pos] = MOUSE[mousepos];
+                                }
                             }
                         }
                     }
                 }
+            } catch (NullPointerException e) {
+                //no mouse pointer available -- ignore
             }
-        } catch (NullPointerException e) {
-            //no mouse pointer available -- ignore
+        }
+
+        synchronized (bufferFillSync) {
+            bufferFilling = false;
         }
     }
 
@@ -409,10 +461,15 @@ public class LiveStream implements PushBufferStream, Runnable,
                 }
             };
             t.start();
-            //fillBuffer();
 
             // Setup the buffer
-            buffer.setData(data);
+            if (nativeData == null) {
+                buffer.setData(data);
+            } else {
+                synchronized (nativeBufferSync) {
+                    buffer.setData(nativeData[currentNativeBuffer]);
+                }
+            }
             buffer.setFormat(format);
 
             // Convert the timestamp to be based on the framerate*bg.getHeight()
