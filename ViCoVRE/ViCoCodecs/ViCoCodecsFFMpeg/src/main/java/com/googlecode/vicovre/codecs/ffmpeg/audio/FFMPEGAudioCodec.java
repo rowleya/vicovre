@@ -41,7 +41,7 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public abstract class FFMPEGAudioCodec implements Codec {
 
