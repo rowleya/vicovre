@@ -43,7 +43,7 @@ import javax.media.format.VideoFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public abstract class FFMPEGVideoCodec implements Codec {
 

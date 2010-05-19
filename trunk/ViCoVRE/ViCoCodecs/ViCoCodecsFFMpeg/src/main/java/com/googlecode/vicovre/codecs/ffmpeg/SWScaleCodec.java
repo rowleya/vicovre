@@ -42,7 +42,7 @@ import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public class SWScaleCodec implements Codec {
 

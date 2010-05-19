@@ -50,8 +50,8 @@ import javax.media.protocol.DataSource;
 
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
 import com.googlecode.vicovre.media.processor.DataSink;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public class FFMPEGDemuxer implements Demultiplexer {
 
