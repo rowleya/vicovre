@@ -34,7 +34,7 @@
     </bean>
 
     <bean id="defaultVideoRtpType" class="java.lang.Integer">
-        <constructor-arg><value>77</value></constructor-arg>
+        <constructor-arg><value>96</value></constructor-arg>
     </bean>
 
     <bean id="defaultAGAudioRtpType" class="java.lang.Integer">
