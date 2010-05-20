@@ -1,0 +1,219 @@
+<project name="BuildX264" default="build-x264">
+
+    <property file="build.properties"/>
+    <property file="versions.properties"/>
+    <property environment="getenv" />
+
+    <import file="../../../../../ViCoCodecsCommons/src/main/native/resources/os.xml"/>
+
+    <macrodef name="configure">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <element name="configureopts" optional="true"/>
+        <element name="envopts" optional="true"/>
+
+        <sequential>
+            <condition property="ldflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <condition property="cflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <exec executable="sh" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="./configure"/>
+                <arg line='--prefix="${prefix.path}"'/>
+                <configureopts/>
+                <env key="LDFLAGS" value="${ldflags.default}@{ldflags}"/>
+                <env key="CFLAGS" value="${cflags.default}@{cflags}"/>
+                <env key="PATH" path="${prefix.path}/bin:${getenv.PATH}"/>
+                <envopts/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="make">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <attribute name="target" default="" />
+        <element name="envopts" optional="true"/>
+
+        <sequential>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="clean"/>
+            </exec>
+            <condition property="ldflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <condition property="cflags.default" value="-m64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 " else="">
+                <isset property="os.isMac64"/>
+            </condition>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <env key="LDFLAGS" value="${ldflags.default}@{ldflags}"/>
+                <env key="CFLAGS" value="@{cflags}"/>
+                <env key="PATH" path="${prefix.path}/bin:${getenv.PATH}"/>
+                <envopts/>
+                <arg line="@{target}"/>
+            </exec>
+            <exec executable="make" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="install"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="bootstrap">
+        <attribute name="library"/>
+
+        <sequential>
+            <exec executable="sh" dir="${extract.path}/@{library}" failonerror="true">
+                <arg value="bootstrap"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="configureandmake">
+        <attribute name="library"/>
+        <attribute name="ldflags" default=""/>
+        <attribute name="cflags" default=""/>
+        <element name="confopts" optional="true"/>
+        <element name="enviropts" optional="true"/>
+
+        <sequential>
+            <configure library="@{library}" ldflags="@{ldflags}" cflags="@{cflags}">
+                <configureopts>
+                    <confopts/>
+                </configureopts>
+                <envopts>
+                    <enviropts/>
+                </envopts>
+            </configure>
+            <make library="@{library}" ldflags="@{ldflags}" cflags="@{cflags}">
+                <envopts>
+                    <enviropts/>
+                </envopts>
+            </make>
+        </sequential>
+    </macrodef>
+
+    <exec executable="pwd" osfamily="windows" outputproperty="msys.path"/>
+
+    <fail message="Please define msys.path in build.properties">
+        <condition>
+            <and>
+                <isset property="os.isWindows"/>
+                <or>
+                    <not><isset property="msys.path"/></not>
+                    <equals arg1="${msys.path}" arg2=""/>
+                </or>
+            </and>
+        </condition>
+    </fail>
+
+    <condition property="prefix.path" value="${msys.path}/x86/windows">
+        <isset property="os.isWindows32"/>
+    </condition>
+    <condition property="prefix.path" value="${msys.path}/amd64/windows">
+        <isset property="os.isWindows64"/>
+    </condition>
+    <condition property="prefix.path.real" value="${basedir}/x86/windows">
+        <isset property="os.isWindows32"/>
+    </condition>
+    <condition property="prefix.path.real" value="${basedir}/amd64/windows">
+        <isset property="os.isWindows64"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/i386/unix">
+        <isset property="os.isUnix32"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/amd64/unix">
+        <isset property="os.isUnix64"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/x86/mac">
+        <isset property="os.isMac32"/>
+    </condition>
+    <condition property="prefix.path" value="${basedir}/x86_64/mac">
+        <isset property="os.isMac64"/>
+    </condition>
+    <condition property="prefix.path.real" value="${prefix.path}">
+        <not><isset property="os.isWindows"/></not>
+    </condition>
+    <echo message="Installation will be made to ${prefix.path}"/>
+
+    <target name="mkdirs.check">
+        <condition property="mkdirs.dontrun">
+            <and>
+                <available file="${download.path}" type="dir"/>
+                <available file="${extract.path}" type="dir"/>
+                <available file="${prefix.path.real}" type="dir"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="mkdirs" depends="mkdirs.check" unless="mkdirs.dontrun">
+        <mkdir dir="${download.path}"/>
+        <mkdir dir="${extract.path}"/>
+        <mkdir dir="${prefix.path.real}"/>
+    </target>
+
+    <target name="yasm.check">
+        <condition property="yasm.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libyasm.a"/>
+                <available file="${prefix.path.real}/include/libyasm.h"/>
+                <available file="${prefix.path.real}/include/libyasm-stdint.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="build-yasm" depends="mkdirs,yasm.check" unless="yasm.dontrun">
+        <get dest="${download.path}/yasm${yasm.version}" src="${yasm.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/yasm${yasm.version}" compression="${yasm.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/yasm${yasm.version}/config/install-sh" perm="u+x"/>
+        <configureandmake library="yasm${yasm.version}"/>
+    </target>
+
+    <target name="x264.check">
+        <condition property="x264.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libx264.a"/>
+                <available file="${prefix.path.real}/include/x264.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <macrodef name="x264.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="x264${x264.version}">
+                <confopts>
+                    <arg value="--disable-pthread"/>
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="x264" unless="os.isMac64">
+        <x264.make/>
+    </target>
+
+    <target name="x264.mac64" if="os.isMac64">
+        <x264.make>
+            <configureopts>
+                <arg value="--host=x86_64-apple-darwin10"/>
+            </configureopts>
+        </x264.make>
+    </target>
+
+    <target name="build-x264" depends="mkdirs,build-yasm,x264.check" unless="x264.dontrun">
+        <get dest="${download.path}/x264${x264.version}" src="${x264.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/x264${x264.version}" compression="${x264.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/x264${x264.version}/config.guess" perm="u+x"/>
+        <chmod file="${extract.path}/x264${x264.version}/config.sub" perm="u+x"/>
+        <chmod file="${extract.path}/x264${x264.version}/version.sh" perm="u+x"/>
+
+        <antcall target="x264"/>
+        <antcall target="x264.mac64"/>
+    </target>
+
+</project>

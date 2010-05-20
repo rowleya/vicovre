@@ -6,6 +6,7 @@
 #include "vic/video/grabber.h"
 #include "vic/codec/encoder-h261.h"
 #include "vic/codec/encoder-h261as.h"
+#include "vic/codec/encoder-h264.h"
 
 class VicEncoder {
     public:
@@ -136,6 +137,9 @@ VicEncoder::VicEncoder(JNIEnv *env, int codec) {
         break;
     case 2:
         codec_ = new H261ASEncoder();
+        break;
+    case 3:
+        codec_ = new H264Encoder();
     }
 }
 
