@@ -1,4 +1,5 @@
 <project name="vic" default="main">
+    <property name="resources" value="resources"/>
     <property name="msys.path" value="C:\msys\1.0" />
     <property name="mingw.path" value="C:\mingw"/>
     <property environment="getenv"/>
@@ -49,7 +50,12 @@
                 <arg file="src\vic\video\grabber.cpp"/>
                 <arg file="src\vic\codec\encoder-h261.cpp"/>
                 <arg file="src\vic\codec\encoder-h261as.cpp"/>
+                <arg file="src\vic\codec\x264encoder.cpp"/>
+                <arg file="src\vic\codec\encoder-h264.cpp"/>
                 <arg file="src\vicencoder.cpp"/>
+                <libdirs/>
+                <arg line="-lx264"/>
+                <arg line="-lyasm"/>
                 <libs/>
             </exec>
         </sequential>
@@ -69,10 +75,16 @@
                 </envopts>
                 <includes>
                     <arg line="-I"/>
+                    <arg path="${resources}/@{arch}/windows/include"/>
+                    <arg line="-I"/>
                     <arg path="${java.home}/../include" />
                     <arg line="-I"/>
                     <arg path="${java.home}/../include/win32" />
                 </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/windows/lib"/>
+                </libdirs>
                 <libs>
                     <arg line="-lwsock32"/>
                 </libs>
@@ -104,6 +116,10 @@
                     <arg line="-I"/>
                     <arg path="${java.home}/../Headers" />
                 </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/mac/lib"/>
+                </libdirs>
             </build>
         </sequential>
     </macrodef>
@@ -135,10 +151,16 @@
                 </ccopts>
                 <includes>
                     <arg line="-I"/>
+                    <arg path="resources/@{arch}/linux/include"/>
+                    <arg line="-I"/>
                     <arg path="${java.home}/../include" />
                     <arg line="-I"/>
                     <arg path="${java.home}/../include/linux" />
                 </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/linux/lib"/>
+                </libdirs>
             </build>
         </sequential>
     </macrodef>
