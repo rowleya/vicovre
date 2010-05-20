@@ -32,14 +32,11 @@
 
 package com.googlecode.vicovre.security.db;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -47,7 +44,6 @@ import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.security.Group;
 import com.googlecode.vicovre.security.OperationSet;
-import com.googlecode.vicovre.security.Password;
 import com.googlecode.vicovre.security.PermissionSet;
 import com.googlecode.vicovre.security.Role;
 import com.googlecode.vicovre.security.User;
@@ -61,7 +57,7 @@ public class PermissionDatabase {
 
     private static final String ACL_EXT = ".acl";
 
-    private HashSet<String> operations = null;
+    private HashMap<String, HashSet<String>> operations = null;
 
     private HashMap<String, Role> roles = null;
 
@@ -81,12 +77,11 @@ public class PermissionDatabase {
     private HashMap<PermissionSet, File> aclFiles =
         new HashMap<PermissionSet, File>();
 
-    private HashMap<String, String> defaultAclXml =
-        new HashMap<String, String>();
+    private HashMap<Object, HashMap<String, PermissionSet>> defaultAcls =
+        new HashMap<Object, HashMap<String, PermissionSet>>();
 
-    private PermissionSet groupsAcl = null;
-
-    private PermissionSet usersAcl = null;
+    private HashMap<Object, Object> containedObjects =
+        new HashMap<Object, Object>();
 
     private File dir = null;
 
@@ -101,12 +96,10 @@ public class PermissionDatabase {
      * @throws SAXException
      */
     public PermissionDatabase(String directory, String roleFile,
-            String operationFile, String groupsAclFile, String usersAclFile)
+            String operationFile)
             throws SAXException, IOException {
         this(directory, PermissionDatabase.class.getResourceAsStream(roleFile),
-                PermissionDatabase.class.getResourceAsStream(operationFile),
-                PermissionDatabase.class.getResourceAsStream(groupsAclFile),
-                PermissionDatabase.class.getResourceAsStream(usersAclFile));
+                PermissionDatabase.class.getResourceAsStream(operationFile));
     }
 
     /**
@@ -118,8 +111,7 @@ public class PermissionDatabase {
      * @throws SAXException
      */
     public PermissionDatabase(String directory, InputStream roleStream,
-            InputStream operationStream, InputStream groupsAclStream,
-            InputStream usersAclStream) throws SAXException, IOException {
+            InputStream operationStream) throws SAXException, IOException {
         operations = OperationReader.readOperations(operationStream);
         roles = RoleReader.readRoles(roleStream);
         dir = new File(directory);
@@ -137,7 +129,7 @@ public class PermissionDatabase {
         File[] groupFiles = dir.listFiles(new ExtensionFilter(GROUP_EXT));
         for (File file : groupFiles) {
             FileInputStream input = new FileInputStream(file);
-            Group group = GroupReader.readGroup(input, users);
+            Group group = GroupReader.readGroup(input, users, roles);
             groups.put(group.getName(), group);
             input.close();
             this.groupFiles.put(group, file);
@@ -151,11 +143,6 @@ public class PermissionDatabase {
             this.aclFiles.put(acl, file);
             addAcl(acl);
         }
-
-        groupsAcl = AclReader.readAcl(groupsAclStream, operations, roles,
-                users, groups);
-        usersAcl = AclReader.readAcl(usersAclStream, operations, roles,
-                users, groups);
     }
 
     private String getId() {
@@ -172,40 +159,64 @@ public class PermissionDatabase {
         acls.put(acl.getClassName(), classAcls);
     }
 
-    public void setDefaultAcl(String className, String aclFile)
-            throws IOException {
-        setDefaultAcl(className, getClass().getResourceAsStream(aclFile));
+    public void setDefaultAcl(Object container, String className,
+            String aclFile) throws IOException, SAXException {
+        setDefaultAcl(container, className,
+                getClass().getResourceAsStream(aclFile));
     }
 
-    public void setDefaultAcl(String className, InputStream aclStream)
-            throws IOException {
-        String file = new String();
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(aclStream));
-        String line = reader.readLine();
-        while (line != null) {
-            file += line + "\n";
-            line = reader.readLine();
+    public void setDefaultAcl(Object container, String className,
+            InputStream aclStream) throws IOException, SAXException {
+        PermissionSet acl = AclReader.readAcl(aclStream, operations, roles,
+                users, groups);
+        HashMap<String, PermissionSet> defaultAclMap =
+            defaultAcls.get(container);
+        if (defaultAclMap == null) {
+            defaultAclMap = new HashMap<String, PermissionSet>();
         }
-        reader.close();
-        defaultAclXml.put(className, file);
+        defaultAclMap.put(className, acl);
+        defaultAcls.put(container, defaultAclMap);
+    }
+
+    public void setContainer(Object object, Object container) {
+        containedObjects.put(object, container);
+    }
+
+    public PermissionSet createAcl(Object object)
+            throws IOException {
+        return createAcl(object, null, null);
+    }
+
+    public PermissionSet createAcl(Object object, User user)
+            throws IOException {
+        return createAcl(object, user, null);
+    }
+
+    public PermissionSet createAcl(Object object, Group group)
+            throws IOException {
+        return createAcl(object, null, group);
     }
 
     public PermissionSet createAcl(Object object,
-            Variable... variables)
-            throws SAXException, IOException {
-        String defaultAcl = defaultAclXml.get(
+            User user, Group group) throws IOException {
+        Object container = containedObjects.get(object);
+        HashMap<String, PermissionSet> defaultAclMap =
+            defaultAcls.get(container);
+        PermissionSet defaultAcl = defaultAclMap.get(
                 object.getClass().getCanonicalName());
-        for (Variable var : variables) {
-            defaultAcl = defaultAcl.replaceAll(var.getName(), var.getValue());
+        if (defaultAcl == null) {
+            defaultAcl = defaultAclMap.get(object.getClass().getSimpleName());
         }
-        PermissionSet acl = AclReader.readAcl(
-                new ByteArrayInputStream(defaultAcl.getBytes()),
-                operations, roles, users, groups);
-        acl.setProtectedObject(object);
-        aclFiles.put(acl, new File(dir, getId() + ACL_EXT));
-        setAcl(acl);
-        return acl;
+        if (user != null) {
+            defaultAcl.setUserVariable(user);
+        }
+        if (group != null) {
+            defaultAcl.setGroupVariable(group);
+        }
+        defaultAcl.setProtectedObject(object);
+        aclFiles.put(defaultAcl, new File(dir, getId() + ACL_EXT));
+        setAcl(defaultAcl);
+        return defaultAcl;
     }
 
     public PermissionSet getAcl(Object object) {
@@ -227,36 +238,25 @@ public class PermissionDatabase {
         }
     }
 
-    public PermissionSet getGroupsAcl() {
-        return groupsAcl;
-    }
-
-    public PermissionSet getUserAcl() {
-        return usersAcl;
-    }
-
-    public String[] getOperations() {
-        return operations.toArray(new String[0]);
+    public String[] getOperations(String className) {
+        return operations.get(className).toArray(new String[0]);
     }
 
     public String[] getRoles() {
         return roles.keySet().toArray(new String[0]);
     }
 
-    public User createUser(String username, String password,
-            String... roles) throws SAXException, IOException {
+    public User createUser(String username,
+            String... roles) throws IOException {
         if (users.containsKey(username)) {
             return null;
         }
         User user = new User(username);
-        Password pass = new Password(password);
-        user.setPassword(pass);
         for (String role : roles) {
             user.addRole(this.roles.get(role));
         }
         userFiles.put(user, new File(dir, getId() + USER_EXT));
         setUser(user);
-        createAcl(user, new Variable("?user", username));
         return user;
     }
 
@@ -278,19 +278,16 @@ public class PermissionDatabase {
         return users.entrySet().toArray(new User[0]);
     }
 
-    public Group addGroup(String name, String... users)
-            throws IOException, SAXException {
+    public Group addGroup(String name, User creator)
+            throws IOException {
         if (groups.containsKey(name)) {
             return null;
         }
 
         Group group = new Group(name);
-        for (String user : users) {
-            group.addUser(this.users.get(user));
-        }
+        group.addUser(creator, roles.get("Administrator"));
         groupFiles.put(group, new File(dir, getId() + GROUP_EXT));
         setGroup(group);
-        createAcl(group, new Variable("?group", name));
         return group;
     }
 

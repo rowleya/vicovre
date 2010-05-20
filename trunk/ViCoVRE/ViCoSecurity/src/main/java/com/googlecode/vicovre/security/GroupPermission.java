@@ -39,6 +39,11 @@ package com.googlecode.vicovre.security;
  */
 public class GroupPermission extends Permission {
 
+    /**
+     * The name of the variable that indicates a variable group
+     */
+    public static final String VARIABLE = "?group";
+
     private Group group = null;
 
     private Role role = null;
@@ -55,6 +60,35 @@ public class GroupPermission extends Permission {
         super(operations, allow);
         this.group = group;
         this.role = role;
+    }
+
+    /**
+     * Creates a new variable GroupPermission
+     * @param operations The operations of the permission
+     * @param allow True to allow the permission
+     * @param role The role to assign the permission to
+     */
+    public GroupPermission(OperationSet operations, boolean allow, Role role) {
+        super(operations, allow);
+        this.role = role;
+    }
+
+    /**
+     * Set the group of a variable permission - only works if not already set
+     * @param group The group to set
+     */
+    public void setGroup(Group group) {
+        if (this.group == null) {
+            this.group = group;
+        }
+    }
+
+    /**
+     * Determines if the group is currently a variable
+     * @return True if the group has not been set
+     */
+    public boolean isVariable() {
+        return group == null;
     }
 
     /**
@@ -80,6 +114,6 @@ public class GroupPermission extends Permission {
      *     com.googlecode.vicovre.security.User)
      */
     public boolean userHasPermission(User user) {
-        return group.containsUser(user) && user.hasRole(role);
+        return group.userHasRole(user, role);
     }
 }

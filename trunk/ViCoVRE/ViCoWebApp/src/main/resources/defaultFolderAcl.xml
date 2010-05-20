@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permissionSet className="PermissionSet"
+            name="Who can change who can change who is the folder administrator">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+    </permissionSet>
+    <permissionSet className="PermissionSet"
+            name="Who can change who is the folder administrator">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Change Permissions</operation>
+        </user>
+    </permissionSet>
+    <permissionSet className="PermissionSet"
+            name="Who is the folder administrator">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Change Permissions</operation>
+        </user>
+    </permissionSet>
+    <permissionSet className="Folder">
+        <role name="GuestUser" allow="true">
+            <operation>Read Folder</operation>
+        </role>
+        <role name="Administrator" allow="true">
+            <operation>Create Recording</operation>
+            <operation>Create Subfolder</operation>
+            <operation>Create Harvest Item</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Create Recording</operation>
+            <operation>Create Subfolder</operation>
+            <operation>Create Harvest Item</operation>
+        </user>
+    </permissionSet>
+</permissions>

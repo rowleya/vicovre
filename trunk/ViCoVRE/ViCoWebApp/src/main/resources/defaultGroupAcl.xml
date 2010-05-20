@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permissionSet className="PermissionSet">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+        <group name="?group" role="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </group>
+    </permissionSet>
+    <permissionSet className="Group">
+        <user name="AuthUser" allow="true">
+            <operation>See Group</operation>
+            <operation>List Users</operation>
+        </user>
+        <role name="Administrator" allow="true">
+            <operation>Change Users</operation>
+        </role>
+        <group name="?group" role="Administrator" allow="true">
+            <operation>Change Users</operation>
+        </group>
+    </permissionSet>
+</permissions>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permissionSet className="Groups">
+        <role name="AuthUser" allow="true">
+            <operation>Create Group</operation>
+            <operation>List Groups</operation>
+        </role>
+    </permissionSet>
+</permissions>

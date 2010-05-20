@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.security;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
@@ -45,7 +46,8 @@ public class Group {
 
     private String name = null;
 
-    private HashSet<User> users = new HashSet<User>();
+    private HashMap<Role, HashSet<User>> users =
+        new HashMap<Role, HashSet<User>>();
 
     /**
      * Creates a new group
@@ -63,12 +65,17 @@ public class Group {
         return name;
     }
 
+    public List<Role> getRoles() {
+        return new Vector<Role>(users.keySet());
+    }
+
     /**
      * Gets the users in the group
-     * @return The users in the group
+     * @role The role of the users to get
+     * @return The users in the group with the specified role
      */
-    public List<User> getUsers() {
-        return new Vector<User>(users);
+    public List<User> getUsers(Role role) {
+        return new Vector<User>(users.get(role));
     }
 
     /**
@@ -77,15 +84,33 @@ public class Group {
      * @return True if the user is in the group
      */
     public boolean containsUser(User user) {
-        return users.contains(user);
+        for (Role role : users.keySet()) {
+            if (users.get(role).contains(user)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean userHasRole(User user, Role role) {
+        HashSet<User> usersInRole = users.get(role);
+        if ((usersInRole != null) && usersInRole.contains(user)) {
+            return true;
+        }
+        return false;
     }
 
     /**
      * Adds a user to the group
      * @param user The user to add
      */
-    public void addUser(User user) {
-        users.add(user);
+    public void addUser(User user, Role role) {
+        HashSet<User> usersWithRole = users.get(role);
+        if (usersWithRole == null) {
+            usersWithRole = new HashSet<User>();
+        }
+        usersWithRole.add(user);
+        users.put(role, usersWithRole);
     }
 
     /**

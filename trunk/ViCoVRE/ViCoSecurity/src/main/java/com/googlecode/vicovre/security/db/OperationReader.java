@@ -34,6 +34,7 @@ package com.googlecode.vicovre.security.db;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.w3c.dom.Node;
@@ -43,14 +44,27 @@ import com.googlecode.vicovre.utils.XmlIo;
 
 public class OperationReader {
 
-    public static HashSet<String> readOperations(InputStream input)
+    public static HashMap<String, HashSet<String>> readOperations(
+            InputStream input)
             throws SAXException, IOException {
-        HashSet<String> operations = new HashSet<String>();
         Node doc = XmlIo.read(input);
-        String[] names = XmlIo.readValues(doc, "operation");
-        for (int i = 0; i < names.length; i++) {
-            operations.add(names[i]);
+        Node[] classes = XmlIo.readNodes(doc, "class");
+
+        HashMap<String, HashSet<String>> operations =
+            new HashMap<String, HashSet<String>>();
+        for (Node node : classes) {
+            String name = XmlIo.readAttr(node, "name", null);
+            if (name == null) {
+                throw new IOException("Class without a name");
+            }
+            String[] opNames = XmlIo.readValues(node, "operation");
+            HashSet<String> ops = new HashSet<String>();
+            for (String opName : opNames) {
+                ops.add(opName);
+            }
+            operations.put(name, ops);
         }
+
         return operations;
     }
 }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permissionSet className="PermissionSet">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Change Permissions</operation>
+        </user>
+    </permissionSet>
+    <permissionSet className="Recording">
+        <role name="GuestUser" allow="true">
+            <operation>Read Recording</operation>
+            <operation>Play Recording</operation>
+        </role>
+        <role name="AuthUser" allow="true">
+            <operation>Play Recording To Venue</operation>
+        </role>
+        <role name="Administrator" allow="true">
+            <operation>Delete Recording</operation>
+            <operation>Change Layout</operation>
+            <operation>Edit Metadata</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Delete Recording</operation>
+            <operation>Change Layout</operation>
+            <operation>Edit Metadata</operation>
+        </user>
+    </permissionSet>
+</permissions>

@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.web.security;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,50 +41,47 @@ import java.util.HashMap;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import com.googlecode.vicovre.security.Group;
-import com.googlecode.vicovre.security.Role;
-import com.googlecode.vicovre.security.User;
 import com.googlecode.vicovre.utils.XmlIo;
 
-public class GroupReader {
+public class UserReader {
 
-    public static Group readGroup(InputStream input,
-            HashMap<String, User> knownUsers,
-            HashMap<String, Role> knownRoles) throws SAXException, IOException {
-        Node doc = XmlIo.read(input);
-        String name = XmlIo.readValue(doc, "name");
-        Node[] roles = XmlIo.readNodes(doc, "role");
-
-
-        Group group = new Group(name);
-        for (Node roleNode : roles) {
-            String roleName = XmlIo.readAttr(roleNode, "name", null);
-            Role role = knownRoles.get(roleName);
-            String[] users = XmlIo.readValues(roleNode, "user");
-            for (String username : users) {
-                User user = knownUsers.get(username);
-                if (user == null) {
-                    throw new SAXException("User " + username + " not known");
-                }
-                group.addUser(user, role);
-            }
+    public static User readUser(InputStream input)
+            throws SAXException, IOException, InstantiationException,
+            IllegalAccessException, ClassNotFoundException {
+        Node document = XmlIo.read(input);
+        Node credentialNode = XmlIo.readNode(document, "credentials");
+        String credentialsClassName = XmlIo.readAttr(credentialNode,
+                "className", null);
+        HashMap<String, String> credentialMap = new HashMap<String, String>();
+        for (String field : credentialMap.keySet()) {
+            String value = XmlIo.readValue(credentialNode, field);
+            credentialMap.put(field, value);
         }
-        return group;
+        Class<? extends Credentials> credentialsClass =
+            (Class<? extends Credentials>) Class.forName(credentialsClassName);
+        Credentials credentials = credentialsClass.newInstance();
+        credentials.setValues(credentialMap);
+        User user = new User();
+        user.setName(XmlIo.readValue(document, "name"));
+        user.setEmail(XmlIo.readValue(document, "email"));
+        return user;
     }
 
-    public static void writeGroup(Group group, OutputStream output) {
+    public static void writeUser(User user, OutputStream output) {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        writer.println("<group>");
-        XmlIo.writeValue(group, "name", writer);
-        for (Role role : group.getRoles()) {
-            writer.println("<role name=\"" + role.getName() + "\">");
-            for (User user : group.getUsers(role)) {
-                XmlIo.writeValue("user", user.getUsername(), writer);
-            }
-            writer.println("</role>");
+        writer.println("<user>");
+        HashMap<String, String> credentials = user.getCredentials().getValues();
+        writer.println("<credentials className=\""
+                + credentials.getClass().getCanonicalName() + "\">");
+        for (String name : credentials.keySet()) {
+            XmlIo.writeValue(name, credentials.get(name), writer);
         }
-        writer.println("</group>");
-        writer.flush();
+        writer.println("</credentials>");
+        XmlIo.writeValue(user, "name", writer);
+        XmlIo.writeValue(user, "email", writer);
+        writer.println("</user>");
     }
+
 }
+
