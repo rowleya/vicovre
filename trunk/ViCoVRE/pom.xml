@@ -21,7 +21,6 @@
         <module>ViCoRecorder</module>
         <module>ViCoRecordings</module>
         <module>ViCoRepositories</module>
-        <module>ViCoSecurity</module>
         <module>ViCoSharedResources</module>
         <module>ViCoStreamer</module>
         <module>ViCoUtils</module>
