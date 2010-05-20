@@ -94,19 +94,23 @@ public class ImageStream implements PushBufferStream {
             if (image == null) {
                 throw new UnsupportedFormatException(null);
             }
-            Dimension size = new Dimension(image.getWidth(), image.getHeight());
-            if ((size.width % 16) != 0) {
-                size.width += 16 - (size.width % 16);
-            }
-            if ((size.height % 16) != 0) {
-                size.height += 16 - (size.height % 16);
-            }
-            format = new RGBFormat(
-                    size, size.width * size.height,
-                    Format.intArray, -1, BITS, RED, GREEN, BLUE, 1,
-                    image.getWidth(), Format.FALSE, RGBFormat.LITTLE_ENDIAN);
-            if (data.length < format.getMaxDataLength()) {
-                data = new int[format.getMaxDataLength()];
+
+            if (format.getSize() == null) {
+                Dimension size = new Dimension(image.getWidth(),
+                        image.getHeight());
+                if ((size.width % 16) != 0) {
+                    size.width += 16 - (size.width % 16);
+                }
+                if ((size.height % 16) != 0) {
+                    size.height += 16 - (size.height % 16);
+                }
+                format = new RGBFormat(
+                        size, size.width * size.height,
+                        Format.intArray, -1, BITS, RED, GREEN, BLUE, 1,
+                        size.width, Format.FALSE, RGBFormat.LITTLE_ENDIAN);
+                if (data.length < format.getMaxDataLength()) {
+                    data = new int[format.getMaxDataLength()];
+                }
             }
             this.timestamp = timestamp;
             this.sequence = sequence;
@@ -123,8 +127,15 @@ public class ImageStream implements PushBufferStream {
 
     public void read(Buffer buffer) throws IOException {
         synchronized (imageSync) {
-            image.getRGB(0, 0, image.getWidth(), image.getHeight(), data, 0,
-                    image.getWidth());
+            Dimension size = new Dimension(format.getSize());
+            int scansize = size.width;
+            if (image.getWidth() < size.width) {
+                size.width = image.getWidth();
+            }
+            if (image.getHeight() < size.height) {
+                size.height = image.getHeight();
+            }
+            image.getRGB(0, 0, size.width, size.height, data, 0, scansize);
             buffer.setData(data);
             buffer.setOffset(0);
             buffer.setLength(data.length);
