@@ -43,10 +43,9 @@ import org.restlet.gwt.data.Status;
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.importexport.client.StreamPanel;
 
-public class TransmitStreamSender extends Callback {
+public class StopStreamSender extends Callback {
 
     private String url = null;
 
@@ -54,64 +53,40 @@ public class TransmitStreamSender extends Callback {
 
     private String streamId = null;
 
-    private String substreamId = null;
-
-    private VenuePanel venuePanel = null;
+    private String sendId = null;
 
     private StreamPanel streamPanel = null;
 
     public static void send(String url, String sessionId, String streamId,
-            String substreamId, VenuePanel venuePanel,
-            StreamPanel streamPanel) {
-        TransmitStreamSender sender = new TransmitStreamSender(url, sessionId,
-                streamId, substreamId, venuePanel, streamPanel);
+            String sendId, StreamPanel streamPanel) {
+        StopStreamSender sender = new StopStreamSender(url, sessionId,
+                streamId, sendId, streamPanel);
         sender.go();
     }
 
-    public TransmitStreamSender(String url, String sessionId,  String streamId,
-            String substreamId,	VenuePanel venuePanel,
-            StreamPanel streamPanel) {
+    public StopStreamSender(String url, String sessionId, String streamId,
+            String sendId, StreamPanel streamPanel) {
         this.url = url;
         this.sessionId = sessionId;
         this.streamId = streamId;
-        this.substreamId = substreamId;
-        this.venuePanel = venuePanel;
+        this.sendId = sendId;
         this.streamPanel = streamPanel;
     }
 
     public void go() {
         Client client = new Client(Protocol.HTTP);
         url += "export/" + URL.encodeComponent(sessionId) + "/"
-            + URL.encodeComponent(streamId);
-        if (substreamId != null) {
-            url += "?substreamid=" + substreamId;
-        }
-        String venue = venuePanel.getVenue();
-        String[] addresses = venuePanel.getAddresses();
-        if ((venue != null) && !venue.equals("")) {
-            url += "&venue=" + URL.encodeComponent(venue);
-        } else if ((addresses != null) && (addresses.length > 0)) {
-            String[] addressParts = addresses[0].split("/");
-            url += "&address=" + URL.encodeComponent(addressParts[0]);
-            url += "&port=" + URL.encodeComponent(addressParts[1]);
-            url += "&ttl=" + URL.encodeComponent(addressParts[2]);
-        } else {
-            MessagePopup error = new MessagePopup("You must choose a venue",
-                    null, MessagePopup.ERROR, MessageResponse.OK);
-            error.center();
-            return;
-        }
-        Request request = new Request(Method.POST, url);
+            + URL.encodeComponent(streamId) + "/" + URL.encodeComponent(sendId);
+        Request request = new Request(Method.DELETE, url);
         client.handle(request, this);
     }
 
     public void onEvent(Request request, Response response) {
         if (response.getStatus().equals(Status.SUCCESS_OK)) {
-            String streamId = response.getEntity().getText();
-            streamPanel.transmitStarted(streamId);
+            streamPanel.transmitStopped();
         } else {
-            streamPanel.transmitFailed();
-            String errorMessage = "Error transmitting: "
+            streamPanel.transmitStoppedFailed();
+            String errorMessage = "Error stopping: "
                 + response.getStatus().getCode() + ": "
                 + response.getStatus().getDescription();
             MessagePopup error = new MessagePopup(errorMessage,
@@ -119,5 +94,4 @@ public class TransmitStreamSender extends Callback {
             error.center();
         }
     }
-
 }

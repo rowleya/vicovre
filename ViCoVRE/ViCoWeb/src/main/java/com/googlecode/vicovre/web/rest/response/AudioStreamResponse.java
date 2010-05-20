@@ -46,11 +46,12 @@ public class AudioStreamResponse extends AVStreamResponse {
     private int channels = 0;
 
     public AudioStreamResponse() {
-        super(null);
+        super(null, null);
     }
 
-    public AudioStreamResponse(String id, AudioFormat format) {
-        super(id);
+    public AudioStreamResponse(String id, AudioFormat format,
+            String transmitStreamId) {
+        super(id, transmitStreamId);
         this.samplerate = format.getSampleRate();
         this.samplesize = format.getSampleSizeInBits();
         this.channels = format.getChannels();

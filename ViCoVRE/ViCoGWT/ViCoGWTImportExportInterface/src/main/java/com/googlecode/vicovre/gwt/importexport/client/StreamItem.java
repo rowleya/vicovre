@@ -54,6 +54,7 @@ public class StreamItem extends Label implements HasDoubleClickHandlers {
         super("Stream " + stream.getId());
         this.sessionId = sessionId;
         this.stream = stream;
+        this.substream = stream.getSubStreams().get(0);
         this.url = url;
     }
 
@@ -82,6 +83,12 @@ public class StreamItem extends Label implements HasDoubleClickHandlers {
     public StreamPanel getPanel() {
         if (panel == null) {
             panel = new StreamPanel(sessionId, stream, substream, url);
+            if (substream != null) {
+                String transmitId = substream.getTransmitId();
+                if (transmitId != null) {
+                    panel.transmitStarted(transmitId);
+                }
+            }
         }
         return panel;
     }

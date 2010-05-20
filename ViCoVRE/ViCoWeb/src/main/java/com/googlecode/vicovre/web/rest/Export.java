@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import javax.media.Format;
 import javax.media.format.VideoFormat;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -130,6 +131,7 @@ public class Export {
 
     @POST
     @Path("/{id}/{streamid}")
+    @Produces("text/plain")
     public Response sendStream(@PathParam("id") String id,
             @PathParam("streamid") String streamId,
             @DefaultValue("0") @QueryParam("substreamid") int substream,
@@ -178,14 +180,16 @@ public class Export {
 
         RTPType realRtpType = rtpTypeRepository.findRtpType(rtpType);
 
+        String sendid = null;
+
         try {
             if (!venue.equals("")) {
-                session.sendStream(streamId, substream, venue, name, note,
-                        realRtpType, width, height);
+                sendid = session.sendStream(streamId, substream, venue, name,
+                        note, realRtpType, width, height);
             } else if (!address.equals("") && (port >= 2) && (port <= 65534)
                     && ((port % 2) == 0)) {
-                session.sendStream(streamId, substream, address, port, ttl,
-                        name, note, realRtpType, width, height);
+                sendid = session.sendStream(streamId, substream, address, port,
+                        ttl, name, note, realRtpType, width, height);
             } else {
                 return Response.status(Status.BAD_REQUEST).build();
             }
@@ -194,7 +198,21 @@ public class Export {
             return Response.serverError().build();
         }
 
-        return Response.ok().build();
+        return Response.ok(sendid).cacheControl(getNoCache()).build();
+    }
+
+    @DELETE
+    @Path("/{id}/{streamid}/{sendid}")
+    public Response endSendStream(@PathParam("id") String id,
+            @PathParam("streamid") String streamId,
+            @PathParam("sendid") String sendId) {
+        ConvertSession session = convertSessionManager.getSession(id);
+        if (session == null) {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+
+        session.endSendStream(sendId);
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 
     @GET

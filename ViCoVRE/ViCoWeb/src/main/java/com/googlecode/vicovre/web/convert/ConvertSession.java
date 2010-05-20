@@ -125,7 +125,7 @@ public class ConvertSession {
         if (stream == null) {
             throw new FileNotFoundException();
         }
-        TransmitStream transmitStream = new TransmitStream(
+        TransmitStream transmitStream = new TransmitStream(streamId,
                 stream.getDataSource(), substream);
         if ((name != null) && !name.equals("")) {
             transmitStream.setName(name);
@@ -134,6 +134,17 @@ public class ConvertSession {
             transmitStream.setNote(note);
         }
         return transmitStream;
+    }
+
+    public String getTransmitStreamId(String streamId, int substream) {
+        for (String id : transmitStreams.keySet()) {
+            TransmitStream stream = transmitStreams.get(id);
+            if (stream.getStreamId().equals(streamId)
+                    && (stream.getSubStream() == substream)) {
+                return id;
+            }
+        }
+        return null;
     }
 
     private Format getFormat(RTPType rtpType, int width, int height) {
@@ -172,6 +183,14 @@ public class ConvertSession {
         String id = UUID.randomUUID().toString();
         transmitStreams.put(id, transmitStream);
         return id;
+    }
+
+    public void endSendStream(String id) {
+        TransmitStream transmitStream = transmitStreams.get(id);
+        if (transmitStream != null) {
+            transmitStream.stop();
+            transmitStreams.remove(id);
+        }
     }
 
     public void receiveStreams(String venue) throws Exception {

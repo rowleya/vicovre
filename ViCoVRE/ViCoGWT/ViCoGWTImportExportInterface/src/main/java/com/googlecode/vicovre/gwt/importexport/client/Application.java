@@ -58,6 +58,7 @@ public class Application implements EntryPoint {
         String url = getUrl();
         panel.add(new ImportPanel(url), "Import");
         panel.add(new ExportPanel(url), "Export");
+        panel.selectTab(0);
         RootPanel.get().add(panel);
     }
 }

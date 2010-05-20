@@ -97,7 +97,7 @@ public class LiveDataSource extends PullBufferDataSource {
         return dataSource.getDuration();
     }
 
-    public void start() throws IOException {
+    public void go() {
         if (!started) {
             started = true;
             for (LiveDataStream stream : streams) {
@@ -106,13 +106,21 @@ public class LiveDataSource extends PullBufferDataSource {
         }
     }
 
-    public void stop() throws IOException {
+    public void end() {
         if (started) {
             started = false;
             for (LiveDataStream stream : streams) {
                 stream.close();
             }
         }
+    }
+
+    public void start() throws IOException {
+        // Does Nothing
+    }
+
+    public void stop() throws IOException {
+        // Does Nothing
     }
 
 }

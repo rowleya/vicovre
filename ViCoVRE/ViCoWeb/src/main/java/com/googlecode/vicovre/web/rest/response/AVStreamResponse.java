@@ -38,16 +38,24 @@ public abstract class AVStreamResponse {
 
     private String id = null;
 
+    private String transmitStreamId = null;
+
     public AVStreamResponse() {
         // Does Nothing
     }
 
-    public AVStreamResponse(String id) {
+    public AVStreamResponse(String id, String transmitStreamId) {
         this.id = id;
+        this.transmitStreamId = transmitStreamId;
     }
 
     @XmlElement(name="id")
     public String getId() {
         return id;
+    }
+
+    @XmlElement(name="transmitting")
+    public String getTransmitId() {
+        return transmitStreamId;
     }
 }

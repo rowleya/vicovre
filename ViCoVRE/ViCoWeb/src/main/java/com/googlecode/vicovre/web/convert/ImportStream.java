@@ -136,10 +136,10 @@ public class ImportStream  {
         return lastFrameNumber + 1;
     }
 
-    private void createLiveSource() throws IOException {
+    private void createLiveSource() {
         System.err.println("Live stream created");
         liveDataSource = new LiveDataSource(dataSource);
-        liveDataSource.start();
+        liveDataSource.go();
         LiveDataStream[] streams = (LiveDataStream[])
             liveDataSource.getStreams();
         streamChangeListeners = new StreamChangeListener[streams.length];
@@ -153,16 +153,13 @@ public class ImportStream  {
     public void addInputStream(InputStream inputStream,
             String contentType, long timestamp, long frame,
             long contentLength) throws IOException, UnsupportedFormatException {
-        System.err.println("Adding input stream");
         lastFrameNumber = frame;
 
         if (isImageSource(contentType)) {
-            System.err.println("Adding image stream");
             com.googlecode.vicovre.media.protocol.image.DataSource ds =
                 (com.googlecode.vicovre.media.protocol.image.DataSource)
                     dataSource;
             if (ds == null) {
-                System.err.println("Creating image stream");
                 ds =
                    new com.googlecode.vicovre.media.protocol.image.DataSource(
                            live);
@@ -171,9 +168,7 @@ public class ImportStream  {
                     createLiveSource();
                 }
             }
-            System.err.println("Reading image");
             ds.readImage(inputStream, timestamp, frame);
-            System.err.println("Finished Reading image");
         } else {
             DataSource ds =
                 new com.googlecode.vicovre.media.protocol.stream.DataSource(
@@ -192,11 +187,11 @@ public class ImportStream  {
         }
     }
 
-    public void setDataSource(DataSource dataSource) throws IOException {
+    public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         if (live) {
             liveDataSource = new LiveDataSource(dataSource);
-            liveDataSource.start();
+            liveDataSource.go();
         }
     }
 
@@ -210,11 +205,7 @@ public class ImportStream  {
     public void close() {
         if (live) {
             if (liveDataSource != null) {
-                try {
-                    liveDataSource.stop();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                liveDataSource.end();
                 liveDataSource = null;
             }
         }
