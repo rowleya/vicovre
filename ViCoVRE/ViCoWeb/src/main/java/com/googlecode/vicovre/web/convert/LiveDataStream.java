@@ -174,7 +174,6 @@ public class LiveDataStream extends DataSink implements PullBufferStream {
     }
 
     public void handleBuffer(Buffer buffer) throws IOException {
-        System.err.println("Handling live buffer");
         if (processor == null) {
             try {
                 Format inputFormat = buffer.getFormat();

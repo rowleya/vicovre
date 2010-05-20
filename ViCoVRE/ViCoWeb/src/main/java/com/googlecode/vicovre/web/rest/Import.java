@@ -154,7 +154,6 @@ public class Import {
                         contentLength = Long.parseLong(clHeader);
                     }
                 }
-                System.err.println("Opening input stream for item");
                 input = item.openStream();
             }
         }
