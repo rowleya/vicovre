@@ -44,8 +44,8 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
 import com.googlecode.vicovre.media.controls.FrameFillControl;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public class NativeDecoder implements Codec, FrameFillControl {
 

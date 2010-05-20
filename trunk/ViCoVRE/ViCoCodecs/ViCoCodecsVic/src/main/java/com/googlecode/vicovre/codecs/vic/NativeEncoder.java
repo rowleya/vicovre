@@ -45,8 +45,8 @@ import javax.media.control.KeyFrameControl;
 import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 
-import com.googlecode.vicovre.codecs.nativeloader.NativeLoader;
 import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
+import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public class NativeEncoder implements Codec,
         KeyFrameControl, KeyFrameForceControl {
@@ -58,6 +58,8 @@ public class NativeEncoder implements Codec,
                 new YUVFormat(new Dimension(352, 288), -1, Format.byteArray, -1,
                         YUVFormat.YUV_420, -1, -1, -1, -1, -1), 2),
         new VicCodec("H261ASEncoder", new VideoFormat("H261AS/RTP"),
+                new YUVFormat(YUVFormat.YUV_420), 1),
+        new VicCodec("H264Encoder", new VideoFormat("H264/RTP"),
                 new YUVFormat(YUVFormat.YUV_420), 1),
     };
 
@@ -205,6 +207,9 @@ public class NativeEncoder implements Codec,
             throw new ResourceUnavailableException("Codec not set");
         }
         ref = openCodec(codec);
+        if (ref <= 0) {
+            throw new ResourceUnavailableException("Cannot open codec: " + ref);
+        }
     }
 
     public void reset() {
