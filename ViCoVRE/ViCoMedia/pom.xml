@@ -24,6 +24,11 @@
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoUtils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoRepositories</artifactId>
             <version>${project.version}</version>
         </dependency>
