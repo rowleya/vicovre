@@ -46,11 +46,12 @@ public class VideoStreamResponse extends AVStreamResponse {
     private int height = 0;
 
     public VideoStreamResponse() {
-        super(null);
+        super(null, null);
     }
 
-    public VideoStreamResponse(String id, VideoFormat format) {
-        super(id);
+    public VideoStreamResponse(String id, VideoFormat format,
+            String transmitStreamId) {
+        super(id, transmitStreamId);
         Dimension size = format.getSize();
         this.width = size.width;
         this.height = size.height;

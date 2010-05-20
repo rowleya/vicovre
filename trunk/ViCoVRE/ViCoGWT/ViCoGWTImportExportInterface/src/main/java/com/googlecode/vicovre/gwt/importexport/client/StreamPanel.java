@@ -42,12 +42,15 @@ import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.importexport.client.rest.RestVenueLoader;
+import com.googlecode.vicovre.gwt.importexport.client.rest.StopStreamSender;
 import com.googlecode.vicovre.gwt.importexport.client.rest.TransmitStreamSender;
 
 public class StreamPanel extends ModalPopup<VerticalPanel>
         implements VenueLoader, ClickHandler {
 
     private String sessionId = null;
+
+    private String streamId = null;
 
     private Stream stream = null;
 
@@ -88,6 +91,8 @@ public class StreamPanel extends ModalPopup<VerticalPanel>
         buttonPanel.add(stopButton);
         buttonPanel.add(closeButton);
 
+        stopButton.setEnabled(false);
+
         panel.add(new Label(title));
         panel.add(venuePanel);
         panel.add(buttonPanel);
@@ -101,12 +106,40 @@ public class StreamPanel extends ModalPopup<VerticalPanel>
         RestVenueLoader.loadVenues(venuePanel, url);
     }
 
+    public void transmitFailed() {
+        transmitButton.setEnabled(true);
+    }
+
+    public void transmitStarted(String streamId) {
+        this.streamId = streamId;
+        transmitButton.setEnabled(false);
+        stopButton.setEnabled(true);
+    }
+
+    public void transmitStopped() {
+        this.streamId = null;
+        transmitButton.setEnabled(true);
+    }
+
+    public void transmitStoppedFailed() {
+        stopButton.setEnabled(true);
+    }
+
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(closeButton)) {
             hide();
         } else if (event.getSource().equals(transmitButton)) {
+            String substreamId = null;
+            if (substream != null) {
+                substreamId = substream.getIdValue();
+            }
+            transmitButton.setEnabled(false);
             TransmitStreamSender.send(url, sessionId, stream.getId(),
-                    substream.getIdValue(), venuePanel);
+                    substreamId, venuePanel, this);
+        } else if (event.getSource().equals(stopButton)) {
+            stopButton.setEnabled(false);
+            StopStreamSender.send(url, sessionId, stream.getId(),
+                    streamId, this);
         }
     }
 

@@ -50,7 +50,7 @@ import com.googlecode.vicovre.gwt.importexport.client.rest.SessionLoader;
 import com.googlecode.vicovre.gwt.importexport.client.rest.SessionsLoader;
 
 public class ExportPanel extends VerticalPanel implements ClickHandler,
-        DoubleClickHandler {
+        DoubleClickHandler, SessionsHandler {
 
     private Button getSessionsButton = new Button("Get Sessions");
 

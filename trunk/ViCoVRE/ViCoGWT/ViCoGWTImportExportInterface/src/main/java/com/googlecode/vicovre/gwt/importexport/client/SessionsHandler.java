@@ -32,17 +32,8 @@
 
 package com.googlecode.vicovre.gwt.importexport.client;
 
-import com.google.gwt.json.client.JSONObject;
+public interface SessionsHandler {
 
-public class AudioSubStream extends SubStream {
-
-    public static final String TYPE = "audio";
-
-    public AudioSubStream(JSONObject substream, Stream stream) {
-        super(substream.get("id"), stream, substream.get("transmitting"));
-    }
-    public String getType() {
-        return TYPE;
-    }
+    void setSessions(String[] sessionUrls);
 
 }

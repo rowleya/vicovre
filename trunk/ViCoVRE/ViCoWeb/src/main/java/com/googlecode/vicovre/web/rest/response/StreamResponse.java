@@ -42,6 +42,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.googlecode.vicovre.web.convert.ConvertSession;
 import com.googlecode.vicovre.web.convert.ImportStream;
 
 @XmlRootElement(name="stream")
@@ -55,16 +56,18 @@ public class StreamResponse {
         // Does Nothing
     }
 
-    public StreamResponse(String id, ImportStream stream) {
+    public StreamResponse(String id, ImportStream stream,
+            ConvertSession session) {
         this.id = id;
         for (int i = 0; i < stream.getNoStreams(); i++) {
+            String transmitStreamId = session.getTransmitStreamId(id, i);
             Format format = stream.getFormat(i);
             if (format instanceof AudioFormat) {
                 substreams.add(new AudioStreamResponse(String.valueOf(i),
-                        (AudioFormat) format));
+                        (AudioFormat) format, transmitStreamId));
             } else if (format instanceof VideoFormat) {
                 substreams.add(new VideoStreamResponse(String.valueOf(i),
-                        (VideoFormat) format));
+                        (VideoFormat) format, transmitStreamId));
             }
         }
     }

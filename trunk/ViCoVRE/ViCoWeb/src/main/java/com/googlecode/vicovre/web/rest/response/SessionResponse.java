@@ -53,7 +53,7 @@ public class SessionResponse {
     public SessionResponse(ConvertSession session) {
         for (String streamId : session.getStreamIds()) {
             ImportStream stream = session.getStream(streamId);
-            streams.add(new StreamResponse(streamId, stream));
+            streams.add(new StreamResponse(streamId, stream, session));
         }
     }
 

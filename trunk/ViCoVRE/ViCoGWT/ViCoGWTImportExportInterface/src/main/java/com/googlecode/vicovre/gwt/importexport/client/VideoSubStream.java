@@ -39,7 +39,7 @@ public class VideoSubStream extends SubStream {
     public static String TYPE = "video";
 
     public VideoSubStream(JSONObject substream, Stream stream) {
-        super(substream.get("id"), stream);
+        super(substream.get("id"), stream, substream.get("transmitting"));
     }
 
     public String getType() {

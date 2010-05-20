@@ -52,20 +52,20 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.importexport.client.ExportPanel;
+import com.googlecode.vicovre.gwt.importexport.client.SessionsHandler;
 
 public class SessionsLoader extends Callback {
 
-    private ExportPanel panel = null;
+    private SessionsHandler panel = null;
 
     private String url = null;
 
-    public static void loadSessions(ExportPanel panel, String url) {
+    public static void loadSessions(SessionsHandler panel, String url) {
         SessionsLoader loader = new SessionsLoader(panel, url);
         loader.go();
     }
 
-    public SessionsLoader(ExportPanel panel, String url) {
+    public SessionsLoader(SessionsHandler panel, String url) {
         this.panel = panel;
         this.url = url;
     }

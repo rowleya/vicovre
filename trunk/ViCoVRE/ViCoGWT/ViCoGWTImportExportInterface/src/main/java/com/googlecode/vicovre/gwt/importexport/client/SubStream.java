@@ -41,12 +41,21 @@ public abstract class SubStream {
 
     private Stream stream = null;
 
-    public SubStream(JSONValue idValue, Stream stream) {
+    private String transmitId = null;
+
+    public SubStream(JSONValue idValue, Stream stream,
+            JSONValue transmitIdValue) {
         this.stream = stream;
         if (idValue != null) {
             JSONString string = idValue.isString();
             if (string != null) {
                 id = string.stringValue();
+            }
+        }
+        if (transmitIdValue != null) {
+            JSONString string = transmitIdValue.isString();
+            if (string != null) {
+                transmitId = string.stringValue();
             }
         }
     }
@@ -66,6 +75,14 @@ public abstract class SubStream {
 
     public Stream getStream() {
         return stream;
+    }
+
+    public String getTransmitId() {
+        return transmitId;
+    }
+
+    public void setTransmitId(String transmitId) {
+        this.transmitId = transmitId;
     }
 
 }

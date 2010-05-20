@@ -41,13 +41,8 @@ import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PullBufferDataSource;
 import javax.media.protocol.PullBufferStream;
-import javax.media.protocol.PullDataSource;
-import javax.media.protocol.PullSourceStream;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
-import javax.media.protocol.PushDataSource;
-import javax.media.protocol.PushSourceStream;
-import javax.media.protocol.SourceStream;
 import javax.media.rtp.RTPConnector;
 import javax.media.rtp.RTPManager;
 import javax.media.rtp.SendStream;
@@ -93,9 +88,12 @@ public class TransmitStream {
 
     private String note = null;
 
-    public TransmitStream(DataSource dataSource, int stream) {
+    private String streamId = null;
+
+    public TransmitStream(String streamId, DataSource dataSource, int stream) {
         this.dataSource = dataSource;
         this.stream = stream;
+        this.streamId = streamId;
         bridge.setName("Multicast");
         bridge.setServerType("multicast");
         agController = new AGController(bridge,
@@ -190,6 +188,14 @@ public class TransmitStream {
         sendStream.close();
         rtpManager.removeTargets("Leaving");
         rtpManager.dispose();
+    }
+
+    public String getStreamId() {
+        return streamId;
+    }
+
+    public int getSubStream() {
+        return stream;
     }
 
 }
