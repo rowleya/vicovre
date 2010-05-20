@@ -59,7 +59,7 @@ import com.googlecode.vicovre.utils.XmlIo;
 public class AclReader {
 
     public static PermissionSet readAcl(InputStream input,
-            HashSet<String> knownOperations,
+            HashMap<String, HashSet<String>> knownOperations,
             HashMap<String, Role> knownRoles,
             HashMap<String, User> knownUsers,
             HashMap<String, Group> knownGroups)
@@ -68,6 +68,7 @@ public class AclReader {
         Node doc = XmlIo.read(input);
         PermissionSet lastPermissions = null;
         String className = XmlIo.readValue(doc, "className");
+        HashSet<String> knownOps = knownOperations.get(className);
         String hashCode = XmlIo.readValue(doc, "hashCode");
         Node[] permissionSets = XmlIo.readNodes(doc, "permissionSet");
         for (int i = 0; i < permissionSets.length; i++) {
@@ -75,6 +76,7 @@ public class AclReader {
             NodeList permissionSet = permissionSets[i].getChildNodes();
             for (int j = 0; j < permissionSet.getLength(); j++) {
                 Node perm = permissionSet.item(j);
+                String name = XmlIo.readValue(perm, "name");
 
                 OperationSet operations = new OperationSet();
                 NodeList ops = perm.getChildNodes();
@@ -82,7 +84,7 @@ public class AclReader {
                     Node op = ops.item(k);
                     if (op.getNodeName().equals("operation")) {
                         String operation = op.getTextContent();
-                        if (!knownOperations.contains(operation)) {
+                        if (!knownOps.contains(operation)) {
                             throw new SAXException("Operation " + operation
                                     + " not known");
                         }
@@ -102,14 +104,20 @@ public class AclReader {
                 if (perm.getNodeName().equals("user")) {
                     String username =
                         attrs.getNamedItem("username").getTextContent();
-                    User user = knownUsers.get(username);
-                    if (user == null) {
-                        throw new SAXException("User " + username
-                                + " not known");
+                    if (!username.equals(UserPermission.VARIABLE)) {
+                        User user = knownUsers.get(username);
+                        if (user == null) {
+                            throw new SAXException("User " + username
+                                    + " not known");
+                        }
+                        UserPermission userPerm = new UserPermission(operations,
+                                allow,  user);
+                        permissions.addPermission(userPerm);
+                    } else {
+                        UserPermission userPerm = new UserPermission(operations,
+                                allow);
+                        permissions.addPermission(userPerm);
                     }
-                    UserPermission userPerm = new UserPermission(operations,
-                            allow,  user);
-                    permissions.addPermission(userPerm);
                 } else if (perm.getNodeName().equals("role")) {
                     String roleName =
                         attrs.getNamedItem("name").getTextContent();
@@ -124,11 +132,6 @@ public class AclReader {
                 } else if (perm.getNodeName().equals("group")) {
                     String groupName =
                         attrs.getNamedItem("name").getTextContent();
-                    Group group = knownGroups.get(groupName);
-                    if (group == null) {
-                        throw new SAXException("Group " + groupName
-                                + " not known");
-                    }
                     String roleName =
                         attrs.getNamedItem("role").getTextContent();
                     Role role = knownRoles.get(roleName);
@@ -136,13 +139,27 @@ public class AclReader {
                         throw new SAXException("Role " + roleName
                                 + " not known");
                     }
-                    GroupPermission groupPerm = new GroupPermission(operations,
-                            allow, group, role);
-                    permissions.addPermission(groupPerm);
+                    if (!groupName.equals(GroupPermission.VARIABLE)) {
+                        Group group = knownGroups.get(groupName);
+                        if (group == null) {
+                            throw new SAXException("Group " + groupName
+                                    + " not known");
+                        }
+
+                        GroupPermission groupPerm = new GroupPermission(
+                                operations, allow, group, role);
+                        permissions.addPermission(groupPerm);
+                    } else {
+                        GroupPermission groupPerm = new GroupPermission(
+                                operations, allow, role);
+                        permissions.addPermission(groupPerm);
+                    }
+
                 } else {
                     throw new SAXException("Permission " + perm.getNodeName()
                             + " not known");
                 }
+                permissions.setName(name);
             }
             permissions.setSetPermissions(lastPermissions);
             lastPermissions = permissions;

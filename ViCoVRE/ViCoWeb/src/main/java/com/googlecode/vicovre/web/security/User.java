@@ -30,76 +30,67 @@
  *
  */
 
-package com.googlecode.vicovre.security;
+package com.googlecode.vicovre.web.security;
+
 
 /**
- * A User Permission object
+ * A User for ViCo.
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class UserPermission extends Permission {
+public class User {
+
+    private Credentials credentials = null;
+
+    private String name = null;
+
+    private String email = null;
 
     /**
-     * The name of the variable if the user is variable
+     * Sets the credentials.
+     * @param credentials The credentials to set
      */
-    public static final String VARIABLE = "?user";
-
-    private User user = null;
-
-    /**
-     * Creates a new UserPermission
-     * @param operations The operation(s) to grant or deny
-     * @param allow True to allow the permission
-     * @param user The user to assign the permission to
-     */
-    public UserPermission(OperationSet operations, boolean allow, User user) {
-        super(operations, allow);
-        this.user = user;
+    public void setCredentials(final Credentials credentials) {
+        this.credentials = credentials;
     }
 
     /**
-     * Creates a new variable UserPermission
-     * @param operations The operations to allow
-     * @param allow True to allow the permission
+     * Sets the name.
+     * @param name The name to set
      */
-    public UserPermission(OperationSet operations, boolean allow) {
-        super(operations, allow);
-        this.user = null;
+    public void setName(final String name) {
+        this.name = name;
     }
 
     /**
-     * Sets the user if not already set
-     * @param user The user to set
+     * Sets the email.
+     * @param email The email to set
      */
-    public void setUser(User user) {
-        if (this.user == null) {
-            this.user = user;
-        }
+    public void setEmail(final String email) {
+        this.email = email;
     }
 
     /**
-     * Determines if the user has been set
-     * @return True if the user has not been set
+     * Gets the credentials of the user.
+     * @return The credentials
      */
-    public boolean isVariable() {
-        return user == null;
+    public Credentials getCredentials() {
+        return credentials;
     }
 
     /**
-     * Gets the username of the permission user
-     * @return The username
+     * Gets the name.
+     * @return The name
      */
-    public String getUsername() {
-        return user.getUsername();
+    public String getName() {
+        return name;
     }
 
     /**
-     *
-     * @see com.googlecode.vicovre.security.Permission#
-     *     userHasPermission(
-     *     com.googlecode.vicovre.security.User)
+     * Gets the email.
+     * @return The email
      */
-    public boolean userHasPermission(User user) {
-        return user.equals(this.user);
+    public String getEmail() {
+        return email;
     }
 }

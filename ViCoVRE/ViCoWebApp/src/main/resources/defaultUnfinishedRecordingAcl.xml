@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+    <permissionSet className="PermissionSet">
+        <role name="Administrator" allow="true">
+            <operation>Change Permissions</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Change Permissions</operation>
+        </user>
+    </permissionSet>
+    <permissionSet className="UnfinishedRecording">
+        <role name="Administrator" allow="true">
+            <operation>Read Recording</operation>
+            <operation>Delete Recording</operation>
+            <operation>Change Recording</operation>
+            <operation>Control Recording</operation>
+        </role>
+        <user name="?user" allow="true">
+            <operation>Read Recording</operation>
+            <operation>Delete Recording</operation>
+            <operation>Change Recording</operation>
+            <operation>Control Recording</operation>
+        </user>
+    </permissionSet>
+</permissions>

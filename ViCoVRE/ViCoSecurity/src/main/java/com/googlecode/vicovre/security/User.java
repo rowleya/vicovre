@@ -45,8 +45,6 @@ public class User {
 
     private String username = null;
 
-    private Password password = new Password();
-
     private HashSet<Role> roles = new HashSet<Role>();
 
     /**
@@ -97,22 +95,6 @@ public class User {
 
     public void removeRole(Role role) {
         roles.remove(role);
-    }
-
-    /**
-     * Sets the password of the user
-     * @param password The password to set
-     */
-    public void setPassword(Password password) {
-        this.password = password;
-    }
-
-    /**
-     * Gets the password of the user
-     * @return The password
-     */
-    public Password getPassword() {
-        return password;
     }
 
     /**

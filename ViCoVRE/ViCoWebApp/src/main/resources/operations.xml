@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<operations>
+    <class name="Folder">
+        <operation value="Read Folder" />
+        <operation value="Create Recording" />
+        <operation value="Create Subfolder" />
+        <operation value="Create Harvest Item" />
+    </class>
+    <class name="UnfinishedRecording">
+        <operation value="Read Recording" />
+        <operation value="Delete Recording" />
+        <operation value="Change Recording" />
+        <operation value="Control Recording" />
+    </class>
+    <class name="Recording">
+        <operation value="Read Recording" />
+        <operation value="Delete Recording" />
+        <operation value="Change Layout" />
+        <operation value="Edit Metadata" />
+        <operation value="Play Recording To Venue"/>
+        <operation value="Play Recording" />
+    </class>
+    <class name="HarvestSource">
+        <operation value="Read Harvest Item" />
+        <operation value="Delete Harvest Item" />
+        <operation value="Change Harvest Item" />
+        <operation value="Harvest Manually" />
+    </class>
+    <class name="Users">
+        <operation value="Create User" />
+        <operation value="List Users" />
+    </class>
+    <class name="Groups">
+        <operation value="Create Group" />
+        <operation value="List Groups" />
+    </class>
+    <class name="User">
+        <operation value="See User" />
+        <operation value="Delete User" />
+        <operation value="Change User" />
+        <operation value="Change Roles" />
+    </class>
+    <class name="Group">
+        <operation value="See Group" />
+        <operation value="List Users" />
+        <operation value="Change Users" />
+    </class>
+    <class name="PermissionSet">
+        <operation value="Change Permissions"/>
+    </class>
+</operations>

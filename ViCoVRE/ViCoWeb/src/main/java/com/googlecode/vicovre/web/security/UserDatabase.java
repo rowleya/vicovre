@@ -30,49 +30,57 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.web.security;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.HashMap;
 
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
+import com.googlecode.vicovre.utils.ExtensionFilter;
 
-import com.googlecode.vicovre.security.Role;
-import com.googlecode.vicovre.security.User;
-import com.googlecode.vicovre.utils.XmlIo;
+public class UserDatabase {
 
-public class UserReader {
+    private static final String USER_EXT = ".user";
 
-    public static User readUser(InputStream input,
-            HashMap<String, Role> knownRoles) throws SAXException, IOException {
-        Node doc = XmlIo.read(input);
-        String username = XmlIo.readValue(doc, "username");
-        String[] roles = XmlIo.readValues(doc, "role");
+    private File dir = null;
 
-        User user = new User(username);
-        for (int i = 0; i < roles.length; i++) {
-            Role role = knownRoles.get(roles[i]);
-            if (role == null) {
-                throw new SAXException("Role " + roles[i] + " not known");
+    private HashMap<User, File> userFiles = new HashMap<User, File>();
+
+    private HashMap<String, User> users = new HashMap<String, User>();
+
+    public UserDatabase(String path) {
+        dir = new File(path);
+        File[] userFiles = dir.listFiles(new ExtensionFilter(USER_EXT));
+        for (File userFile : userFiles) {
+            try {
+                FileInputStream input = new FileInputStream(userFile);
+                User user = UserReader.readUser(input);
+                input.close();
+                users.put(user.getCredentials().getId(), user);
+                this.userFiles.put(user, userFile);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            user.addRole(role);
         }
-        return user;
     }
 
-    public static void writeUser(User user, OutputStream output) {
-        PrintWriter writer = new PrintWriter(output);
-        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        writer.println("<user>");
-        XmlIo.writeValue(user, "username", writer);
-        for (Role role : user.getRoles()) {
-            XmlIo.writeValue("role", role.getName(), writer);
-        }
-        writer.println("</user>");
-        writer.flush();
+    public User getUser(String id) {
+        return users.get(id);
+    }
+
+    public void addUser(User user) throws IOException {
+        users.put(user.getCredentials().getId(), user);
+        File userFile = new File(dir, System.currentTimeMillis()
+                + (Math.random() * 1000000) + USER_EXT);
+        FileOutputStream output = new FileOutputStream(userFile);
+        UserReader.writeUser(user, output);
+        output.close();
+        userFiles.put(user, userFile);
+    }
+
+    public void updateUser(User user) throws IOException {
+        addUser(user);
     }
 }

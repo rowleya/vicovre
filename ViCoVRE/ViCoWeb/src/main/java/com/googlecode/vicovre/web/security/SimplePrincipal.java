@@ -30,76 +30,34 @@
  *
  */
 
-package com.googlecode.vicovre.security;
+package com.googlecode.vicovre.web.security;
+
+import java.security.Principal;
 
 /**
- * A User Permission object
+ * A Simple Principal.
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class UserPermission extends Permission {
+public class SimplePrincipal implements Principal {
+
+    private String name = null;
 
     /**
-     * The name of the variable if the user is variable
+     * Creates a new SimplePrincipal.
+     * @param name The name of the principal
      */
-    public static final String VARIABLE = "?user";
-
-    private User user = null;
-
-    /**
-     * Creates a new UserPermission
-     * @param operations The operation(s) to grant or deny
-     * @param allow True to allow the permission
-     * @param user The user to assign the permission to
-     */
-    public UserPermission(OperationSet operations, boolean allow, User user) {
-        super(operations, allow);
-        this.user = user;
-    }
-
-    /**
-     * Creates a new variable UserPermission
-     * @param operations The operations to allow
-     * @param allow True to allow the permission
-     */
-    public UserPermission(OperationSet operations, boolean allow) {
-        super(operations, allow);
-        this.user = null;
-    }
-
-    /**
-     * Sets the user if not already set
-     * @param user The user to set
-     */
-    public void setUser(User user) {
-        if (this.user == null) {
-            this.user = user;
-        }
-    }
-
-    /**
-     * Determines if the user has been set
-     * @return True if the user has not been set
-     */
-    public boolean isVariable() {
-        return user == null;
-    }
-
-    /**
-     * Gets the username of the permission user
-     * @return The username
-     */
-    public String getUsername() {
-        return user.getUsername();
+    public SimplePrincipal(final String name) {
+        this.name = name;
     }
 
     /**
      *
-     * @see com.googlecode.vicovre.security.Permission#
-     *     userHasPermission(
-     *     com.googlecode.vicovre.security.User)
+     * @see java.security.Principal#getName()
+     * {@inheritDoc}
      */
-    public boolean userHasPermission(User user) {
-        return user.equals(this.user);
+    public String getName() {
+        return name;
     }
+
 }

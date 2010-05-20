@@ -48,6 +48,8 @@ public class PermissionSet {
 
     private String className = null;
 
+    private String name = null;
+
     private int hashCode = 0;
 
     private boolean defaultPermission = DENY;
@@ -60,6 +62,10 @@ public class PermissionSet {
         this.className = className;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public void setHashCode(int hashCode) {
         this.hashCode = hashCode;
     }
@@ -70,6 +76,10 @@ public class PermissionSet {
 
     public int getHashCode() {
         return hashCode;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void setProtectedObject(Object object) {
@@ -114,6 +124,34 @@ public class PermissionSet {
 
     public void deletePermission(int index) {
         permissions.remove(index);
+    }
+
+    public void setUserVariable(User user) {
+        for (Permission permission : permissions) {
+            if (permission instanceof UserPermission) {
+                UserPermission userPerm = (UserPermission) permission;
+                if (userPerm.isVariable()) {
+                    userPerm.setUser(user);
+                }
+            }
+        }
+        if (perms != null) {
+            perms.setUserVariable(user);
+        }
+    }
+
+    public void setGroupVariable(Group group) {
+        for (Permission permission : permissions) {
+            if (permission instanceof GroupPermission) {
+                GroupPermission groupPerm = (GroupPermission) permission;
+                if (groupPerm.isVariable()) {
+                    groupPerm.setGroup(group);
+                }
+            }
+        }
+        if (perms != null) {
+            perms.setGroupVariable(group);
+        }
     }
 
     public boolean userHasPermission(User user, OperationSet operations) {

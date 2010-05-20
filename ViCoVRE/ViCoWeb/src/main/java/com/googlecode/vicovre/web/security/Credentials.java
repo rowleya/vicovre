@@ -30,76 +30,59 @@
  *
  */
 
-package com.googlecode.vicovre.security;
+package com.googlecode.vicovre.web.security;
 
-/**
- * A User Permission object
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class UserPermission extends Permission {
+import java.util.HashMap;
 
-    /**
-     * The name of the variable if the user is variable
-     */
-    public static final String VARIABLE = "?user";
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    private User user = null;
+public interface Credentials {
 
     /**
-     * Creates a new UserPermission
-     * @param operations The operation(s) to grant or deny
-     * @param allow True to allow the permission
-     * @param user The user to assign the permission to
+     * Gets the id of the credentials to match in the security database
+     * @return The id
      */
-    public UserPermission(OperationSet operations, boolean allow, User user) {
-        super(operations, allow);
-        this.user = user;
-    }
+    String getId();
 
     /**
-     * Creates a new variable UserPermission
-     * @param operations The operations to allow
-     * @param allow True to allow the permission
+     * Gets a map of values for saving / updating the credentials
+     * @return The values to save
      */
-    public UserPermission(OperationSet operations, boolean allow) {
-        super(operations, allow);
-        this.user = null;
-    }
+    HashMap<String, String> getValues();
 
     /**
-     * Sets the user if not already set
-     * @param user The user to set
+     * Sets the values for loading / updating the credentials
+     * @param values The values to load
      */
-    public void setUser(User user) {
-        if (this.user == null) {
-            this.user = user;
-        }
-    }
+    void setValues(HashMap<String, String> values);
 
     /**
-     * Determines if the user has been set
-     * @return True if the user has not been set
+     * Determines if the given value is private
+     * @param field The name of the value
+     * @return True if the value is private, false otherwise
      */
-    public boolean isVariable() {
-        return user == null;
-    }
+    boolean isPrivate(String field);
 
     /**
-     * Gets the username of the permission user
-     * @return The username
+     * Determines if the given value is fixed i.e. not editable
+     * @param field The name of the value
+     * @return True if the value is fixed, false otherwise
      */
-    public String getUsername() {
-        return user.getUsername();
-    }
+    boolean isFixed(String field);
 
     /**
-     *
-     * @see com.googlecode.vicovre.security.Permission#
-     *     userHasPermission(
-     *     com.googlecode.vicovre.security.User)
+     * Reads credentials of this type from a request
+     * @param request The request
+     * @return True if the credentials are read, false if they are missing
      */
-    public boolean userHasPermission(User user) {
-        return user.equals(this.user);
-    }
+    boolean read(HttpServletRequest request);
+
+    /**
+     * Authenticates the credentials given against these credentials
+     * @param credentials The credentials to check a match for
+     * @param response The response to put any error message in
+     * @return True if the credentials
+     */
+    boolean authenticate(Credentials credentials, HttpServletResponse response);
 }
