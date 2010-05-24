@@ -55,6 +55,7 @@ class pktque {
                 last->next = elem;
             }
             last = elem;
+            elem->next = 0;
             if (first == 0) {
                 first = elem;
             }
@@ -68,12 +69,12 @@ class pktque {
             if (last == elem) {
                 last = 0;
             }
+            pktbuf *buf = 0;
             if (elem != 0) {
-                pktbuf *buf = elem->buf;
+                buf = elem->buf;
                 delete elem;
-                return buf;
             }
-            return 0;
+            return buf;
         }
 
         bool hasFirst() {
@@ -189,9 +190,9 @@ class TransmitterModule : public Module {
     ~TransmitterModule();
     void setData(u_int8_t* data, int length);
     pktque *pktsToSend_;
+    RTP_BufferPool *pool_;
     protected:
     TransmitterModule(int ft);
-    RTP_BufferPool *pool_;
     void send(pktbuf *pb);
 };
 

@@ -66,6 +66,10 @@ public class SWScaleCodec implements Codec {
 
     private Dimension outSize = null;
 
+    private boolean open = false;
+
+    private Integer openSync = new Integer(0);
+
     public Format[] getSupportedInputFormats() {
         return Utils.getVideoFormats(null, -1);
     }
@@ -80,54 +84,71 @@ public class SWScaleCodec implements Codec {
     }
 
     public int process(Buffer input, Buffer output) {
-        if (ref == -1) {
-            VideoFormat inFormat = (VideoFormat) input.getFormat();
-            VideoFormat outFormat = (VideoFormat) output.getFormat();
-            Dimension inSize = inFormat.getSize();
-            if (outSize == null) {
-                outSize = outFormat.getSize();
+        synchronized (openSync) {
+            if (!open) {
+                return BUFFER_PROCESSED_FAILED;
             }
-            if (outSize == null) {
-                outSize = inSize;
+            if (ref == -1) {
+                VideoFormat inFormat = (VideoFormat) input.getFormat();
+                VideoFormat outFormat = (VideoFormat) output.getFormat();
+                Dimension inSize = inFormat.getSize();
+                if (outSize == null) {
+                    outSize = outFormat.getSize();
+                }
+                if (outSize == null) {
+                    outSize = inSize;
+                }
+                if (outSize.width == -1) {
+                    outSize.width = inSize.width;
+                }
+                if (outSize.height == -1) {
+                    outSize.height = inSize.height;
+                }
+
+                ref = openCodec(pixelFormatIn.getId(), inSize.width,
+                        inSize.height, pixelFormatOut.getId(), outSize.width,
+                        outSize.height);
+                if (ref > 0) {
+
+                    outputFormat = Utils.getVideoFormat(pixelFormatOut,
+                            outSize, inFormat.getFrameRate());
+                    if (outputFormat.getDataType() == Format.byteArray) {
+                        bytedata =
+                            new byte[outputFormat.getMaxDataLength() * 2];
+                    } else if (outputFormat.getDataType() == Format.intArray) {
+                        intdata =
+                            new int[outputFormat.getMaxDataLength() * 2];
+                    } else if (outputFormat.getDataType() == Format.shortArray) {
+                        shortdata =
+                            new short[outputFormat.getMaxDataLength() * 2];
+                    }
+                } else {
+                    System.err.println("Could not open scale codec");
+                    return BUFFER_PROCESSED_FAILED;
+                }
+
             }
-            if (outSize.width == -1) {
-                outSize.width = inSize.width;
-            }
-            if (outSize.height == -1) {
-                outSize.height = inSize.height;
-            }
-            System.err.println("Input = " + input.getFormat());
-            System.err.println("Output = " + output.getFormat());
-            outputFormat = Utils.getVideoFormat(pixelFormatOut,
-                    outSize, inFormat.getFrameRate());
             if (outputFormat.getDataType() == Format.byteArray) {
-                bytedata = new byte[outputFormat.getMaxDataLength() * 2];
+                output.setData(bytedata);
+                output.setLength(bytedata.length / 2);
             } else if (outputFormat.getDataType() == Format.intArray) {
-                intdata = new int[outputFormat.getMaxDataLength() * 2];
+                output.setData(intdata);
+                output.setLength(intdata.length / 2);
             } else if (outputFormat.getDataType() == Format.shortArray) {
-                shortdata = new short[outputFormat.getMaxDataLength() * 2];
+                output.setData(shortdata);
+                output.setLength(shortdata.length / 2);
             }
 
-            ref = openCodec(pixelFormatIn.getId(), inSize.width, inSize.height,
-                    pixelFormatOut.getId(), outSize.width, outSize.height);
-        }
-        if (outputFormat.getDataType() == Format.byteArray) {
-            output.setData(bytedata);
-            output.setLength(bytedata.length / 2);
-        } else if (outputFormat.getDataType() == Format.intArray) {
-            output.setData(intdata);
-            output.setLength(intdata.length / 2);
-        } else if (outputFormat.getDataType() == Format.shortArray) {
-            output.setData(shortdata);
-            output.setLength(shortdata.length / 2);
-        }
+            output.setOffset(0);
+            output.setFormat(outputFormat);
+            output.setSequenceNumber(input.getSequenceNumber());
+            output.setTimeStamp(input.getTimeStamp());
 
-        output.setOffset(0);
-        output.setFormat(outputFormat);
-        output.setSequenceNumber(input.getSequenceNumber());
-        output.setTimeStamp(input.getTimeStamp());
-
-        return process(ref, input, output);
+            if (input.getData() == null) {
+                return BUFFER_PROCESSED_FAILED;
+            }
+            return process(ref, input, output);
+        }
     }
 
     public Format setInputFormat(Format input) {
@@ -154,9 +175,12 @@ public class SWScaleCodec implements Codec {
     }
 
     public void close() {
-        if (ref != -1) {
-            closeCodec(ref);
-            ref = -1;
+        synchronized (openSync) {
+            open = false;
+            if (ref != -1) {
+                closeCodec(ref);
+                ref = -1;
+            }
         }
     }
 
@@ -166,6 +190,9 @@ public class SWScaleCodec implements Codec {
 
     public void open() throws ResourceUnavailableException {
         NativeLoader.loadLibrary(getClass(), "swscalej");
+        synchronized (openSync) {
+            open = true;
+        }
     }
 
     public void reset() {
