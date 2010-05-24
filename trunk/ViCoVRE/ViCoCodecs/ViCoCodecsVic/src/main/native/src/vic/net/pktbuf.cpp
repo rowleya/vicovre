@@ -41,7 +41,7 @@ public:
 } buffer_pool_class;
 */
 
-BufferPool::BufferPool() : freebufs_(0), nbufs_(0), allocbufs_(0), lastallocbuf_(0)
+BufferPool::BufferPool() : freebufs_(0), nbufs_(0), allocbufs_(0)
 {
 }
 
@@ -59,13 +59,8 @@ pktbuf* BufferPool::alloc()
         pb->dp = (u_int8_t *)(pb->rtp_header + 1);
         ++nbufs_;
     }
-    if (lastallocbuf_ != 0) {
-        lastallocbuf_->next = pb;
-    }
-    lastallocbuf_ = pb;
-    if (allocbufs_ == 0) {
-        allocbufs_ = pb;
-    }
+    pb->next = allocbufs_;
+    allocbufs_ = pb;
     pb->len = 0;
     pb->ref = 1;
     return (pb);
@@ -88,6 +83,8 @@ void BufferPool::close() {
         }
         delete buf;
     }
+    freebufs_ = 0;
+    allocbufs_ = 0;
 }
 
 void BufferPool::setData(u_int8_t *data, int length) {
@@ -116,9 +113,6 @@ void BufferPool::release(pktbuf* pb)
             last->next = current->next;
         } else {
             allocbufs_ = current->next;
-        }
-        if (current == lastallocbuf_) {
-            lastallocbuf_ = last;
         }
         pb->next = freebufs_;
         freebufs_ = pb;

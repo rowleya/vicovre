@@ -159,6 +159,8 @@ public abstract class H261AbstractEncoder implements Codec,
 
     private String codecName = null;
 
+    private boolean inited = false;
+
     /**
      * Creates a new H261AbstractEncoder
      * @param codecName the name of the codec
@@ -304,6 +306,25 @@ public abstract class H261AbstractEncoder implements Codec,
             VideoFormat ivf = (VideoFormat) input.getFormat();
 
             if (ivf instanceof YUVFormat) {
+                if (!inited) {
+                    YUVFormat vfIn = (YUVFormat) ivf;
+                    Dimension size = vfIn.getSize();
+                    width = size.width;
+                    height = size.height;
+                    yStart = vfIn.getOffsetY();
+                    cbStart = vfIn.getOffsetU();
+                    crStart = vfIn.getOffsetV();
+                    yStride = vfIn.getStrideY();
+                    crcbStride = vfIn.getStrideUV();
+                    nBlocksWidth = width / 16;
+                    nBlocksHeight = height / 16;
+                    nBlocks = nBlocksWidth * nBlocksHeight;
+                    nGobs = nBlocks / 33;
+                    if ((nGobs * 33) < nBlocks) {
+                        nGobs += 1;
+                    }
+                    inited = true;
+                }
                 if (cr == null) {
                     cr = new ConditionalReplenishment(width, height);
                 }
@@ -581,24 +602,7 @@ public abstract class H261AbstractEncoder implements Codec,
      */
     public Format setInputFormat(Format in) {
         Format format = in;
-        if (format instanceof YUVFormat) {
-            YUVFormat vfIn = (YUVFormat) format;
-            Dimension size = vfIn.getSize();
-            width = size.width;
-            height = size.height;
-            yStart = vfIn.getOffsetY();
-            cbStart = vfIn.getOffsetU();
-            crStart = vfIn.getOffsetV();
-            yStride = vfIn.getStrideY();
-            crcbStride = vfIn.getStrideUV();
-            nBlocksWidth = width / 16;
-            nBlocksHeight = height / 16;
-            nBlocks = nBlocksWidth * nBlocksHeight;
-            nGobs = nBlocks / 33;
-            if ((nGobs * 33) < nBlocks) {
-                nGobs += 1;
-            }
-        }
+
         return format;
     }
 

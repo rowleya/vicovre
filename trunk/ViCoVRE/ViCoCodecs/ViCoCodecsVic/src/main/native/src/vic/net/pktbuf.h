@@ -56,7 +56,6 @@ class BufferPool {
     private:
     pktbuf* freebufs_;
     pktbuf* allocbufs_;
-    pktbuf* lastallocbuf_;
     int nbufs_;
 };
 

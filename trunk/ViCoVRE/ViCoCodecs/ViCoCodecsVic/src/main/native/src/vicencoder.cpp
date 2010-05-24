@@ -185,6 +185,7 @@ int VicEncoder::encode(JNIEnv *env, jobject input, jobject output,
             crvec, grabber_->getInW(), grabber_->getInH());
     codec_->setData(out + outoffset, outlength);
     codec_->consume(frame);
+    delete frame;
 
     pktbuf *buf = codec_->pktsToSend_->removeFirst();
     int i = 0;
@@ -194,6 +195,7 @@ int VicEncoder::encode(JNIEnv *env, jobject input, jobject output,
         i++;
         buf = codec_->pktsToSend_->removeFirst();
     }
+    codec_->pool_->close();
 
     env->ReleasePrimitiveArrayCritical((jarray) indata, in, 0);
     env->ReleasePrimitiveArrayCritical((jarray) outdata, out, 0);
