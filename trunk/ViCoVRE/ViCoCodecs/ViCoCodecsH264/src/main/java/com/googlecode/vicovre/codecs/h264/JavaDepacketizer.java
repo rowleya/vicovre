@@ -46,6 +46,18 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
 
     private static final byte[] START_SEQUENCE = new byte[]{0, 0, 1};
 
+    /*private static final byte[] SPS = new byte[]{
+        0x67, 0x42, (byte) 0xc0, 0x0c, (byte) 0x92, 0x54, 0x0a, 0x0f,
+        (byte) 0xd0, (byte) 0x80, 0x00, 0x00, 0x03, 0x00, (byte) 0x80, 0x00,
+        0x00, 0x08, 0x47, (byte) 0x8a, 0x15, 0x50};
+
+    private static final byte[] PPS = new byte[]{
+        0x68, (byte) 0xce, 0x3c, (byte) 0x80};
+
+    private boolean firstPacketDecoded = false; */
+
+    private int indexOffset = 0;
+
     /**
      * @see javax.media.Codec#getSupportedInputFormats()
      */
@@ -95,7 +107,7 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
      * @see javax.media.PlugIn#getName()
      */
     public String getName() {
-        return "H264 IOCom Depacketizer";
+        return "H264 Depacketizer";
     }
 
     /**
@@ -109,13 +121,24 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
         if (type >= 1 && type <= 23) {
             type = 1;
         }
+        /*if (!firstPacketDecoded) {
+            firstPacketDecoded = true;
+            define(index, SPS.length + START_SEQUENCE.length);
+            offsetCopy(index, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
+            offsetCopy(index, START_SEQUENCE.length, SPS, 0, SPS.length);
+            define(index + 1, PPS.length + START_SEQUENCE.length);
+            offsetCopy(index + 1, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
+            offsetCopy(index + 1, START_SEQUENCE.length, PPS, 0, PPS.length);
+            indexOffset = 2;
+        } */
+        int ind = index + indexOffset;
 
         switch (type) {
 
         case 1:
-            define(index, length + START_SEQUENCE.length);
-            offsetCopy(index, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
-            offsetCopy(index, START_SEQUENCE.length, in, offset, length);
+            define(ind, length + START_SEQUENCE.length);
+            offsetCopy(ind, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
+            offsetCopy(ind, START_SEQUENCE.length, in, offset, length);
             break;
 
         case 24:
@@ -132,17 +155,17 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
                 }
             }
 
-            define(index, totalBytes);
+            define(ind, totalBytes);
             pos = offset + 1;
             int packetPos = 0;
             while ((end - pos) > 2) {
                 int size = (in[pos] << 8) | in[pos + 1];
-                offsetCopy(index, packetPos, START_SEQUENCE, 0,
+                offsetCopy(ind, packetPos, START_SEQUENCE, 0,
                         START_SEQUENCE.length);
                 pos += 2;
                 packetPos += START_SEQUENCE.length;
 
-                offsetCopy(index, packetPos, in, pos, size);
+                offsetCopy(ind, packetPos, in, pos, size);
                 pos += size;
                 packetPos += size;
             }
@@ -158,14 +181,14 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
             reconstructedNal |= nalType;
 
             if (startBit) {
-                define(index, START_SEQUENCE.length + (length - 2) + 1);
-                offsetCopy(index, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
-                offsetCopy(index, START_SEQUENCE.length,
+                define(ind, START_SEQUENCE.length + (length - 2) + 1);
+                offsetCopy(ind, 0, START_SEQUENCE, 0, START_SEQUENCE.length);
+                offsetCopy(ind, START_SEQUENCE.length,
                         new byte[]{reconstructedNal}, 0, 1);
-                offsetCopy(index, START_SEQUENCE.length + 1, in, offset + 2,
+                offsetCopy(ind, START_SEQUENCE.length + 1, in, offset + 2,
                         length - 2);
             } else {
-                copy(index, in, offset + 2, length - 2);
+                copy(ind, in, offset + 2, length - 2);
             }
             break;
 
@@ -191,7 +214,7 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
      *     newPacketSet()
      */
     protected void newPacketSet() {
-        // Does Nothing
+        indexOffset = 0;
     }
 
 }
