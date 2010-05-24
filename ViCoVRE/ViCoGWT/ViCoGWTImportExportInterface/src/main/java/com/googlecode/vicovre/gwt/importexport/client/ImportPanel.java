@@ -49,7 +49,6 @@ import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.importexport.client.rest.CreateSessionSender;
 import com.googlecode.vicovre.gwt.importexport.client.rest.RestVenueLoader;
-import com.googlecode.vicovre.gwt.importexport.client.rest.SessionLoader;
 import com.googlecode.vicovre.gwt.importexport.client.rest.SessionsLoader;
 
 public class ImportPanel extends VerticalPanel implements ClickHandler,
