@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #include "grabber.h"
 #include "crdef.h"
