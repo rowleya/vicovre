@@ -99,6 +99,10 @@ public class MemeticFileReader {
 
     private long timestamp = 0;
 
+    private long lastRealTimestamp = 0;
+
+    private long lastTimestamp = 0;
+
     private int flags = 0;
 
     private int type = 0;
@@ -106,8 +110,6 @@ public class MemeticFileReader {
     private String filename = null;
 
     private long firstTimestamp = -1;
-
-    private long lastTimestamp = -1;
 
     private long maxTimestamp = -1;
 
@@ -208,13 +210,17 @@ public class MemeticFileReader {
                             lastSequence = 0 - (65536 - sequence);
                         }
                     }
+                    boolean sameAsLast = (lastRealTimestamp == timestamp);
+                    lastRealTimestamp = timestamp;
                     if (sequence > lastSequence) {
                         Format format = getFormat();
                         if (format != null) {
                             if (format instanceof VideoFormat) {
-                                timestamp = offset * 1000000L;
-                                        /*(long)((timestamp * 1000000000L)
-                                        / rtpType.getClockRate()); */
+                                if (sameAsLast) {
+                                    timestamp = lastTimestamp;
+                                } else {
+                                    timestamp = offset * 1000000L;
+                                }
                             } else if (format instanceof AudioFormat) {
                                 AudioFormat audioFormat = (AudioFormat) format;
                                 timestamp = (long) ((timestamp * 1000000000L)
