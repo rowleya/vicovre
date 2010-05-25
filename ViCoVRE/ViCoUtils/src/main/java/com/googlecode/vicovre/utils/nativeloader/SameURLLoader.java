@@ -49,10 +49,12 @@ public class SameURLLoader implements Loader {
 
     /**
      * {@inheritDoc}
+     * @throws LoadException
      * @see com.googlecode.vicovre.utils.nativeloader.Loader#load(
      *     java.lang.Class, java.lang.String)
      */
-    public void load(final Class<?> loadingClass, final String name) {
+    public void load(final Class<?> loadingClass, final String name)
+            throws LoadException {
         String pathToClass = "/"
             + loadingClass.getCanonicalName().replace(".", "/") + ".class";
         URL classUrl = loadingClass.getResource(pathToClass);
@@ -90,7 +92,7 @@ public class SameURLLoader implements Loader {
                     return;
                 }
             } catch (Exception e1) {
-                throw new UnsatisfiedLinkError(e1.getMessage());
+                throw new LoadException(e1);
             }
         }
         throw new UnsatisfiedLinkError("Could not find " + name

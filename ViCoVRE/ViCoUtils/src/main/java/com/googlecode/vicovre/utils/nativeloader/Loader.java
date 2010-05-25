@@ -44,5 +44,5 @@ public interface Loader {
      * @param loadingClass The class loading the library
      * @param name The name of the library to load
      */
-    void load(Class<?> loadingClass, String name);
+    void load(Class<?> loadingClass, String name) throws LoadException;
 }

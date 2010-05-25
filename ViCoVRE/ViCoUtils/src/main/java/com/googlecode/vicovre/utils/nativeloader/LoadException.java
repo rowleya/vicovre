@@ -32,51 +32,14 @@
 
 package com.googlecode.vicovre.utils.nativeloader;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+public class LoadException extends Exception {
 
-/**
- * Loads a library from the class resources.
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class ResourceLoader implements Loader {
-
-    private static final int BUFFER_SIZE = 1024;
-
-    /**
-     * {@inheritDoc}
-     * @throws LoadException
-     * @see com.googlecode.vicovre.utils.nativeloader.Loader#load(
-     *     java.lang.Class, java.lang.String)
-     */
-    public void load(final Class<?> loadingClass, final String name)
-            throws LoadException {
-        InputStream input = loadingClass.getResourceAsStream("/" + name);
-        if (input != null) {
-            File file = new File(NativeLoader.USER_LIB_DIR, name);
-            if (!file.exists()) {
-                System.err.println("    Extracting to " + file);
-                file.getParentFile().mkdirs();
-                try {
-                    FileOutputStream output = new FileOutputStream(file);
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    int bytesRead = input.read(buffer);
-                    while (bytesRead != -1) {
-                        output.write(buffer, 0, bytesRead);
-                        bytesRead = input.read(buffer);
-                    }
-                    output.close();
-                    input.close();
-                } catch (Exception e) {
-                    throw new LoadException(e);
-                }
-            }
-            System.load(file.getAbsolutePath());
-            return;
-        }
-        throw new UnsatisfiedLinkError("Could not find " + name
-                + " in classpath");
+    public LoadException(String message, Throwable cause) {
+        super(message, cause);
     }
+
+    public LoadException(Throwable cause) {
+        super(cause);
+    }
+
 }
