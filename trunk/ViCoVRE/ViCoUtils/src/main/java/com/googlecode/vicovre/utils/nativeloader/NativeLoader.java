@@ -136,9 +136,12 @@ public final class NativeLoader {
                         }
                     }
                 }
-                loadError = "Could not find library " + name + ": " + loadError;
-                LOADERROR.put(name, loadError);
-                throw new UnsatisfiedLinkError(loadError);
+                String error = "Could not find library " + name;
+                if (loadError != null) {
+                    error += ": " + loadError;
+                }
+                LOADERROR.put(name, error);
+                throw new UnsatisfiedLinkError(error);
             }
         }
     }
