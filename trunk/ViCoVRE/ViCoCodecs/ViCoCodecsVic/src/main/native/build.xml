@@ -23,7 +23,6 @@
                 <arg line="-I"/><arg file="src"/>
                 <arg line="-I"/><arg file="src/vic"/>
                 <arg line="-I"/><arg file="src/vic/codec"/>
-                <arg line="-I"/><arg file="src/vic/codec/jpeg"/>
                 <arg line="-I"/><arg file="src/vic/codec/p64"/>
                 <arg line="-I"/><arg file="src/vic/net"/>
                 <arg line="-I"/><arg file="src/vic/rtp"/>
@@ -36,8 +35,6 @@
                 <arg file="src\vic\codec\dct.cpp"/>
                 <arg file="src\vic\codec\decoder.cpp"/>
                 <arg file="src\vic\net\pktbuf.cpp"/>
-                <arg file="src\vic\codec\jpeg\jpeg.cpp"/>
-                <arg file="src\vic\codec\decoder-jpeg.cpp"/>
                 <arg file="src\vic\codec\p64\p64.cpp"/>
                 <arg file="src\vic\codec\huffcode.c"/>
                 <arg file="src\vic\codec\decoder-h261.cpp"/>

@@ -50,8 +50,6 @@ import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 public class NativeDecoder implements Codec, FrameFillControl {
 
     private static final VicCodec[] CODECS = new VicCodec[]{
-        new VicCodec("JpegDecoder", new VideoFormat("JPEG/RTP"),
-                new YUVFormat(YUVFormat.YUV_422), 1),
         new VicCodec("H261Decoder", new VideoFormat("H261/RTP"),
                 new YUVFormat(new Dimension(352, 288), -1, Format.byteArray, -1,
                         YUVFormat.YUV_420, -1, -1, -1, -1, -1), 2),

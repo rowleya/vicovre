@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 #include "vic/codec/decoder.h"
-#include "vic/codec/decoder-jpeg.h"
 #include "vic/codec/decoder-h261.h"
 #include "vic/codec/decoder-h261as.h"
 
@@ -140,12 +139,9 @@ VicDecoder::VicDecoder(JNIEnv *env, int codec) {
     codec_ = 0;
     switch (codec) {
     case 0:
-        codec_ = new MotionJpegDecoder();
-        break;
-    case 1:
         codec_ = new H261Decoder();
         break;
-    case 2:
+    case 1:
         codec_ = new H261ASDecoder();
     }
 }
