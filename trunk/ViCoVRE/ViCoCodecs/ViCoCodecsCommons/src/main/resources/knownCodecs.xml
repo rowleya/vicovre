@@ -28,6 +28,12 @@
         <class>com.googlecode.vicovre.codecs.ffmpeg.video.FLV1Encoder</class>
     </codec>
     <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.JPEGDecoder</class>
+    </codec>
+    <codec>
+        <class>com.sun.media.codec.video.jpeg.DePacketizer</class>
+    </codec>
+    <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.SWScaleCodec</class>
     </codec>
     <codec>
