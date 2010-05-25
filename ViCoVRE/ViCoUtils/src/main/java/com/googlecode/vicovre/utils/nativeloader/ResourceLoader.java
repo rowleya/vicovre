@@ -75,7 +75,7 @@ public class ResourceLoader implements Loader {
                 System.load(file.getAbsolutePath());
                 return;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new LoadException(e);
         }
         throw new UnsatisfiedLinkError("Could not find " + name
