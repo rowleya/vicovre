@@ -31,6 +31,7 @@
 static const char rcsid[] =
     "@(#) $Header$ (LBL)";
 #endif
+#include <string.h>
 #include "module.h"
 
 const char* Module::fttoa(int ft)

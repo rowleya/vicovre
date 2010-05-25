@@ -30,6 +30,8 @@
 static const char rcsid[] =
     "@(#) $Header$ (LBL)";
 
+#include <string.h>
+#include <stdio.h>
 #include "pktbuf.h"
 
 /*static class BufferPoolClass : public TclClass {

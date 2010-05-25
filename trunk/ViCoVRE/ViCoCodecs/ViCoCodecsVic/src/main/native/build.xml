@@ -151,7 +151,7 @@
                 </ccopts>
                 <includes>
                     <arg line="-I"/>
-                    <arg path="resources/@{arch}/linux/include"/>
+                    <arg path="resources/@{arch}/unix/include"/>
                     <arg line="-I"/>
                     <arg path="${java.home}/../include" />
                     <arg line="-I"/>
@@ -159,7 +159,7 @@
                 </includes>
                 <libdirs>
                     <arg line="-L"/>
-                    <arg path="${resources}/@{arch}/linux/lib"/>
+                    <arg path="${resources}/@{arch}/unix/lib"/>
                 </libdirs>
             </build>
         </sequential>
