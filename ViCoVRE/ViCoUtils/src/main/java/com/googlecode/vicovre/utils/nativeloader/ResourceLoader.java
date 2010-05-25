@@ -59,7 +59,6 @@ public class ResourceLoader implements Loader {
             if (input != null) {
                 File file = new File(NativeLoader.USER_LIB_DIR, name);
                 if (!file.exists()) {
-                    System.err.println("    Extracting to " + file);
                     file.getParentFile().mkdirs();
                     FileOutputStream output = new FileOutputStream(file);
                     byte[] buffer = new byte[BUFFER_SIZE];
@@ -72,6 +71,7 @@ public class ResourceLoader implements Loader {
                     input.close();
 
                 }
+                System.err.println("    Loading " + file);
                 System.load(file.getAbsolutePath());
                 return;
             }
