@@ -34,7 +34,6 @@ package com.googlecode.vicovre.utils.nativeloader;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 
 /**
@@ -131,10 +130,13 @@ public final class NativeLoader {
                             return;
                         } catch (UnsatisfiedLinkError error) {
                             // Do Nothing
+                        } catch (LoadException error) {
+                            error.printStackTrace();
+                            loadError = error.getMessage();
                         }
                     }
                 }
-                loadError = "Could not find library " + name;
+                loadError = "Could not find library " + name + ": " + loadError;
                 LOADERROR.put(name, loadError);
                 throw new UnsatisfiedLinkError(loadError);
             }
