@@ -158,6 +158,9 @@
                     <arg line="-L"/>
                     <arg path="${resources}/@{arch}/unix/lib"/>
                 </libdirs>
+                <libs>
+                    <arg line="-lz"/>
+                </libs>
             </build>
         </sequential>
     </macrodef>
