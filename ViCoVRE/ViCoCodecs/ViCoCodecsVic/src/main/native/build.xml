@@ -159,7 +159,7 @@
                     <arg path="${resources}/@{arch}/unix/lib"/>
                 </libdirs>
                 <libs>
-                    <arg line="-lz"/>
+                    <arg line="-lstdc++"/>
                 </libs>
             </build>
         </sequential>
