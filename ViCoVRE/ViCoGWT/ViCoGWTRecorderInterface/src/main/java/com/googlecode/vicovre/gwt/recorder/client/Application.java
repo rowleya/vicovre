@@ -35,6 +35,7 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -61,7 +62,12 @@ public class Application implements EntryPoint {
 
     public void onModuleLoad() {
         parameters = Dictionary.getDictionary("Parameters");
-        xmlrpcClient = new XmlRpcClient(getParam(XMLRPC_SERVER));
+        String xmlrpcServer = getParam(XMLRPC_SERVER);
+        if (xmlrpcServer.startsWith("/")) {
+            xmlrpcServer = xmlrpcServer.substring(1);
+        }
+        String url = GWT.getHostPageBaseURL() + xmlrpcServer;
+        xmlrpcClient = new XmlRpcClient(url);
         xmlrpcClient.setTimeoutMillis(120000);
 
         DockPanel topPanel = new DockPanel();

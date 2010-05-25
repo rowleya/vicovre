@@ -36,6 +36,7 @@ import java.util.List;
 
 import pl.rmalinowski.gwt2swf.client.ui.SWFWidget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
@@ -63,7 +64,12 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
     public void center() {
         if (player == null) {
             player = new SWFWidget("Player.swf");
-            player.addFlashVar("uri", Application.getParam("playUrl")
+            String playUrl = Application.getParam("playUrl");
+            if (playUrl.startsWith("/")) {
+                playUrl = playUrl.substring(1);
+            }
+            String url = GWT.getHostPageBaseURL() + playUrl;
+            player.addFlashVar("uri", url
                     + "?folder=" + item.getFolder() + "%26recordingId="
                     + item.getId() + "%26startTime=0");
             VerticalPanel panel = getWidget();
