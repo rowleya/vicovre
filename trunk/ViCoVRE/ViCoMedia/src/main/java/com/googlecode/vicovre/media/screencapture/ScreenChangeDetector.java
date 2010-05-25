@@ -33,18 +33,14 @@ package com.googlecode.vicovre.media.screencapture;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.HashMap;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
 import javax.media.ResourceUnavailableException;
 import javax.media.format.UnsupportedFormatException;
-import javax.media.format.YUVFormat;
 
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
@@ -138,6 +134,7 @@ public class ScreenChangeDetector extends Thread
      */
     public void run() {
         if (!started) {
+            System.err.println("Starting capture detection of " + baseFileName);
             started = true;
             try {
                 reader.streamSeek(0);
@@ -150,6 +147,8 @@ public class ScreenChangeDetector extends Thread
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            System.err.println("Finishing capture detection of "
+                    + baseFileName);
         }
     }
 
