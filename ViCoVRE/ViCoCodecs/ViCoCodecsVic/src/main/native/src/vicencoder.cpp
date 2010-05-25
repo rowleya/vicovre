@@ -130,15 +130,12 @@ VicEncoder::VicEncoder(JNIEnv *env, int codec) {
     codec_ = 0;
     switch (codec) {
     case 0:
-        //codec_ = new MotionJpegPixelDecoder();
-        break;
-    case 1:
         codec_ = new H261PixelEncoder();
         break;
-    case 2:
+    case 1:
         codec_ = new H261ASEncoder();
         break;
-    case 3:
+    case 2:
         codec_ = new H264Encoder();
     }
 }

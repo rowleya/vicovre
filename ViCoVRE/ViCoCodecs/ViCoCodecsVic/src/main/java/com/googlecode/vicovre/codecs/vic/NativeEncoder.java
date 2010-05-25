@@ -52,8 +52,6 @@ public class NativeEncoder implements Codec,
         KeyFrameControl, KeyFrameForceControl {
 
     private static final VicCodec[] CODECS = new VicCodec[]{
-        new VicCodec("JpegEncoder", new VideoFormat("JPEG/RTP"),
-                new YUVFormat(YUVFormat.YUV_420), 1),
         new VicCodec("H261Encoder", new VideoFormat("H261/RTP"),
                 new YUVFormat(new Dimension(352, 288), -1, Format.byteArray, -1,
                         YUVFormat.YUV_420, -1, -1, -1, -1, -1), 2),
