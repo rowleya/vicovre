@@ -53,13 +53,14 @@ public class ResourceLoader implements Loader {
      */
     public void load(final Class<?> loadingClass, final String name)
             throws LoadException {
-        InputStream input = loadingClass.getResourceAsStream("/" + name);
-        if (input != null) {
-            File file = new File(NativeLoader.USER_LIB_DIR, name);
-            if (!file.exists()) {
-                System.err.println("    Extracting to " + file);
-                file.getParentFile().mkdirs();
-                try {
+
+        try {
+            InputStream input = loadingClass.getResourceAsStream("/" + name);
+            if (input != null) {
+                File file = new File(NativeLoader.USER_LIB_DIR, name);
+                if (!file.exists()) {
+                    System.err.println("    Extracting to " + file);
+                    file.getParentFile().mkdirs();
                     FileOutputStream output = new FileOutputStream(file);
                     byte[] buffer = new byte[BUFFER_SIZE];
                     int bytesRead = input.read(buffer);
@@ -69,12 +70,13 @@ public class ResourceLoader implements Loader {
                     }
                     output.close();
                     input.close();
-                } catch (Exception e) {
-                    throw new LoadException(e);
+
                 }
+                System.load(file.getAbsolutePath());
+                return;
             }
-            System.load(file.getAbsolutePath());
-            return;
+        } catch (Exception e) {
+            throw new LoadException(e);
         }
         throw new UnsatisfiedLinkError("Could not find " + name
                 + " in classpath");
