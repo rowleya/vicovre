@@ -91,8 +91,8 @@ public class SameURLLoader implements Loader {
                     System.load(file.getAbsolutePath());
                     return;
                 }
-            } catch (Exception e1) {
-                throw new LoadException(e1);
+            } catch (Exception e) {
+                throw new LoadException(e);
             }
         }
         throw new UnsatisfiedLinkError("Could not find " + name
