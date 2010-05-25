@@ -449,7 +449,7 @@ public class ChangeDetection implements Renderer {
                         Format.intArray,
                         Format.NOT_SPECIFIED, 32, 0x00FF0000,
                         0x0000FF00, 0x000000FF,
-                        3, size.width, Format.FALSE,
+                        1, size.width, Format.NOT_SPECIFIED,
                         Format.NOT_SPECIFIED);
                 try {
                     toRGB = new SimpleProcessor(yuvFormat, format);
@@ -518,8 +518,10 @@ public class ChangeDetection implements Renderer {
      */
     public void close() {
         nblk = -1;
-        refbuf.free();
-        if (devbuf instanceof QuickArray) {
+        if (refbuf != null) {
+            refbuf.free();
+        }
+        if ((devbuf != null) && (devbuf instanceof QuickArray)) {
             ((QuickArray) devbuf).free();
         }
     }
