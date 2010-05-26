@@ -164,38 +164,6 @@ public class AudioMixer {
 
         for (int i = 0; i < sources.length; i++) {
             if (resample[i] != null) {
-                /*double ratio = sources[i].getSampleRate() / FORMAT.getSampleRate();
-                double sum = 1.0;
-                double sample = 0.0;
-                byte[] sourceSamples = new byte[sourceSamplesPerBuffer[i] * 2];
-                int sno = 0;
-                for (int j = 0; j < SAMPLES_PER_BUFFER; j++) {
-                    if (sum >= 1.0) {
-                        double dsample = sources[i].readNextSample();
-                        int samp = (int) (dsample * MAX_SAMPLE);
-                        System.err.println("samp = " + samp);
-                        for (int k = sno * 2; k <= ((sno * 2) + 1); k++) {
-                            sourceSamples[k] = (byte) (samp & 0xFF);
-                            System.err.println(k + " " + sourceSamples[k]);
-                            samp >>= Byte.SIZE;
-                        }
-                        int samp2 = 0;
-                        for (int k = 0; k < 2; k++) {
-                            System.err.println(((sno * 2) + k) + " " + sourceSamples[(sno * 2) + k]);
-                            int shift = k * Byte.SIZE;
-                            samp2 |= (sourceSamples[(sno * 2) + k] & 0xFF) << shift;
-                        }
-                        int shift = Integer.SIZE - FORMAT.getSampleSizeInBits();
-                        samp2 <<= shift;
-                        samp2 >>= shift;
-                        System.err.println("samp2 = " + samp2);
-                        sample = (double) samp2 / MAX_SAMPLE;
-                        sum -= 1.0;
-                        sno += 1;
-                    }
-                    samples[j] += sample;
-                    sum += ratio;
-                } */
 
                 byte[] sourceSamples = new byte[sourceSamplesPerBuffer[i] * 2];
                 for (int j = 0; j < sourceSamplesPerBuffer[i]; j++) {
