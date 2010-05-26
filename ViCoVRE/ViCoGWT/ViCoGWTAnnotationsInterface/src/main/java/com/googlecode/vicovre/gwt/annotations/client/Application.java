@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Vector;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -97,11 +98,15 @@ public class Application implements EntryPoint, ClickHandler,
     private HandlerRegistration closeHandler = null;
 
     protected String getUrl() {
-        String url = parameters.get("url");
-        if (!url.endsWith("/")) {
-            url += "/";
+        String url = GWT.getHostPageBaseURL();
+        String paramUrl = parameters.get("url");
+        if (paramUrl.startsWith("/")) {
+            paramUrl = paramUrl.substring(1);
         }
-        return url;
+        if (!paramUrl.endsWith("/")) {
+            paramUrl += "/";
+        }
+        return url + paramUrl;
     }
 
     protected String getAuthor() {
