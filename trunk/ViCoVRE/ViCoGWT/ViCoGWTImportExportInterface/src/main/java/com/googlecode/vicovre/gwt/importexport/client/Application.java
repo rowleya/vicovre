@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.gwt.importexport.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
@@ -42,11 +43,15 @@ public class Application implements EntryPoint {
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
     protected String getUrl() {
-        String url = parameters.get("url");
-        if (!url.endsWith("/")) {
-            url += "/";
+        String url = GWT.getHostPageBaseURL();
+        String paramUrl = parameters.get("url");
+        if (paramUrl.startsWith("/")) {
+            paramUrl = paramUrl.substring(1);
         }
-        return url;
+        if (!paramUrl.endsWith("/")) {
+            paramUrl += "/";
+        }
+        return url + paramUrl;
     }
 
     public void onModuleLoad() {
