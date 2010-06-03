@@ -60,7 +60,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      */
     public static final String CONTENT_TYPE = "video/x-flv";
 
-    private static final int INT_TO_2_BIT_MASK = 0x2;
+    private static final int SORENSON_H323_VIDEO_FLAG = 0x2;
 
     private static final int BIT_SHIFT_4 = 4;
 
@@ -104,7 +104,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     private static final int FLV_AUDIO_TAG = 0x8;
 
-    private static final int NANO_TO_MILLIS = 1000000;
+    private static final long NANO_TO_MILLIS = 1000000;
 
     private static final int BIT_SHIFT_24 = 24;
 
@@ -163,6 +163,9 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
     // The size of the last tag written
     private int lastTagSize = 0;
 
+    // The first timestamp written
+    private long firstTimestamp = -1;
+
     // The last timestamp written
     private long lastTimestamp = -1;
 
@@ -171,6 +174,9 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     // The current buffer being processed
     private Buffer buffer = null;
+
+    // True if the same buffer is to be read from again
+    private boolean sameBuffer = false;
 
     // The object to use to synchronize processing an reading
     private Integer bufferSync = new Integer(0);
@@ -183,9 +189,6 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     // The size of the video
     private Dimension size = null;
-
-    // The last sequence number seen
-    private long lastSequence = -1;
 
     // True if the first video packet has been seen
     private boolean firstVideoPacketSeen = false;
@@ -277,10 +280,11 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
             if (!done) {
                 result = -1;
                 buffer = buf;
+                sameBuffer = false;
                 bufferSync.notifyAll();
             }
 
-            while ((result == -1) && !done) {
+            while (((result == -1) || (buffer != null)) && !done) {
                 try {
                     bufferSync.wait();
                 } catch (InterruptedException e) {
@@ -291,8 +295,9 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
             if (done) {
                 return BUFFER_PROCESSED_OK;
             }
+
+            return result;
         }
-        return result;
     }
 
     /**
@@ -563,9 +568,8 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
                 new SorensonH263Header(
                         (byte[]) buffer.getData(),
                         buffer.getOffset(), buffer.getLength());
-            out.write(((header.getPictureType() + 1)
-                    << BIT_SHIFT_4)
-                    | INT_TO_2_BIT_MASK);
+            out.write(((header.getPictureType() + 1) << BIT_SHIFT_4)
+                    | SORENSON_H323_VIDEO_FLAG);
         }
         return out.size() - startSize;
     }
@@ -640,14 +644,19 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
                 int prevTagSize = 0;
                 int headerSize = 0;
                 int dataSize = 0;
-                if (lastSequence != buffer.getSequenceNumber()) {
-
-                    long timestamp = buffer.getTimeStamp() / NANO_TO_MILLIS;
-                    if (lastTimestamp == -1) {
-                        lastTimestamp = timestamp;
+                if (!sameBuffer) {
+                    long timestamp = Math.round((double) buffer.getTimeStamp()
+                            / NANO_TO_MILLIS);
+                    if ((lastTimestamp != -1) && (lastTimestamp >= timestamp)) {
+                        timestamp = lastTimestamp + 1;
                     }
-                    timestamp = timestamp - lastTimestamp;
+                    lastTimestamp = timestamp;
+                    if (firstTimestamp == -1) {
+                        firstTimestamp = timestamp;
+                    }
+                    timestamp = timestamp - firstTimestamp;
                     timestamp += timestampOffset;
+
                     if (format instanceof AudioFormat) {
                         headerSize = writeAudioHeader(length, timestamp,
                                 (AudioFormat) format, out);
@@ -669,12 +678,17 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
                 }
 
                 lastTagSize = prevTagSize + headerSize + dataSize;
-                lastSequence = buffer.getSequenceNumber();
             } else if (done) {
                 out.writeInt(lastTagSize);
                 result = BUFFER_PROCESSED_OK;
             }
-            buffer = null;
+
+            if (result != INPUT_BUFFER_NOT_CONSUMED) {
+                buffer = null;
+                sameBuffer = false;
+            } else {
+                sameBuffer = true;
+            }
             bufferSync.notifyAll();
         }
         out.close();
