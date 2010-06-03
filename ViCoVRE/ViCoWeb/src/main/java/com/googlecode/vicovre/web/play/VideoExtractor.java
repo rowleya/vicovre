@@ -40,9 +40,7 @@ import java.io.OutputStream;
 
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
-import javax.media.PlugIn;
 import javax.media.ResourceUnavailableException;
-import javax.media.format.AudioFormat;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
@@ -66,15 +64,15 @@ import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl
  */
 public class VideoExtractor {
 
-    private SimpleProcessor videoProcessor = null;
-
-    private SimpleProcessor audioProcessor = null;
-
     private JavaMultiplexer multiplexer = null;
 
     private MemeticFileReader videoReader = null;
 
     private AudioMixer mixer = null;
+
+    private VideoMediaSource videoSource = null;
+
+    private AudioMediaSource audioSource = null;
 
     private long audioOffset = 0;
 
@@ -127,14 +125,13 @@ public class VideoExtractor {
         multiplexer.setNumTracks(numTracks);
 
         if (videoReader != null) {
-            videoProcessor = new SimpleProcessor(videoReader.getFormat(),
-                    multiplexer, videoTrack);
+            videoSource = new VideoMediaSource(videoReader, multiplexer,
+                    videoTrack);
         }
 
         if (audioReaders != null) {
             mixer = new AudioMixer(audioReaders);
-            audioProcessor = new SimpleProcessor(mixer.getFormat(),
-                    multiplexer, audioTrack);
+            audioSource = new AudioMediaSource(mixer, multiplexer, audioTrack);
         }
 
         long earliestStart = Long.MAX_VALUE;
@@ -249,8 +246,8 @@ public class VideoExtractor {
             videoTimestampOffset = videoOffset  + videoOffsetShift;
             try {
                 mixer = new AudioMixer(new MemeticFileReader[0]);
-                audioProcessor = new SimpleProcessor(mixer.getFormat(),
-                        multiplexer, audioTrack);
+                audioSource = new AudioMediaSource(mixer, multiplexer,
+                        audioTrack);
             } catch (Exception e) {
                 // Does Nothing
             }
@@ -264,9 +261,9 @@ public class VideoExtractor {
         boolean isVideoData = false;
 
         // Fill in the first frame if possible
-        if (videoProcessor != null) {
+        if (videoSource != null) {
             FrameFillControl control = (FrameFillControl)
-                videoProcessor.getControl("controls.FrameFillControl");
+                videoSource.getControl("controls.FrameFillControl");
             if (control != null) {
                 if (firstFrame != null) {
                     if (firstFrame.exists()) {
@@ -292,22 +289,18 @@ public class VideoExtractor {
         // Output the first video frame
         if (videoReader != null) {
             videoReader.setTimestampOffset(videoTimestampOffset);
-            isVideoData = videoReader.readNextPacket();
-            int status = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
-            while (isVideoData && (status != PlugIn.BUFFER_PROCESSED_OK)
-                    && (status != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
-                Buffer inputBuffer = videoReader.getBuffer();
-                //System.err.println("Video ts = " + videoReader.getTimestamp() + " os = " + videoReader.getOffset());
-                inputBuffer.setTimeStamp(0);
-                status = videoProcessor.process(inputBuffer);
-                isVideoData = videoReader.readNextPacket();
+            isVideoData = videoSource.readNext();
+            if (isVideoData) {
+                videoSource.setTimestamp(0);
+                videoSource.process();
+                isVideoData = videoSource.readNext();
             }
 
         }
 
         // Read the first audio buffer
         if (mixer != null) {
-            isAudioData = mixer.readNextBuffer();
+            isAudioData = audioSource.readNext();
         }
 
         long startTime = System.currentTimeMillis();
@@ -315,28 +308,26 @@ public class VideoExtractor {
 
         // Output the rest of the data
         while (isAudioData && isVideoData && !dataSink.isDone()) {
-            long audioTimestamp = mixer.getTimestamp();
-            long videoTimestamp = videoReader.getTimestamp();
+            long audioTimestamp = audioSource.getTimestamp();
+            long videoTimestamp = videoSource.getTimestamp();
 
             //System.err.println("Audio ts = " + audioTimestamp + " os = " + mixer.getOffset() + " Video ts = " + videoTimestamp + " os = " + videoReader.getOffset());
 
             if (audioTimestamp < videoTimestamp) {
-                if (mixer.getTimestamp() <= audioEndTimestamp) {
+                if (audioTimestamp <= audioEndTimestamp) {
                     firstTimestamp = waitForNext(startTime, firstTimestamp,
                             audioTimestamp);
-                    Buffer inputBuffer = mixer.getBuffer();
-                    audioProcessor.process(inputBuffer);
-                    mixer.readNextBuffer();
+                    audioSource.process();
+                    isAudioData = audioSource.readNext();
                 } else {
                     isAudioData = false;
                 }
             } else {
-                if (videoReader.getTimestamp() <= videoEndTimestamp) {
+                if (videoTimestamp <= videoEndTimestamp) {
                     firstTimestamp = waitForNext(startTime, firstTimestamp,
                             videoTimestamp);
-                    Buffer inputBuffer = videoReader.getBuffer();
-                    videoProcessor.process(inputBuffer);
-                    isVideoData = videoReader.readNextPacket();
+                    videoSource.process();
+                    isVideoData = videoSource.readNext();
                 } else {
                     isVideoData = false;
                 }
@@ -345,12 +336,11 @@ public class VideoExtractor {
 
         // Output audio remaining after the video has finished
         while (isAudioData && !dataSink.isDone()) {
-            if (mixer.getTimestamp() <= audioEndTimestamp) {
+            if (audioSource.getTimestamp() <= audioEndTimestamp) {
                 firstTimestamp = waitForNext(startTime, firstTimestamp,
-                        mixer.getTimestamp());
-                Buffer inputBuffer = mixer.getBuffer();
-                audioProcessor.process(inputBuffer);
-                isAudioData = mixer.readNextBuffer();
+                        audioSource.getTimestamp());
+                audioSource.process();
+                isAudioData = audioSource.readNextBuffer();
             } else {
                 isAudioData = false;
             }
@@ -358,12 +348,11 @@ public class VideoExtractor {
 
         // Output video remaining after the audio has finished
         while (isVideoData && !dataSink.isDone()) {
-            if (videoReader.getTimestamp() <= videoEndTimestamp) {
+            if (videoSource.getTimestamp() <= videoEndTimestamp) {
                 firstTimestamp = waitForNext(startTime, firstTimestamp,
-                        videoReader.getTimestamp());
-                Buffer inputBuffer = videoReader.getBuffer();
-                videoProcessor.process(inputBuffer);
-                isVideoData = videoReader.readNextPacket();
+                        videoSource.getTimestamp());
+                videoSource.process();
+                isVideoData = videoSource.readNext();
             } else {
                 isVideoData = false;
             }
@@ -371,10 +360,11 @@ public class VideoExtractor {
 
         if (videoReader != null) {
             videoReader.close();
-            videoProcessor.close();
+            videoSource.close();
         }
         if (mixer != null) {
             mixer.close();
+            audioSource.close();
         }
         multiplexer.close();
         dataSink.close();
@@ -386,12 +376,17 @@ public class VideoExtractor {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         VideoExtractor extractor = new VideoExtractor(
+            // Video
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
-            "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/2792696808",
+            //"../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/2792696808",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
+            //"../../recordings/1273840957545552375448/2941173072",
+            "../../recordings/127435969591176530449/1446065064",
+
+            // Audio
             /*new String[]{
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/548913710",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/251851200",
@@ -399,20 +394,40 @@ public class VideoExtractor {
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/282971832",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/66893508",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/163114337"
-                    }, */
-            new String[]{"../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/124113515"},
+            }, */
+            /*new String[]{
+                "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/124113515"
+            }, */
+            /*new String[]{
+                "../../recordings/1273840957545552375448/193044552",
+                "../../recordings/1273840957545552375448/2217839544",
+                "../../recordings/1273840957545552375448/1184358165",
+            }, */
+            new String[]{
+                "../../recordings/127435969591176530449/1448927216",
+                "../../recordings/127435969591176530449/144994584",
+                "../../recordings/127435969591176530449/199381944",
+            },
+
+            // Sync
             //null,
             /*new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",}, */
-            new String[]{
+            /*new String[]{
                     "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/1911227824",
                     "../../recordings/MAGIC/MAGIC002/2009-10-08_090000-002983902/1254543160"
+            }, */
+            /*new String[]{
+                "../../recordings/1273840957545552375448/3003136496",
+            }, */
+            new String[]{
+                "../../recordings/127435969591176530449/3521524142",
             },
             new Dimension(640, 480),
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream("test.flv");
-        extractor.transferToStream(testout, 600000, 0, 600000, null);
+        extractor.transferToStream(testout, 0, 0, 60000, null);
     }
 }

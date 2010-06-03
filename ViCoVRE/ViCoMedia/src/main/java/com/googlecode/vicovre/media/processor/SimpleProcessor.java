@@ -86,6 +86,9 @@ public class SimpleProcessor {
 
     private ProcessingThread thread = null;
 
+    private LinkedList<ProcessorListener> listeners =
+        new LinkedList<ProcessorListener>();
+
     private boolean closed = false;
 
     private boolean firstFrameProcessed = false;
@@ -478,11 +481,15 @@ public class SimpleProcessor {
                     localInputBuffer.getFormat());
             iterator.setInputFormat(format);
         }
+        long firstInputBufferTimestamp = -1;
         do {
 
             long lastSequence = outputBuffer.getSequenceNumber();
             outputBuffer.setTimeStamp(0);
             outputBuffer.setOffset(0);
+            if (firstInputBufferTimestamp == -1) {
+                firstInputBufferTimestamp = localInputBuffer.getTimeStamp();
+            }
             if (outputBuffer.getData() != null) {
                 outputBuffer.setLength(Array.getLength(
                         outputBuffer.getData()));
@@ -505,11 +512,10 @@ public class SimpleProcessor {
                     outputBuffer.setSequenceNumber(lastSequence);
                 }
                 if (outputBuffer.getTimeStamp() == 0) {
-                    outputBuffer.setTimeStamp(
-                            localInputBuffer.getTimeStamp());
+                    outputBuffer.setTimeStamp(firstInputBufferTimestamp);
                 }
-                if (!outputBuffer.isDiscard()
-                        && !outputBuffer.isEOM()) {
+                firstInputBufferTimestamp = -1;
+                if (!outputBuffer.isDiscard()) {
                     if (iterator.hasNext()) {
                         iterator.next();
                         status = process(iterator, render);
@@ -546,9 +552,11 @@ public class SimpleProcessor {
                                     PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
                             thread.finishedProcessing();
                         }
+                        for (ProcessorListener listener : listeners) {
+                            listener.finishedProcessing(outputBuffer);
+                        }
                     }
                 }
-
             }
 
         } while (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED);
@@ -857,5 +865,13 @@ public class SimpleProcessor {
             out.println(iter.getInputFormat() + " -> " + iter.getCodec());
         }
         out.println(outputFormats.getLast());
+    }
+
+    public void addListener(ProcessorListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(ProcessorListener listener) {
+        listeners.remove(listener);
     }
 }

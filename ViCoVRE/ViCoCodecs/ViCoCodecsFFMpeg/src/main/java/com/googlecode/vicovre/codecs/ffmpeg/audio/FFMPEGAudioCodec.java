@@ -190,7 +190,11 @@ public abstract class FFMPEGAudioCodec implements Codec {
         }
         if ((result != OUTPUT_BUFFER_NOT_FILLED)
                 && (result != BUFFER_PROCESSED_FAILED)) {
-            output.setSequenceNumber(sequenceNumber++);
+            if (output.getLength() == 0) {
+                output.setDiscard(true);
+            } else {
+                output.setSequenceNumber(sequenceNumber++);
+            }
         }
         return result;
     }
