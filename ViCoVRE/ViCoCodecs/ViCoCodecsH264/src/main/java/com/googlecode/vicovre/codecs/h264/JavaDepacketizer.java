@@ -146,11 +146,16 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
             int pos = offset + 1;
             int totalBytes = 0;
             while ((end - pos) > 2) {
-                int size = (in[pos] << 8) | in[pos + 1];
-                totalBytes += size + START_SEQUENCE.length;
-                pos += 2 + size;
-                if (pos > end) {
-                    System.err.println("Consumed too many bytes!");
+                int size = ((in[pos] & 0xFF) << 8) | (in[pos + 1] & 0xFF);
+                if (size > 0) {
+                    totalBytes += size + START_SEQUENCE.length;
+                    pos += 2 + size;
+                    if (pos > end) {
+                        System.err.println("Consumed too many bytes!");
+                        return false;
+                    }
+                } else {
+                    System.err.println("Size (" + size + ") is negative!");
                     return false;
                 }
             }
@@ -159,7 +164,7 @@ public class JavaDepacketizer extends JavaAbstractDepacketizer {
             pos = offset + 1;
             int packetPos = 0;
             while ((end - pos) > 2) {
-                int size = (in[pos] << 8) | in[pos + 1];
+                int size = ((in[pos] & 0xFF) << 8) | (in[pos + 1] & 0xFF);
                 offsetCopy(ind, packetPos, START_SEQUENCE, 0,
                         START_SEQUENCE.length);
                 pos += 2;
