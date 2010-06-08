@@ -75,8 +75,8 @@ public class ProcessingThread extends DataSink implements PushBufferStream {
     public void handleBuffer(Buffer buffer) {
         int status = processor.process(buffer);
         if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
-            System.err.println("Plug in Error!");
-            close();
+            /*System.err.println("Plug in Error!");
+            close(); */
         }
     }
 
