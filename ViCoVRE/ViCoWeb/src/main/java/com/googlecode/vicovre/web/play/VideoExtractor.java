@@ -37,10 +37,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Vector;
 
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
 import javax.media.Multiplexer;
+import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
 import javax.media.Time;
 import javax.media.format.UnsupportedFormatException;
@@ -49,7 +51,6 @@ import javax.media.protocol.ContentDescriptor;
 import javax.media.util.ImageToBuffer;
 
 import com.googlecode.vicovre.codecs.ffmpeg.audio.AudioMixer;
-import com.googlecode.vicovre.codecs.flv.JavaMultiplexer;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.FrameFillControl;
@@ -91,20 +92,37 @@ public class VideoExtractor {
     /**
      * Creates a new VideoExtractor
      *
-     * @param videoFilename The file from which to extract video
+     * @param videoFilenames The files from which to extract video
+     * @param positions The positions of the video streams
      * @param audioFilenames The files from which to extract audio
      * @param syncFilenames The files that should be synched with
+     * @param backgroundColour The RGB background colour
+     * @param rtpTypeRepository The RTP Type Repository
      * @throws IOException
      * @throws UnsupportedFormatException
      * @throws ResourceUnavailableException
      */
-    public VideoExtractor(String[] videoFilenames, Rectangle[] positions,
+    public VideoExtractor(String contentType, String[] videoFilenames,
+            Rectangle[] positions,
             String[] audioFilenames, String[] syncFilenames,
             int backgroundColour, RtpTypeRepository rtpTypeRepository)
             throws IOException, UnsupportedFormatException,
             ResourceUnavailableException {
-        multiplexer = new JavaMultiplexer();
-        multiplexer.setContentDescriptor(new ContentDescriptor("flv"));
+
+        Vector<?> muxers = PlugInManager.getPlugInList(null,
+                new ContentDescriptor(contentType),
+                PlugInManager.MULTIPLEXER);
+        if (muxers.size() == 0) {
+            throw new UnsupportedFormatException(new ContentDescriptor("flv"));
+        }
+        String muxerClassName = (String) muxers.get(0);
+        try {
+            Class<?> muxerClass = Class.forName(muxerClassName);
+            multiplexer = (Multiplexer) muxerClass.newInstance();
+        } catch (Exception e) {
+            throw new UnsupportedFormatException(e.getMessage(),
+                    new ContentDescriptor("flv"));
+        }
 
         int numTracks = 0;
         MemeticFileReader[] videoReaders = null;
@@ -396,6 +414,9 @@ public class VideoExtractor {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         VideoExtractor extractor = new VideoExtractor(
+            //"video/x-flv",
+            "audio/mpeg",
+
             // Video
             /*new String[]{
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040"
@@ -460,7 +481,10 @@ public class VideoExtractor {
             0x000000,
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
-        FileOutputStream testout = new FileOutputStream("test.flv");
+        FileOutputStream testout = new FileOutputStream(
+                //"test.flv"
+                "test.mp3"
+                );
         extractor.transferToStream(testout, 0, 3000000, 3060000, null);
     }
 }

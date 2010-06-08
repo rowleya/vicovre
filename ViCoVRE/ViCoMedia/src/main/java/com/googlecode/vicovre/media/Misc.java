@@ -44,6 +44,7 @@ import java.util.Vector;
 import javax.media.Codec;
 import javax.media.Demultiplexer;
 import javax.media.Format;
+import javax.media.Multiplexer;
 import javax.media.PlugIn;
 import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
@@ -65,6 +66,9 @@ public class Misc {
     private static final Vector<String> KNOWN_CODECS = new Vector<String>();
 
     private static final Vector<String> KNOWN_DEMULTIPLEXERS =
+        new Vector<String>();
+
+    private static final Vector<String> KNOWN_MULTIPLEXERS =
         new Vector<String>();
 
     private static boolean codecsConfigured = false;
@@ -97,9 +101,12 @@ public class Misc {
         codecsConfigured = true;
         KNOWN_CODECS.clear();
         KNOWN_DEMULTIPLEXERS.clear();
+        KNOWN_MULTIPLEXERS.clear();
         PlugInManager.setPlugInList(KNOWN_CODECS, PlugInManager.CODEC);
         PlugInManager.setPlugInList(KNOWN_DEMULTIPLEXERS,
                 PlugInManager.DEMULTIPLEXER);
+        PlugInManager.setPlugInList(KNOWN_MULTIPLEXERS,
+                PlugInManager.MULTIPLEXER);
         KnownCodecsParser parser = new KnownCodecsParser(codecConfigFile);
         for (String codec : parser.getCodecs()) {
             try {
@@ -116,6 +123,14 @@ public class Misc {
             } catch (Exception e) {
                 System.err.println("Warning: could not load demultiplexer "
                         + demultiplexer + ": " + e.getMessage());
+            }
+        }
+        for (String multiplexer : parser.getMultiplexers()) {
+            try {
+                addMultiplexer(multiplexer);
+            } catch (Exception e) {
+                System.err.println("Warning: could not load multiplexer "
+                        + multiplexer + ": " + e.getMessage());
             }
         }
     }
@@ -179,15 +194,17 @@ public class Misc {
             throws InstantiationException,
             IllegalAccessException {
         Demultiplexer demux = (Demultiplexer) loadPlugin(demuxClass);
-        Vector<String> plugins = (Vector<String>) PlugInManager.getPlugInList(
+        Vector<?> plugins = PlugInManager.getPlugInList(
                 null, null, PlugInManager.DEMULTIPLEXER);
-        PlugInManager.setPlugInList(new Vector(), PlugInManager.DEMULTIPLEXER);
+        PlugInManager.setPlugInList(new Vector<Object>(),
+                PlugInManager.DEMULTIPLEXER);
         PlugInManager.addPlugIn(demux.getClass().getCanonicalName(),
                 demux.getSupportedInputContentDescriptors(),
                 null,
                 PlugInManager.DEMULTIPLEXER);
-        for (String demuxerClass : plugins) {
+        for (int i = 0; i < plugins.size(); i++) {
             try {
+                String demuxerClass = (String) plugins.get(i);
                 Demultiplexer demuxer = (Demultiplexer)
                     loadPlugin(demuxerClass);
                 PlugInManager.addPlugIn(demuxerClass,
@@ -215,7 +232,40 @@ public class Misc {
                 PlugInManager.CODEC);
     }
 
+    /**
+     * Adds a multiplexer
+     * @param muxClassName The class of the plugin
+     * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static void addMultiplexer(String muxClassName)
+            throws ClassNotFoundException, InstantiationException,
+            IllegalAccessException {
+        Multiplexer mux = (Multiplexer) loadPlugin(muxClassName);
+        PlugInManager.addPlugIn(mux.getClass().getCanonicalName(),
+                mux.getSupportedInputFormats(),
+                mux.getSupportedOutputContentDescriptors(null),
+                PlugInManager.MULTIPLEXER);
+    }
 
+    /**
+     * Adds a multiplexer
+     * @param muxClass The class of the plugin
+     * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
+    public static void addMultiplexer(
+                Class<? extends Multiplexer> muxClass)
+            throws InstantiationException,
+            IllegalAccessException {
+        Multiplexer mux = (Multiplexer) loadPlugin(muxClass);
+        PlugInManager.addPlugIn(mux.getClass().getCanonicalName(),
+                mux.getSupportedInputFormats(),
+                mux.getSupportedOutputContentDescriptors(null),
+                PlugInManager.MULTIPLEXER);
+    }
 
     /**
      * Loads a plugin

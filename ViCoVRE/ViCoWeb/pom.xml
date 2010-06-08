@@ -67,7 +67,7 @@
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
-            <artifactId>ViCoCodecsFLV</artifactId>
+            <artifactId>ViCoCodecsMultiplexers</artifactId>
             <version>${project.version}</version>
         </dependency>
 

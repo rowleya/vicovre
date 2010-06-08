@@ -142,6 +142,7 @@ public class FlvController implements Controller {
 
         try {
             VideoExtractor extractor = new VideoExtractor(
+                    "video/x-flv",
                     new String[]{videoFile.getAbsolutePath()},
                     new Rectangle[]{rect},
                     audioStreams, syncStreams, 0x000000, rtpTypeRepository);
