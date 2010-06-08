@@ -40,7 +40,9 @@ import java.io.OutputStream;
 
 import javax.imageio.ImageIO;
 import javax.media.Buffer;
+import javax.media.Multiplexer;
 import javax.media.ResourceUnavailableException;
+import javax.media.Time;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
@@ -51,6 +53,7 @@ import com.googlecode.vicovre.codecs.flv.JavaMultiplexer;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.FrameFillControl;
+import com.googlecode.vicovre.media.controls.SetDurationControl;
 import com.googlecode.vicovre.media.processor.OutputStreamDataSink;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.media.video.VideoMixer;
@@ -65,7 +68,7 @@ import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl
  */
 public class VideoExtractor {
 
-    private JavaMultiplexer multiplexer = null;
+    private Multiplexer multiplexer = null;
 
     private VideoMixer videoMixer = null;
 
@@ -226,8 +229,11 @@ public class VideoExtractor {
     public void transferToStream(OutputStream outputStream, long offsetShift,
             long offset, long duration, File firstFrame)
             throws IOException {
-        multiplexer.setDuration(duration);
-        multiplexer.setTimestampOffset(offset);
+        SetDurationControl setDurationControl = (SetDurationControl)
+            multiplexer.getControl(SetDurationControl.class.getName());
+        if (setDurationControl != null) {
+            setDurationControl.setDuration(new Time(duration * 1000000L));
+        }
         OutputStreamDataSink dataSink = new OutputStreamDataSink(
                 multiplexer.getDataOutput(), 0, outputStream);
         dataSink.start();
@@ -247,6 +253,8 @@ public class VideoExtractor {
                 (audioMixer.getOffset() - offset - offsetShift) * 1000000;
             videoTimestampOffset = videoOffset  + videoOffsetShift;
             audioMixer.setTimestampOffset(audioOffset + audioOffsetShift);
+            videoSource.setTimestampOffset(offset * 1000000L);
+            audioSource.setTimestampOffset(offset * 1000000L);
         } else if (videoMixer != null) {
             videoMixer.streamSeek(offset - (videoOffset / 1000000L)
                     + offsetShift);
@@ -260,10 +268,13 @@ public class VideoExtractor {
             } catch (Exception e) {
                 // Does Nothing
             }
+            videoSource.setTimestampOffset(offset * 1000000L);
+            audioSource.setTimestampOffset(offset * 1000000L);
         } else if (audioMixer != null) {
             audioMixer.streamSeek(offset + offsetShift);
             audioMixer.setTimestampOffset(
                     (audioMixer.getOffset() - offset - offsetShift) * 1000000);
+            audioSource.setTimestampOffset(offset * 1000000L);
         }
 
         boolean isAudioData = false;
@@ -450,6 +461,6 @@ public class VideoExtractor {
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream("test.flv");
-        extractor.transferToStream(testout, 3000000, 0, 60000, null);
+        extractor.transferToStream(testout, 0, 3000000, 3060000, null);
     }
 }

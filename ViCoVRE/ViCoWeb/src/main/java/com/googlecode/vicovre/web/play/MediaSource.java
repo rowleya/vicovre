@@ -62,6 +62,8 @@ public abstract class MediaSource extends Thread implements ProcessorListener {
 
     private boolean started = false;
 
+    private long timestampOffset = 0;
+
     public MediaSource(Format inputFormat, Multiplexer multiplexer, int track)
             throws UnsupportedFormatException, ResourceUnavailableException {
         processor = new SimpleProcessor(inputFormat, multiplexer, track);
@@ -73,6 +75,10 @@ public abstract class MediaSource extends Thread implements ProcessorListener {
     protected abstract boolean readNextBuffer() throws IOException;
 
     protected abstract Buffer getBuffer();
+
+    public void setTimestampOffset(long timestampOffset) {
+        this.timestampOffset = timestampOffset;
+    }
 
     public void run() {
         while (!sourceFinished) {
@@ -158,6 +164,8 @@ public abstract class MediaSource extends Thread implements ProcessorListener {
             if (!sourceFinished) {
                 int result = PlugIn.INPUT_BUFFER_NOT_CONSUMED;
                 while (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED) {
+                    outputBuffer.setTimeStamp(outputBuffer.getTimeStamp()
+                            + timestampOffset);
                     result = multiplexer.process(outputBuffer, track);
                 }
             }
