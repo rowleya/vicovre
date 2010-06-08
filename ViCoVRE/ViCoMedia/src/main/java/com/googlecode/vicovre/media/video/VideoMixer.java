@@ -32,7 +32,185 @@
 
 package com.googlecode.vicovre.media.video;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.media.Buffer;
+import javax.media.Format;
+import javax.media.format.UnsupportedFormatException;
+import javax.media.format.VideoFormat;
+import javax.media.format.YUVFormat;
+
+import com.googlecode.vicovre.media.MemeticFileReader;
+
 public class VideoMixer {
 
+    private static final float FRAME_RATE = 25.0f;
+
+    private static final Class<?> DATA_TYPE = Format.byteArray;
+
+    private static final int YUV_TYPE = YUVFormat.YUV_420;
+
+    private static final double BUFFER_DURATION = 1000000000.0 / FRAME_RATE;
+
+    private VideoFormat format = null;
+
+    private VideoSource[] sources = null;
+
+    private boolean[] sourceFinished = null;
+
+    private long minStartTime = 0;
+
+    private long currentTimestamp = 0;
+
+    private byte[] data = null;
+
+    private Buffer buffer = null;
+
+    public VideoMixer(MemeticFileReader[] sources, Rectangle[] positions,
+            int backgroundColour)
+            throws UnsupportedFormatException {
+        this.sources = new VideoSource[sources.length];
+        sourceFinished = new boolean[sources.length];
+        minStartTime = Long.MAX_VALUE;
+        for (MemeticFileReader source : sources) {
+            if (source.getStartTime() < minStartTime) {
+                minStartTime = source.getStartTime();
+            }
+        }
+
+        int minx = Integer.MAX_VALUE;
+        int maxx = 0;
+        int miny = Integer.MAX_VALUE;
+        int maxy = 0;
+        for (int i = 0; i < sources.length; i++) {
+            Dimension size = new Dimension(positions[i].width,
+                    positions[i].height);
+            int ysize = size.width * size.height;
+            int csize = ysize / 4;
+            int maxdatalength = ysize + (csize * 2);
+            YUVFormat convertFormat = new YUVFormat(size, maxdatalength,
+                    DATA_TYPE, FRAME_RATE, YUV_TYPE, size.width, size.width / 2,
+                    0, ysize, ysize + csize);
+            this.sources[i] = new VideoSource(sources[i], convertFormat,
+                    minStartTime, positions[i].x, positions[i].y);
+            sourceFinished[i] = false;
+            minx = Math.min(minx, positions[i].x);
+            maxx = Math.max(maxx, positions[i].x + size.width);
+            miny = Math.min(miny, positions[i].y);
+            maxy = Math.max(maxy, positions[i].y + size.height);
+        }
+
+        Dimension size = new Dimension(maxx + minx, maxy + miny);
+        if ((size.width % 16) != 0) {
+            size.width += 16 - (size.width % 16);
+        }
+        if ((size.height % 16) != 0) {
+            size.height += 16 - (size.height % 16);
+        }
+        System.err.println("Output size = " + size);
+        int ysize = size.width * size.height;
+        int csize = ysize / 4;
+        int maxdatalength = ysize + (csize * 2);
+        format = new YUVFormat(size, maxdatalength,
+                DATA_TYPE, FRAME_RATE, YUV_TYPE, size.width, size.width / 2,
+                0, ysize, ysize + csize);
+
+        data = new byte[maxdatalength];
+        Color bg = new Color(backgroundColour);
+        int r = bg.getRed();
+        int g = bg.getGreen();
+        int b = bg.getBlue();
+        byte y  = (byte) (((int)  ( 0.29900 * r + 0.58700 * g + 0.11400 * b))
+                & 0xFF);
+        byte cr = (byte) (((int) ((-0.16874 * r - 0.33126 * g + 0.50000 * b)))
+                & 0xFF);
+        byte cb = (byte) (((int) (( 0.50000 * r - 0.41869 * g - 0.08131 * b)))
+                & 0xFF);
+        Arrays.fill(data, 0, ysize - 1, y);
+        Arrays.fill(data, ysize, ysize + csize - 1, (byte) (cr - 128));
+        Arrays.fill(data, ysize + csize, maxdatalength - 1, (byte) (cb - 128));
+
+        buffer = new Buffer();
+        buffer.setData(data);
+        buffer.setOffset(0);
+        buffer.setLength(data.length);
+        buffer.setFormat(format);
+    }
+
+    public void streamSeek(long offset) throws IOException {
+        for (int i = 0; i < sources.length; i++) {
+            sources[i].seek(offset);
+        }
+    }
+
+    public long getStartTime() {
+        return minStartTime;
+    }
+
+    public void setStartTime(long startTime) {
+        minStartTime = startTime;
+    }
+
+    public long getTimestamp() {
+        return currentTimestamp;
+    }
+
+    public long getOffset() {
+        long minOffset = Long.MAX_VALUE;
+        for (int i = 0; i < sources.length; i++) {
+            minOffset = Math.min(minOffset, sources[i].getOffset());
+        }
+        return minOffset;
+    }
+
+    public void setTimestampOffset(long timestampOffset) {
+        for (int i = 0; i < sources.length; i++) {
+            sources[i].setTimestampOffset(timestampOffset);
+        }
+    }
+
+    public Format getFormat() {
+        return format;
+    }
+
+    public boolean readNextBuffer() throws IOException {
+        for (int i = 0; i < sources.length; i++) {
+            if (!sourceFinished[i]) {
+                boolean finished = !sources[i].readNextBuffer(buffer, false);
+                if (finished && !sourceFinished[i]) {
+                    sourceFinished[i] = true;
+                    sources[i].readNextBuffer(buffer, true);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Reads the next buffer
+     * @return The next buffer
+     */
+    public Buffer getBuffer() {
+        buffer.setTimeStamp(getTimestamp());
+        currentTimestamp += BUFFER_DURATION;
+        return buffer;
+    }
+
+    /**
+     * Closes the mixer
+     *
+     */
+    public void close() {
+        for (int i = 0; i < sources.length; i++) {
+            sources[i].close();
+            sources[i] = null;
+        }
+        sources = null;
+    }
 
 }

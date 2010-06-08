@@ -39,25 +39,25 @@ import javax.media.Multiplexer;
 import javax.media.ResourceUnavailableException;
 import javax.media.format.UnsupportedFormatException;
 
-import com.googlecode.vicovre.media.MemeticFileReader;
+import com.googlecode.vicovre.media.video.VideoMixer;
 
 public class VideoMediaSource extends MediaSource {
 
-    private MemeticFileReader videoReader = null;
+    private VideoMixer videoMixer = null;
 
-    public VideoMediaSource(MemeticFileReader videoReader,
+    public VideoMediaSource(VideoMixer videoMixer,
             Multiplexer multiplexer, int track)
             throws UnsupportedFormatException, ResourceUnavailableException {
-        super(videoReader.getFormat(), multiplexer, track);
-        this.videoReader = videoReader;
+        super(videoMixer.getFormat(), multiplexer, track);
+        this.videoMixer = videoMixer;
     }
 
     protected Buffer getBuffer() {
-        return videoReader.getBuffer();
+        return videoMixer.getBuffer();
     }
 
     protected boolean readNextBuffer() throws IOException {
-        return videoReader.readNextPacket();
+        return videoMixer.readNextBuffer();
     }
 
 }
