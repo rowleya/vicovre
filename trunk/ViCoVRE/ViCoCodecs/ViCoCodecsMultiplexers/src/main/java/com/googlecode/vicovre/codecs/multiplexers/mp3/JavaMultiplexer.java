@@ -65,8 +65,6 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream {
 
     private int result = -1;
 
-    private boolean sameBuffer = false;
-
     public DataSource getDataOutput() {
         return dataSource;
     }
@@ -118,7 +116,6 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream {
             if (!done) {
                 result = -1;
                 buffer = buf;
-                sameBuffer = false;
                 bufferSync.notifyAll();
             }
 
@@ -187,8 +184,45 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream {
     }
 
     public int read(byte[] buf, int off, int len) throws IOException {
-        // TODO Auto-generated method stub
-        return 0;
+        synchronized (bufferSync) {
+            while ((buffer == null) && !done) {
+                try {
+                    bufferSync.wait();
+                } catch (InterruptedException e) {
+                    // Do Nothing
+                }
+            }
+
+            if (buffer != null) {
+
+                Format format = buffer.getFormat();
+                int length = buffer.getLength();
+                int offset = buffer.getOffset();
+
+                if (format instanceof AudioFormat) {
+                    int toCopy = length;
+                    if (length > len) {
+                        toCopy = len;
+                    }
+                    System.arraycopy(buffer.getData(), offset, buf, off,
+                            toCopy);
+                    if (toCopy < length) {
+                        buffer.setOffset(offset + toCopy);
+                        buffer.setLength(length - toCopy);
+                        result = INPUT_BUFFER_NOT_CONSUMED;
+                    } else {
+                        buffer = null;
+                        result = BUFFER_PROCESSED_OK;
+                        bufferSync.notifyAll();
+                    }
+                    return toCopy;
+                }
+                buffer = null;
+                result = BUFFER_PROCESSED_OK;
+                bufferSync.notifyAll();
+            }
+            return 0;
+        }
     }
 
     public boolean willReadBlock() {
