@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.codecs.flv;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import javax.media.Buffer;
 import javax.media.Format;
 import javax.media.Multiplexer;
+import javax.media.Time;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.ContentDescriptor;
@@ -47,13 +49,15 @@ import javax.media.protocol.PullSourceStream;
 
 import com.googlecode.vicovre.codecs.utils.ByteArrayOutputStream;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
+import com.googlecode.vicovre.media.controls.SetDurationControl;
 
 /**
  * An FLV Multiplexer
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class JavaMultiplexer implements Multiplexer, PullSourceStream {
+public class JavaMultiplexer implements Multiplexer, PullSourceStream,
+        SetDurationControl {
 
     /**
      * The flash content type
@@ -162,9 +166,6 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
 
     // The size of the last tag written
     private int lastTagSize = 0;
-
-    // The first timestamp written
-    private long firstTimestamp = -1;
 
     // The last timestamp written
     private long lastTimestamp = -1;
@@ -414,6 +415,9 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      * @see javax.media.Controls#getControl(java.lang.String)
      */
     public Object getControl(String s) {
+        if (s.equals(SetDurationControl.class.getName())) {
+            return this;
+        }
         return null;
     }
 
@@ -422,7 +426,7 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
      * @see javax.media.Controls#getControls()
      */
     public Object[] getControls() {
-        return new Object[0];
+        return new Object[]{this};
     }
 
     private void writeFLVHeader(DataOutputStream out)
@@ -651,10 +655,6 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
                         timestamp = lastTimestamp + 1;
                     }
                     lastTimestamp = timestamp;
-                    if (firstTimestamp == -1) {
-                        firstTimestamp = timestamp;
-                    }
-                    timestamp = timestamp - firstTimestamp;
                     timestamp += timestampOffset;
 
                     if (format instanceof AudioFormat) {
@@ -734,6 +734,14 @@ public class JavaMultiplexer implements Multiplexer, PullSourceStream {
     public void resizeVideoTo(Dimension size) {
         supportedFormats[0] = new VideoFormat("FLV1", size,
                 Format.NOT_SPECIFIED, Format.byteArray, Format.NOT_SPECIFIED);
+    }
+
+    public void setDuration(Time duration) {
+        setDuration(duration.getNanoseconds() / 1000000);
+    }
+
+    public Component getControlComponent() {
+        return null;
     }
 
 }

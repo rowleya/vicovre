@@ -333,6 +333,7 @@ int Video::init(JNIEnv *env, jobject context) {
 int Video::encode(JNIEnv *env, jobject input, jobject output) {
     jobject indata = env->CallObjectMethod(input, getDataMethod);
     int inoffset = env->CallIntMethod(input, getOffsetMethod);
+    int flags = env->CallIntMethod(input, getBufferFlagsMethod);
     jobject outdata = env->CallObjectMethod(output, getDataMethod);
     int outoffset = env->CallIntMethod(output, getOffsetMethod);
     int outlength = env->CallIntMethod(output, getLengthMethod);
@@ -346,6 +347,11 @@ int Video::encode(JNIEnv *env, jobject input, jobject output) {
             inputWidth, inputHeight);
     sws_scale(scaleContext, frame->data, frame->linesize,
             0, inputHeight, scaleFrame->data, scaleFrame->linesize);
+    if (flags & FLAG_KEY_FRAME) {
+        frame->key_frame = 1;
+    } else {
+        frame->key_frame = 0;
+    }
     int bytesEncoded = avcodec_encode_video(codecContext, (out + outoffset),
             outlength, scaleFrame);
 
