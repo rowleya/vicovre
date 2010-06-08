@@ -43,9 +43,10 @@ import javax.media.format.VideoFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
+import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
-public abstract class FFMPEGVideoCodec implements Codec {
+public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
 
     private static final int DEF_WIDTH = 352;
 
@@ -74,6 +75,8 @@ public abstract class FFMPEGVideoCodec implements Codec {
     private boolean inited = false;
 
     private VideoCodecContext context = null;
+
+    private boolean nextKey = true;
 
     protected FFMPEGVideoCodec(int codecId,
             VideoFormat[] encodedFormats, boolean encode) {
@@ -191,6 +194,10 @@ public abstract class FFMPEGVideoCodec implements Codec {
         output.setFormat(outputFormat);
         int result = 0;
         if (encode) {
+            if (nextKey) {
+                nextKey = false;
+                input.setFlags(input.getFlags() | Buffer.FLAG_KEY_FRAME);
+            }
             result = encode(ref, input, output);
         } else {
             result = decode(ref, input, output);
@@ -251,11 +258,18 @@ public abstract class FFMPEGVideoCodec implements Codec {
     }
 
     public Object getControl(String className) {
+        if (className.equals(KeyFrameForceControl.class.getName())) {
+            return this;
+        }
         return null;
     }
 
     public Object[] getControls() {
-        return new Object[0];
+        return new Object[]{this};
+    }
+
+    public void nextFrameKey() {
+        nextKey = true;
     }
 
     private native long open(boolean encoding, int codecId, int logLevel);
