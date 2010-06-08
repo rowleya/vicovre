@@ -19,10 +19,10 @@
         <module>ViCoCodecsColourspace</module>
         <module>ViCoCodecsCommons</module>
         <module>ViCoCodecsFFMpeg</module>
-        <module>ViCoCodecsFLV</module>
         <module>ViCoCodecsH261</module>
         <module>ViCoCodecsH264</module>
         <module>ViCoCodecsLinear</module>
+        <module>ViCoCodecsMultiplexers</module>
         <module>ViCoCodecsULaw</module>
         <module>ViCoCodecsVic</module>
     </modules>

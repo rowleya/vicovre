@@ -51,15 +51,17 @@ import org.xml.sax.helpers.XMLReaderFactory;
  *         <codec>
  *             <class>name-of-class</class>
  *             <nativeLib>name-of-required-native-library</nativeLib>
- *             ...
- *
  *         </codec>
  *         ...
  *         <demultiplexer>
  *             <class>name-of-class</class>
  *             <nativeLib>name-of-required-native-library</nativeLib>
  *         </demultiplexer>
- *
+ *         ...
+ *         <multiplexer>
+ *             <class>name-of-class</class>
+ *             <nativeLib>name-of-required-native-library</nativeLib>
+ *         </multiplexer>
  *     </codecs>
  *
  * @author Andrew G D Rowley
@@ -80,6 +82,8 @@ public class KnownCodecsParser extends DefaultHandler {
 
     private boolean inDemultiplexer = false;
 
+    private boolean inMultiplexer = false;
+
     private boolean inClass = false;
 
     private boolean inNativeLib = false;
@@ -89,6 +93,8 @@ public class KnownCodecsParser extends DefaultHandler {
     private Vector<String> knownCodecs = new Vector<String>();
 
     private Vector<String> knownDemultiplexers = new Vector<String>();
+
+    private Vector<String> knownMultiplexers = new Vector<String>();
 
     private Vector<String> requiredLibraries = new Vector<String>();
 
@@ -120,11 +126,13 @@ public class KnownCodecsParser extends DefaultHandler {
             } else {
                 throw new SAXException(localName + " not allowed here");
             }
-        } else if (!inCodec && !inDemultiplexer) {
+        } else if (!inCodec && !inDemultiplexer && !inMultiplexer) {
             if (localName.equals("codec")) {
                 inCodec = true;
             } else if (localName.equals("demultiplexer")) {
                 inDemultiplexer = true;
+            } else if (localName.equals("multiplexer")) {
+                inMultiplexer = true;
             } else {
                 throw new SAXException(localName + " not allowed here");
             }
@@ -162,6 +170,8 @@ public class KnownCodecsParser extends DefaultHandler {
             } else if (inDemultiplexer
                     && !knownDemultiplexers.contains(chars)) {
                 knownDemultiplexers.add(chars);
+            } else if (inMultiplexer && !knownMultiplexers.contains(chars)) {
+                knownMultiplexers.add(chars);
             }
             inClass = false;
         } else if (inNativeLib && localName.equals("nativeLib")) {
@@ -173,6 +183,8 @@ public class KnownCodecsParser extends DefaultHandler {
             inCodec = false;
         } else if (inDemultiplexer && localName.equals("demultiplexer")) {
             inDemultiplexer = false;
+        } else if (inMultiplexer && localName.equals("multiplexer")) {
+            inMultiplexer = false;
         } else if (inCodecs && localName.equals("codecs")) {
             inCodecs = false;
         } else {
@@ -195,6 +207,14 @@ public class KnownCodecsParser extends DefaultHandler {
      */
     public Vector<String> getDemultiplexers() {
         return knownDemultiplexers;
+    }
+
+    /**
+     * Gets the know multiplexers
+     * @return The known multiplexers
+     */
+    public Vector<String> getMultiplexers() {
+        return knownMultiplexers;
     }
 
     /**

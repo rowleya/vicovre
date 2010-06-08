@@ -15,6 +15,12 @@
     <demultiplexer>
         <class>com.sun.media.parser.RawPullStreamParser</class>
     </demultiplexer>
+    <multiplexer>
+        <class>com.googlecode.vicovre.codecs.multiplexers.flv.JavaMultiplexer</class>
+    </multiplexer>
+    <multiplexer>
+        <class>com.googlecode.vicovre.codecs.multiplexers.mp3.JavaMultiplexer</class>
+    </multiplexer>
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>
