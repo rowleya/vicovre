@@ -32,17 +32,13 @@
 package com.googlecode.vicovre.web.play;
 
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -55,7 +51,6 @@ import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
 
 /**
  * A servlet for streaming out in FLV format
@@ -143,10 +138,13 @@ public class FlvController implements Controller {
             generationSpeed = Double.parseDouble(genSpeed);
         }
 
+        Rectangle rect = new Rectangle(0, 0, size.width, size.height);
+
         try {
             VideoExtractor extractor = new VideoExtractor(
-                    videoFile.getAbsolutePath(),
-                    audioStreams, syncStreams, size, rtpTypeRepository);
+                    new String[]{videoFile.getAbsolutePath()},
+                    new Rectangle[]{rect},
+                    audioStreams, syncStreams, 0x000000, rtpTypeRepository);
             extractor.setGenerationSpeed(generationSpeed);
             response.setContentType("video/x-flv");
             response.setStatus(HttpServletResponse.SC_OK);

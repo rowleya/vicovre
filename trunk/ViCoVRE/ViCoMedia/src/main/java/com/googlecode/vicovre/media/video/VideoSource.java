@@ -34,9 +34,11 @@ package com.googlecode.vicovre.media.video;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import javax.media.Buffer;
-import javax.media.Format;
+import javax.media.PlugIn;
 import javax.media.format.RGBFormat;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.VideoFormat;
@@ -48,6 +50,8 @@ import com.googlecode.vicovre.media.processor.SimpleProcessor;
 public class VideoSource {
 
     private Buffer buffer = null;
+
+    private Buffer nextBuffer = null;
 
     private MemeticFileReader source = null;
 
@@ -63,24 +67,34 @@ public class VideoSource {
 
     private double bufferStartOffset = 0;
 
+    private double bufferEndOffset = 0;
+
     private VideoFormat format = null;
 
     private SimpleProcessor processor = null;
 
     private boolean isFinished = false;
 
+    private boolean frameCopied = false;
+
+    private int x = 0;
+
+    private int y = 0;
+
     public VideoSource(MemeticFileReader source, VideoFormat convertFormat,
-            long minStartTime, float frameRate)
-            throws UnsupportedFormatException {
+            long minStartTime, int x, int y)
+    throws UnsupportedFormatException {
         this.source = source;
         this.startTime = source.getStartTime();
         this.offsetShift = startTime - minStartTime;
+        this.x = x;
+        this.y = y;
         this.format = (VideoFormat) source.getFormat();
-        if (!format.getEncoding().equals(convertFormat)) {
+        if (!format.matches(convertFormat)) {
             processor = new SimpleProcessor(format, convertFormat);
             format = (VideoFormat) processor.getOutputFormat();
         }
-        msPerRead = 1000.0 / frameRate;
+        msPerRead = 1000.0 / convertFormat.getFrameRate();
     }
 
     public void seek(long offset) throws IOException {
@@ -97,58 +111,131 @@ public class VideoSource {
         source.setTimestampOffset(timestampOffset);
     }
 
-    public void readNextBuffer(Buffer bufferToFill, int x, int y)
-            throws IOException {
-        currentOffset += msPerRead;
-        if (!isFinished && (buffer == null)) {
-            isFinished = !source.readNextPacket();
-            if (!isFinished) {
-                buffer = source.getBuffer();
-                if (processor != null) {
-                    processor.process(buffer);
-                    buffer = processor.getOutputBuffer();
-                    format = (VideoFormat) buffer.getFormat();
+    private void readNextBuffer() throws IOException {
+        nextBuffer = null;
+        isFinished = !source.readNextPacket();
+        if (!isFinished) {
+            if (processor != null) {
+                int result = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
+                while (!isFinished
+                        && (result != PlugIn.BUFFER_PROCESSED_OK)
+                        && (result != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                    nextBuffer = source.getBuffer();
+                    result = processor.process(nextBuffer);
+                    if ((result != PlugIn.BUFFER_PROCESSED_OK)
+                            && (result != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                        isFinished = !source.readNextPacket();
+                    }
                 }
-                bufferStartOffset = sourceOffset
-                    + (source.getTimestamp() / 1000000);
+                if ((result == PlugIn.BUFFER_PROCESSED_OK)
+                        || (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                    nextBuffer = processor.getOutputBuffer();
+                }
+            } else {
+                nextBuffer = (Buffer) source.getBuffer().clone();
             }
         }
-        if (isFinished || (currentOffset < bufferStartOffset)) {
-            return;
+    }
+
+    private void readBuffer() throws IOException {
+        if ((nextBuffer == null) && !isFinished) {
+            readNextBuffer();
+        }
+        do {
+            if (nextBuffer != null) {
+                buffer = nextBuffer;
+                bufferStartOffset = sourceOffset
+                    + (source.getTimestamp() / 1000000);
+
+                readNextBuffer();
+                if (!isFinished) {
+                    bufferEndOffset = sourceOffset
+                        + (source.getTimestamp() / 1000000);
+                } else {
+                    bufferEndOffset = bufferStartOffset + msPerRead;
+                }
+            } else {
+                buffer = null;
+            }
+        } while ((buffer != null) && (bufferEndOffset < currentOffset));
+    }
+
+    public boolean readNextBuffer(Buffer bufferToFill, boolean force)
+            throws IOException {
+        if (!force) {
+            currentOffset += msPerRead;
         }
 
+        if (!isFinished && ((buffer == null)
+                || (currentOffset > bufferEndOffset))) {
+            readBuffer();
+            frameCopied = false;
+        }
+
+        if (!force && ((buffer == null)
+                || (currentOffset < bufferStartOffset)
+                || frameCopied)) {
+            return !isFinished;
+        }
+        frameCopied = true;
+
         VideoFormat bufferFormat = (VideoFormat) bufferToFill.getFormat();
+        Dimension targetSize = bufferFormat.getSize();
+        Object targetData = bufferToFill.getData();
+        Object data = null;
+        int offset = 0;
+        boolean created = false;
+        if (buffer != null) {
+            data = buffer.getData();
+            offset = buffer.getOffset();
+            if (data == null) {
+                created = true;
+                data = Array.newInstance(targetData.getClass(),
+                        format.getMaxDataLength());
+            }
+        } else {
+            created = true;
+            data = Array.newInstance(targetData.getClass(),
+                    format.getMaxDataLength());
+        }
+
         if (bufferFormat instanceof RGBFormat) {
             RGBFormat rgb = (RGBFormat) format;
             RGBFormat targetRgb = (RGBFormat) bufferFormat;
             Dimension size = format.getSize();
-            Dimension targetSize = bufferFormat.getSize();
-            Object data = buffer.getData();
-            Object targetData = bufferToFill.getData();
 
             for (int i = 0; i < size.height; i++) {
-                int srcPos = buffer.getOffset()
+                int srcPos = offset
                     + (size.width * i * rgb.getPixelStride());
                 int destPos = bufferToFill.getOffset()
                     + (targetSize.width * (x + i) * targetRgb.getPixelStride())
                     + (y * targetRgb.getPixelStride());
                 int length = size.width * rgb.getPixelStride();
                 System.arraycopy(data, srcPos,
-                        targetData, destPos, length);
+                    targetData, destPos, length);
             }
         } else if (bufferFormat instanceof YUVFormat) {
             YUVFormat yuv = (YUVFormat) format;
             YUVFormat targetYuv = (YUVFormat) bufferFormat;
             Dimension size = format.getSize();
-            Dimension targetSize = bufferFormat.getSize();
-            Object data = buffer.getData();
-            Object targetData = bufferToFill.getData();
             int type = yuv.getYuvType();
             if ((type == YUVFormat.YUV_111)
                     || (type == YUVFormat.YUV_411)
                     || (type == YUVFormat.YUV_420)
                     || (type == YUVFormat.YUV_422)
                     || (type == YUVFormat.YUV_YVU9)) {
+                int ratio = size.width / yuv.getStrideUV();
+                int crheight = size.height / ratio;
+
+                if (created) {
+                    Arrays.fill((byte[]) data, yuv.getOffsetY(),
+                            (size.width * size.height) - 1, (byte) 0);
+                    Arrays.fill((byte[]) data, yuv.getOffsetU(),
+                            (yuv.getStrideUV() * crheight - 1), (byte) 0x80);
+                    Arrays.fill((byte[]) data, yuv.getOffsetV(),
+                            (yuv.getStrideUV() * crheight - 1), (byte) 0x80);
+                }
+                int[] heights = new int[]{size.height, crheight, crheight};
                 int[] offsets = new int[]{yuv.getOffsetY(), yuv.getOffsetU(),
                                         yuv.getOffsetV()};
                 int[] targetOffsets = new int[]{targetYuv.getOffsetY(),
@@ -157,42 +244,32 @@ public class VideoSource {
                         yuv.getStrideUV()};
                 int[] targetStrides = new int[]{targetYuv.getStrideY(),
                         targetYuv.getStrideUV(), targetYuv.getStrideUV()};
+                int[] ratios = new int[]{1, ratio, ratio};
+
                 for (int j = 0; j < offsets.length; j++) {
-                    int offset = buffer.getOffset() + offsets[j];
-                    int targetOffset = bufferToFill.getOffset()
+                    int off = offset + offsets[j];
+                    int targetOff = bufferToFill.getOffset()
                         + targetOffsets[j];
                     int stride = strides[j];
                     int targetStride = targetStrides[j];
-                    for (int i = 0; i < size.height; i++) {
-                        int srcPos = offset + (size.width * i * stride);
-                        int destPos = targetOffset
-                            + (targetSize.width * (x + i) * targetStride)
-                            + (y * targetStride);
-                        int length = size.width * stride;
+                    for (int i = 0; i < heights[j]; i++) {
+                        int srcPos = off + (i * stride);
+                        int destPos = targetOff
+                            + (((y / ratios[j]) + i) * targetStride)
+                            + (x / ratios[j]);
                         System.arraycopy(data, srcPos,
-                                targetData, destPos, length);
+                            targetData, destPos, stride);
                     }
-                }
-            } else if (type == YUVFormat.YUV_YUYV) {
-                int stride = 4;
-                if (yuv.getDataType() == Format.intArray) {
-                    stride = 1;
-                } else if (yuv.getDataType() == Format.shortArray) {
-                    stride = 2;
-                }
-                for (int i = 0; i < size.height; i++) {
-                    int srcPos = buffer.getOffset()
-                        + (size.width * i * stride);
-                    int destPos = bufferToFill.getOffset()
-                        + (targetSize.width * (x + i) * stride)
-                        + (y * stride);
-                    int length = size.width * stride;
-                    System.arraycopy(data, srcPos,
-                            targetData, destPos, length);
                 }
             }
         }
-        buffer = null;
+        return true;
+    }
+
+    public void close() {
+        if (processor != null) {
+            processor.close();
+        }
     }
 
 }
