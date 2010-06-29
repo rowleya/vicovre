@@ -69,6 +69,9 @@ public abstract class RTCPReport {
     // The CNAME of the source
     private String cName = null;
 
+    // The Name of the source
+    private String name = null;
+
     // True if this is a bye event
     private boolean isBye = false;
 
@@ -145,6 +148,8 @@ public abstract class RTCPReport {
                         sourceDescriptions.add(description);
                         if (type == SourceDescription.SOURCE_DESC_CNAME) {
                             cName = descStr;
+                        } else if (type == SourceDescription.SOURCE_DESC_NAME) {
+                            name = descStr;
                         }
                     }
                 }
@@ -200,6 +205,14 @@ public abstract class RTCPReport {
      */
     public String getCName() {
         return cName;
+    }
+
+    /**
+     * Gets the name of the source of the report
+     * @return the name, or null if none sent
+     */
+    public String getName() {
+        return name;
     }
 
     /**
