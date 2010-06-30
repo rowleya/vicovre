@@ -199,6 +199,11 @@ public abstract class RTCPReport {
         return sourceDescriptions;
     }
 
+    public void setSourceDescriptions(
+            Vector<SourceDescription> sourceDescriptions) {
+        this.sourceDescriptions = sourceDescriptions;
+    }
+
     /**
      * Gets the cName of the source of the report
      * @return the cName, or null if none sent
