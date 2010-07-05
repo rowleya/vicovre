@@ -41,6 +41,7 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
+import com.googlecode.vicovre.media.format.BitRateAudioFormat;
 import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public abstract class FFMPEGAudioCodec implements Codec {
@@ -128,8 +129,6 @@ public abstract class FFMPEGAudioCodec implements Codec {
     public int process(Buffer input, Buffer output) {
         if (data == null) {
             inputFormat = (AudioFormat) input.getFormat();
-            outputFormat = new AudioFormat(outputFormat.getEncoding(),
-                inputFormat.getSampleRate(), 16, inputFormat.getChannels());
             AudioCodecContext context = getContext();
             int dataSize = init(ref, context);
             if (dataSize < 0) {
@@ -144,6 +143,20 @@ public abstract class FFMPEGAudioCodec implements Codec {
                 encoderInputData = new byte[encoderInputSize];
                 nsPerSample = 1000000000.0 / inputFormat.getSampleRate();
                 sampleSize = 2 * context.getChannels();
+
+                outputFormat = new BitRateAudioFormat(
+                        outputFormat.getEncoding(),
+                        inputFormat.getSampleRate(), 16,
+                        inputFormat.getChannels(),
+                        AudioFormat.NOT_SPECIFIED, AudioFormat.NOT_SPECIFIED,
+                        encoderInputSize * 8,
+                        Format.NOT_SPECIFIED,
+                        Format.byteArray,
+                        context.getBitRate(), 0);
+            } else {
+                outputFormat = new AudioFormat(outputFormat.getEncoding(),
+                        inputFormat.getSampleRate(), 16,
+                        inputFormat.getChannels());
             }
         }
         output.setData(data);

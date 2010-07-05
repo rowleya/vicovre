@@ -66,8 +66,8 @@
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="liveAnnotationTypeRepository"/></constructor-arg>
         <!-- Comment out the following lines to ignore annotations -->
-        <!-- <constructor-arg><ref bean="annotationDao"/></constructor-arg>
-        <constructor-arg><value>${recording.prefix}</value></constructor-arg> -->
+        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
+        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
     </bean>
     <bean name="/flv.do" class="com.googlecode.vicovre.web.play.FlvController">
         <constructor-arg><ref bean="database"/></constructor-arg>
@@ -83,7 +83,7 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <!-- Comment out the following lines to ignore annotations -->
-        <!-- <constructor-arg><ref bean="annotationDao"/></constructor-arg>
-        <constructor-arg><value>${recording.prefix}</value></constructor-arg> -->
+        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
+        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
     </bean>
 </beans>

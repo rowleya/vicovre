@@ -39,28 +39,23 @@ import java.io.IOException;
 
 import javax.media.Buffer;
 import javax.media.Format;
-import javax.media.Multiplexer;
 import javax.media.Time;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.ContentDescriptor;
-import javax.media.protocol.DataSource;
-import javax.media.protocol.PullSourceStream;
 
-import com.googlecode.vicovre.codecs.multiplexers.MultiplexerDataSource;
-import com.googlecode.vicovre.codecs.multiplexers.MultiplexerStream;
-import com.googlecode.vicovre.codecs.multiplexers.flv.SorensonH263Header;
 import com.googlecode.vicovre.codecs.utils.ByteArrayOutputStream;
 import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 import com.googlecode.vicovre.media.controls.SetDurationControl;
+import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
 
 /**
  * An FLV Multiplexer
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
-        SetDurationControl {
+public class JavaMultiplexer extends BasicMultiplexer
+        implements SetDurationControl {
 
     /**
      * The flash content type
@@ -137,29 +132,8 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
 
     private static final byte[] FLV_TYPE = new byte[]{0x46, 0x4C, 0x56};
 
-    private final Format[] supportedFormats = new Format[]{
-        new VideoFormat("flv1"),
-        new AudioFormat(AudioFormat.MPEGLAYER3),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 16, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 16, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_11000_HZ, 16, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 8, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 8, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_11000_HZ, 8, 1),
-        new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_5500_HZ, 8, 1)
-    };
-
-    // The maximum number of tracks
-    private static final int MAX_TRACKS = 2;
-
-    // The datasource that holds the data
-    private MultiplexerDataSource dataSource = new MultiplexerDataSource(this);
-
     // True if this is the first packet
     private boolean firstPacket = true;
-
-    // The formats of the tracks
-    private Format[] inputFormats = new Format[0];
 
     // The index of the audio track
     private int audioTrack = -1;
@@ -173,23 +147,14 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
     // The last timestamp written
     private long lastTimestamp = -1;
 
-    // True if the multiplex is done
-    private boolean done = false;
-
-    // The current buffer being processed
-    private Buffer buffer = null;
-
     // True if the same buffer is to be read from again
     private boolean sameBuffer = false;
 
-    // The object to use to synchronize processing an reading
-    private Integer bufferSync = new Integer(0);
-
-    // The result of the processing
-    private int result = -1;
-
     // The duration of the file in milliseconds or -1 if unknown
     private long duration = -1;
+
+    // The offset of the first packet in milliseconds or -1 if unknown
+    private long offset = -1;
 
     // The size of the video
     private Dimension size = null;
@@ -197,71 +162,20 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
     // True if the first video packet has been seen
     private boolean firstVideoPacketSeen = false;
 
-    // The offset of the timestamps
-    private long timestampOffset = 0;
-
-    /**
-     * Sets the offset to add to timestamps
-     * @param timestampOffset The offset to add
-     */
-    public void setTimestampOffset(long timestampOffset) {
-        this.timestampOffset = timestampOffset;
-    }
-
-    /**
-     * Sets the duration of the file
-     * @param duration The duration in milliseconds
-     */
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
-
-    /**
-     *
-     * @see javax.media.Multiplexer#getDataOutput()
-     */
-    public DataSource getDataOutput() {
-        return dataSource;
-    }
-
-    /**
-     *
-     * @see javax.media.Multiplexer#getSupportedInputFormats()
-     */
-    public Format[] getSupportedInputFormats() {
-        return supportedFormats;
-    }
-
-    /**
-     *
-     * @see javax.media.Multiplexer#getSupportedOutputContentDescriptors(
-     *     javax.media.Format[])
-     */
-    public ContentDescriptor[] getSupportedOutputContentDescriptors(
-            Format[] inputs) {
-        if (inputs == null) {
-            return new ContentDescriptor[]{
-                new ContentDescriptor(CONTENT_TYPE)
-            };
-        }
-        boolean error = false;
-        for (int i = 0; i < inputs.length; i++) {
-            boolean formatFound = false;
-            for (int j = 0; j < supportedFormats.length; j++) {
-                if (inputs[i].matches(supportedFormats[j])) {
-                    formatFound = true;
-                }
-            }
-            if (!formatFound) {
-                error = true;
-            }
-        }
-        if (error) {
-            return new ContentDescriptor[0];
-        }
-        return new ContentDescriptor[]{
-            new ContentDescriptor(CONTENT_TYPE)
-        };
+    public JavaMultiplexer() {
+        super(new ContentDescriptor[]{new ContentDescriptor(CONTENT_TYPE)},
+                new Format[]{
+                new VideoFormat("flv1"),
+                new AudioFormat(AudioFormat.MPEGLAYER3),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 16, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 16, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_11000_HZ, 16, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_44000_HZ, 8, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_22000_HZ, 8, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_11000_HZ, 8, 1),
+                new AudioFormat(AudioFormat.LINEAR, AUDIO_RATE_5500_HZ, 8, 1)
+            },
+            2);
     }
 
     // Converts an int into a 3-byte array
@@ -274,39 +188,6 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
     // Returns the value of the most significant 8 bits
     private byte high8Bits(int value) {
         return (byte) ((value >> BIT_SHIFT_24) & BYTE_MASK);
-    }
-
-    private int processBuffer(Buffer buf) {
-        synchronized (bufferSync) {
-            while ((buffer != null) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-
-            if (!done) {
-                result = -1;
-                buffer = buf;
-                sameBuffer = false;
-                bufferSync.notifyAll();
-            }
-
-            while (((result == -1) || (buffer != null)) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-
-            if (done) {
-                return BUFFER_PROCESSED_OK;
-            }
-
-            return result;
-        }
     }
 
     /**
@@ -323,20 +204,7 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
             }
         }
 
-        return processBuffer(buf);
-    }
-
-    /**
-     *
-     * @see javax.media.Multiplexer#setContentDescriptor(
-     *     javax.media.protocol.ContentDescriptor)
-     */
-    public ContentDescriptor setContentDescriptor(
-            ContentDescriptor contentDescriptor) {
-        if (contentDescriptor.getContentType().equals(CONTENT_TYPE)) {
-            return contentDescriptor;
-        }
-        return null;
+        return super.process(buf, trk);
     }
 
     /**
@@ -344,54 +212,22 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
      * @see javax.media.Multiplexer#setInputFormat(javax.media.Format, int)
      */
     public Format setInputFormat(Format format, int track) {
-        boolean formatSupported = false;
-        for (int i = 0; i < supportedFormats.length; i++) {
-            if (format.matches(supportedFormats[i])) {
-                formatSupported = true;
-            }
-        }
-        if (!formatSupported) {
+        Format f = super.setInputFormat(format, track);
+        if (f == null) {
             return null;
         }
         if (format instanceof VideoFormat) {
             if ((videoTrack == -1) || (track == videoTrack)) {
                 videoTrack = track;
-                inputFormats[track] = format;
-                return format;
             }
-        }
-        if (format instanceof AudioFormat) {
+        } else if (format instanceof AudioFormat) {
             if ((audioTrack == -1) || (track == audioTrack)) {
                 audioTrack = track;
-                inputFormats[track] = format;
-                return format;
             }
         }
-        return null;
+        return f;
     }
 
-    /**
-     *
-     * @see javax.media.Multiplexer#setNumTracks(int)
-     */
-    public int setNumTracks(int tracks) {
-        if (tracks > MAX_TRACKS) {
-            tracks = MAX_TRACKS;
-        }
-        inputFormats = new Format[tracks];
-        return tracks;
-    }
-
-    /**
-     *
-     * @see javax.media.PlugIn#close()
-     */
-    public void close() {
-        synchronized (bufferSync) {
-            done = true;
-            bufferSync.notifyAll();
-        }
-    }
 
     /**
      *
@@ -403,18 +239,10 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
 
     /**
      *
-     * @see javax.media.PlugIn#open()
-     */
-    public void open() {
-        // Does Nothing
-    }
-
-    /**
-     *
      * @see javax.media.PlugIn#reset()
      */
     public void reset() {
-        done = false;
+        super.reset();
         firstPacket = true;
     }
 
@@ -494,7 +322,7 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
         if (duration != -1) {
             out.writeUTF("duration");
             out.write(0);
-            out.writeDouble(duration / 1000.0);
+            out.writeDouble((duration + offset) / 1000.0);
         }
 
         lastTagSize = out.size() - startSize;
@@ -566,8 +394,8 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
     }
 
     private int writeVideoHeader(int length, long timestamp,
-            VideoFormat format, DataOutputStream out) throws IOException,
-            QuickArrayException {
+            VideoFormat format, DataOutputStream out, Buffer buffer)
+            throws IOException, QuickArrayException {
         out.writeInt(lastTagSize);
         int startSize = out.size();
         out.write(FLV_VIDEO_TAG);
@@ -588,7 +416,6 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
 
     private int writeData(Buffer buffer, ByteArrayOutputStream bytes,
             DataOutputStream out) throws IOException {
-        int startSize = out.size();
         Object dataObj = buffer.getData();
         int length = buffer.getLength();
         int offset = buffer.getOffset();
@@ -616,140 +443,88 @@ public class JavaMultiplexer implements Multiplexer, MultiplexerStream,
                 out.writeInt(data[i]);
             }
         }
-        result = BUFFER_PROCESSED_OK;
-        if (toWrite != length) {
-            buffer.setOffset(offset + toWrite);
-            buffer.setLength(length - toWrite);
-            result = INPUT_BUFFER_NOT_CONSUMED;
-        }
-        return out.size() - startSize;
+        return toWrite;
     }
 
-    /**
-     *
-     * @see javax.media.protocol.PullSourceStream#read(byte[], int, int)
-     */
-    public int read(byte[] buf, int off, int len) throws IOException {
+    public int read(byte[] buf, int off, int len, Buffer buffer, int track)
+            throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(
                 buf, off, len);
         DataOutputStream out = new DataOutputStream(bytes);
 
-        synchronized (bufferSync) {
-            while ((buffer == null) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
+        Format format = buffer.getFormat();
+        int length = buffer.getLength();
 
-            if (buffer != null) {
-
-                Format format = buffer.getFormat();
-                int length = buffer.getLength();
-
-                if (firstPacket) {
-                    writeFLVHeader(out);
-                    firstPacket = false;
-                }
-
-                int prevTagSize = 0;
-                int headerSize = 0;
-                int dataSize = 0;
-                if (!sameBuffer) {
-                    long timestamp = Math.round((double) buffer.getTimeStamp()
-                            / NANO_TO_MILLIS);
-                    if ((lastTimestamp != -1) && (lastTimestamp >= timestamp)) {
-                        timestamp = lastTimestamp + 1;
-                    }
-                    lastTimestamp = timestamp;
-                    timestamp += timestampOffset;
-
-                    if (format instanceof AudioFormat) {
-                        headerSize = writeAudioHeader(length, timestamp,
-                                (AudioFormat) format, out);
-                        dataSize = writeData(buffer, bytes, out);
-                    } else if (format instanceof VideoFormat) {
-                        try {
-                            headerSize = writeVideoHeader(length, timestamp,
-                                    (VideoFormat) format, out);
-                        } catch (QuickArrayException e) {
-                            IOException error = new IOException(e.getMessage());
-                            error.setStackTrace(e.getStackTrace());
-                            throw error;
-                        }
-                        dataSize = writeData(buffer, bytes, out);
-                    }
-                } else {
-                    prevTagSize = lastTagSize;
-                    dataSize = writeData(buffer, bytes, out);
-                }
-
-                lastTagSize = prevTagSize + headerSize + dataSize;
-            } else if (done) {
-                out.writeInt(lastTagSize);
-                result = BUFFER_PROCESSED_OK;
-            }
-
-            if (result != INPUT_BUFFER_NOT_CONSUMED) {
-                buffer = null;
-                sameBuffer = false;
-            } else {
-                sameBuffer = true;
-            }
-            bufferSync.notifyAll();
+        if (firstPacket) {
+            writeFLVHeader(out);
+            firstPacket = false;
         }
+
+        int prevTagSize = 0;
+        int headerSize = 0;
+        int dataSize = 0;
+        if (!sameBuffer) {
+            long timestamp = Math.round((double) buffer.getTimeStamp()
+                    / NANO_TO_MILLIS);
+            if ((lastTimestamp != -1) && (lastTimestamp >= timestamp)) {
+                timestamp = lastTimestamp + 1;
+            }
+            lastTimestamp = timestamp;
+
+            if (format instanceof AudioFormat) {
+                headerSize = writeAudioHeader(length, timestamp,
+                        (AudioFormat) format, out);
+                dataSize = writeData(buffer, bytes, out);
+            } else if (format instanceof VideoFormat) {
+                try {
+                    headerSize = writeVideoHeader(length, timestamp,
+                            (VideoFormat) format, out, buffer);
+                } catch (QuickArrayException e) {
+                    IOException error = new IOException(e.getMessage());
+                    error.setStackTrace(e.getStackTrace());
+                    throw error;
+                }
+                dataSize = writeData(buffer, bytes, out);
+            }
+        } else {
+            prevTagSize = lastTagSize;
+            dataSize = writeData(buffer, bytes, out);
+        }
+
+        lastTagSize = prevTagSize + headerSize + dataSize;
+
+        if (dataSize != length) {
+            buffer.setOffset(buffer.getOffset() + dataSize);
+            buffer.setLength(length - dataSize);
+            sameBuffer = true;
+        } else {
+            sameBuffer = false;
+            setResult(BUFFER_PROCESSED_OK, true);
+        }
+
         out.close();
         return bytes.getCount();
     }
 
-    /**
-     *
-     * @see javax.media.protocol.PullSourceStream#willReadBlock()
-     */
-    public boolean willReadBlock() {
-        return (buffer == null) && !done;
+    protected int readLast(byte[] buf, int off, int len) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream(
+                buf, off, len);
+        DataOutputStream out = new DataOutputStream(bytes);
+        out.writeInt(lastTagSize);
+        setResult(BUFFER_PROCESSED_OK, true);
+        out.close();
+        return bytes.getCount();
     }
 
-    /**
-     *
-     * @see javax.media.protocol.SourceStream#endOfStream()
-     */
-    public boolean endOfStream() {
-        return done;
-    }
-
-    /**
-     *
-     * @see javax.media.protocol.SourceStream#getContentDescriptor()
-     */
-    public ContentDescriptor getContentDescriptor() {
-        return new ContentDescriptor(CONTENT_TYPE);
-    }
-
-    /**
-     *
-     * @see javax.media.protocol.SourceStream#getContentLength()
-     */
-    public long getContentLength() {
-        return LENGTH_UNKNOWN;
-    }
-
-    /**
-     * Indicates that the video should be resized to the given size
-     * @param size The size to resize to
-     */
-    public void resizeVideoTo(Dimension size) {
-        supportedFormats[0] = new VideoFormat("FLV1", size,
-                Format.NOT_SPECIFIED, Format.byteArray, Format.NOT_SPECIFIED);
+    public void setOffset(Time offset) {
+        this.offset = offset.getNanoseconds() / 1000000;
     }
 
     public void setDuration(Time duration) {
-        setDuration(duration.getNanoseconds() / 1000000);
+        this.duration = duration.getNanoseconds() / 1000000;
     }
 
     public Component getControlComponent() {
         return null;
     }
-
 }

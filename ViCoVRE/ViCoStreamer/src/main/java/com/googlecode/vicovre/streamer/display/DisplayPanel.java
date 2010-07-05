@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Timer;
 
 import javax.media.CannotRealizeException;
+import javax.media.Effect;
 import javax.media.NoPlayerException;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
@@ -54,6 +55,9 @@ import com.googlecode.vicovre.media.controls.PlayControl;
 import com.googlecode.vicovre.media.rtp.StreamListener;
 import com.googlecode.vicovre.media.ui.FileListener;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
+import com.googlecode.vicovre.streamer.web.ChangeDetectionEffect;
+import com.googlecode.vicovre.streamer.web.StreamUpdateListener;
+import com.googlecode.vicovre.streamer.web.VideoWebServer;
 
 public class DisplayPanel extends JPanel implements StreamListener,
         LocalStreamListener, FileListener {
@@ -72,6 +76,9 @@ public class DisplayPanel extends JPanel implements StreamListener,
     private HashMap<DataSource, VideoPanel> localVideoPanels =
         new HashMap<DataSource, VideoPanel>();
 
+    private HashMap<DataSource, StreamUpdateListener> localStreamListeners =
+        new HashMap<DataSource, StreamUpdateListener>();
+
     private HashMap<Long, AudioPanel> audioPanels =
         new HashMap<Long, AudioPanel>();
 
@@ -85,7 +92,10 @@ public class DisplayPanel extends JPanel implements StreamListener,
     private HashMap<DataSource, Timer> localTimers =
         new HashMap<DataSource, Timer>();
 
-    public DisplayPanel() {
+    private VideoWebServer webServer = null;
+
+    public DisplayPanel(VideoWebServer webServer) {
+        this.webServer = webServer;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         localStreams.setLayout(new AVLayout());
@@ -245,7 +255,13 @@ public class DisplayPanel extends JPanel implements StreamListener,
         synchronized (localSsrcs) {
             localSsrcs.add(ssrc);
         }
-        VideoPanel panel = new VideoPanel(dataSource, "", false);
+        StreamUpdateListener listener = webServer.getStream(
+                String.valueOf(ssrc), name);
+        ChangeDetectionEffect cdEffect = new ChangeDetectionEffect();
+        cdEffect.addScreenListener(listener);
+        VideoPanel panel = new VideoPanel(dataSource, "", false,
+                new Effect[]{cdEffect});
+        localStreamListeners.put(dataSource, listener);
         synchronized (localVideoPanels) {
             panel.setName(name);
             localVideoPanels.put(dataSource, panel);
@@ -278,6 +294,9 @@ public class DisplayPanel extends JPanel implements StreamListener,
                 localStreams.remove(panel);
                 localVideoPanels.remove(dataSource);
                 localTimers.get(dataSource).cancel();
+                StreamUpdateListener listener =
+                    localStreamListeners.remove(dataSource);
+                listener.streamStopped();
             }
         }
         validate();

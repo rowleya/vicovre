@@ -180,7 +180,7 @@ public class FlvController implements Controller {
             // Generate the stream
             extractor.transferToStream(response.getOutputStream(),
                     offsetShift, offset,
-                    duration, frameFile);
+                    duration - offset, frameFile);
             response.flushBuffer();
         } catch (EOFException e) {
             System.err.println("User disconnected");

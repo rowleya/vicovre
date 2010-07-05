@@ -44,6 +44,7 @@ import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
+import com.googlecode.vicovre.media.format.BitRateVideoFormat;
 import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
 public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
@@ -118,10 +119,11 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
             context.setOutputWidth(outputSize.width);
             context.setOutputHeight(outputSize.height);
         }
+        if (inputFormat.getFrameRate() != -1) {
+            context.setFrameRate((int) inputFormat.getFrameRate());
+        }
         if (encode) {
             context.setPixelFmt(Utils.getPixFormat(inputFormat).getId());
-            outputFormat = new VideoFormat(outputFormat.getEncoding(),
-                    outputSize, -1, Format.byteArray, -1);
         } else {
             context.setPixelFmt(Utils.getPixFormat(outputFormat).getId());
         }
@@ -167,6 +169,13 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
                 return BUFFER_PROCESSED_FAILED;
             }
             if (encode) {
+                outputFormat = new BitRateVideoFormat(
+                        outputFormat.getEncoding(),
+                        new Dimension(context.getOutputWidth(),
+                                context.getOutputHeight()),
+                        -1, Format.byteArray, -1,
+                        context.getBitrate(),
+                        context.getBitrateTolerance());
                 allocateData(dataSize);
             }
             inited = true;

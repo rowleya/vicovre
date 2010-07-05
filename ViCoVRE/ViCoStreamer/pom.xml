@@ -69,14 +69,14 @@
             <plugin>
                  <artifactId>maven-jar-plugin</artifactId>
                  <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.googlecode.vicovre.streamer.Streamer</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                     <archive>
+                         <manifest>
+                             <addClasspath>true</addClasspath>
+                             <classpathPrefix>lib/</classpathPrefix>
+                             <mainClass>com.googlecode.vicovre.streamer.Streamer</mainClass>
+                         </manifest>
+                     </archive>
+                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.dstovall</groupId>
@@ -110,7 +110,7 @@
                         <mainClass>com.googlecode.vicovre.streamer.Streamer</mainClass>
                     </jnlp>
                     <sign>
-                        <keystore>keystore</keystore>
+                        <keystore>../keystore</keystore>
                         <keypass>password</keypass>
                         <storepass>password</storepass>
                         <alias>cert</alias>
@@ -126,7 +126,7 @@
 
                         <keystoreConfig>
                             <delete>false</delete>
-                            <gen>true</gen>
+                            <gen>false</gen>
                         </keystoreConfig>
                     </sign>
 
@@ -242,6 +242,11 @@
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>start</artifactId>
             <version>6.1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lti</groupId>
+            <artifactId>civil-native-windows32</artifactId>
+            <version>1.0</version>
         </dependency>
      </dependencies>
 </project>

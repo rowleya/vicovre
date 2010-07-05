@@ -37,5 +37,15 @@ import javax.media.Time;
 
 public interface SetDurationControl extends Control {
 
+    /**
+     * Sets the timestamp of the first packet
+     * @param offset The offset
+     */
+    void setOffset(Time offset);
+
+    /**
+     * Sets the time difference between the first and last packets
+     * @param duration The duration
+     */
     void setDuration(Time duration);
 }

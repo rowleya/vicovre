@@ -35,6 +35,7 @@ package com.googlecode.vicovre.codecs.utils;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
  * A stream that writes to a byte array
@@ -51,6 +52,10 @@ public class ByteArrayOutputStream extends OutputStream {
 
     private int count = 0;
 
+    private int startOffset = 0;
+
+    private int startLength = 0;
+
     /**
      * Creates a new ByteArrayOutputStream
      * @param array The array to write to
@@ -61,6 +66,14 @@ public class ByteArrayOutputStream extends OutputStream {
         this.array = array;
         this.offset = offset;
         this.length = length;
+        startOffset = offset;
+        startLength = length;
+    }
+
+    public void reset() {
+        offset = startOffset;
+        length = startLength;
+        count = 0;
     }
 
     /**
@@ -82,8 +95,9 @@ public class ByteArrayOutputStream extends OutputStream {
      */
     public void write(byte[] bytes, int off, int len) throws IOException {
         if ((length < len) || ((offset + len) > array.length)) {
-            throw new EOFException("End of byte array reached: "
-                + length + ": " + len + ": " + offset + ": " + array.length);
+            throw new EOFException("End of byte array reached: length = "
+                + length + ": towrite = " + len + ": offset = " + offset
+                + ": array length = " + array.length);
         }
         System.arraycopy(bytes, off, array, offset, len);
         offset += len;
