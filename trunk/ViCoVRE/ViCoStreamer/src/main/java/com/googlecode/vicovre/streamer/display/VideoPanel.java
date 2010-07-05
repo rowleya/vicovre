@@ -43,6 +43,7 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.text.NumberFormat;
 
+import javax.media.Effect;
 import javax.media.NoPlayerException;
 import javax.media.control.BitRateControl;
 import javax.media.control.FrameRateControl;
@@ -184,11 +185,17 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
      * @throws NoPlayerException
      */
     public VideoPanel(DataSource ds, String format, boolean muteNow) {
+        this(ds, format, muteNow, new Effect[0]);
+    }
+
+    public VideoPanel(DataSource ds, String format, boolean muteNow,
+            Effect[] effects) {
 
         // Create and start the player
         String error = null;
         try {
-            player = new VideoPlayer(ds, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            player = new VideoPlayer(ds, PREVIEW_WIDTH, PREVIEW_HEIGHT,
+                    effects);
 
             if (!muteNow) {
                 player.start();

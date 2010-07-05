@@ -13,10 +13,9 @@
 
     <build>
         <finalName>ViCoSharedResources</finalName>
-
         <resources>
             <resource>
-                <directory>/src/main/shared</directory>
+                <directory>src/main/shared</directory>
            </resource>
         </resources>
     </build>

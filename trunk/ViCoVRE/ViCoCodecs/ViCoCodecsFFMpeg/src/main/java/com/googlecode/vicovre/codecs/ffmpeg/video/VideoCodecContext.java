@@ -74,11 +74,11 @@ public class VideoCodecContext {
 
     private int flags2 = 0;
 
-    private int qmin = 0;
+    private int qmin = 2;
 
-    private int qmax = 0;
+    private int qmax = 31;
 
-    private int maxQdiff = 0;
+    private int maxQdiff = 3;
 
     private int lowres = 0;
 
@@ -86,7 +86,9 @@ public class VideoCodecContext {
 
     private int debug = 0;
 
-    private int bitrate = 0;
+    private int bitrate = 200 * 1000;
+
+    private int bitrateTolerance = 4000 * 1000;
 
     private int maxrate = 0;
 
@@ -101,6 +103,8 @@ public class VideoCodecContext {
     private int pixelFmt = 0;
 
     private int outputDataSize = 0;
+
+    private int frameRate = 25;
 
     /**
      * Returns the flags.
@@ -357,5 +361,21 @@ public class VideoCodecContext {
      */
     public void setOutputDataSize(int outputDataSize) {
         this.outputDataSize = outputDataSize;
+    }
+
+    public void setFrameRate(int frameRate) {
+        this.frameRate = frameRate;
+    }
+
+    public int getFrameRate() {
+        return frameRate;
+    }
+
+    public void setBitrateTolerance(int bitrateTolerance) {
+        this.bitrateTolerance = bitrateTolerance;
+    }
+
+    public int getBitrateTolerance() {
+        return bitrateTolerance;
     }
 }

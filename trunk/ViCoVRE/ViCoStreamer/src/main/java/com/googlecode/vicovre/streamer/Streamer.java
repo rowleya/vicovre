@@ -72,6 +72,7 @@ import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
 import com.googlecode.vicovre.streamer.display.DisplayPanel;
+import com.googlecode.vicovre.streamer.web.VideoWebServer;
 import com.googlecode.vicovre.utils.Config;
 
 /**
@@ -94,7 +95,9 @@ public class Streamer extends JFrame implements ActionListener {
 
     private static final int[] AUDIO_TYPES = new int[]{84, 112};
 
-    private DisplayPanel displayPanel = new DisplayPanel();
+    private VideoWebServer webServer = new VideoWebServer(7890);
+
+    private DisplayPanel displayPanel = new DisplayPanel(webServer);
 
     private AGController agController = null;
 
@@ -123,6 +126,7 @@ public class Streamer extends JFrame implements ActionListener {
     public Streamer() throws SAXException, IOException,
             ParserConfigurationException {
         super("Streamer");
+        webServer.start();
         setSize(400, 600);
         setLocationRelativeTo(null);
         setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -183,6 +187,7 @@ public class Streamer extends JFrame implements ActionListener {
                 clientProfile);
         if (config != null) {
             localDeviceDialog.setConfiguration(config);
+            setWebPort(localDeviceDialog.getWebPort());
         }
         agController.setJoinListener(localDeviceDialog);
         devicesButton.setEnabled(true);
@@ -274,9 +279,27 @@ public class Streamer extends JFrame implements ActionListener {
         System.exit(0);
     }
 
+    private void setWebPort(int webPort) {
+        try {
+            System.err.println("Setting port to " + webPort);
+            webServer.setPort(webPort);
+            System.err.println("Port set");
+        } catch (IOException e1) {
+            localDeviceDialog.setWebPort(webPort);
+            e1.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Error setting web port: " + e1.getMessage(),
+                    "Web Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(devicesButton)) {
+            int webPort = localDeviceDialog.getWebPort();
             localDeviceDialog.setVisible(true);
+            if (webPort != localDeviceDialog.getWebPort()) {
+                setWebPort(localDeviceDialog.getWebPort());
+            }
         } else if (e.getSource().equals(profileButton)) {
             try {
                 editProfile();

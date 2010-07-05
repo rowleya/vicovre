@@ -43,6 +43,7 @@ public:
         jmethodID setLengthMethod;
         jmethodID setTimestampMethod;
         jmethodID setSequenceNumberMethod;
+        jmethodID setBufferFlagsMethod;
 
         jmethodID getFlagsMethod;
         jmethodID getFlags2Method;
@@ -59,6 +60,8 @@ public:
         jmethodID getOutputWidthMethod;
         jmethodID getOutputHeightMethod;
         jmethodID getPixelFormatMethod;
+        jmethodID getBitrateToleranceMethod;
+        jmethodID getFrameRateMethod;
         jmethodID setFlagsMethod;
         jmethodID setFlags2Method;
         jmethodID setQMinMethod;
@@ -74,6 +77,7 @@ public:
         jmethodID setOutputWidthMethod;
         jmethodID setOutputHeightMethod;
         jmethodID setPixelFormatMethod;
+        jmethodID setBitrateToleranceMethod;
 
         jmethodID setOutputDataSizeMethod;
 
@@ -173,6 +177,10 @@ Video::Video(JNIEnv *env) {
             "getOutputHeight", "()I");
     getPixelFormatMethod = env->GetMethodID(contextClass,
             "getPixelFmt", "()I");
+    getBitrateToleranceMethod = env->GetMethodID(contextClass,
+                "getBitrateTolerance", "()I");
+    getFrameRateMethod = env->GetMethodID(contextClass,
+                "getFrameRate", "()I");
 
     setFlagsMethod = env->GetMethodID(contextClass, "setFlags", "(I)V");
     setFlags2Method = env->GetMethodID(contextClass, "setFlags2", "(I)V");
@@ -194,6 +202,8 @@ Video::Video(JNIEnv *env) {
             "setOutputHeight", "(I)V");
     setPixelFormatMethod = env->GetMethodID(contextClass,
             "setPixelFmt", "(I)V");
+    setBitrateToleranceMethod = env->GetMethodID(contextClass,
+                "setBitrateTolerance", "(I)V");
 
     setOutputDataSizeMethod = env->GetMethodID(contextClass,
                 "setOutputDataSize", "(I)V");
@@ -226,6 +236,7 @@ Video::Video(JNIEnv *env) {
     setTimestampMethod = env->GetMethodID(bufferCl, "setTimeStamp", "(J)V");
     setSequenceNumberMethod = env->GetMethodID(bufferCl,
         "setSequenceNumber", "(J)V");
+    setBufferFlagsMethod = env->GetMethodID(bufferCl, "setFlags", "(I)V");
 
     jfieldID rtpMarker = env->GetStaticFieldID(bufferCl,
             "FLAG_RTP_MARKER", "I");
@@ -270,6 +281,8 @@ void Video::fillInCodecContext(JNIEnv *env, jobject context) {
     env->CallVoidMethod(context, setDctAlgoMethod, codecContext->dct_algo);
     env->CallVoidMethod(context, setDebugMethod, codecContext->debug);
     env->CallVoidMethod(context, setBitRateMethod, codecContext->bit_rate);
+    env->CallVoidMethod(context, setBitrateToleranceMethod,
+            codecContext->bit_rate_tolerance);
 }
 
 int Video::init(JNIEnv *env, jobject context) {
@@ -291,7 +304,8 @@ int Video::init(JNIEnv *env, jobject context) {
         codecContext->pix_fmt = codec->pix_fmts[0];
 
         codecContext->time_base.num = 1;
-        codecContext->time_base.den = 90000;
+        codecContext->time_base.den = env->CallIntMethod(context,
+                getFrameRateMethod);
 
         codecContext->qmax = env->CallIntMethod(context, getQMaxMethod);
         codecContext->qmin = env->CallIntMethod(context, getQMinMethod);
@@ -300,6 +314,14 @@ int Video::init(JNIEnv *env, jobject context) {
         codecContext->lowres = env->CallIntMethod(context, getLowResMethod);
         codecContext->dct_algo = env->CallIntMethod(context, getDctAlgoMethod);
         codecContext->bit_rate = env->CallIntMethod(context, getBitRateMethod);
+        codecContext->bit_rate_tolerance = env->CallIntMethod(context,
+                getBitrateToleranceMethod);
+        codecContext->rc_max_rate = env->CallIntMethod(context,
+                getMaxRateMethod);
+        codecContext->rc_min_rate = codecContext->rc_max_rate;
+        if (codecContext->rc_min_rate > codecContext->bit_rate) {
+            codecContext->rc_min_rate = codecContext->bit_rate;
+        }
         if (codecContext->rc_max_rate > 0) {
             codecContext->rc_buffer_size = codecContext->bit_rate
                     * av_q2d(codecContext->time_base);
@@ -337,6 +359,7 @@ int Video::encode(JNIEnv *env, jobject input, jobject output) {
     jobject outdata = env->CallObjectMethod(output, getDataMethod);
     int outoffset = env->CallIntMethod(output, getOffsetMethod);
     int outlength = env->CallIntMethod(output, getLengthMethod);
+    int outFlags = env->CallIntMethod(output, getBufferFlagsMethod);
 
     uint8_t *in = (uint8_t *) env->GetPrimitiveArrayCritical(
         (jarray) indata, 0);
@@ -348,9 +371,9 @@ int Video::encode(JNIEnv *env, jobject input, jobject output) {
     sws_scale(scaleContext, frame->data, frame->linesize,
             0, inputHeight, scaleFrame->data, scaleFrame->linesize);
     if (flags & FLAG_KEY_FRAME) {
-        frame->key_frame = 1;
+        scaleFrame->key_frame = 1;
     } else {
-        frame->key_frame = 0;
+        scaleFrame->key_frame = 0;
     }
     int bytesEncoded = avcodec_encode_video(codecContext, (out + outoffset),
             outlength, scaleFrame);
@@ -361,6 +384,13 @@ int Video::encode(JNIEnv *env, jobject input, jobject output) {
         return BUFFER_PROCESSED_FAILED;
     }
 
+
+    if (codecContext->coded_frame && codecContext->coded_frame->key_frame) {
+        outFlags = outFlags | FLAG_KEY_FRAME;
+    } else {
+        outFlags = outFlags & ~FLAG_KEY_FRAME;
+    }
+    env->CallVoidMethod(output, setBufferFlagsMethod, outFlags);
     env->CallVoidMethod(output, setLengthMethod, bytesEncoded);
     return BUFFER_PROCESSED_OK;
 }

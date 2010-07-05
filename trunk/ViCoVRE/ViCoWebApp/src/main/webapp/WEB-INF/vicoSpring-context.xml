@@ -46,7 +46,7 @@
     </bean>
 
     <!-- Annotations implementation - comment out to ignore annotations -->
-    <!-- <bean id="profileRepository" class="org.caboto.profile.ProfileRepositoryXmlImpl">
+    <bean id="profileRepository" class="org.caboto.profile.ProfileRepositoryXmlImpl">
         <constructor-arg index="0" value="profiles.xml"/>
     </bean>
 
@@ -58,5 +58,5 @@
     <bean id="annotationDao" class="org.caboto.dao.AnnotationDaoImpl">
         <constructor-arg index="0" ref="profileRepository"/>
         <constructor-arg index="1" ref="cabotoDatabase"/>
-    </bean> -->
+    </bean>
 </beans>

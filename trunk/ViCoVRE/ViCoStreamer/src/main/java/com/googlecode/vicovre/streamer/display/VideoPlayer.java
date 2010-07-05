@@ -84,7 +84,8 @@ class VideoPlayer {
      * @throws IOException
      * @throws NoPlayerException
      */
-    public VideoPlayer(DataSource ds, int previewwidth, int previewheight)
+    public VideoPlayer(DataSource ds, int previewwidth, int previewheight,
+            Effect[] effects)
             throws NoPlayerException {
         this.previewwidth = previewwidth;
         this.previewheight = previewheight;
@@ -133,7 +134,7 @@ class VideoPlayer {
         }
 
         if (videoTrack != -1) {
-            renderer = new RGBRenderer(new Effect[0]);
+            renderer = new RGBRenderer(effects);
             renderer.setDataSource(ds, videoTrack);
             if (renderer.setInputFormat(videoFormat) == null) {
                 throw new NoPlayerException("Unsupported format "

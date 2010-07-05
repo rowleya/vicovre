@@ -32,215 +32,59 @@
 
 package com.googlecode.vicovre.codecs.multiplexers.mp3;
 
-import java.io.IOException;
-
 import javax.media.Buffer;
 import javax.media.Format;
-import javax.media.Multiplexer;
-import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.ContentDescriptor;
-import javax.media.protocol.DataSource;
 
-import com.googlecode.vicovre.codecs.multiplexers.MultiplexerDataSource;
-import com.googlecode.vicovre.codecs.multiplexers.MultiplexerStream;
+import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
 
-public class JavaMultiplexer implements Multiplexer, MultiplexerStream {
+public class JavaMultiplexer extends BasicMultiplexer {
 
-    public static final String CONTENT_TYPE = "audio/mpeg";
-
-    private MultiplexerDataSource dataSource = new MultiplexerDataSource(this);
-
-    private final Format[] supportedFormats = new Format[]{
-        new VideoFormat(null),
-        new AudioFormat(AudioFormat.MPEGLAYER3)
-    };
-
-    private Buffer buffer = null;
-
-    private Integer bufferSync = new Integer(0);
-
-    private boolean done = false;
-
-    private int result = -1;
-
-    public DataSource getDataOutput() {
-        return dataSource;
-    }
-
-    public Format[] getSupportedInputFormats() {
-        return supportedFormats;
-    }
-
-    public ContentDescriptor[] getSupportedOutputContentDescriptors(
-            Format[] inputs) {
-        if (inputs == null) {
-            return new ContentDescriptor[]{
-                new ContentDescriptor(CONTENT_TYPE)
-            };
-        }
-        boolean error = false;
-        for (int i = 0; i < inputs.length; i++) {
-            boolean formatFound = false;
-            for (int j = 0; j < supportedFormats.length; j++) {
-                if (inputs[i].matches(supportedFormats[j])) {
-                    formatFound = true;
-                }
-            }
-            if (!formatFound) {
-                error = true;
-            }
-        }
-        if (error) {
-            return new ContentDescriptor[0];
-        }
-        return new ContentDescriptor[]{
-            new ContentDescriptor(CONTENT_TYPE)
-        };
+    public JavaMultiplexer() {
+        super(new ContentDescriptor[]{new ContentDescriptor("audio/mpeg")},
+            new Format[]{new VideoFormat(null),
+                         new AudioFormat(AudioFormat.MPEGLAYER3)},
+            1);
     }
 
     public int process(Buffer buf, int track) {
         if (buf.getFormat() instanceof VideoFormat) {
             return BUFFER_PROCESSED_OK;
         }
-        synchronized (bufferSync) {
-            while ((buffer != null) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-
-            if (!done) {
-                result = -1;
-                buffer = buf;
-                bufferSync.notifyAll();
-            }
-
-            while (((result == -1) || (buffer != null)) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-
-            if (done) {
-                return BUFFER_PROCESSED_OK;
-            }
-
-            return result;
-        }
-    }
-
-    public ContentDescriptor setContentDescriptor(
-            ContentDescriptor contentDescriptor) {
-        if (contentDescriptor.getContentType().equals(CONTENT_TYPE)) {
-            return contentDescriptor;
-        }
-        return null;
-    }
-
-    public Format setInputFormat(Format format, int track) {
-        for (int i = 0; i < supportedFormats.length; i++) {
-            if (format.matches(supportedFormats[i])) {
-                return format;
-            }
-        }
-        return null;
-    }
-
-    public int setNumTracks(int numtracks) {
-        return numtracks;
-    }
-
-    public void close() {
-        synchronized (bufferSync) {
-            done = true;
-            bufferSync.notifyAll();
-        }
+        return super.process(buf, track);
     }
 
     public String getName() {
         return "MP3 Multiplexer";
     }
 
-    public void open() throws ResourceUnavailableException {
-        // Does Nothing
-    }
+    protected int read(byte[] buf, int off, int len, Buffer buffer, int track) {
+        Format format = buffer.getFormat();
+        int length = buffer.getLength();
+        int offset = buffer.getOffset();
 
-    public void reset() {
-        done = false;
-    }
-
-    public Object getControl(String className) {
-        return null;
-    }
-
-    public Object[] getControls() {
-        return new Object[0];
-    }
-
-    public int read(byte[] buf, int off, int len) throws IOException {
-        synchronized (bufferSync) {
-            while ((buffer == null) && !done) {
-                try {
-                    bufferSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
+        if (format instanceof AudioFormat) {
+            int toCopy = length;
+            if (length > len) {
+                toCopy = len;
             }
-
-            if (buffer != null) {
-
-                Format format = buffer.getFormat();
-                int length = buffer.getLength();
-                int offset = buffer.getOffset();
-
-                if (format instanceof AudioFormat) {
-                    int toCopy = length;
-                    if (length > len) {
-                        toCopy = len;
-                    }
-                    System.arraycopy(buffer.getData(), offset, buf, off,
-                            toCopy);
-                    if (toCopy < length) {
-                        buffer.setOffset(offset + toCopy);
-                        buffer.setLength(length - toCopy);
-                        result = INPUT_BUFFER_NOT_CONSUMED;
-                    } else {
-                        buffer = null;
-                        result = BUFFER_PROCESSED_OK;
-                        bufferSync.notifyAll();
-                    }
-                    return toCopy;
-                }
-                buffer = null;
-                result = BUFFER_PROCESSED_OK;
-                bufferSync.notifyAll();
+            System.arraycopy(buffer.getData(), offset, buf, off,
+                    toCopy);
+            if (toCopy < length) {
+                buffer.setOffset(offset + toCopy);
+                buffer.setLength(length - toCopy);
+            } else {
+                setResult(BUFFER_PROCESSED_OK, true);
             }
-            return 0;
+            return toCopy;
         }
+        setResult(BUFFER_PROCESSED_OK, true);
+        return 0;
     }
 
-    public boolean willReadBlock() {
-        return (buffer == null) && !done;
+    protected int readLast(byte[] buf, int off, int len) {
+        return 0;
     }
-
-    public boolean endOfStream() {
-        return done;
-    }
-
-    public ContentDescriptor getContentDescriptor() {
-        return new ContentDescriptor(CONTENT_TYPE);
-    }
-
-    public long getContentLength() {
-        return LENGTH_UNKNOWN;
-    }
-
-
-
 }

@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <script language='JavaScript'>
+
+            function startWindow(id) {
+                win = window.open(id + '/screen.html', '',
+                    'toolbar=no,resizable=yes,scrollbars=no,top=0,left=0,status=no');
+                win.resizeTo(screen.availWidth, screen.availHeight);
+                win.focus();
+                /*top.opener=self;
+                top.close(); */
+            }
+
+            function newRequest() {
+                if (window.XMLHttpRequest) {
+                    return new XMLHttpRequest();
+                } else if (window.ActiveXObject) {
+                    return new ActiveXObject("Microsoft.XMLHTTP");
+                }
+            }
+
+            var request = null;
+
+            function getUpdate() {
+                request = newRequest();
+                request.onreadystatechange = handleUpdate;
+                request.open("POST", "listStreams.xml", true);
+                request.send("");
+            }
+
+            function handleUpdate() {
+                if (request.readyState == 4) {
+                    if (request.status == 200) {
+                        var response = request.responseXML.documentElement;
+                        if (response != null) {
+                            var streams = response.getElementsByTagName(
+                                                 'stream');
+                            if ((streams != null) && (streams.length > 0)) {
+                                var list = "<ul>";
+                                for (var i = 0; i < streams.length; i++) {
+                                    list += "<li>";
+                                    var attrs = streams[i].attributes;
+                                    var name =
+                                        attrs.getNamedItem('name').nodeValue;
+                                    var id = attrs.getNamedItem('id').nodeValue;
+                                    list += "<a href='javascript:startWindow("
+                                        + id + ");'>" + name + "</a>";
+                                    list += "</li>";
+                                }
+                                list += "</ul>";
+                                document.getElementById("list").innerHTML =
+                                    list;
+                            } else {
+                                document.getElementById("list").innerHTML =
+                                    "<p>No streams are available.</p>";
+                            }
+                        }
+                    } else {
+                        document.getElementById("list").innerHTML =
+                            "<p>System offline - please wait...</p>";
+                    }
+                    getUpdate();
+                }
+            }
+        </script>
+    </head>
+    <body marginheight="0" marginwidth="0" topmargin="0" leftmargin="0"
+            rightmargin="0" id="body">
+        <p>Select a stream to view:</p>
+        <div style="position: absolute; top: 0px; left: 0px;" id="list">
+            <p>No streams are available.</p>
+        </div>
+        <script language="JavaScript">
+            getUpdate();
+        </script>
+    </body>
+</html>

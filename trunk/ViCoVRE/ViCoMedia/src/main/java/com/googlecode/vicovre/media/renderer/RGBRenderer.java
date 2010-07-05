@@ -270,13 +270,6 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         }
         bitsRead += bits;
 
-        if (((input.getFormat() instanceof RGBFormat)
-                || (input.getFormat() instanceof YUVFormat))
-                && !visible && !updatePreview) {
-            framesRead += 1;
-            return BUFFER_PROCESSED_OK;
-        }
-
         // Run through the effects
         for (int i = 0; (i < renderEffects.length)
                 && ((retval == BUFFER_PROCESSED_OK)
@@ -285,8 +278,8 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 retval = effectProcessors[i].process(input, false);
                 input = effectProcessors[i].getOutputBuffer();
             }
-            if (visible && ((retval == BUFFER_PROCESSED_OK)
-                    || (retval == INPUT_BUFFER_NOT_CONSUMED))) {
+            if ((retval == BUFFER_PROCESSED_OK)
+                    || (retval == INPUT_BUFFER_NOT_CONSUMED)) {
                 Buffer b = new Buffer();
                 b.setOffset(0);
                 b.setLength(0);
@@ -299,6 +292,12 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
             }
         }
 
+        if (((input.getFormat() instanceof RGBFormat)
+                || (input.getFormat() instanceof YUVFormat))
+                && !visible && !updatePreview) {
+            framesRead += 1;
+            return BUFFER_PROCESSED_OK;
+        }
 
         // Run the final processor
         if ((processor != null) && ((retval == BUFFER_PROCESSED_OK)

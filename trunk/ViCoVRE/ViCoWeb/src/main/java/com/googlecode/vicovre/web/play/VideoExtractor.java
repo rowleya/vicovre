@@ -250,6 +250,7 @@ public class VideoExtractor {
         SetDurationControl setDurationControl = (SetDurationControl)
             multiplexer.getControl(SetDurationControl.class.getName());
         if (setDurationControl != null) {
+            setDurationControl.setOffset(new Time(offset * 1000000L));
             setDurationControl.setDuration(new Time(duration * 1000000L));
         }
         OutputStreamDataSink dataSink = new OutputStreamDataSink(
@@ -257,8 +258,8 @@ public class VideoExtractor {
         dataSink.start();
 
         // Seek to the start of the video and audio
-        long audioEndTimestamp = (duration - offset) * 1000000L;
-        long videoEndTimestamp = (duration - offset) * 1000000L;
+        long audioEndTimestamp = duration * 1000000L;
+        long videoEndTimestamp = duration * 1000000L;
         long videoTimestampOffset = 0;
         if ((videoMixer != null) && (audioMixer != null)) {
             videoMixer.streamSeek(offset - (videoOffset / 1000000L)
@@ -349,7 +350,7 @@ public class VideoExtractor {
             long audioTimestamp = audioSource.getTimestamp();
             long videoTimestamp = videoSource.getTimestamp();
 
-            //System.err.println("Audio ts = " + audioTimestamp + " os = " + mixer.getOffset() + " Video ts = " + videoTimestamp + " os = " + videoReader.getOffset());
+            //System.err.println("Audio ts = " + audioTimestamp + " os = " + audioMixer.getOffset() + " Video ts = " + videoTimestamp + " os = " + videoMixer.getOffset());
 
             if (audioTimestamp < videoTimestamp) {
                 if (audioTimestamp <= audioEndTimestamp) {
@@ -405,7 +406,7 @@ public class VideoExtractor {
             audioSource.close();
         }
         multiplexer.close();
-        dataSink.close();
+        //dataSink.close();
         System.err.println("Extractor finished");
     }
 
@@ -414,8 +415,9 @@ public class VideoExtractor {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         VideoExtractor extractor = new VideoExtractor(
-            //"video/x-flv",
-            "audio/mpeg",
+            //"video/x-ms-asf",
+            "video/x-flv",
+            //"audio/mpeg",
 
             // Video
             /*new String[]{
@@ -429,15 +431,16 @@ public class VideoExtractor {
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
             //"../../recordings/1273840957545552375448/2941173072",
             new String[]{
-                //"../../recordings/127435969591176530449/3526413242",
+                "../../recordings/127435969591176530449/3526413242",
                 "../../recordings/127435969591176530449/3521524142",
                 "../../recordings/127435969591176530449/1446065064",
             },
 
             new Rectangle[]{
-                //new Rectangle(286, 30, 720, 540),
+                new Rectangle(286, 30, 720, 540),
                 new Rectangle(286, 30, 720, 540),
                 new Rectangle(30, 30, 240, 196),
+                //new Rectangle(640, 480),
             },
 
             // Audio
@@ -482,9 +485,11 @@ public class VideoExtractor {
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream(
-                //"test.flv"
-                "test.mp3"
+                "test.flv"
+                //"test.mp3"
+                //"test.asf"
                 );
-        extractor.transferToStream(testout, 0, 3000000, 3060000, null);
+        extractor.transferToStream(testout, 0, 3000000, 60000, null);
+        System.exit(0);
     }
 }

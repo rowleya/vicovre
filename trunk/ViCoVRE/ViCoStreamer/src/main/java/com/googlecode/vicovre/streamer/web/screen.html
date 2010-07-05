@@ -1,0 +1,79 @@
+<html>
+    <head>
+        <script language='JavaScript'>
+            function resizeImage() {
+                height = window.innerHeight;
+                if (height == undefined) {
+                    height = document.body.offsetHeight;
+                }
+                document.getElementById("image").height = height-4;
+            }
+
+            function newRequest() {
+                if (window.XMLHttpRequest) {
+                    return new XMLHttpRequest();
+                } else if (window.ActiveXObject) {
+                    return new ActiveXObject("Microsoft.XMLHTTP");
+                }
+            }
+
+            var request = null;
+
+            function getUpdate() {
+                request = newRequest();
+                request.onreadystatechange = handleUpdate;
+                request.open("POST", "isChange.xml", true);
+                request.send("");
+            }
+
+            function handleUpdate() {
+                if (request.readyState == 4) {
+                    if (request.status == 200) {
+                        var response = request.responseXML.documentElement;
+                        if (response != null) {
+                            var isNewImage = response.getElementsByTagName(
+                                                 'isNewImage');
+                            if (isNewImage != null) {
+                                isNewImage = isNewImage[0].firstChild.data;
+                                if (isNewImage == "true") {
+                                    var now = new Date();
+                                    document.getElementById("image").src =
+                                        "image.jpg?" + now.getTime();
+                                    resizeImage();
+                                }
+                            }
+                        }
+
+                        getUpdate();
+                    } else {
+                        if (!wasOffline) {
+                            document.getElementById("info").style.visibility =
+                                "visible";
+                            document.getElementById("image").style.visibility =
+                                "hidden";
+                        }
+                    }
+                }
+            }
+
+        </script>
+    </head>
+    <body marginheight="0" marginwidth="0" topmargin="0" leftmargin="0"
+            rightmargin="0" onresize="resizeImage();" id="body">
+        <img style="visibility: visible;" id="image" src="image.jpg?0">
+        <script>resizeImage();</script>
+        <div style="position: absolute;
+                    top: 0px;
+                    left: 0px;
+                    visibility: hidden;"
+                id="info">
+            <p>
+            The user has stopped ScreenStreamer.
+            Please <a href="javascript: window.close()">close</a> this window.
+            </p>
+        </div>
+        <script language="JavaScript">
+            getUpdate();
+        </script>
+    </body>
+</html>
