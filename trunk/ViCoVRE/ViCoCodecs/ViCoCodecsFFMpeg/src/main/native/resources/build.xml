@@ -228,6 +228,28 @@
         </configureandmake>
     </target>
 
+     <target name="faac.check">
+            <condition property="faac.dontrun">
+                <and>
+                    <available file="${prefix.path.real}/lib/libfaac.a"/>
+                    <available file="${prefix.path.real}/include/faac.h"/>
+                </and>
+            </condition>
+        </target>
+
+    <target name="build-faac" depends="mkdirs,faac.check" unless="faac.dontrun">
+        <get dest="${download.path}/faac${faac.version}" src="${faac.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/faac${faac.version}" compression="${faac.compression}" dest="${extract.path}"/>
+        <bootstrap library="faac"/>
+        <chmod file="${extract.path}/faadc/install-sh" perm="u+x"/>
+        <configureandmake library="faac" ldflags="-no-undefined">
+            <confopts>
+                <arg value="--disable-shared" />
+                <arg value="--enable-static" />
+            </confopts>
+        </configureandmake>
+    </target>
+
     <target name="xvidcore.check">
         <condition property="xvidcore.dontrun">
             <and>
@@ -474,23 +496,19 @@
         </exec>
     </target>
 
-    <target name="a52.check">
-        <condition property="a52.dontrun">
+    <target name="amr.check">
+        <condition property="amr.dontrun">
             <and>
-                <available file="${prefix.path.real}/lib/liba52.a"/>
-                <available file="${prefix.path.real}/include/a52dec/a52.h"/>
-                <available file="${prefix.path.real}/include/a52dec/attributes.h"/>
-                <available file="${prefix.path.real}/include/a52dec/audio_out.h"/>
-                <available file="${prefix.path.real}/include/a52dec/mm_accel.h"/>
+                <available file="${prefix.path.real}/lib/libamropencore.a"/>
             </and>
         </condition>
     </target>
 
-    <target name="build-a52" depends="mkdirs,a52.check" unless="a52.dontrun">
-        <get dest="${download.path}/a52${a52.version}" src="${a52.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
-        <untar src="${download.path}/a52${a52.version}" compression="${a52.compression}" dest="${extract.path}"/>
-        <chmod file="${extract.path}/a52dec${a52.version}/install-sh" perm="u+x"/>
-        <configureandmake library="a52dec${a52.version}">
+    <target name="build-amr" depends="mkdirs,amr.check" unless="amr.dontrun">
+        <get dest="${download.path}/opencore-amr${amr.version}" src="${amr.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
+        <untar src="${download.path}/opencore-amr${amr.version}" compression="${amr.compression}" dest="${extract.path}"/>
+        <chmod file="${extract.path}/opencore-amr${amr.version}/install-sh" perm="u+x"/>
+        <configureandmake library="opencore-amr${amr.version}">
             <confopts>
                 <arg value="--disable-shared" />
                 <arg value="--enable-static" />
@@ -501,12 +519,8 @@
     <target name="patch-ffmpeg">
         <get dest="${download.path}/ffmpeg-patch${ffmpeg.version}" src="${ffmpeg.patch.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/ffmpeg-patch${ffmpeg.version}" compression="${ffmpeg.patch.compression}" dest="${extract.path}"/>
-        <copy tofile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/liba52.c" file="${extract.path}/ffmpeg-patch${ffmpeg.version}/liba52.c"/>
-        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/configure.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/configure"/>
-        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/Makefile.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/Makefile"/>
-        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/allcodecs.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/allcodecs.c"/>
         <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/dsputil_mmx.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/x86/dsputil_mmx.c"/>
-        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/h264.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/h264.c"/>
+        <!--<patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/h264.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/h264.c"/> -->
     </target>
 
     <target name="ffmpeg.check">
@@ -565,6 +579,7 @@
                     <arg value="--enable-libgsm"/>
                     <arg value="--disable-decoder=aac"/>
                     <arg value="--enable-libfaad"/>
+                    <arg value="--enable-libfaac"/>
                     <arg value="--enable-libtheora"/>
                     <arg value="--enable-libvorbis"/>
                     <arg value="--enable-libxvid"/>
@@ -605,7 +620,7 @@
         </ffmpeg.make>
     </target>
 
-    <target name="build-ffmpeg" depends="mkdirs,ffmpeg.check,build-yasm,build-lame,build-faad,build-xvidcore,build-x264,build-vorbis,build-theora,build-gsm,build-a52" unless="ffmpeg.dontrun">
+    <target name="build-ffmpeg" depends="mkdirs,ffmpeg.check,build-yasm,build-lame,build-faad,build-faac,build-xvidcore,build-x264,build-vorbis,build-theora,build-gsm" unless="ffmpeg.dontrun">
         <get dest="${download.path}/ffmpeg${ffmpeg.version}" src="${ffmpeg.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/ffmpeg${ffmpeg.version}" compression="${ffmpeg.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/ffmpeg${ffmpeg.version}/version.sh" perm="u+x"/>
