@@ -327,50 +327,6 @@
         <antcall target="xvidcore.move.unix"/>
     </target>
 
-    <target name="x264.check">
-        <condition property="x264.dontrun">
-            <and>
-                <available file="${prefix.path.real}/lib/libx264.a"/>
-                <available file="${prefix.path.real}/include/x264.h"/>
-            </and>
-        </condition>
-    </target>
-
-    <macrodef name="x264.make">
-        <element name="configureopts" optional="true"/>
-        <sequential>
-            <configureandmake library="x264${x264.version}">
-                <confopts>
-                    <arg value="--disable-pthread"/>
-                    <configureopts/>
-                </confopts>
-            </configureandmake>
-        </sequential>
-    </macrodef>
-
-    <target name="x264" unless="os.isMac64">
-        <x264.make/>
-    </target>
-
-    <target name="x264.mac64" if="os.isMac64">
-        <x264.make>
-            <configureopts>
-                <arg value="--host=x86_64-apple-darwin10"/>
-            </configureopts>
-        </x264.make>
-    </target>
-
-    <target name="build-x264" depends="mkdirs,build-yasm,x264.check" unless="x264.dontrun">
-        <get dest="${download.path}/x264${x264.version}" src="${x264.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
-        <untar src="${download.path}/x264${x264.version}" compression="${x264.compression}" dest="${extract.path}"/>
-        <chmod file="${extract.path}/x264${x264.version}/config.guess" perm="u+x"/>
-        <chmod file="${extract.path}/x264${x264.version}/config.sub" perm="u+x"/>
-        <chmod file="${extract.path}/x264${x264.version}/version.sh" perm="u+x"/>
-
-        <antcall target="x264"/>
-        <antcall target="x264.mac64"/>
-    </target>
-
     <target name="ogg.check">
         <condition property="ogg.dontrun">
             <and>
@@ -575,7 +531,6 @@
                     <arg value="--enable-postproc"/>
                     <arg value="--enable-swscale"/>
                     <arg value="--enable-libmp3lame"/>
-                    <arg value="--enable-libx264"/>
                     <arg value="--enable-libgsm"/>
                     <arg value="--disable-decoder=aac"/>
                     <arg value="--enable-libfaad"/>
@@ -583,6 +538,7 @@
                     <arg value="--enable-libtheora"/>
                     <arg value="--enable-libvorbis"/>
                     <arg value="--enable-libxvid"/>
+                    <arg value="--enable-libopencore-amrnb"/>
                     <arg value="--disable-shared" />
                     <arg value="--enable-static" />
                     <arg value="--disable-debug" />
@@ -620,7 +576,7 @@
         </ffmpeg.make>
     </target>
 
-    <target name="build-ffmpeg" depends="mkdirs,ffmpeg.check,build-yasm,build-lame,build-faad,build-faac,build-xvidcore,build-x264,build-vorbis,build-theora,build-gsm" unless="ffmpeg.dontrun">
+    <target name="build-ffmpeg" depends="mkdirs,ffmpeg.check,build-yasm,build-lame,build-faad,build-faac,build-xvidcore,build-vorbis,build-theora,build-gsm,build-amr" unless="ffmpeg.dontrun">
         <get dest="${download.path}/ffmpeg${ffmpeg.version}" src="${ffmpeg.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/ffmpeg${ffmpeg.version}" compression="${ffmpeg.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/ffmpeg${ffmpeg.version}/version.sh" perm="u+x"/>
