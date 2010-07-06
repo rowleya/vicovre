@@ -240,12 +240,13 @@
     <target name="build-faac" depends="mkdirs,faac.check" unless="faac.dontrun">
         <get dest="${download.path}/faac${faac.version}" src="${faac.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/faac${faac.version}" compression="${faac.compression}" dest="${extract.path}"/>
-        <bootstrap library="faac"/>
-        <chmod file="${extract.path}/faadc/install-sh" perm="u+x"/>
-        <configureandmake library="faac" ldflags="-no-undefined">
+        <bootstrap library="faac${faac.version}"/>
+        <chmod file="${extract.path}/faac${faac.version}/install-sh" perm="u+x"/>
+        <configureandmake library="faac${faac.version}" ldflags="-no-undefined">
             <confopts>
                 <arg value="--disable-shared" />
                 <arg value="--enable-static" />
+				<arg value="--with-mp4v2=no"/>
             </confopts>
         </configureandmake>
     </target>
@@ -455,7 +456,7 @@
     <target name="amr.check">
         <condition property="amr.dontrun">
             <and>
-                <available file="${prefix.path.real}/lib/libamropencore.a"/>
+                <available file="${prefix.path.real}/lib/libopencore-amrnb.a"/>
             </and>
         </condition>
     </target>
@@ -526,6 +527,8 @@
             <configureandmake library="ffmpeg${ffmpeg.version}" ldflags="-L${prefix.path}/lib" cflags="-I${prefix.path}/include">
                 <confopts>
                     <arg value="--enable-gpl"/>
+					<arg value="--enable-nonfree"/>
+					<arg value="--enable-version3"/>
                     <arg value="--disable-ffplay"/>
                     <arg value="--disable-ffserver"/>
                     <arg value="--enable-postproc"/>
