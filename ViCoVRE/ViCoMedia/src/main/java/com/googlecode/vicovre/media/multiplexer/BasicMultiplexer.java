@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.media.multiplexer;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import javax.media.Buffer;
 import javax.media.Format;
@@ -67,6 +68,16 @@ public abstract class BasicMultiplexer implements Multiplexer,
     private ContentDescriptor contentType = null;
 
     private int maxTracks = 0;
+
+    private LinkedList<Buffer> bufferedBuffers = new LinkedList<Buffer>();
+
+    private LinkedList<Integer> bufferedTracks = new LinkedList<Integer>();
+
+    private boolean[] trackSeen = null;
+
+    private int tracksToSee = 0;
+
+    private Integer tracksSync = new Integer(0);
 
     protected BasicMultiplexer(ContentDescriptor[] contentTypes,
             Format[] supportedFormats, int maxTracks) {
@@ -106,7 +117,7 @@ public abstract class BasicMultiplexer implements Multiplexer,
         return contentTypes;
     }
 
-    public int process(Buffer buf, int track) {
+    private int doProcess(Buffer buf, int track) {
         synchronized (bufferSync) {
             while ((buffer != null) && !done) {
                 try {
@@ -139,6 +150,35 @@ public abstract class BasicMultiplexer implements Multiplexer,
         }
     }
 
+    public int process(Buffer buf, int trk) {
+        synchronized (tracksSync) {
+            if (tracksToSee > 0) {
+                bufferedBuffers.addLast((Buffer) buf.clone());
+                bufferedTracks.addLast(trk);
+                if (!trackSeen[trk]) {
+                    trackSeen[trk] = true;
+                    tracksToSee--;
+                    System.err.println("Track " + trk + " input format = " + buf.getFormat());
+                    setInputFormat(buf.getFormat(), trk);
+                    if (tracksToSee > 0) {
+                        return BUFFER_PROCESSED_OK;
+                    }
+                }
+            }
+        }
+        if (!bufferedBuffers.isEmpty()) {
+            while (!bufferedBuffers.isEmpty()) {
+                Buffer buffer = bufferedBuffers.removeFirst();
+                int track = bufferedTracks.removeFirst();
+                if (doProcess(buffer, track) == BUFFER_PROCESSED_FAILED) {
+                    return BUFFER_PROCESSED_FAILED;
+                }
+            }
+            return BUFFER_PROCESSED_OK;
+        }
+        return doProcess(buf, trk);
+    }
+
     public ContentDescriptor setContentDescriptor(
             ContentDescriptor contentDescriptor) {
         for (ContentDescriptor type : contentTypes) {
@@ -167,6 +207,8 @@ public abstract class BasicMultiplexer implements Multiplexer,
             noTracks = maxTracks;
         }
         trackFormats = new Format[noTracks];
+        tracksToSee = noTracks;
+        trackSeen = new boolean[noTracks];
         return noTracks;
     }
 
@@ -235,7 +277,7 @@ public abstract class BasicMultiplexer implements Multiplexer,
     }
 
     public boolean endOfStream() {
-        return done;
+        return done && (buffer == null);
     }
 
     public ContentDescriptor getContentDescriptor() {
