@@ -34,6 +34,7 @@ package com.googlecode.vicovre.codecs.ffmpeg.video;
 
 import javax.media.format.VideoFormat;
 
+import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 /**

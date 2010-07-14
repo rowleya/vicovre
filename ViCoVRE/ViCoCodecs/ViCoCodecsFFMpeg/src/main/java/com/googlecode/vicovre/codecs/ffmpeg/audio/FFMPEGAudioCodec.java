@@ -153,6 +153,10 @@ public abstract class FFMPEGAudioCodec implements Codec {
                         Format.NOT_SPECIFIED,
                         Format.byteArray,
                         context.getBitRate(), 0);
+                byte[] extradata = context.getExtraData();
+                if (extradata != null) {
+                    output.setHeader(extradata);
+                }
             } else {
                 outputFormat = new AudioFormat(outputFormat.getEncoding(),
                         inputFormat.getSampleRate(), 16,

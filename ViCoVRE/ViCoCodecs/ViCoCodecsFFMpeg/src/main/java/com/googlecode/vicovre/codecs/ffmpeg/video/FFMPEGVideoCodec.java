@@ -177,6 +177,10 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
                         context.getBitrate(),
                         context.getBitrateTolerance());
                 allocateData(dataSize);
+                byte[] extradata = context.getExtraData();
+                if (extradata != null) {
+                    output.setHeader(extradata);
+                }
             }
             inited = true;
         }
@@ -255,6 +259,7 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
 
     public void open() throws ResourceUnavailableException {
         NativeLoader.loadLibrary(getClass(), "ffmpegj");
+        System.err.println("Log level = " + logLevel);
         ref = open(encode, codecId, logLevel);
         if (ref <= 0) {
             throw new ResourceUnavailableException("Could not open codec: "

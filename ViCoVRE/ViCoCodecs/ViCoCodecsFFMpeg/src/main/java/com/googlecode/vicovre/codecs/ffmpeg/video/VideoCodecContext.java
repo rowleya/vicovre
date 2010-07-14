@@ -106,6 +106,8 @@ public class VideoCodecContext {
 
     private int frameRate = 25;
 
+    private byte[] extraData = null;
+
     /**
      * Returns the flags.
      * @return the flags
@@ -377,5 +379,14 @@ public class VideoCodecContext {
 
     public int getBitrateTolerance() {
         return bitrateTolerance;
+    }
+
+    public byte[] createExtraData(int size) {
+        extraData = new byte[size];
+        return extraData;
+    }
+
+    public byte[] getExtraData() {
+        return extraData;
     }
 }
