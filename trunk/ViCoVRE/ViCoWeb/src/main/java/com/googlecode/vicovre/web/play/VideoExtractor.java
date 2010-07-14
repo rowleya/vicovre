@@ -416,8 +416,9 @@ public class VideoExtractor {
         }
         VideoExtractor extractor = new VideoExtractor(
             //"video/x-ms-asf",
-            "video/x-flv",
+            //"video/x-flv",
             //"audio/mpeg",
+            "video/mp4",
 
             // Video
             /*new String[]{
@@ -485,11 +486,12 @@ public class VideoExtractor {
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream(
-                "test.flv"
+                //"test.flv"
                 //"test.mp3"
                 //"test.asf"
+                "test.mp4"
                 );
-        extractor.transferToStream(testout, 0, 3000000, 60000, null);
+        extractor.transferToStream(testout, 0, 0, 5000, null);
         System.exit(0);
     }
 }

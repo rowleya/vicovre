@@ -30,69 +30,51 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Date;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+import com.google.gwt.core.client.JavaScriptObject;
 
-    private String name = null;
+public class Recording extends JavaScriptObject {
 
-    private String description = null;
-
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    protected Recording() {
+        // Does Nothing
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
-    }
+    public static final native Recording parse(String json) /*-{
+        return eval('(' + json + ')');
+    }-*/;
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
+    public final native String getId() /*-{
+        return this.id;
+    }-*/;
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
-    }
+    public final native RecordingMetadata getMetadata() /*-{
+        return this.metadata;
+    }-*/;
 
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public final native Date getStartDate() /*-{
+        return this.startDate;
+    }-*/;
 
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
-    }
+    public final native Date getStopDate() /*-{
+        return this.stopDate;
+    }-*/;
 
+    public final native String getAg3VenueServer() /*-{
+        return this.ag3VenueServer;
+    }-*/;
+
+    public final native String getAg3VenueUrl() /*-{
+        return this.ag3VenueUrl;
+    }-*/;
+
+    public final native NetworkLocation[] getAddresses() /*-{
+        return this.addresses;
+    }-*/;
+
+    public final native String getStatus() /*-{
+        return this.status;
+    }-*/;
 }

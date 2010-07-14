@@ -30,69 +30,28 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.web.rest.response;
+
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+@XmlRootElement(name="folders")
+public class FoldersResponse {
 
-    private String name = null;
+    private List<String> folders = null;
 
-    private String description = null;
-
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    public FoldersResponse() {
+        // Does Nothing
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
+    public FoldersResponse(List<String> folders) {
+        this.folders = folders;
     }
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
+    @XmlElement(name="folder")
+    public List<String> getFolders() {
+        return folders;
     }
-
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
-    }
-
 }

@@ -30,69 +30,51 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-    private String name = null;
+public class RecordingItemPauser extends AbstractRestCall {
 
-    private String description = null;
+    private RecordingItem item = null;
 
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    private String url = null;
+
+    public static void pause(RecordingItem item, String url) {
+        RecordingItemPauser pauser = new RecordingItemPauser(item, url);
+        pauser.go();
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
+    public RecordingItemPauser(RecordingItem item, String url) {
+        this.item = item;
+        this.url = url + "record" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId() + "/pause";
     }
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
+    public void go() {
+        item.setStatus("Pausing...");
+        item.setCreated(false);
+        go(url, Method.PUT, MediaType.TEXT_PLAIN);
     }
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
+    protected void onError(String message) {
+        item.setCreated(true);
+        item.setStatus("Recording");
+        item.setStatus("Error: " + message);
     }
 
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
+    protected void onSuccess(Response response) {
+        String status = response.getEntity().getText();
+        item.setCreated(true);
+        item.setStatus(status);
     }
 
 }

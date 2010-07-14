@@ -45,7 +45,7 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.importexport.client.ImportPanel;
 
-public class CreateSessionSender extends Callback {
+public class CreateSessionSender implements Callback {
 
     private ImportPanel panel = null;
 

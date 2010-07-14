@@ -30,48 +30,51 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
+
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-public class RecordingItemEditor implements AsyncCallback<Boolean> {
+public class RecordingItemStarter extends AbstractRestCall {
 
     private RecordingItem item = null;
 
-    private String oldStatus = null;
+    private String url = null;
 
-    public static void updateRecording(RecordingItem item) {
-        new RecordingItemEditor(item);
+    public static void start(RecordingItem item, String url) {
+        RecordingItemStarter starter = new RecordingItemStarter(item, url);
+        starter.go();
     }
 
-    private RecordingItemEditor(RecordingItem item) {
+    public RecordingItemStarter(RecordingItem item, String url) {
         this.item = item;
-        this.oldStatus = item.getStatus();
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
-                "unfinishedRecording.updateUnfinishedRecording",
-                new Object[]{item.getFolder(), item.getId(), item.getDetails()},
-                this);
+        this.url = url + "record" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId() + "/start";
+    }
+
+    public void go() {
+        item.setStatus("Starting...");
         item.setCreated(false);
-        item.setStatus("Updating...");
-        request.execute();
+        go(url, Method.PUT, MediaType.TEXT_PLAIN);
     }
 
-    public void onFailure(Throwable error) {
+    protected void onError(String message) {
         item.setCreated(true);
-        item.setStatus(oldStatus);
-        item.setStatus("Error: " + error.getMessage());
-
+        item.setStatus("Stopped");
+        item.setStatus("Error: " + message);
     }
 
-    public void onSuccess(Boolean result) {
+    protected void onSuccess(Response response) {
+        String status = response.getEntity().getText();
         item.setCreated(true);
-        item.setStatus(oldStatus);
+        item.setStatus(status);
     }
-
 
 }

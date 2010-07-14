@@ -701,7 +701,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private void stopRecording() {
         try {
-            archiveManager.disableRecording();
+            archiveManager.disableRecording(false);
             archiveManager.terminate();
             liveAnnotationsServer.setStoreDirectory(
                     notRecordingAnnotationsDir);

@@ -40,6 +40,7 @@ import java.util.Vector;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -53,12 +54,12 @@ import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemDeleter;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemEditor;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemPauser;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemResumer;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemStarter;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemStopper;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemDeleter;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemEditor;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemPauser;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemResumer;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStarter;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStopper;
 
 public class RecordingItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<RecordingItem> {
@@ -111,11 +112,15 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private String id = null;
 
+    private String url = null;
+
     private FolderPanel folderPanel = null;
 
-    public RecordingItem(FolderPanel folderPanel, String id, String itemName) {
+    public RecordingItem(FolderPanel folderPanel, String id, String itemName,
+            String url) {
         this.folderPanel = folderPanel;
         this.id = id;
+        this.url = url;
         name.setText(itemName);
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
@@ -237,7 +242,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     public void setStatus(String status) {
         this.status.setText(status);
-        if (status.equals(RECORDING)) {
+        if (status.startsWith(RECORDING)) {
             DOM.setStyleAttribute(this.status.getElement(), "color", "red");
             stopButton.setEnabled(true);
             recordButton.setDown(true);
@@ -245,13 +250,13 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             DOM.setStyleAttribute(this.status.getElement(), "color", "red");
         } else {
             DOM.setStyleAttribute(this.status.getElement(), "color", "black");
-            if (status.equals(PAUSED)) {
+            if (status.startsWith(PAUSED)) {
                 stopButton.setEnabled(true);
                 recordButton.setDown(false);
-            } else if (status.equals(STOPPED)) {
+            } else if (status.startsWith(STOPPED)) {
                 stopButton.setEnabled(false);
                 recordButton.setDown(false);
-            } else if (status.equals(COMPLETED)) {
+            } else if (status.startsWith(COMPLETED)) {
                 recordButton.setEnabled(false);
                 stopButton.setEnabled(false);
                 deleteButton.setEnabled(false);
@@ -285,21 +290,21 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(recordButton)) {
             if (recordButton.isDown()) {
-                if (status.getText().equals(STOPPED)) {
-                    RecordingItemStarter.start(this);
+                if (status.getText().startsWith(STOPPED)) {
+                    RecordingItemStarter.start(this, url);
                 } else {
-                    RecordingItemResumer.resume(this);
+                    RecordingItemResumer.resume(this, url);
                 }
             } else {
-                RecordingItemPauser.pause(this);
+                RecordingItemPauser.pause(this, url);
             }
         } else if (event.getSource().equals(stopButton)) {
-            RecordingItemStopper.stop(this);
+            RecordingItemStopper.stop(this, url);
         } else if (event.getSource().equals(editButton)) {
-            RecordingItemPopup popup = new RecordingItemPopup(this);
+            RecordingItemPopup popup = new RecordingItemPopup(this, url);
             popup.center();
         } else if (event.getSource().equals(deleteButton)) {
-            RecordingItemDeleter.deleteRecording(this);
+            RecordingItemDeleter.deleteRecording(this, url);
         }
     }
 
@@ -315,8 +320,48 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             venueServerUrl = popup.getVenueServer();
             venueUrl = popup.getVenue();
             addresses = popup.getAddresses();
-            RecordingItemEditor.updateRecording(this);
+            if (id != null) {
+                RecordingItemEditor.updateRecording(this, url);
+            }
         }
+    }
+
+    public String getDetailsAsUrl() {
+        String itemUrl = "metadata_name=" + URL.encodeComponent(getName());
+
+        String description = getDescription();
+        if (description != null) {
+            itemUrl += "&metadata_description="
+                + URL.encodeComponent(description);
+        }
+
+        Date startDate = getStartDate();
+        if (startDate != null) {
+            itemUrl += "&startDate="
+                + URL.encodeComponent(String.valueOf(startDate.getTime()));
+        }
+        Date stopDate = getStopDate();
+        if (stopDate != null) {
+            itemUrl += "&stopDate="
+                + URL.encodeComponent(String.valueOf(stopDate.getTime()));
+        }
+
+        String ag3VenueServer = getVenueServerUrl();
+        if (ag3VenueServer != null) {
+            itemUrl += "&ag3VenueServer="
+                + URL.encodeComponent(ag3VenueServer);
+            itemUrl += "&ag3VenueUrl="
+                + URL.encodeComponent(getVenueUrl());
+        } else {
+            String[] addresses = getAddresses();
+            for (int i = 0; i < addresses.length; i++) {
+                String[] parts = addresses[i].split("/");
+                itemUrl += "&host=" + parts[0];
+                itemUrl += "&port=" + parts[1];
+                itemUrl += "&ttl=" + parts[2];
+            }
+        }
+        return itemUrl;
     }
 
     public Map<String, Object> getDetails() {
@@ -355,8 +400,25 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
     }
 
     public int compareTo(RecordingItem item) {
-        int startDateCompare = startDate.compareTo(item.startDate);
-        int stopDateCompare = stopDate.compareTo(item.stopDate);
+        int startDateCompare = 0;
+        int stopDateCompare = 0;
+
+        if (startDate != null && item.startDate != null) {
+            startDateCompare = startDate.compareTo(item.startDate);
+        } else if (startDate != null) {
+            startDateCompare = 1;
+        } else if (item.startDate != null) {
+            startDateCompare = -1;
+        }
+
+        if (stopDate != null && item.stopDate != null) {
+            stopDateCompare = stopDate.compareTo(item.stopDate);
+        } else if (stopDate != null) {
+            stopDateCompare = 1;
+        } else if (item.stopDate != null) {
+            stopDateCompare = -1;
+        }
+
         int nameCompare = name.getText().compareTo(item.name.getText());
         if (startDateCompare == 0) {
             if (stopDateCompare == 0) {

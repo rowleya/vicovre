@@ -32,7 +32,6 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
-
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -41,8 +40,8 @@ import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.FolderLoader;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueServerLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.VenueServerLoader;
 
 public class Application implements EntryPoint {
 
@@ -51,6 +50,18 @@ public class Application implements EntryPoint {
     private static XmlRpcClient xmlrpcClient = null;
 
     private static Dictionary parameters = null;
+
+    protected String getUrl() {
+        String url = GWT.getHostPageBaseURL();
+        String paramUrl = parameters.get("url");
+        if (paramUrl.startsWith("/")) {
+            paramUrl = paramUrl.substring(1);
+        }
+        if (!paramUrl.endsWith("/")) {
+            paramUrl += "/";
+        }
+        return url + paramUrl;
+    }
 
     public static String getParam(String name) {
         return parameters.get(name);
@@ -79,7 +90,8 @@ public class Application implements EntryPoint {
         StatusPanel status = new StatusPanel();
         status.setWidth("95%");
 
-        FolderPanel panel = new FolderPanel();
+        String restUrl = getUrl();
+        FolderPanel panel = new FolderPanel(restUrl);
 
         topPanel.add(status, DockPanel.NORTH);
         topPanel.add(panel, DockPanel.CENTER);
@@ -87,12 +99,12 @@ public class Application implements EntryPoint {
         topPanel.setCellHeight(status, "50px");
         RootPanel.get().add(topPanel);
 
-        ActionLoader loader = new ActionLoader(null, 1,
+        ActionLoader loader = new ActionLoader(null, 2,
                 "Loading Application...",
                 "There was an error loading the application.\n"
                 + "Please refresh the page to try again.",
                 false, true);
-        VenueServerLoader.loadVenues(loader);
-        FolderLoader.loadFolders(panel, loader);
+        VenueServerLoader.load(loader, restUrl);
+        FolderLoader.load(panel, loader, restUrl);
     }
 }

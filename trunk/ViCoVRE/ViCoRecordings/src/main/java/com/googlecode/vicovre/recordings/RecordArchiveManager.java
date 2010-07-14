@@ -353,9 +353,11 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
     /**
      * Stops the recording of packets
      */
-    public void disableRecording() {
-        lastPauseTime = System.currentTimeMillis();
-        pauseTimes.add(lastPauseTime - subtractTime);
+    public void disableRecording(boolean pause) {
+        if (pause) {
+            lastPauseTime = System.currentTimeMillis();
+            pauseTimes.add(lastPauseTime - subtractTime);
+        }
         recordFlag = false;
 
     }
@@ -382,7 +384,7 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
      * @throws IOException
      */
     public void terminate() throws IOException {
-        disableRecording();
+        disableRecording(false);
 
         // Finish processing of queued packets
         done = true;

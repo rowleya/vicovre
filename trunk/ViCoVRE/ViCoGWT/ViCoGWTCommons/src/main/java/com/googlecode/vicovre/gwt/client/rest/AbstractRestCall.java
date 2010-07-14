@@ -30,41 +30,54 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.gwt.client.rest;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import org.restlet.gwt.Callback;
+import org.restlet.gwt.Client;
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Preference;
+import org.restlet.gwt.data.Protocol;
+import org.restlet.gwt.data.Request;
+import org.restlet.gwt.data.Response;
 
-public class RecordingItemResumer implements AsyncCallback<String> {
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
 
-    private RecordingItem item = null;
+public abstract class AbstractRestCall implements Callback {
 
-    public static void resume(RecordingItem item) {
-        new RecordingItemResumer(item);
+    protected void go(String url, Method method, MediaType mediaType) {
+        Client client = new Client(Protocol.HTTP);
+        Request request = new Request(method, url);
+        request.getClientInfo().getAcceptedMediaTypes().add(
+                new Preference<MediaType>(mediaType));
+        client.handle(request, this);
     }
 
-    private RecordingItemResumer(RecordingItem item) {
-        this.item = item;
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.resumeRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Resuming...");
-        item.setCreated(false);
-        request.execute();
+    protected void go(String url, Method method) {
+        go(url, method, MediaType.APPLICATION_JSON);
     }
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Paused");
-        item.setStatus("Error: " + error.getMessage());
+    protected void go(String url) {
+        go(url, Method.GET);
     }
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    public void onEvent(Request request, Response response) {
+        if (response.getStatus().isSuccess()) {
+            onSuccess(response);
+        } else {
+            onError(response.getStatus().getCode() + ": "
+                    + response.getStatus().getDescription());
+        }
+    }
+
+    protected abstract void onError(String message);
+
+    protected abstract void onSuccess(Response response);
+
+    protected void displayError(String error) {
+        MessagePopup popup = new MessagePopup(error, null, MessagePopup.ERROR,
+                MessageResponse.OK);
+        popup.center();
     }
 }

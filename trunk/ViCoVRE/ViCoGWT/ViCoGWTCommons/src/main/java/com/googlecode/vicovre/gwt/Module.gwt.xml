@@ -4,4 +4,10 @@
       <!-- Inherit the core Web Toolkit stuff.                        -->
       <inherits name='com.google.gwt.user.User'/>
 
+      <!-- Inherit Restlet GWT -->
+      <inherits name='org.restlet.GWT'/>
+
+      <!-- Inherit JSON -->
+      <inherits name="com.google.gwt.json.JSON" />
+
 </module>

@@ -55,7 +55,7 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.importexport.client.ExportPanel;
 import com.googlecode.vicovre.gwt.importexport.client.Stream;
 
-public class SessionLoader extends Callback {
+public class SessionLoader implements Callback {
 
     private ExportPanel panel = null;
 

@@ -46,7 +46,7 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.importexport.client.StreamPanel;
 
-public class TransmitStreamSender extends Callback {
+public class TransmitStreamSender implements Callback {
 
     private String url = null;
 

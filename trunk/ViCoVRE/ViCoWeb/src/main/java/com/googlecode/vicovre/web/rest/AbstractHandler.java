@@ -30,44 +30,57 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.web.rest;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
-public class RecordingItemStopper implements AsyncCallback<String> {
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
 
-    private RecordingItem item = null;
+import com.googlecode.vicovre.recordings.Folder;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
-    private String oldStatus = null;
+public abstract class AbstractHandler {
 
-    public static void stop(RecordingItem item) {
-        new RecordingItemStopper(item);
+    private RecordingDatabase database = null;
+
+    protected AbstractHandler(RecordingDatabase database) {
+        this.database = database;
     }
 
-    private RecordingItemStopper(RecordingItem item) {
-        this.item = item;
-        oldStatus = item.getStatus();
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.stopRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Stopping...");
-        item.setCreated(false);
-        request.execute();
+    protected RecordingDatabase getDatabase() {
+        return database;
     }
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus(oldStatus);
-        item.setStatus("Error: " + error.getMessage());
+    protected String getFolderPath(UriInfo uriInfo, int removeStart,
+            int removeEnd) {
+        List<PathSegment> pathSegments = uriInfo.getPathSegments();
+        String folderPath = "";
+        for (int i = removeStart;
+                i < pathSegments.size() - removeEnd; i++) {
+            folderPath += pathSegments.get(i).getPath();
+        }
+        return folderPath;
     }
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    protected String getId(UriInfo uriInfo, int removeEnd) {
+        List<PathSegment> pathSegments = uriInfo.getPathSegments();
+        String id = pathSegments.get(pathSegments.size() - 1
+                - removeEnd).getPath();
+        return id;
+    }
+
+    protected Folder getFolder(String folderPath) throws IOException {
+        Folder folder = database.getTopLevelFolder();
+        if ((folderPath != null) && !folderPath.equals("")) {
+            folder = database.getFolder(
+                new File(database.getTopLevelFolder().getFile(), folderPath));
+            if (folder == null) {
+                throw new IOException("Unknown folder " + folderPath);
+            }
+        }
+        return folder;
     }
 }

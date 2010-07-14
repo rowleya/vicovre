@@ -30,55 +30,66 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import java.util.Map;
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Reference;
+import org.restlet.gwt.data.Response;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItemPopup;
 
-public class RecordingItemCreator implements AsyncCallback<String>,
-        MessageResponseHandler {
+public class RecordingItemCreator extends AbstractRestCall
+        implements MessageResponseHandler {
 
     private FolderPanel folderPanel = null;
-
-    private String folder = null;
 
     private RecordPanel panel = null;
 
     private RecordingItem item = null;
 
+    private String url = null;
+
+    private String baseUrl = null;
+
     private RecordingItemPopup popup = null;
 
     public static void createRecordingItem(FolderPanel folderPanel,
-            RecordPanel panel) {
-        new RecordingItemCreator(folderPanel, panel);
+            RecordPanel panel, String url) {
+        RecordingItemCreator creator =
+            new RecordingItemCreator(folderPanel, panel, url);
+        creator.go();
     }
 
-    private RecordingItemCreator(FolderPanel folderPanel, RecordPanel panel) {
+    private RecordingItemCreator(FolderPanel folderPanel, RecordPanel panel,
+            String url) {
         this.folderPanel = folderPanel;
         this.panel = panel;
-        this.folder = folderPanel.getCurrentFolder();
-        popup = new RecordingItemPopup(this);
+        this.url = url + "record" + folderPanel.getCurrentFolder();
+        this.baseUrl = url;
+    }
+
+    public void go() {
+        popup = new RecordingItemPopup(this, baseUrl);
         popup.center();
     }
 
-    public void onFailure(Throwable error) {
+    protected void onError(String message) {
         item.setFailedToCreate();
-        item.setStatus("Error: Creation Failed: " + error.getMessage());
-        GWT.log("Error creating recording item", error);
+        item.setStatus("Error: Creation Failed: " + message);
+        GWT.log("Error creating recording item: " + message);
     }
 
-    public void onSuccess(String id) {
+    protected void onSuccess(Response response) {
+        String id = new Reference(
+                response.getEntity().getText()).getLastSegment();
         item.setId(id);
         item.setCreated(true);
         item.setStatus("Stopped");
@@ -86,17 +97,18 @@ public class RecordingItemCreator implements AsyncCallback<String>,
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            item = new RecordingItem(folderPanel, null, popup.getName());
+            item = new RecordingItem(folderPanel, null, popup.getName(),
+                    baseUrl);
             item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");
             panel.addItem(item);
-            Map<String, Object> details = item.getDetails();
-            XmlRpcClient xmlRpcClient = Application.getXmlRpcClient();
-            XmlRpcRequest<String> request = new XmlRpcRequest<String>(
-                    xmlRpcClient, "unfinishedRecording.addUnfinishedRecording",
-                    new Object[]{folder, details}, this);
-            request.execute();
+
+            String itemUrl = url + "?";
+            itemUrl += item.getDetailsAsUrl();
+
+            GWT.log("Item url = " + itemUrl);
+            go(itemUrl, Method.POST, MediaType.TEXT_PLAIN);
         }
     }
 

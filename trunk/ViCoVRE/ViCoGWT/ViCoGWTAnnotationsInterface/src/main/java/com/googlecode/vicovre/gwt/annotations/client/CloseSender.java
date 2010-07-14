@@ -38,7 +38,7 @@ import org.restlet.gwt.data.Protocol;
 import org.restlet.gwt.data.Request;
 import org.restlet.gwt.data.Response;
 
-public class CloseSender extends Callback {
+public class CloseSender implements Callback {
 
     public static void close(Application application) {
         Client client = new Client(Protocol.HTTP);
