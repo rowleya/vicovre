@@ -60,6 +60,7 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemPauser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemResumer;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStarter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStopper;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.Recording;
 
 public class RecordingItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<RecordingItem> {
@@ -338,12 +339,12 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         Date startDate = getStartDate();
         if (startDate != null) {
             itemUrl += "&startDate="
-                + URL.encodeComponent(String.valueOf(startDate.getTime()));
+                + URL.encodeComponent(Recording.DATE_FORMAT.format(startDate));
         }
         Date stopDate = getStopDate();
         if (stopDate != null) {
             itemUrl += "&stopDate="
-                + URL.encodeComponent(String.valueOf(stopDate.getTime()));
+                + URL.encodeComponent(Recording.DATE_FORMAT.format(stopDate));
         }
 
         String ag3VenueServer = getVenueServerUrl();

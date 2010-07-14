@@ -34,6 +34,8 @@ package com.googlecode.vicovre.recordings;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -59,6 +61,9 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  */
 @XmlRootElement(name="unfinishedrecording")
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
+
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss");
 
     private static final String STOPPED = "Stopped";
 
@@ -245,7 +250,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the addresses
      * @return the addresses
      */
-    @XmlElement
+    @XmlElement(name="address")
     public NetworkLocation[] getAddresses() {
         return addresses;
     }
@@ -262,7 +267,14 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the startDate
      * @return the startDate
      */
-    @XmlElement
+    @XmlElement(name="startDate")
+    public String getStartDateString() {
+        if (startDate != null) {
+            return DATE_FORMAT.format(startDate);
+        }
+        return null;
+    }
+
     public Date getStartDate() {
         return startDate;
     }
@@ -275,11 +287,22 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         this.startDate = startDate;
     }
 
+    public void setStartDateString(String startDate) throws ParseException {
+        this.startDate = DATE_FORMAT.parse(startDate);
+    }
+
     /**
      * Returns the stopDate
      * @return the stopDate
      */
-    @XmlElement
+    @XmlElement(name="stopDate")
+    public String getStopDateString() {
+        if (stopDate != null) {
+            return DATE_FORMAT.format(stopDate);
+        }
+        return null;
+    }
+
     public Date getStopDate() {
         return stopDate;
     }
@@ -290,6 +313,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      */
     public void setStopDate(Date stopDate) {
         this.stopDate = stopDate;
+    }
+
+    public void setStopDateString(String stopDate) throws ParseException {
+        this.stopDate = DATE_FORMAT.parse(stopDate);
     }
 
     /**
@@ -409,7 +436,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
             }
         } else {
             recordingStarted = false;
-            status = STOPPED + ", no streams recorded";
+            status = STOPPED + ": no streams recorded";
         }
     }
 
@@ -440,10 +467,8 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(UnfinishedRecording r) {
-        Date startDate = getStartDate();
-        Date otherStartDate = r.getStartDate();
-        if (startDate != null && otherStartDate != null) {
-            return getStartDate().compareTo(r.getStartDate());
+        if (startDate != null && r.startDate != null) {
+            return startDate.compareTo(r.startDate);
         } else if (startDate != null) {
             return 1;
         } else {

@@ -32,11 +32,13 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
-import java.util.Date;
-
 import com.google.gwt.core.client.JavaScriptObject;
+import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
 public class Recording extends JavaScriptObject {
+
+    public static final StringDateTimeFormat DATE_FORMAT =
+        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     protected Recording() {
         // Does Nothing
@@ -54,11 +56,11 @@ public class Recording extends JavaScriptObject {
         return this.metadata;
     }-*/;
 
-    public final native Date getStartDate() /*-{
+    public final native String getStartDate() /*-{
         return this.startDate;
     }-*/;
 
-    public final native Date getStopDate() /*-{
+    public final native String getStopDate() /*-{
         return this.stopDate;
     }-*/;
 

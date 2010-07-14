@@ -115,8 +115,10 @@ public class RecordingItemLoader extends AbstractRestCall {
         recordingItem.setDescriptionIsEditable(
                 metadata.isDescriptionEditable());
 
-        recordingItem.setStartDate(recording.getStartDate());
-        recordingItem.setStopDate(recording.getStopDate());
+        recordingItem.setStartDate(Recording.DATE_FORMAT.parse(
+                recording.getStartDate()));
+        recordingItem.setStopDate(Recording.DATE_FORMAT.parse(
+                recording.getStopDate()));
 
         String venueServerUrl = recording.getAg3VenueServer();
         if (venueServerUrl != null) {
