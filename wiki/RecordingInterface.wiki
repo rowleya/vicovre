@@ -1,4 +1,4 @@
-#summary Recording REST Interface
+#summary Description of the REST interface for controlling Recordings
 
 = Introduction =
 
