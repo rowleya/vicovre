@@ -17,3 +17,14 @@ This page describes the REST interface used to list, create, edit, delete, start
 || PUT || {{{http://<url>/record/<folder>/<id>/resume}}} || Resumes the recording with the given url. || None || None ||
 
 == Recording Details ==
+The recording details are specified as URL-Encoded parameters (e.g. key=value) passed after the url.  The following keys can be specified:
+|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
+|| metadata_name || The name of the recording || String || 1 || Required ||
+|| metadata_description || The description of the recording || String || 0 or 1 || ||
+|| startDate || The date and time at which to automatically start recording.  If not specified, the recording will have to be started manually. || Number of milliseconds since midnight on the 1st January 1970. || 0 or 1 || ||
+|| stopDate || The date and time at which to automatically stop recording.  If not specified, the recording will have to be stopped manually. || Number of milliseconds since midnight on the 1st January 1970. || 0 or 1 || ||
+|| ag3VenueServerUrl || The AG3 venue server that hosts the venue to record from. || URL of venue server. || 0 or 1 || Required if addresses not specified. ||
+|| ag3VenueUrl || The AG3 venue to record from. || URL of venue. || 0 or 1 || Required if addresses not specified. ||
+|| host || The IP address to record from. || IP address. || One for each address. || Required if venue not specified; One required for each address. ||
+|| port || The port to record from. || Even number between 2 and 65534. || One for each address. || One required for each address. ||
+|| ttl || The Time-to-live to record using. || Number between 0 and 256. || One for each address. || One required for each address. ||
