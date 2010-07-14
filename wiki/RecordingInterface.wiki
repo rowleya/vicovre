@@ -7,7 +7,7 @@ This page describes the REST interface used to list, create, edit, delete, start
 = Details =
 
 || *HTTP Method* || *URL Format* || *Description* || *Return Content Types* || *Return Entity* ||
-|| GET || {{{http://<url>/record/<folder>}}} || Gets a list of the recordings in the given folder.  If no folder is specified, the root directory of the recordings is listed. || text/xml, application/json || The list of recordings. ||
+|| GET || {{{http://<url>/record/<folder>}}} || Gets a list of the recordings in the given folder.  If no folder is specified, the root directory of the recordings is listed. || text/xml, application/json || The list of recordings - see below for formatting. ||
 || POST || {{{http://<url>/record/<folder>?<details>}}} || Creates a new recording in the specified folder. See below for what can be specified in {{{<-details>}}}. || text/plain || The full url of the new recording. ||
 || PUT || {{{http://<url>/record/<folder>/<id>?<details>}}} || Edits the recording with the given url. See below for what can be specified in {{{<details>}}}. || None || None ||
 || DELETE || {{{http://<url>/record/<folder>/<id>}}} || Deletes the recording with the given url. || None || None ||
@@ -16,15 +16,77 @@ This page describes the REST interface used to list, create, edit, delete, start
 || PUT || {{{http://<url>/record/<folder>/<id>/pause}}} || Pauses the recording with the given url. || None || None ||
 || PUT || {{{http://<url>/record/<folder>/<id>/resume}}} || Resumes the recording with the given url. || None || None ||
 
+== Recording List ==
+If text/xml is requested as the content type, the recording list will be produced as follows:
+
+{{{
+<recordings>
+    <recording>
+        <!-- The id of the recording -->
+        <id>...</id>
+
+        <metadata>
+            
+            <!-- The name of the recording -->
+            <name>...</name>
+
+            <!-- The description of the recording (optional) -->
+            <description>...</description>
+
+            <!-- True if the description is editable, false otherwise (optional) -->
+            <descriptionEditable>...</descriptionEditable>
+        </metadata>
+
+        <!-- The date / time that the recording will start (see below for format) (optional) -->
+        <startDate>...</startDate>
+
+        <!-- The date / time that the recording will stop (see below for format) (optional) -->
+        <stopDate>...</stopDate>
+
+        <!-- The AGTk venue server that the venue to record from is on (optional) -->
+        <ag3VenueServer>...</ag3VenueServer>
+        
+        <!-- The AGTk venue to record from (optional) -->
+        <ag3VenueUrl>...</ag3VenueUrl>
+
+        <!-- An address to record from (0 or more) -->
+        <address>
+
+             <!-- The IP address to record from -->
+             <host>...</host>
+
+             <!-- The port to record from -->
+             <port>...</port>
+
+             <!-- The ttl to record with -->
+             <ttl>...</ttl>
+        </address>
+ 
+        <!-- The current status of the recording (see below) -->
+        <status>...</status>
+    </recording>
+</recordings>
+
+=== Recording Statuses ===
+The recording status is formatted as a key word, optionally followed by additional information after a colon (which can be ignored), e.g. status[:info].  The status can be one of the following:
+ * Stopped - the recording has not yet started, or has finished but nothing was recorded
+ * Recording - the recording is in progress
+ * Paused - the recording has been paused
+ * Completed - the recording has been completed (note that after this status has been read, the recording will no longer exist, and so will not appear in the next listing).
+ * Error - there was an error performing the last command (or automatically starting or stopping)
+
 == Recording Details ==
 The recording details are specified as URL-Encoded parameters (e.g. key=value) passed after the url.  The following keys can be specified:
 || *Key* || *Description* || *Type* || *Count* || *Requirement* ||
 || metadata_name || The name of the recording || String || 1 || Required ||
 || metadata_description || The description of the recording || String || 0 or 1 || ||
-|| startDate || The date and time at which to automatically start recording.  If not specified, the recording will have to be started manually. || Number of milliseconds since midnight on the 1st January 1970. || 0 or 1 || ||
-|| stopDate || The date and time at which to automatically stop recording.  If not specified, the recording will have to be stopped manually. || Number of milliseconds since midnight on the 1st January 1970. || 0 or 1 || ||
+|| startDate || The date and time at which to automatically start recording.  If not specified, the recording will have to be started manually. || Date / Time (see below) || 0 or 1 || ||
+|| stopDate || The date and time at which to automatically stop recording.  If not specified, the recording will have to be stopped manually. || Date / Time (see below) || 0 or 1 || ||
 || ag3VenueServerUrl || The AG3 venue server that hosts the venue to record from. || URL of venue server. || 0 or 1 || Required if addresses not specified. ||
 || ag3VenueUrl || The AG3 venue to record from. || URL of venue. || 0 or 1 || Required if addresses not specified. ||
 || host || The IP address to record from. || IP address. || One for each address. || Required if venue not specified; One required for each address. ||
 || port || The port to record from. || Even number between 2 and 65534. || One for each address. || One required for each address. ||
 || ttl || The Time-to-live to record using. || Number between 0 and 256. || One for each address. || One required for each address. ||
+
+== Date / Time Format ==
+Dates and Times are represented as ISO8601 combined date time extended format without the timezone i.e. YYYY-MM-DDTHH:MM:SS.
