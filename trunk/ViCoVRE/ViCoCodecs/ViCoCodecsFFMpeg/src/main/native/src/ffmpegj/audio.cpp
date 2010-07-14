@@ -1,6 +1,7 @@
 #include "com_googlecode_vicovre_codecs_ffmpeg_audio_FFMPEGAudioCodec.h"
 
 #define INT64_C(val) val##LL
+#define UINT64_C(val) val##ULL
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -50,6 +51,8 @@ class Audio {
         jmethodID setFlagsMethod;
         jmethodID setFlags2Method;
         jmethodID setFrameSizeMethod;
+
+        jmethodID createExtraDataMethod;
 
         AVCodec *codec;
         AVCodecContext *codecContext;
@@ -130,6 +133,9 @@ Audio::Audio(JNIEnv *env) {
     setFlags2Method = env->GetMethodID(contextClass, "setFlags2", "(I)V");
     setFrameSizeMethod = env->GetMethodID(contextClass, "setFrameSize", "(I)V");
 
+    createExtraDataMethod = env->GetMethodID(contextClass,
+                "createExtraData", "(I)[B");
+
     jclass plugin = env->FindClass("javax/media/PlugIn");
     jfieldID ok = env->GetStaticFieldID(plugin, "BUFFER_PROCESSED_OK", "I");
     jfieldID failed = env->GetStaticFieldID(plugin,
@@ -169,6 +175,7 @@ int Audio::open(bool encode, int codecId, int logLevel) {
 
     codecContext = avcodec_alloc_context();
     codecContext->codec_id = CodecID(codecId);
+    codecContext->codec_type = CODEC_TYPE_AUDIO;
     codecContext->debug = 0;
     isEncoding = encode;
     if (isEncoding) {
@@ -212,6 +219,15 @@ int Audio::init(JNIEnv *env, jobject context) {
         if (isEncoding) {
             env->CallVoidMethod(context, setFrameSizeMethod,
                     codecContext->frame_size);
+            if (codecContext->extradata_size > 0) {
+                jarray jextradata = (jarray) env->CallObjectMethod(context,
+                        createExtraDataMethod, codecContext->extradata_size);
+                uint8_t *extradata = (uint8_t *) env->GetPrimitiveArrayCritical(
+                        (jarray) jextradata, 0);
+                memcpy(extradata, codecContext->extradata,
+                        codecContext->extradata_size);
+                env->ReleasePrimitiveArrayCritical(jextradata, extradata, 0);
+            }
         }
         return AVCODEC_MAX_AUDIO_FRAME_SIZE;
     }

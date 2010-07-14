@@ -108,6 +108,12 @@ public class HeaderOutputStream implements DataOutput {
         output.writeUTF(s);
     }
 
+    public int getSize() throws IOException {
+        output.flush();
+        bytes.flush();
+        return bytes.size();
+    }
+
     public byte[] getBytes() throws IOException {
         output.flush();
         bytes.flush();

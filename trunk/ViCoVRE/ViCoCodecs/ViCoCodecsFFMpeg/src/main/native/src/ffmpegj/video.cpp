@@ -1,6 +1,7 @@
 #include "com_googlecode_vicovre_codecs_ffmpeg_video_FFMPEGVideoCodec.h"
 
 #define INT64_C(val) val##LL
+#define UINT64_C(val) val##ULL
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -78,6 +79,7 @@ public:
         jmethodID setOutputHeightMethod;
         jmethodID setPixelFormatMethod;
         jmethodID setBitrateToleranceMethod;
+        jmethodID createExtraDataMethod;
 
         jmethodID setOutputDataSizeMethod;
 
@@ -205,6 +207,9 @@ Video::Video(JNIEnv *env) {
     setBitrateToleranceMethod = env->GetMethodID(contextClass,
                 "setBitrateTolerance", "(I)V");
 
+    createExtraDataMethod = env->GetMethodID(contextClass,
+            "createExtraData", "(I)[B");
+
     setOutputDataSizeMethod = env->GetMethodID(contextClass,
                 "setOutputDataSize", "(I)V");
 
@@ -251,13 +256,14 @@ Video::~Video() {
 }
 
 int Video::open(bool encode, int codecId, int logLevel) {
-    avcodec_init();
     av_log_set_level(logLevel);
+    avcodec_init();
     avcodec_register_all();
     av_register_all();
 
     codecContext = avcodec_alloc_context();
     codecContext->codec_id = CodecID(codecId);
+    codecContext->codec_type = CODEC_TYPE_VIDEO;
     codecContext->debug = 0;
     isEncoding = encode;
     if (isEncoding) {
@@ -326,9 +332,13 @@ int Video::init(JNIEnv *env, jobject context) {
             codecContext->rc_buffer_size = codecContext->bit_rate
                     * av_q2d(codecContext->time_base);
         }
+    } else {
+        codecContext->width = inputWidth;
+        codecContext->height = inputWidth;
     }
 
     int result = avcodec_open(codecContext, codec);
+    fflush(stderr);
     if (result >= 0) {
         frame = avcodec_alloc_frame();
         scaleFrame = avcodec_alloc_frame();
@@ -344,6 +354,17 @@ int Video::init(JNIEnv *env, jobject context) {
                     inputWidth, inputHeight, pixelFormat,
                     outputWidth, outputHeight, codecContext->pix_fmt,
                     SWS_BICUBIC, NULL, NULL, NULL);
+
+            if (codecContext->extradata_size > 0) {
+                jarray jextradata = (jarray) env->CallObjectMethod(context,
+                        createExtraDataMethod, codecContext->extradata_size);
+                uint8_t *extradata = (uint8_t *) env->GetPrimitiveArrayCritical(
+                        (jarray) jextradata, 0);
+                memcpy(extradata, codecContext->extradata,
+                        codecContext->extradata_size);
+                env->ReleasePrimitiveArrayCritical(jextradata, extradata, 0);
+            }
+
             return outputWidth * outputHeight * 4;
         } else {
             return 0;

@@ -24,6 +24,9 @@
     <multiplexer>
         <class>com.googlecode.vicovre.codecs.multiplexers.asf.JavaMultiplexer</class>
     </multiplexer>
+    <multiplexer>
+        <class>com.googlecode.vicovre.codecs.multiplexers.mp4.JavaMultiplexer</class>
+    </multiplexer>
     <codec>
         <class>com.googlecode.vicovre.codecs.h264.JavaIoComDepacketizer</class>
     </codec>
@@ -35,6 +38,9 @@
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.video.FLV1Encoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.video.MPEG4Encoder</class>
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.video.MSMPEG4Encoder</class>
@@ -50,6 +56,9 @@
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.ffmpeg.audio.MP3Encoder</class>
+    </codec>
+    <codec>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.audio.AACEncoder</class>
     </codec>
     <codec>
         <class>com.googlecode.vicovre.codecs.vic.NativeEncoder</class>

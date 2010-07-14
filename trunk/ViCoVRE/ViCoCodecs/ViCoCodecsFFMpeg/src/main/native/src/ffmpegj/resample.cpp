@@ -1,6 +1,7 @@
 #include "com_googlecode_vicovre_codecs_ffmpeg_audio_ResampleCodec.h"
 
 #define INT64_C(val) val##LL
+#define UINT64_C(val) val##ULL
 
 extern "C" {
 #include "libavcodec/avcodec.h"

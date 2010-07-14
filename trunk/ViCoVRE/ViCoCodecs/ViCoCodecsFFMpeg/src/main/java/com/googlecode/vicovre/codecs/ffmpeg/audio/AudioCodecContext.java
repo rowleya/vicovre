@@ -50,6 +50,8 @@ public class AudioCodecContext {
 
     private int flags2 = 0;
 
+    private byte[] extraData = null;
+
     /**
      * Returns the channels
      * @return the channels
@@ -176,5 +178,14 @@ public class AudioCodecContext {
      */
     public void setFlags2(int flags2) {
         this.flags2 = flags2;
+    }
+
+    public byte[] createExtraData(int size) {
+        extraData = new byte[size];
+        return extraData;
+    }
+
+    public byte[] getExtraData() {
+        return extraData;
     }
 }

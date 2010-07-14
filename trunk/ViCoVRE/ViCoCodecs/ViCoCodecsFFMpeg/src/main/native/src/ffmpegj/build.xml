@@ -30,16 +30,17 @@
                 <arg file="resample.cpp"/>
                 <arg file="ptrlong.cpp"/>
                 <libdirs/>
-                <arg line="-lavcodec" />
                 <arg line="-lavformat" />
+                <arg line="-lavcodec" />
                 <arg line="-lavutil" />
                 <arg line="-lmp3lame" />
                 <arg line="-lpostproc" />
                 <arg line="-lswscale" />
-                <arg line="-lx264" />
                 <arg line="-lyasm" />
                 <arg line="-lgsm" />
-                <arg line="-lfaad"/>
+                <arg line="-lfaac" />
+                <arg line="-lfaad" />
+                <arg line="-lopencore-amrnb" />
                 <arg line="-ltheora" />
                 <arg line="-ltheoradec" />
                 <arg line="-ltheoraenc" />
@@ -47,7 +48,6 @@
                 <arg line="-lvorbisenc" />
                 <arg line="-lvorbisfile" />
                 <arg line="-lxvidcore" />
-                <arg line="-la52" />
                 <arg line="-logg" />
                 <libs/>
             </exec>
