@@ -36,7 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Date;
+import java.text.ParseException;
 import java.util.List;
 
 import javax.ws.rs.DELETE;
@@ -80,13 +80,21 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
 
         String startDateString = details.getFirst("startDate");
         if (startDateString != null) {
-            recording.setStartDate(new Date(Long.parseLong(startDateString)));
+            try {
+                recording.setStartDateString(startDateString);
+            } catch (ParseException e) {
+                throw new IOException(e);
+            }
         } else {
             recording.setStartDate(null);
         }
         String stopDateString = details.getFirst("stopDate");
         if (stopDateString != null) {
-            recording.setStopDate(new Date(Long.parseLong(stopDateString)));
+            try {
+                recording.setStopDateString(stopDateString);
+            } catch (ParseException e) {
+                throw new IOException(e);
+            }
         } else {
             recording.setStopDate(null);
         }
@@ -221,8 +229,6 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         String folderPath = getFolderPath(uriInfo, 1, 1);
         String id = getId(uriInfo, 0);
 
-        System.err.println("Folder path = " + folderPath + " id = " + id);
-
         Folder folder = getFolder(folderPath);
         UnfinishedRecording recording = folder.getUnfinishedRecording(id);
         if (recording == null) {
@@ -234,7 +240,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
 
     @Path("{folder: .*}")
     @GET
-    @Produces("application/json")
+    @Produces({"text/xml", "application/json"})
     public Response getUnfinishedRecordings(
             @PathParam("folder") String folderPath)
             throws IOException {
@@ -245,7 +251,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     }
 
     @GET
-    @Produces("application/json")
+    @Produces({"text/xml", "application/json"})
     public Response getUnfinishedRecordings() throws IOException {
         return getUnfinishedRecordings("");
     }
