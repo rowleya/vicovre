@@ -2,6 +2,18 @@
 
 = Introduction =
 
-This page describes the REST interface used to create, delete, edit, start, stop, pause and resume recordings.
+This page describes the REST interface used to list, create, edit, delete, start, stop, pause and resume recordings.
 
 = Details =
+
+|| *HTTP Method* || *URL Format* || *Return Content Types* || *Description* || *Return Entity* ||
+|| GET || {{{http://<url>/record/<folder>}}} || text/xml, application/json || Gets a list of the recordings in the given folder.  If no folder is specified, the root directory of the recordings is listed. || The list of recordings. ||
+|| POST || {{{http://<url>/record/<folder>?<recording-details>}}} || text/plain || Creates a new recording in the specified folder. See below for what can be specified in {{{<recording-details>}}}. || The full url of the new recording. ||
+|| PUT || {{{http://<url>/record/<folder>/<id>?<recording-details>}}} || Edits the recording with the given url. See below for what can be specified in {{{<recording-details>}}}. || None ||
+|| DELETE || {{{http://<url>/record/<folder>/<id>}}} || Deletes the recording with the given url. || None ||
+|| PUT || {{{http://<url>/record/<folder>/<id>/start}}} || Starts the recording with the given url. || None ||
+|| PUT || {{{http://<url>/record/<folder>/<id>/stop}}} || Stops the recording with the given url. || None ||
+|| PUT || {{{http://<url>/record/<folder>/<id>/pause}}} || Pauses the recording with the given url. || None ||
+|| PUT || {{{http://<url>/record/<folder>/<id>/resume}}} || Resumes the recording with the given url. || None ||
+
+== Recording Details ==
