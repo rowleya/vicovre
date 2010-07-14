@@ -17,11 +17,16 @@ This page describes the REST interface used to list, create, edit, delete, start
 || PUT || {{{http://<url>/record/<folder>/<id>/resume}}} || Resumes the recording with the given url. || None || None ||
 
 == Recording List ==
-If text/xml is requested as the content type, the recording list will be produced as follows:
+
+=== XML ===
+If text/xml is requested as the content type, the recording list will be produced as follows (note that the fields may appear in any order):
 
 {{{
 <recordings>
+
+    <!-- 0 or more recordings -->
     <recording>
+        
         <!-- The id of the recording -->
         <id>...</id>
 
@@ -61,11 +66,75 @@ If text/xml is requested as the content type, the recording list will be produce
              <!-- The ttl to record with -->
              <ttl>...</ttl>
         </address>
+        ...
  
         <!-- The current status of the recording (see below) -->
         <status>...</status>
     </recording>
+    
+    ...
 </recordings>
+}}}
+
+=== JSON ===
+If application/json is requested as the content type, the recording list will be produced as follows (note that the fields may appear in any order):
+
+{{{
+{"recording":[
+    
+    /* 0 or more recordings */
+    {
+
+    /* The id of the recording */
+    "id":"...",
+
+    "metadata":
+        {
+
+        /* The name of the recording */
+        "name":"...",
+
+        /* The description of the recording (optional) */
+        "description":"...",
+
+        /* true if the description is editable, false otherwise (optional) */
+        "descriptionEditable":...,
+        },
+    
+    /* The date / time that the recording will start (see below for format) (optional) */
+    "startDate":"..."
+
+    /* The date / time that the recording will stop(see below for format) (optional) */
+    "stopDate":"..."
+
+    /* The AGTk venue server that the venue to record from is on (optional) */
+    "ag3VenueServer":"..."
+
+    /* The AGTk venue to record from (optional) */
+    "ag3VenueUrl":"..."
+
+    /* An address to record from (0 or more) */
+    "address":[
+        {
+
+        /* The IP address to record from */
+        "host":"...",
+        
+        /* The port to record from */
+        "port":...,
+        
+        /* The ttl to record using */
+        "ttl":...
+        }
+    ],
+    ...
+
+    /* The current status of the recording (see below) */
+    "status":"..."
+    },
+    ...
+]}
+}}}
 
 === Recording Statuses ===
 The recording status is formatted as a key word, optionally followed by additional information after a colon (which can be ignored), e.g. status[:info].  The status can be one of the following:
