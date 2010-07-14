@@ -44,12 +44,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.codehaus.jettison.json.JSONArray;
-
 import ag3.interfaces.VenueServer;
 import ag3.interfaces.types.ConnectionDescription;
 
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.web.rest.response.VenueServersResponse;
 import com.googlecode.vicovre.web.rest.response.VenuesResponse;
 import com.sun.jersey.spi.inject.Inject;
 
@@ -86,10 +85,13 @@ public class VenueHandler {
             + url.getHost() + ":" + port + "/VenueServer";
         return venueServerUrl;
     }
+
     @Path("/servers")
     @GET
+    @Produces("application/json")
     public Response getVenueServers() {
-        return Response.ok(database.getKnownVenueServers()).build();
+        return Response.ok(new VenueServersResponse(Arrays.asList(
+                database.getKnownVenueServers()))).build();
     }
 
     @Path("/server")

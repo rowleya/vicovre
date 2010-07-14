@@ -53,8 +53,8 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 
-public class MessageReceiver extends Callback
-        implements MessageResponseHandler {
+public class MessageReceiver implements Callback,
+        MessageResponseHandler {
 
     private Application application = null;
 

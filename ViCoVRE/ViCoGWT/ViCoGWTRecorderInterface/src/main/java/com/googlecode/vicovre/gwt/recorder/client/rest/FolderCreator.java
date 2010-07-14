@@ -30,59 +30,61 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.annotations.client;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
+import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
 
-import com.google.gwt.core.client.GWT;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.FolderCreatePopup;
+import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 
-public class TimeReceiver implements Callback {
+public class FolderCreator extends AbstractRestCall
+        implements MessageResponseHandler {
 
-    private Application application = null;
+    private FolderPanel folderPanel = null;
 
-    private LiveAnnotationType type = null;
+    private FolderCreatePopup popup = null;
 
-    public static void getTime(Application application,
-            LiveAnnotationType type) {
-        TimeReceiver receiver = new TimeReceiver(application, type);
-        receiver.go();
+    private String folderPath = null;
+
+    private String url = null;
+
+    public static void createFolder(FolderPanel folderPanel, String url) {
+        FolderCreator creator = new FolderCreator(folderPanel, url);
+        creator.go();
     }
 
-    public TimeReceiver(Application application, LiveAnnotationType type) {
-        this.application = application;
-        this.type = type;
+    public FolderCreator(FolderPanel folderPanel, String url) {
+        this.folderPanel = folderPanel;
+        this.url = url + "folders";
     }
 
     public void go() {
-        application.clearPanel();
-        Client client = new Client(Protocol.HTTP);
-        String url = application.getUrl();
-        url += "annotations/date";
-        client.get(url, this);
+        popup = new FolderCreatePopup(this);
+        popup.show();
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().equals(Status.SUCCESS_OK)) {
-            String timestamp = response.getEntity().getText();
-            GWT.log("Timestamp = " + timestamp, null);
-            type.setTimestamp(timestamp);
-            application.displayAnnotationPanel(type);
-        } else {
-            application.displayButtonPanel();
-            String errorMessage = "Error receiving time "
-                + response.getStatus().getCode() + ": "
-                + response.getStatus().getDescription();
-            MessagePopup error = new MessagePopup(errorMessage,
-                    null, MessagePopup.ERROR, MessageResponse.OK);
-            error.center();
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.OK) {
+            folderPath = folderPanel.getCurrentFolder();
+            if (!folderPath.endsWith("/")) {
+                folderPath += "/";
+            }
+            folderPath += popup.getName();
+
+            go(url + folderPath, Method.PUT);
         }
+    }
+
+    protected void onError(String message) {
+        displayError("Error creating folder: " + message);
+    }
+
+    protected void onSuccess(Response response) {
+        folderPanel.addFolder(folderPath);
     }
 
 }

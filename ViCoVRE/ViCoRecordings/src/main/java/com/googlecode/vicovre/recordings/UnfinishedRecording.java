@@ -38,6 +38,9 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import ag3.interfaces.Venue;
 import ag3.interfaces.types.BridgeDescription;
 import ag3.interfaces.types.ClientProfile;
@@ -54,6 +57,7 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlRootElement(name="unfinishedrecording")
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private static final String STOPPED = "Stopped";
@@ -148,6 +152,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         }
     }
 
+    public UnfinishedRecording() {
+        // Does Nothing
+    }
+
     /**
      * Creates a new TimerRecording
      * @param manager The manager used to start and stop the recording
@@ -168,6 +176,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Gets the unique id
      * @return The id
      */
+    @XmlElement
     public String getId() {
         return file.getName().substring(0, file.getName().indexOf(
                 RecordingConstants.UNFINISHED_RECORDING_INDEX));
@@ -177,6 +186,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the metadata
      * @return the metadata
      */
+    @XmlElement
     public RecordingMetadata getMetadata() {
         return metadata;
     }
@@ -201,6 +211,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the ag3VenueServer
      * @return the ag3VenueServer
      */
+    @XmlElement
     public String getAg3VenueServer() {
         return ag3VenueServer;
     }
@@ -217,6 +228,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the ag3VenueUrl
      * @return the ag3VenueUrl
      */
+    @XmlElement
     public String getAg3VenueUrl() {
         return ag3VenueUrl;
     }
@@ -233,6 +245,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the addresses
      * @return the addresses
      */
+    @XmlElement
     public NetworkLocation[] getAddresses() {
         return addresses;
     }
@@ -249,6 +262,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the startDate
      * @return the startDate
      */
+    @XmlElement
     public Date getStartDate() {
         return startDate;
     }
@@ -265,6 +279,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Returns the stopDate
      * @return the stopDate
      */
+    @XmlElement
     public Date getStopDate() {
         return stopDate;
     }
@@ -281,6 +296,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Gets the current status of the recording
      * @return The status
      */
+    @XmlElement
     public String getStatus() {
         return status;
     }
@@ -359,7 +375,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         if (recordingFinished || !recordingStarted) {
             return;
         }
-        manager.disableRecording();
+        manager.disableRecording(false);
         connector.close();
         try {
             manager.terminate();
@@ -381,14 +397,19 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
         Recording finishedRecording = getFinishedRecording();
         finishedRecording.setMetadata(getMetadata());
-        try {
-            database.addRecording(finishedRecording);
-            recordingFinished = true;
-            database.deleteUnfinishedRecording(this);
-            status = COMPLETED;
-        } catch (IOException e) {
-            e.printStackTrace();
-            status = "Error: " + e.getMessage();
+        if (!finishedRecording.getStreams().isEmpty()) {
+            try {
+                database.addRecording(finishedRecording);
+                recordingFinished = true;
+                database.deleteUnfinishedRecording(this);
+                status = COMPLETED;
+            } catch (IOException e) {
+                e.printStackTrace();
+                status = "Error: " + e.getMessage();
+            }
+        } else {
+            recordingStarted = false;
+            status = STOPPED + ", no streams recorded";
         }
     }
 
@@ -399,7 +420,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         if (!recordingStarted || recordingFinished) {
             return;
         }
-        manager.disableRecording();
+        manager.disableRecording(true);
         status = PAUSED;
     }
 
@@ -419,7 +440,15 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(UnfinishedRecording r) {
-        return getStartDate().compareTo(r.getStartDate());
+        Date startDate = getStartDate();
+        Date otherStartDate = r.getStartDate();
+        if (startDate != null && otherStartDate != null) {
+            return getStartDate().compareTo(r.getStartDate());
+        } else if (startDate != null) {
+            return 1;
+        } else {
+            return -1;
+        }
     }
 
     public Recording getFinishedRecording() {

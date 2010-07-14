@@ -42,20 +42,21 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
+import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
 
 public class RecordingItemPopup extends ModalPopup<Grid>
-        implements ValueChangeHandler<Boolean>, ClickHandler {
+        implements ValueChangeHandler<Boolean>, ClickHandler, VenueLoader {
 
     private static int lastId = 0;
 
@@ -65,7 +66,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private TextArea description = new TextArea();
 
-    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
+    private VenuePanel venue = new VenuePanel(this);
 
     private RadioButton manualStart = null;
 
@@ -95,16 +96,20 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private MessageResponseHandler handler = null;
 
-    public RecordingItemPopup(RecordingItem item) {
+    private String url = null;
+
+    public RecordingItemPopup(RecordingItem item, String url) {
         super(new Grid(6, 2));
         this.item = item;
         this.handler = item;
+        this.url = url;
         init();
     }
 
-    public RecordingItemPopup(MessageResponseHandler handler) {
+    public RecordingItemPopup(MessageResponseHandler handler, String url) {
         super(new Grid(6, 2));
         this.handler = handler;
+        this.url = url;
         init();
     }
 
@@ -284,14 +289,38 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(ok)) {
-            hide();
-            handler.handleResponse(new MessageResponse(MessageResponse.OK,
-                    this));
+            String error = null;
+            if (name.getText().isEmpty()) {
+                error = "Please enter a name for the recording";
+            } else if (venue.getVenueServer() != null) {
+                if (venue.getVenueServer().equals("")) {
+                    error = "Please enter the name of a venue server";
+                } else if (venue.getVenue() == null) {
+                    error = "Please select a venue";
+                }
+            } else if (venue.getAddresses() != null) {
+                if (venue.getAddresses().length < 1) {
+                    error = "Please enter at least one address";
+                }
+            }
+            if (error == null) {
+                hide();
+                handler.handleResponse(new MessageResponse(MessageResponse.OK,
+                        this));
+            } else {
+                MessagePopup errorPopup = new MessagePopup(error, null,
+                        MessagePopup.ERROR, MessageResponse.OK);
+                errorPopup.center();
+            }
         } else if (event.getSource().equals(cancel)) {
             hide();
             handler.handleResponse(new MessageResponse(MessageResponse.CANCEL,
                     this));
         }
+    }
+
+    public void loadVenues(VenuePanel panel) {
+        RestVenueLoader.loadVenues(panel, url);
     }
 
 }

@@ -30,41 +30,31 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.web.rest.response;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import java.util.List;
 
-public class RecordingItemStarter implements AsyncCallback<String> {
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-    private RecordingItem item = null;
+import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.UnfinishedRecording;
 
-    public static void start(RecordingItem item) {
-        new RecordingItemStarter(item);
+@XmlRootElement(name="recordings")
+public class UnfinishedRecordingsResponse {
+
+    private List<UnfinishedRecording> recordings = null;
+
+    public UnfinishedRecordingsResponse() {
+        // Does Nothing
     }
 
-    private RecordingItemStarter(RecordingItem item) {
-        this.item = item;
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.startRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Starting...");
-        item.setCreated(false);
-        request.execute();
+    public UnfinishedRecordingsResponse(List<UnfinishedRecording> recordings) {
+        this.recordings = recordings;
     }
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Stopped");
-        item.setStatus("Error: " + error.getMessage());
-    }
-
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
+    @XmlElement(name="recording")
+    public List<UnfinishedRecording> getRecordings() {
+        return recordings;
     }
 }

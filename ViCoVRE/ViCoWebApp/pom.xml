@@ -75,22 +75,13 @@
                             <maxIdleTime>60000</maxIdleTime>
                         </connector>
                     </connectors>
-                    <systemproperties>
-                        <systemproperty>
-                            <name>org.apache.commons.logging.Log</name>
-                            <value>
-                                org.apache.commons.logging.impl.Log4JLogger
-                            </value>
-                        </systemproperty>
-                        <systemproperty>
-                            <name>slf4j</name>
-                            <value>false</value>
-                        </systemproperty>
-                        <systemproperty>
-                            <name>log4j.configuration</name>
-                            <value>file:./target/ViCoVRE/WEB-INF/classes/log4j.properties</value>
-                        </systemproperty>
-                    </systemproperties>
+                    <requestLog implementation="org.mortbay.jetty.NCSARequestLog">
+30                        <filename>target/yyyy_mm_dd.request.log</filename>
+31                        <retainDays>90</retainDays>
+32                        <append>true</append>
+33                        <extended>false</extended>
+34                        <logTimeZone>GMT</logTimeZone>
+35                  </requestLog>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -109,6 +100,12 @@
                         <groupId>log4j</groupId>
                         <artifactId>log4j</artifactId>
                         <version>1.2.13</version>
+                        <type>jar</type>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-jcl</artifactId>
+                        <version>1.0.1</version>
                         <type>jar</type>
                     </dependency>
                     <dependency>

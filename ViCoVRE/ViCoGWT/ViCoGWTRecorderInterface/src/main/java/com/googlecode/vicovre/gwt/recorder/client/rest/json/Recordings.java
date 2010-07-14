@@ -30,69 +30,23 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+public class Recordings extends JavaScriptObject {
 
-    private String name = null;
-
-    private String description = null;
-
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    protected Recordings() {
+        // Does Nothing
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
-    }
+    public static final native Recordings parse(String json) /*-{
+        return eval('(' + json + ')');
+    }-*/;
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
-    }
+    public final native JsArray<Recording> getRecordings() /*-{
+        return this.recording;
+    }-*/;
 
 }

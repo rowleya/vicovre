@@ -30,41 +30,25 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public class RecordingItemPauser implements AsyncCallback<String> {
+public class NetworkLocation extends JavaScriptObject {
 
-    private RecordingItem item = null;
-
-    public static void pause(RecordingItem item) {
-        new RecordingItemPauser(item);
+    protected NetworkLocation() {
+        // Does Nothing
     }
 
-    private RecordingItemPauser(RecordingItem item) {
-        this.item = item;
-        XmlRpcClient client = Application.getXmlRpcClient();
-        XmlRpcRequest<String> request = new XmlRpcRequest<String>(client,
-                "unfinishedRecording.pauseRecording",
-                new Object[]{item.getFolder(), item.getId()}, this);
-        item.setStatus("Pausing...");
-        item.setCreated(false);
-        request.execute();
-    }
+    public final native String getHost() /*-{
+        return this.host;
+    }-*/;
 
-    public void onFailure(Throwable error) {
-        item.setCreated(true);
-        item.setStatus("Recording");
-        item.setStatus("Error: " + error.getMessage());
-    }
+    public final native int getPort() /*-{
+        return this.port;
+    }-*/;
 
-    public void onSuccess(String status) {
-        item.setCreated(true);
-        item.setStatus(status);
-    }
+    public final native int getTtl() /*-{
+        return this.ttl;
+    }-*/;
 }

@@ -58,7 +58,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 
-public class LiveAnnotationType extends Callback implements ClickHandler {
+public class LiveAnnotationType implements Callback, ClickHandler {
 
     private Application application = null;
 

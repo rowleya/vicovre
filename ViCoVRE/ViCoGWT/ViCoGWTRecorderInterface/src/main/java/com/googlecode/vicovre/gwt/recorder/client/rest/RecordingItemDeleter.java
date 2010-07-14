@@ -30,29 +30,40 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.xmlrpc;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
-import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
+
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.recorder.client.Application;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-public class RecordingItemDeleter implements AsyncCallback<Boolean>,
-        MessageResponseHandler {
+public class RecordingItemDeleter extends AbstractRestCall
+        implements MessageResponseHandler {
 
     private RecordingItem item = null;
 
-    public static void deleteRecording(RecordingItem item) {
-        new RecordingItemDeleter(item);
+    private String url = null;
+
+    public static void deleteRecording(RecordingItem item, String url) {
+        RecordingItemDeleter deleter = new RecordingItemDeleter(item, url);
+        deleter.go();
     }
 
-    private RecordingItemDeleter(RecordingItem item) {
+    private RecordingItemDeleter(RecordingItem item, String url) {
         this.item = item;
+        this.url = url + "record" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId();
+    }
+
+    public void go() {
         MessagePopup message = new MessagePopup(
             "Are you sure that you would like to delete this recording?",
             this, MessagePopup.QUESTION,
@@ -60,30 +71,22 @@ public class RecordingItemDeleter implements AsyncCallback<Boolean>,
         message.center();
     }
 
-    public void onFailure(Throwable error) {
-        item.setStatus("Error: Deletion failed: " + error.getMessage());
-        GWT.log("Error deleting item", error);
+    protected void onError(String message) {
+        item.setStatus("Error: Deletion failed: " + message);
+        GWT.log("Error deleting item: " + message);
     }
 
-    public void onSuccess(Boolean result) {
-        if (result) {
-            item.removeFromParent();
-        } else {
-            item.setStatus("Error: Deletion failed");
-        }
+    protected void onSuccess(Response response) {
+        item.removeFromParent();
     }
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.YES) {
             item.setCreated(false);
             item.setStatus("Deleting...");
-            XmlRpcClient client = Application.getXmlRpcClient();
-            XmlRpcRequest<Boolean> request = new XmlRpcRequest<Boolean>(client,
-                    "unfinishedRecording.deleteUnfinishedRecording",
-                    new Object[]{item.getFolder(), item.getId()}, this);
-            request.execute();
+            GWT.log("Deleting from " + url);
+            go(url, Method.DELETE);
         }
     }
-
 
 }

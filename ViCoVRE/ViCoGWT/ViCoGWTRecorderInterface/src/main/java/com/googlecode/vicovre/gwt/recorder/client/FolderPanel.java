@@ -48,10 +48,11 @@ import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.FolderCreator;
+
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemLoader;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemLoader;
 
 public class FolderPanel extends HorizontalPanel
         implements SelectionHandler<TreeItem>, ClickHandler {
@@ -62,7 +63,7 @@ public class FolderPanel extends HorizontalPanel
 
     private PlayPanel playPanel = new PlayPanel();
 
-    private RecordPanel recordPanel = new RecordPanel(this);
+    private RecordPanel recordPanel = null;
 
     private HarvestPanel harvestPanel = new HarvestPanel(this);
 
@@ -71,7 +72,13 @@ public class FolderPanel extends HorizontalPanel
 
     private Tree folders = new Tree();
 
-    public FolderPanel() {
+    private String url = null;
+
+    public FolderPanel(String url) {
+        this.url = url;
+
+        recordPanel = new RecordPanel(this, url);
+
         setWidth("95%");
         setHeight("100%");
 
@@ -152,7 +159,8 @@ public class FolderPanel extends HorizontalPanel
         harvestPanel.clear();
 
         PlayItemLoader.loadPlayItems(path, this, playPanel, loader);
-        RecordingItemLoader.loadRecordingItems(path, this, recordPanel, loader);
+        RecordingItemLoader.loadRecordingItems(path, this, recordPanel, loader,
+                url);
         HarvestItemLoader.loadHarvestItems(path, this, harvestPanel, loader);
     }
 
@@ -167,7 +175,7 @@ public class FolderPanel extends HorizontalPanel
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            FolderCreator.createFolder(this);
+            FolderCreator.createFolder(this, url);
         }
     }
 

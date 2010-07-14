@@ -54,7 +54,7 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.importexport.client.SessionsHandler;
 
-public class SessionsLoader extends Callback {
+public class SessionsLoader implements Callback {
 
     private SessionsHandler panel = null;
 

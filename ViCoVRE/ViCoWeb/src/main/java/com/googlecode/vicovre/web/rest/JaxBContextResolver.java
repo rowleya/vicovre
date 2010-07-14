@@ -30,69 +30,26 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.web.rest;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Provider;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
 
-    private String name = null;
+@Provider
+public class JaxBContextResolver implements ContextResolver<JAXBContext> {
 
-    private String description = null;
-
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    public JAXBContext getContext(Class<?> objectType) {
+        try {
+            return new JSONJAXBContext(
+                    JSONConfiguration.natural().build(), objectType);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
-
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
-    }
-
 }

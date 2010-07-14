@@ -30,69 +30,45 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.google.gwt.core.client.GWT;
+import com.googlecode.vicovre.gwt.client.VenuePanel;
+import com.googlecode.vicovre.gwt.client.rest.VenueServerReceiver;
+import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 
-/**
- * Metadata for recordings
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-@XmlRootElement(name="metadata")
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+public class VenueServerLoader implements VenueServerReceiver {
 
-    private String name = null;
+    private ActionLoader loader = null;
 
-    private String description = null;
+    private String url = null;
 
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
-    @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    public static void load(ActionLoader loader, String url) {
+        VenueServerLoader vsLoader = new VenueServerLoader(loader, url);
+        vsLoader.go();
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
+    public VenueServerLoader(ActionLoader loader, String url) {
+        this.loader = loader;
+        this.url = url;
     }
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
+    public void go() {
+        com.googlecode.vicovre.gwt.client.rest.VenueServerLoader.load(this,
+                url);
     }
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
+    public void addVenueServer(String venueServer) {
+        VenuePanel.addVenueServer(venueServer);
     }
 
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
+    public void failedToGetVenueServers(String error) {
+        GWT.log("Error loading venue servers: " + error);
+        loader.itemFailed("Error loading venue servers: " + error);
     }
 
-    public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
+    public void finishedAddingVenueServers() {
+        loader.itemLoaded();
     }
 
 }

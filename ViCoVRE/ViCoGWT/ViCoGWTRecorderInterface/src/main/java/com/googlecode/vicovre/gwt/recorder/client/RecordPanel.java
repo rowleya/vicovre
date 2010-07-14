@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.RecordingItemCreator;
+import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemCreator;
 
 public class RecordPanel extends VerticalPanel implements ClickHandler {
 
@@ -50,7 +50,10 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     private FolderPanel folderPanel = null;
 
-    public RecordPanel(FolderPanel folderPanel) {
+    private String url = null;
+
+    public RecordPanel(FolderPanel folderPanel, String url) {
+        this.url = url;
         this.folderPanel = folderPanel;
         setWidth("100%");
         setHeight("100%");
@@ -78,7 +81,7 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            RecordingItemCreator.createRecordingItem(folderPanel, this);
+            RecordingItemCreator.createRecordingItem(folderPanel, this, url);
         }
     }
 

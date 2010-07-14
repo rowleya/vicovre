@@ -53,7 +53,7 @@ import com.google.gwt.xml.client.NodeList;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 
-public class LiveAnnotationTypeReceiver extends Callback {
+public class LiveAnnotationTypeReceiver implements Callback {
 
     private Application application = null;
 

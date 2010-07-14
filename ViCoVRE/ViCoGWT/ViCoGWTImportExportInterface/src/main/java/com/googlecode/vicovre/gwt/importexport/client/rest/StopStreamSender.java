@@ -45,7 +45,7 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.importexport.client.StreamPanel;
 
-public class StopStreamSender extends Callback {
+public class StopStreamSender implements Callback {
 
     private String url = null;
 
