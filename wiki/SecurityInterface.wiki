@@ -23,7 +23,7 @@ This page details the REST interface used for controlling security including add
 || PUT || {{{http://<url>/group/<group>}}} || Creates a new group. || [SecurityRoles Writer] or [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/group/<group>/owner}}} || Sets the group owner. || The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/group/<group>/users?username=<username>[&username=<username>]...}}} || Sets the users in the group. ||  The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
-|| DELETE || {{{http://<url>/group/<group> || Deletes a group. ||  The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
+|| DELETE || {{{http://<url>/group/<group>}}} || Deletes a group. ||  The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
 
 == Roles ==
 || *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
