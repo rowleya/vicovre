@@ -9,7 +9,7 @@ This page details the REST interface used for controlling security including add
 || *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
 || GET || {{{http://<url>/user/}}} || List the existing users. || [SecurityRoles Writer] or more. || application/json, text/xml || A list of users.  See below for details. ||
 || GET || {{{http://<url>/user/<username>/role}}} || Gets the role of a user.  || [SecurityRoles Administrator] || text/plain || The [SecurityRoles role] of the user ||
-|| PUT || {{{http://<url>/user/<username>?password=<password>[&role=<role>]}}} || Creates a new user. || [SecurityRoles User] unless [SecurityRoles {{{<role>}}}] is specified, in which case [SecurityRoles Administrator]. || None || None ||
+|| PUT || {{{http://<url>/user/<username>?password=<password>[&role=<role>]}}} || Creates a new user. || [SecurityRoles User] unless [SecurityRoles <role>] is specified, in which case [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/user/<username>/password?password=<password>[&oldPassword=<oldPassword>]}}} || Changes a user's password. || Logged in as {{{<username>}}} unless {{{<oldPassword>}}} is not specified, in which case [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/user/<username>/role?role=<role>}}} || Changes a user's role. || [SecurityRoles Administrator] || None || None ||
 || DELETE || {{{http://<url>/user/<username>}}} || Deletes a user. || Logged in as {{{<username>}}} or [SecurityRoles Administrator] || None || None ||
