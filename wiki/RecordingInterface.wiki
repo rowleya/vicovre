@@ -8,7 +8,7 @@ This page describes the REST interface used to list, create, edit, delete, start
 
 || *HTTP Method* || *URL Format* || *Description* || *Return Content Types* || *Return Entity* ||
 || GET || {{{http://<url>/record/<folder>}}} || Gets a list of the recordings in the given folder.  If no folder is specified, the root directory of the recordings is listed. || text/xml, application/json || The list of recordings - see below for formatting. ||
-|| POST || {{{http://<url>/record/<folder>?<details>}}} || Creates a new recording in the specified folder. See below for what can be specified in {{{<-details>}}}. || text/plain || The full url of the new recording. ||
+|| POST || {{{http://<url>/record/<folder>?<details>}}} || Creates a new recording in the specified folder. See below for what can be specified in {{{<details>}}}. || text/plain || The full url of the new recording. ||
 || PUT || {{{http://<url>/record/<folder>/<id>?<details>}}} || Edits the recording with the given url. See below for what can be specified in {{{<details>}}}. || None || None ||
 || DELETE || {{{http://<url>/record/<folder>/<id>}}} || Deletes the recording with the given url. || None || None ||
 || PUT || {{{http://<url>/record/<folder>/<id>/start}}} || Starts the recording with the given url. || None || None ||
