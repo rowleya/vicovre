@@ -8,6 +8,6 @@ This page lists the roles that are defined in the security architecture.
 
 || *Role* || *Description* ||
 || User || An unauthenticated user. ||
-|| AuthUser || An authenticated user. ||
+|| !AuthUser || An authenticated user. ||
 || Writer || An authenticated user with write permission. ||
 || Administrator || An administrator. ||
