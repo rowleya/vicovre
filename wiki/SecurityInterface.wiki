@@ -6,10 +6,67 @@ This page details the REST interface used for controlling security including add
 
 = Details =
 
+== Users == 
 || *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
-|| GET || {{{http://<url>/user/}}} || List the existing users. || [SecurityRoles Writer] or more. || application/json, text/xml || A list of users.  See below for details. ||
+|| GET || {{{http://<url>/user/}}} || List the existing users. || [SecurityRoles Writer] or [SecurityRoles Administrator]. || application/json, text/xml || A list of users.  See below for details. ||
 || GET || {{{http://<url>/user/<username>/role}}} || Gets the role of a user.  || [SecurityRoles Administrator] || text/plain || The [SecurityRoles role] of the user ||
 || PUT || {{{http://<url>/user/<username>?password=<password>[&role=<role>]}}} || Creates a new user, optionally with a given [SecurityRoles role] (default !AuthUser). || [SecurityRoles User] unless {{{<role>}}} is specified, in which case [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/user/<username>/password?password=<password>[&oldPassword=<oldPassword>]}}} || Changes a user's password. || Logged in as {{{<username>}}} unless {{{<oldPassword>}}} is not specified, in which case [SecurityRoles Administrator]. || None || None ||
 || PUT || {{{http://<url>/user/<username>/role?role=<role>}}} || Changes a user's [SecurityRoles role]. || [SecurityRoles Administrator] || None || None ||
 || DELETE || {{{http://<url>/user/<username>}}} || Deletes a user. || Logged in as {{{<username>}}} or [SecurityRoles Administrator] || None || None ||
+
+== Groups ==
+|| *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
+|| GET || {{{http://<url>/group/}}} || List the existing groups. || [SecurityRoles Writer] or [SecurityRoles Administrator]. || application/json, text/xml || A list of groups.  See below for details. ||
+|| GET || {{{http://<url>/group/<group>/owner}}} || Gets the owner of the group. || The owner of {{{<group>}}} or [SecurityRoles Administrator]. || text/plain || The username of the owner of the group. ||
+|| GET || {{{http://<url>/group/<group>/users}}} || Gets the users in the group. || The owner of {{{<group>}}} or [SecurityRoles Administrator]. || application/json, text/xml || A list of users.  See below for details. ||
+|| PUT || {{{http://<url>/group/<group>}}} || Creates a new group. || [SecurityRoles Writer] or [SecurityRoles Administrator]. || None || None ||
+|| PUT || {{{http://<url>/group/<group>/owner}}} || Sets the group owner. || The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
+|| PUT || {{{http://<url>/group/<group>/users?username=<username>[&username=<username>]...}}} || Sets the users in the group. ||  The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
+|| DELETE || {{{http://<url>/group/<group> || Deletes a group. ||  The owner of {{{<group>}}} or [SecurityRoles Administrator]. || None || None ||
+
+== Roles ==
+|| *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
+|| GET || {{{http://<url>/role}}} || Lists the [SecurityRoles roles]. || [SecurityRoles Administrator] || application/json, text/xml || A list of roles. See below for details. ||
+
+== List of Users ==
+If the return type is text/xml, the user list will be formatted as follows:
+{{{
+<users>
+    <user>...</user>
+    ...
+</users>
+}}}
+
+If the return type is application/json, the user list will be formatted as follows:
+{{{
+{user: [...,]}
+}}}
+
+== List of Groups ==
+If the return type is text/xml, the group list will be formatted as follows:
+{{{
+<groups>
+    <group>...</group>
+    ...
+</groups>
+}}}
+
+If the return type is application/json, the group list will be formatted as follows:
+{{{
+{group: [...,]}
+}}}
+
+== List of Roles ==
+If the return type is text/xml, the role list will be formatted as follows:
+{{{
+<roles>
+    <role>...</role>
+    ...
+</roles>
+}}}
+
+If the return type is application/json, the rolelist will be formatted as follows:
+{{{
+{role: [...,]}
+}}}
