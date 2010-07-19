@@ -84,7 +84,7 @@ public class Auth {
 
     @Path("basic")
     @GET
-    public Response basicLogin(@QueryParam("successRedirect") String successUrl,
+    public Response basicLogin(@QueryParam("onSuccess") String successUrl,
             @Context HttpServletRequest request) throws URISyntaxException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         boolean failed = false;
