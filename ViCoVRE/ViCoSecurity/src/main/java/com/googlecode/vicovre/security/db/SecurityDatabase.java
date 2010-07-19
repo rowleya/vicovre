@@ -46,11 +46,11 @@ import javax.servlet.http.HttpSession;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.security.AlreadyExistsException;
-import com.googlecode.vicovre.security.CurrentUser;
 import com.googlecode.vicovre.security.InvalidOperationException;
-import com.googlecode.vicovre.security.SecurityFilter;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.UnknownException;
+import com.googlecode.vicovre.security.servlet.CurrentUser;
+import com.googlecode.vicovre.security.servlet.SecurityFilter;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 
 public class SecurityDatabase {

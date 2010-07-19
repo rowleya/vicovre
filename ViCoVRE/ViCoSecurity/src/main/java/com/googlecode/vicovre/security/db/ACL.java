@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import com.googlecode.vicovre.security.CurrentUser;
+import com.googlecode.vicovre.security.servlet.CurrentUser;
 
 public class ACL {
 

@@ -30,49 +30,20 @@
  *
  */
 
-package com.googlecode.vicovre.security;
-
-import java.io.IOException;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+package com.googlecode.vicovre.security.servlet;
 
 import com.googlecode.vicovre.security.db.User;
 
-public class SecurityFilter implements Filter {
+public class CurrentUser {
 
-    public static final String SESSION_USER =
-        SecurityFilter.class.getPackage().getName().concat(".user");
+    private static final ThreadLocal<User> user = new ThreadLocal<User>();
 
-    public void destroy() {
-        // Does Nothing
+    public static User get() {
+        return user.get();
     }
 
-    public void doFilter(ServletRequest request, ServletResponse response,
-            FilterChain chain) throws IOException, ServletException {
-        if (request instanceof HttpServletRequest) {
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
-            HttpSession session = httpRequest.getSession(false);
-            if (session != null) {
-                User user = (User) session.getAttribute(SESSION_USER);
-                if (user != null) {
-                    CurrentUser.set(user);
-                } else {
-                    CurrentUser.set(User.GUEST);
-                }
-            }
-        }
-        chain.doFilter(request, response);
-    }
-
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // Does Nothing
+    protected static void set(User user) {
+        CurrentUser.user.set(user);
     }
 
 }
