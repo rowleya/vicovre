@@ -72,7 +72,8 @@ public class SecurityDatabase {
 
     private File topLevelFolder = null;
 
-    public SecurityDatabase(String directory) throws SAXException, IOException {
+    public SecurityDatabase(String directory, String... usersToCreate)
+            throws SAXException, IOException {
         topLevelFolder = new File(directory);
         if (!topLevelFolder.exists()) {
             topLevelFolder.mkdirs();
@@ -102,6 +103,18 @@ public class SecurityDatabase {
             FileInputStream input = new FileInputStream(groupFile);
             Group group = GroupReader.readGroup(input, users);
             groups.put(group.getName(), group);
+        }
+
+        for (String userToCreate : usersToCreate) {
+            String[] parts = userToCreate.split("/");
+            try {
+                addUser(parts[0], parts[1], parts[2]);
+            } catch (AlreadyExistsException e) {
+                // Do Nothing
+            } catch (Exception e) {
+                System.err.println("Warning, error adding " + userToCreate
+                        + ": " + e.getMessage());
+            }
         }
 
         readACLs(topLevelFolder);
@@ -145,21 +158,26 @@ public class SecurityDatabase {
         }
     }
 
+    private void addUser(String username, String password, Role role)
+            throws IOException {
+        checkUsername(username);
+        checkPassword(password);
+        if (!users.containsKey(username)) {
+            User user = new User(username, role);
+            synchronized (user) {
+                Password.setPassword(password, user);
+                users.put(username, user);
+                writeUser(user);
+            }
+        } else {
+            throw new AlreadyExistsException(
+                    "User " + username + " already exists");
+        }
+    }
+
     public void addUser(String username, String password) throws IOException {
         synchronized (users) {
-            checkUsername(username);
-            checkPassword(password);
-            if (!users.containsKey(username)) {
-                User user = new User(username, Role.AUTHUSER);
-                synchronized (user) {
-                    Password.setPassword(password, user);
-                    users.put(username, user);
-                    writeUser(user);
-                }
-            } else {
-                throw new AlreadyExistsException(
-                        "User " + username + " already exists");
-            }
+            addUser(username, password, Role.AUTHUSER);
         }
     }
 
@@ -170,8 +188,6 @@ public class SecurityDatabase {
                 throw new UnauthorizedException(
                    "Only an administrator can add a user with a specific role");
             }
-            checkUsername(username);
-            checkPassword(password);
             Role role = Role.ROLES.get(roleName);
             if (roleName == null) {
                 throw new UnknownException("Unknown role " + roleName);
@@ -181,17 +197,7 @@ public class SecurityDatabase {
                         "Cannot create a guest user!");
             }
 
-            if (!users.containsKey(username)) {
-                User user = new User(username, role);
-                synchronized (user) {
-                    Password.setPassword(password, user);
-                    users.put(username, user);
-                    writeUser(user);
-                }
-            } else {
-                throw new AlreadyExistsException(
-                        "User " + username + " already exists");
-            }
+            addUser(username, password, role);
         }
     }
 
