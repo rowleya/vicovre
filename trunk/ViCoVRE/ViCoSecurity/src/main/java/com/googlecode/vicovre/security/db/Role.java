@@ -42,10 +42,8 @@ public class Role extends Entity {
 
     public static final Role WRITER = new Role("Writer", AUTHUSER);
 
-    public static final Role SERVICE = new Role("Service", WRITER);
-
     public static final Role ADMINISTRATOR =
-        new Role("Administrator", SERVICE);
+        new Role("Administrator", WRITER);
 
     public static final HashMap<String, Role> ROLES =
         new HashMap<String, Role>();
@@ -53,7 +51,6 @@ public class Role extends Entity {
         ROLES.put(USER.getName(), USER);
         ROLES.put(AUTHUSER.getName(), AUTHUSER);
         ROLES.put(WRITER.getName(), WRITER);
-        ROLES.put(SERVICE.getName(), SERVICE);
         ROLES.put(ADMINISTRATOR.getName(), ADMINISTRATOR);
     }
 
