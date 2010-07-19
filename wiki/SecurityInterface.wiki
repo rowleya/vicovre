@@ -6,4 +6,5 @@ This page details the REST interface used for controlling security including add
 
 = Details =
 
-|| *HTTP Method* || *URL Format* || *Description* || *Return Content Types* || *Return Entity* ||
+|| *HTTP Method* || *URL Format* || *Description* || *Authorization* || *Return Content Types* || *Return Entity* ||
+|| GET || {{{http://<url>/user/}}} || List the existing users. || Must have "Writer" role or more. ||
