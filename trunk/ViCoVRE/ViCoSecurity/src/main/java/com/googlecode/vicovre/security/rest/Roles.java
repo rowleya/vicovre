@@ -36,6 +36,7 @@ import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
@@ -49,6 +50,7 @@ public class Roles {
     private SecurityDatabase database = null;
 
     @GET
+    @Produces({"application/json", "text/xml"})
     public Response getRoles() {
         List<String> roles = database.getRoles();
         return Response.ok(new RolesResponse(roles)).build();
