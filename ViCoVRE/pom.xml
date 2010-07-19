@@ -23,6 +23,7 @@
         <module>ViCoRepositories</module>
         <module>ViCoSharedResources</module>
         <module>ViCoStreamer</module>
+        <module>ViCoSecurity</module>
         <module>ViCoUtils</module>
         <module>ViCoWeb</module>
         <module>ViCoWebApp</module>
