@@ -1,0 +1,8 @@
+#summary Description of the REST interface for controlling security
+
+= Introduction =
+
+This page details the REST interface used for controlling security including adding, editing and removing users and groups.
+
+= Details =
+
