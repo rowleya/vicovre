@@ -137,7 +137,7 @@ If application/json is requested as the content type, the recording list will be
 }}}
 
 === Recording Statuses ===
-The recording status is formatted as a key word, optionally followed by additional information after a colon (which can be ignored), e.g. status[:info].  The status can be one of the following:
+The recording status is formatted as a key word, optionally followed by additional information after a colon (which can be ignored), e.g. {{{status[:info]}}}.  The status can be one of the following:
  * Stopped - the recording has not yet started, or has finished but nothing was recorded
  * Recording - the recording is in progress
  * Paused - the recording has been paused
@@ -156,6 +156,7 @@ The recording details are specified as URL-Encoded parameters (e.g. key=value) p
 || host || The IP address to record from. || IP address. || One for each address. || Required if venue not specified; One required for each address. ||
 || port || The port to record from. || Even number between 2 and 65534. || One for each address. || One required for each address. ||
 || ttl || The Time-to-live to record using. || Number between 0 and 256. || One for each address. || One required for each address. ||
+|| notify || An email address to notify when the recording is complete. || An e-mail address || 0 or 1 || ||
 
 == Date / Time Format ==
 Dates and Times are represented as ISO8601 combined date time extended format without the timezone i.e. YYYY-MM-DDTHH:MM:SS.
