@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.DataInputStream;
 import java.io.EOFException;

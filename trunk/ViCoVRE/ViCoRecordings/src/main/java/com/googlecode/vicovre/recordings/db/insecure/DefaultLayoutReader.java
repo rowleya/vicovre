@@ -30,44 +30,39 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
-import java.io.File;
-import java.io.FileFilter;
+import java.io.IOException;
+import java.io.InputStream;
 
-import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
-/**
- * A filter that returns folders that are or are not recordings.
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class FolderFilter implements FileFilter {
+import com.googlecode.vicovre.recordings.DefaultLayout;
+import com.googlecode.vicovre.recordings.DefaultLayoutPosition;
+import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.utils.XmlIo;
 
-    private boolean isRecording = false;
+public class DefaultLayoutReader {
 
-    /**
-     * Creates a new FolderFilter.
-     * @param isRecording True to return only recordings, false to not return
-     *         recordings
-     */
-    public FolderFilter(final boolean isRecording) {
-        this.isRecording = isRecording;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see java.io.FileFilter#accept(java.io.File)
-     */
-    public boolean accept(final File pathname) {
-        if (pathname.isDirectory()) {
-            File recording = new File(pathname,
-                    RecordingConstants.RECORDING_INDEX);
-            if (recording.exists() == isRecording) {
-                return true;
-            }
+    public static DefaultLayout readLayout(InputStream input,
+            LayoutRepository layoutRepository)
+            throws SAXException, IOException {
+        DefaultLayout layout = new DefaultLayout(layoutRepository);
+        Node doc = XmlIo.read(input);
+        XmlIo.setString(doc, layout, "name");
+        XmlIo.setLong(doc, layout, "time");
+        XmlIo.setLong(doc, layout, "endTime");
+        for (DefaultLayoutPosition position : layout.getLayoutPositions()) {
+            Node pos = XmlIo.readNode(doc, "pos" + position.getName());
+            layout.setField(position.getName(),
+                    BooleanFieldSetReader.readFieldSet(pos));
         }
-        return false;
+        Node[] audioStreams = XmlIo.readNodes(doc, "audioStream");
+        for (Node audioStream : audioStreams) {
+            layout.addAudioStream(BooleanFieldSetReader.readFieldSet(
+                    audioStream));
+        }
+        return layout;
     }
-
 }

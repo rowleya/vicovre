@@ -40,10 +40,10 @@ import java.util.Map;
 
 import org.apache.xmlrpc.XmlRpcException;
 
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+
 import ag3.interfaces.VenueServer;
 import ag3.interfaces.types.ConnectionDescription;
-
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public class VenueHandler extends AbstractHandler {
 

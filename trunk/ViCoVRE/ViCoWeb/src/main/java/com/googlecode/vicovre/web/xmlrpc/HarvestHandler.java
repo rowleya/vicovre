@@ -45,8 +45,8 @@ import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;

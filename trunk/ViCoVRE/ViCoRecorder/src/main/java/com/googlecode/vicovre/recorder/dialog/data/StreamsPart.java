@@ -48,7 +48,7 @@ import org.apache.commons.httpclient.methods.multipart.Part;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Stream;
-import com.googlecode.vicovre.recordings.db.StreamReader;
+import com.googlecode.vicovre.recordings.db.insecure.StreamReader;
 
 /**
  * @author Andrew G D Rowley

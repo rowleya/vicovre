@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +45,6 @@ import ag3.interfaces.types.MulticastNetworkLocation;
 import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
@@ -69,7 +68,7 @@ public class HarvestSourceReader {
      */
     public static HarvestSource readHarvestSource(InputStream input,
             HarvestFormatRepository harvestFormatRepository,
-            RtpTypeRepository typeRepository, Folder folder, File file)
+            RtpTypeRepository typeRepository, InsecureFolder folder, File file)
             throws SAXException, IOException {
         HarvestSource harvestSource = new HarvestSource(folder, file,
                 typeRepository);

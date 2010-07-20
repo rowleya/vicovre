@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;

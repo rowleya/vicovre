@@ -39,8 +39,8 @@ import java.util.Map;
 
 import org.apache.xmlrpc.XmlRpcException;
 
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public abstract class AbstractHandler {

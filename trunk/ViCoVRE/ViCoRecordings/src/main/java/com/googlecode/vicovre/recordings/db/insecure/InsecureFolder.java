@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,12 +46,12 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.db.DefaultLayoutReader;
-import com.googlecode.vicovre.recordings.db.FolderFilter;
-import com.googlecode.vicovre.recordings.db.HarvestSourceReader;
+import com.googlecode.vicovre.recordings.DefaultLayout;
+import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.recordings.db.RecordingReader;
-import com.googlecode.vicovre.recordings.db.UnfinishedRecordingReader;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
@@ -64,7 +64,7 @@ import com.googlecode.vicovre.utils.XmlIo;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class Folder implements Comparable<Folder> {
+public class InsecureFolder implements Folder {
 
     private File file = null;
 
@@ -93,7 +93,7 @@ public class Folder implements Comparable<Folder> {
      * Creates a folder
      * @param file The real folder
      */
-    public Folder(File file, RtpTypeRepository typeRepository,
+    public InsecureFolder(File file, RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository,
             RecordingDatabase database, boolean readOnly) {
@@ -145,7 +145,7 @@ public class Folder implements Comparable<Folder> {
      * @param name the name to set
      * @throws IOException
      */
-    public void setName(String name) throws IOException {
+    protected void setName(String name) throws IOException {
         File outputFile = new File(file, RecordingConstants.NAME);
         if (!name.equals(file.getName())) {
             PrintWriter output = new PrintWriter(outputFile);
@@ -183,7 +183,7 @@ public class Folder implements Comparable<Folder> {
      * Sets the description
      * @param description the description to set
      */
-    public void setDescription(String description) throws IOException {
+    protected void setDescription(String description) throws IOException {
         File outputFile = new File(file, RecordingConstants.DESCRIPTION);
         if (description != null) {
             PrintWriter output = new PrintWriter(outputFile);
@@ -204,7 +204,7 @@ public class Folder implements Comparable<Folder> {
         Vector<Folder> folders = new Vector<Folder>();
         File[] files = file.listFiles(new FolderFilter(false));
         for (File folderFile : files) {
-            Folder folder = new Folder(folderFile, typeRepository,
+            InsecureFolder folder = new InsecureFolder(folderFile, typeRepository,
                     layoutRepository, harvestFormatRepository, database,
                     readOnly);
             folders.add(folder);
@@ -341,43 +341,43 @@ public class Folder implements Comparable<Folder> {
         return defaultLayouts;
     }
 
-    public void addRecording(Recording recording) {
+    protected void addRecording(Recording recording) {
         if (!readOnly) {
             recordings.put(recording.getId(), recording);
         }
     }
 
-    public void addUnfinishedRecording(UnfinishedRecording recording) {
+    protected void addUnfinishedRecording(UnfinishedRecording recording) {
         if (!readOnly) {
             unfinishedRecordings.put(recording.getId(), recording);
         }
     }
 
-    public void addHarvestSource(HarvestSource harvestSource) {
+    protected void addHarvestSource(HarvestSource harvestSource) {
         if (!readOnly) {
             harvestSources.put(harvestSource.getId(), harvestSource);
         }
     }
 
-    public void deleteRecording(String id) {
+    protected void deleteRecording(String id) {
         if (!readOnly) {
             recordings.remove(id);
         }
     }
 
-    public void deleteUnfinishedRecording(String id) {
+    protected void deleteUnfinishedRecording(String id) {
         if (!readOnly) {
             unfinishedRecordings.remove(id);
         }
     }
 
-    public void deleteHarvestSource(String id) {
+    protected void deleteHarvestSource(String id) {
         if (!readOnly) {
             harvestSources.remove(id);
         }
     }
 
-    public boolean equals(Folder folder) {
+    public boolean equals(InsecureFolder folder) {
         return file.equals(folder.file);
     }
 

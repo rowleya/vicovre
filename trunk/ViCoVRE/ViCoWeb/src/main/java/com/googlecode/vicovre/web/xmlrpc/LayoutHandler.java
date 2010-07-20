@@ -40,10 +40,10 @@ import java.util.Vector;
 
 import org.apache.xmlrpc.XmlRpcException;
 
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;

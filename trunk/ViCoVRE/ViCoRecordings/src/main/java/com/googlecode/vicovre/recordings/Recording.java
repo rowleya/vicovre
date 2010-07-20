@@ -35,22 +35,13 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
-import org.xml.sax.SAXException;
+import com.googlecode.vicovre.recordings.db.Folder;
 
-import com.googlecode.vicovre.repositories.rtptype.RTPType;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-
-import ag3.interfaces.Venue;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.StreamDescription;
 
 /**
  * Represents a recording

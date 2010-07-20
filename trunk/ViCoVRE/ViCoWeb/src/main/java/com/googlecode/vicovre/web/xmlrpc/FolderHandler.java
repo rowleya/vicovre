@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Vector;
 
-import com.googlecode.vicovre.recordings.Folder;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public class FolderHandler extends AbstractHandler {

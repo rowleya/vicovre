@@ -40,8 +40,6 @@ import java.net.DatagramPacket;
 import java.nio.channels.FileChannel;
 import java.util.Date;
 
-import javax.media.format.VideoFormat;
-
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTCPSDES;

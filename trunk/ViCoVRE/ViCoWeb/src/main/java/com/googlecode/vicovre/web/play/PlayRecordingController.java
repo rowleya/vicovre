@@ -59,11 +59,11 @@ import org.caboto.domain.Annotation;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.ReplayLayout;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
