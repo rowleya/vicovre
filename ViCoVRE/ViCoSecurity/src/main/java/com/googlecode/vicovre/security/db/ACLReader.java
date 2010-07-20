@@ -57,8 +57,10 @@ public class ACLReader {
         }
         String allowString = XmlIo.readValue(doc, "allow");
         boolean allow = Boolean.parseBoolean(allowString);
+        String proxyString = XmlIo.readValue(doc, "canProxy");
+        boolean canProxy = Boolean.parseBoolean(proxyString);
 
-        ACL acl = new ACL(id, owner, allow);
+        ACL acl = new ACL(id, owner, allow, canProxy);
 
         Node[] exceptions = XmlIo.readNodes(doc, "exception");
         for (Node exception : exceptions) {
@@ -99,6 +101,7 @@ public class ACLReader {
         writer.println("<id>" + acl.getId() + "</id>");
         writer.println("<owner>" + acl.getOwner().getUsername() + "</owner>");
         writer.println("<allow>" + acl.isAllow() + "</owner>");
+        writer.println("<canProxy>" + acl.canProxy() + "</canProxy>");
         for (Entity entity : acl.getExceptions()) {
             String type = null;
             String name = null;

@@ -56,9 +56,9 @@ import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.web.rest.response.UnfinishedRecordingsResponse;
@@ -188,7 +188,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         RecordingMetadata metadata = new RecordingMetadata();
         fillIn(metadata, uriInfo.getQueryParameters());
         recording.setMetadata(metadata);
-        getDatabase().addUnfinishedRecording(recording);
+        getDatabase().addUnfinishedRecording(recording, null);
 
         return Response.ok(
                 uriInfo.getAbsolutePathBuilder().path(

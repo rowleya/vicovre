@@ -47,8 +47,8 @@ import org.springframework.web.servlet.mvc.Controller;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.Misc;
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 

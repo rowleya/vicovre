@@ -49,6 +49,7 @@ import com.googlecode.vicovre.media.rtp.RTCPHeader;
 import com.googlecode.vicovre.media.rtp.RTCPPacketSink;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
 import com.googlecode.vicovre.media.rtp.RTPPacketSink;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 /**

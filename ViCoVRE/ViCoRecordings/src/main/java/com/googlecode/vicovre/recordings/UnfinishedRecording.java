@@ -51,6 +51,7 @@ import ag3.interfaces.types.StreamDescription;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
@@ -426,7 +427,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         finishedRecording.setMetadata(getMetadata());
         if (!finishedRecording.getStreams().isEmpty()) {
             try {
-                database.addRecording(finishedRecording);
+                database.addRecording(finishedRecording, this);
                 recordingFinished = true;
                 database.deleteUnfinishedRecording(this);
                 status = COMPLETED;

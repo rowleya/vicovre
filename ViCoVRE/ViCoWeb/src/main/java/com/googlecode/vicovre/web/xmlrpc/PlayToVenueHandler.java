@@ -34,9 +34,9 @@ package com.googlecode.vicovre.web.xmlrpc;
 
 import org.apache.xmlrpc.XmlRpcException;
 
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public class PlayToVenueHandler extends AbstractHandler {

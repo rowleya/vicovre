@@ -45,13 +45,16 @@ public class ACL {
 
     private User owner = null;
 
+    private boolean canProxy = false;
+
     private boolean allow = false;
 
     private Set<Entity> exceptions = new HashSet<Entity>();
 
-    protected ACL(String id, User owner, boolean allow) {
+    protected ACL(String id, User owner, boolean allow, boolean canProxy) {
         this.owner = owner;
         this.allow = allow;
+        this.canProxy = canProxy;
         owner.addOwned(this);
     }
 
@@ -108,6 +111,10 @@ public class ACL {
 
     public boolean isAllowed() {
         return isAllowed(CurrentUser.get());
+    }
+
+    protected boolean canProxy() {
+        return canProxy;
     }
 
     protected boolean isAllow() {

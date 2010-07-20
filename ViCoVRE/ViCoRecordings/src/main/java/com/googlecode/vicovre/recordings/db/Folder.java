@@ -32,33 +32,63 @@
 
 package com.googlecode.vicovre.recordings.db;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-
-import org.w3c.dom.Node;
+import java.util.List;
 import org.xml.sax.SAXException;
 
-import com.googlecode.vicovre.utils.XmlIo;
+import com.googlecode.vicovre.recordings.DefaultLayout;
+import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.UnfinishedRecording;
 
-public class VenueServerReader {
+public interface Folder extends Comparable<Folder> {
 
-    public static String[] readVenueServers(InputStream input)
-            throws SAXException, IOException {
-        Node doc = XmlIo.read(input);
-        return XmlIo.readValues(doc, "url");
-    }
+    /**
+     * Gets the file
+     * @return The file
+     */
+    public File getFile();
 
-    public static void writeVenueServers(String[] servers, OutputStream output) {
-        PrintWriter writer = new PrintWriter(output);
-        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        writer.println("<servers>");
-        for (String server : servers) {
-            XmlIo.writeValue("url", server, writer);
-        }
-        writer.println("</servers>");
-        writer.flush();
-    }
+    /**
+     * Returns the name
+     * @return the name
+     */
+    public String getName();
 
+    /**
+     * Returns the description
+     * @return the description
+     */
+    public String getDescription();
+
+    /**
+     * Returns the folders
+     * @return the folders
+     */
+    public List<Folder> getFolders();
+
+    /**
+     * Gets a recording
+     * @param id The id of the recording
+     * @return The recording or null if doesn't exist
+     */
+    public Recording getRecording(String id);
+
+    /**
+     * Returns the recordings
+     * @return the recordings
+     */
+    public List<Recording> getRecordings();
+
+    public UnfinishedRecording getUnfinishedRecording(String id);
+
+    public List<UnfinishedRecording> getUnfinishedRecordings();
+
+    public HarvestSource getHarvestSource(String id);
+
+    public List<HarvestSource> getHarvestSources();
+
+    public List<DefaultLayout> getDefaultLayouts() throws IOException,
+            SAXException;
 }

@@ -30,57 +30,35 @@
  *
  */
 
-package com.googlecode.vicovre.web.rest;
+package com.googlecode.vicovre.recordings.db.insecure;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
-import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.UriInfo;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
-import com.googlecode.vicovre.recordings.db.Folder;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.utils.XmlIo;
 
-public abstract class AbstractHandler {
+public class VenueServerReader {
 
-    private RecordingDatabase database = null;
-
-    protected AbstractHandler(RecordingDatabase database) {
-        this.database = database;
+    public static String[] readVenueServers(InputStream input)
+            throws SAXException, IOException {
+        Node doc = XmlIo.read(input);
+        return XmlIo.readValues(doc, "url");
     }
 
-    protected RecordingDatabase getDatabase() {
-        return database;
-    }
-
-    protected String getFolderPath(UriInfo uriInfo, int removeStart,
-            int removeEnd) {
-        List<PathSegment> pathSegments = uriInfo.getPathSegments();
-        String folderPath = "";
-        for (int i = removeStart;
-                i < pathSegments.size() - removeEnd; i++) {
-            folderPath += pathSegments.get(i).getPath();
+    public static void writeVenueServers(String[] servers, OutputStream output) {
+        PrintWriter writer = new PrintWriter(output);
+        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        writer.println("<servers>");
+        for (String server : servers) {
+            XmlIo.writeValue("url", server, writer);
         }
-        return folderPath;
+        writer.println("</servers>");
+        writer.flush();
     }
 
-    protected String getId(UriInfo uriInfo, int removeEnd) {
-        List<PathSegment> pathSegments = uriInfo.getPathSegments();
-        String id = pathSegments.get(pathSegments.size() - 1
-                - removeEnd).getPath();
-        return id;
-    }
-
-    protected Folder getFolder(String folderPath) throws IOException {
-        Folder folder = database.getTopLevelFolder();
-        if ((folderPath != null) && !folderPath.equals("")) {
-            folder = database.getFolder(
-                new File(database.getTopLevelFolder().getFile(), folderPath));
-            if (folder == null) {
-                throw new IOException("Unknown folder " + folderPath);
-            }
-        }
-        return folder;
-    }
 }

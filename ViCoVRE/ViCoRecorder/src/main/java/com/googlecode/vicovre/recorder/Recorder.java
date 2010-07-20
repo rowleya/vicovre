@@ -108,6 +108,7 @@ import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.insecure.InsecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -494,7 +495,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private void loadDatabase() {
         try {
-            recordingDatabase = new RecordingDatabase(dataDirectory,
+            recordingDatabase = new InsecureRecordingDatabase(dataDirectory,
                     typeRepository, layoutRepository, null, false);
         } catch (Exception e) {
             e.printStackTrace();
@@ -741,7 +742,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             }
 
             uploadDialog.finishRecording(recording);
-            recordingDatabase.addRecording(recording);
+            recordingDatabase.addRecording(recording, null);
             archiveManager = null;
         } catch (Exception error) {
             error.printStackTrace();

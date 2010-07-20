@@ -545,14 +545,39 @@ public class SecurityDatabase {
         return entities;
     }
 
-    public void createAcl(String folder, String id, boolean allow,
-            WriteOnlyEntity... exceptions) throws IOException {
-        if (CurrentUser.get().getRole().is(Role.WRITER)) {
+    private User getCurrentUser(File folderFile, String requesterId) {
+        User user = CurrentUser.get();
+        if (user != null) {
+            return user;
+        }
+
+        if (requesterId != null) {
+            HashMap<String, ACL> aclList = acls.get(folderFile);
+            if (aclList != null) {
+                ACL acl = aclList.get(requesterId);
+                if (acl != null) {
+                    if (acl.canProxy()) {
+                        return acl.getOwner();
+                    }
+                }
+            }
+        }
+
+        return User.GUEST;
+    }
+
+    public void createAcl(String creatorFolder, String creatorId,
+            String folder, String id, boolean allow, boolean canProxy,
+            WriteOnlyEntity... exceptions)
+            throws IOException {
+        User currentUser = getCurrentUser(
+                new File(topLevelFolder, creatorFolder), creatorId);
+        if (!currentUser.getRole().is(Role.WRITER)) {
             throw new UnauthorizedException(
                     "You must have write permission to perform this operation");
         }
-        File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
+            File folderFile = new File(topLevelFolder, folder);
             HashMap<String, ACL> aclList = acls.get(folderFile);
             if (aclList == null) {
                 aclList = new HashMap<String, ACL>();
@@ -567,7 +592,7 @@ public class SecurityDatabase {
             if (!folderFile.exists()) {
                 folderFile.mkdirs();
             }
-            ACL acl = new ACL(id, CurrentUser.get(), allow);
+            ACL acl = new ACL(id, currentUser, allow, canProxy);
             synchronized (acl) {
                 for (Entity entity : entities) {
                     acl.addException(entity);
@@ -666,9 +691,15 @@ public class SecurityDatabase {
     public boolean isAllowed(String folder, String id) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id);
-            synchronized (acl) {
-                return acl.isAllowed();
+            try {
+                ACL acl = obtainAcl(folderFile, id);
+                synchronized (acl) {
+                    return acl.isAllowed();
+                }
+            } catch (UnknownException e) {
+
+                // If there is no ACL, return false
+                return false;
             }
         }
     }

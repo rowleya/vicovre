@@ -45,6 +45,7 @@ import java.util.TimerTask;
 import ag3.interfaces.types.NetworkLocation;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
@@ -498,7 +499,7 @@ public class HarvestSource {
                         recording.setAddresses(addresses);
                         recording.setAg3VenueServer(ag3VenueServer);
                         recording.setAg3VenueUrl(ag3VenueUrl);
-                        database.addUnfinishedRecording(recording);
+                        database.addUnfinishedRecording(recording, this);
                     }
                 }
             } else {

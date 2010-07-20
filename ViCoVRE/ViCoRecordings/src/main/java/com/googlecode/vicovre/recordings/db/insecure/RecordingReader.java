@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,7 +45,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.Folder;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
@@ -70,7 +69,7 @@ public class RecordingReader {
      * @throws IOException
      * @throws SAXException
      */
-    public static Recording readRecording(InputStream input, Folder folder,
+    public static Recording readRecording(InputStream input, InsecureFolder folder,
             RtpTypeRepository typeRepository, LayoutRepository layoutRepository)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
