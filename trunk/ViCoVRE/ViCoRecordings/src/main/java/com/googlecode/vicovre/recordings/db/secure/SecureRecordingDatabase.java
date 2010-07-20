@@ -42,6 +42,7 @@ import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
+import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
 public class SecureRecordingDatabase implements RecordingDatabase {
 
@@ -197,5 +198,13 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                     "Only the owner of the recording can edit it");
         }
         database.updateUnfinishedRecording(recording);
+    }
+
+    public void setRecordingAcl(Recording recording, boolean isPublic,
+            WriteOnlyEntity... exceptions) throws IOException {
+        securityDatabase.setAcl(
+                getFolderName(recording.getDirectory().getParentFile()),
+                READ_RECORDING_ID_PREFIX + recording.getId(), isPublic,
+                exceptions);
     }
 }
