@@ -115,22 +115,27 @@ public class RecordingItemLoader extends AbstractRestCall {
         recordingItem.setDescriptionIsEditable(
                 metadata.isDescriptionEditable());
 
-        recordingItem.setStartDate(Recording.DATE_FORMAT.parse(
+        if (recording.getStartDate() != null) {
+            recordingItem.setStartDate(Recording.DATE_FORMAT.parse(
                 recording.getStartDate()));
-        recordingItem.setStopDate(Recording.DATE_FORMAT.parse(
+        }
+        if (recording.getStopDate() != null) {
+            recordingItem.setStopDate(Recording.DATE_FORMAT.parse(
                 recording.getStopDate()));
+        }
 
         String venueServerUrl = recording.getAg3VenueServer();
+        GWT.log("Venue server = " + venueServerUrl);
         if (venueServerUrl != null) {
             recordingItem.setVenueServerUrl(venueServerUrl);
             recordingItem.setVenueUrl(recording.getAg3VenueUrl());
         } else {
-            NetworkLocation[] addresses = recording.getAddresses();
-            String[] addrs = new String[addresses.length];
-            for (int i = 0; i < addresses.length; i++) {
-                String host = addresses[i].getHost();
-                int port = addresses[i].getPort();
-                int ttl = addresses[i].getTtl();
+            JsArray<NetworkLocation> addresses = recording.getAddresses();
+            String[] addrs = new String[addresses.length()];
+            for (int i = 0; i < addresses.length(); i++) {
+                String host = addresses.get(i).getHost();
+                int port = addresses.get(i).getPort();
+                int ttl = addresses.get(i).getTtl();
                 addrs[i] = host + "/" + port + "/" + ttl;
             }
             recordingItem.setAddresses(addrs);

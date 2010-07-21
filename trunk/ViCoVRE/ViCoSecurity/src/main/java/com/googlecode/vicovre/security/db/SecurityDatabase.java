@@ -72,6 +72,10 @@ public class SecurityDatabase {
 
     private File topLevelFolder = null;
 
+    public SecurityDatabase(String directory) throws SAXException, IOException {
+        this(directory, new String[0]);
+    }
+
     public SecurityDatabase(String directory, String... usersToCreate)
             throws SAXException, IOException {
         topLevelFolder = new File(directory);
@@ -487,21 +491,29 @@ public class SecurityDatabase {
         return user.getRole().getName();
     }
 
-    public boolean login(String username, String password,
+    public String getUsername() {
+        User user = CurrentUser.get();
+        if (user.equals(User.GUEST)) {
+            return null;
+        }
+        return user.getUsername();
+    }
+
+    public String login(String username, String password,
             HttpServletRequest request) {
         synchronized (users) {
             User user = users.get(username);
             if (user == null) {
-                return false;
+                return null;
             }
             synchronized (user) {
                 if (Password.isPassword(password, user)) {
                     HttpSession session = request.getSession();
                     session.setAttribute(SecurityFilter.SESSION_USER, user);
-                    return true;
+                    return user.getRole().getName();
                 }
             }
-            return false;
+            return null;
         }
     }
 
@@ -606,13 +618,22 @@ public class SecurityDatabase {
     }
 
     private ACL obtainAcl(File folderFile, String id) {
-        HashMap<String, ACL> aclList = acls.get(folderFile);
-        if (aclList == null) {
-            throw new UnknownException("Unknown ACL " + id);
-        }
-        ACL acl = aclList.get(id);
-        if (acl == null) {
-            throw new UnknownException("Unknown ACL " + id);
+        ACL acl = null;
+        try {
+            HashMap<String, ACL> aclList = acls.get(folderFile);
+            if (aclList == null) {
+                throw new UnknownException("Unknown ACL " + id);
+            }
+            acl = aclList.get(id);
+            if (acl == null) {
+                throw new UnknownException("Unknown ACL " + id);
+            }
+        } catch (UnknownException e) {
+            if (CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
+                acl = new ACL(id, CurrentUser.get(), false, false);
+            } else {
+                throw e;
+            }
         }
 
         if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)

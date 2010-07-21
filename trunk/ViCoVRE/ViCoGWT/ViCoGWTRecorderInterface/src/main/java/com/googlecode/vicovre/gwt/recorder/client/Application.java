@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.googlecode.vicovre.gwt.recorder.client.rest.CurrentUserLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.VenueServerLoader;
 
@@ -87,11 +88,13 @@ public class Application implements EntryPoint {
         topPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         topPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
-        StatusPanel status = new StatusPanel();
+        String restUrl = getUrl();
+
+        FolderPanel panel = new FolderPanel(restUrl);
+
+        StatusPanel status = new StatusPanel(restUrl, panel);
         status.setWidth("95%");
 
-        String restUrl = getUrl();
-        FolderPanel panel = new FolderPanel(restUrl);
 
         topPanel.add(status, DockPanel.NORTH);
         topPanel.add(panel, DockPanel.CENTER);
@@ -99,11 +102,12 @@ public class Application implements EntryPoint {
         topPanel.setCellHeight(status, "50px");
         RootPanel.get().add(topPanel);
 
-        ActionLoader loader = new ActionLoader(null, 2,
+        ActionLoader loader = new ActionLoader(null, 3,
                 "Loading Application...",
                 "There was an error loading the application.\n"
                 + "Please refresh the page to try again.",
                 false, true);
+        CurrentUserLoader.load(status, loader, restUrl);
         VenueServerLoader.load(loader, restUrl);
         FolderLoader.load(panel, loader, restUrl);
     }

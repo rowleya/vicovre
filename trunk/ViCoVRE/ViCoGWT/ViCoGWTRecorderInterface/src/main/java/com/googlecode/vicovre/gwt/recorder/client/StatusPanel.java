@@ -41,6 +41,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
+import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
+import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
 
 public class StatusPanel extends HorizontalPanel implements ClickHandler {
 
@@ -62,6 +64,8 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
 
     private TextBox username = new TextBox();
 
+    private String role = null;
+
     private PasswordTextBox password = new PasswordTextBox();
 
     private Button loginButton = new Button(LOG_IN);
@@ -72,7 +76,13 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
 
     private WaitPopup loginPopup = new WaitPopup("Logging in...", true);
 
-    public StatusPanel() {
+    private String url = null;
+
+    private FolderPanel folderPanel = null;
+
+    public StatusPanel(String url, FolderPanel folderPanel) {
+        this.url = url;
+        this.folderPanel = folderPanel;
         add(status);
         setCellVerticalAlignment(status, ALIGN_MIDDLE);
         DOM.setStyleAttribute(status.getElement(), "color", "black");
@@ -99,11 +109,7 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
     public void onClick(ClickEvent event) {
         if (event.getSource() == loginButton) {
             if (loggedIn) {
-                loggedIn = false;
-                loginPanel.setVisible(true);
-                loginButton.setText(LOG_IN);
-                status.setText(LOGGED_OUT);
-                DOM.setStyleAttribute(status.getElement(), "color", "black");
+                Logout.logout(this, url);
             } else if (loginError) {
                 loginError = false;
                 loginPanel.setVisible(true);
@@ -112,24 +118,52 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
                 DOM.setStyleAttribute(status.getElement(), "color", "black");
             } else {
                 loginPopup.show();
-                loggedIn = !username.getText().trim().equals("");
-                if (!loggedIn) {
-                    loginError = true;
-                    loginPanel.setVisible(false);
-                    loginButton.setText(RETRY);
-                    status.setText(ERROR);
-                    DOM.setStyleAttribute(status.getElement(), "color", "red");
-                } else {
-                    loginError = false;
-                    loginPanel.setVisible(false);
-                    loginButton.setText(LOG_OUT);
-                    status.setText(username.getText() + LOGGED_IN);
-                    DOM.setStyleAttribute(status.getElement(), "color",
-                            "black");
-                }
+                Login.login(this, url, username.getText(), password.getText());
             }
         }
     }
 
+    public void setLogin(String username, String role) {
+        loginError = false;
+        loggedIn = true;
+        loginPanel.setVisible(false);
+        loginButton.setText(LOG_OUT);
+        status.setText(username + LOGGED_IN);
+        this.role = role;
+        DOM.setStyleAttribute(status.getElement(), "color",
+                "black");
+    }
 
+    public void loginSuccessful(String username, String role) {
+        loginPopup.hide();
+        setLogin(username, role);
+        folderPanel.reload();
+    }
+
+    public void loginFailed(String error) {
+        loginPopup.hide();
+        String message = error;
+        if (message == null) {
+            message = ERROR;
+        }
+        loginError = true;
+        loginPanel.setVisible(false);
+        loginButton.setText(RETRY);
+        status.setText(message);
+        DOM.setStyleAttribute(status.getElement(), "color", "red");
+    }
+
+    public void loggedOut() {
+        loggedIn = false;
+        loginPanel.setVisible(true);
+        loginButton.setText(LOG_IN);
+        status.setText(LOGGED_OUT);
+        this.role = null;
+        DOM.setStyleAttribute(status.getElement(), "color", "black");
+        folderPanel.reload();
+    }
+
+    public String getRole() {
+        return role;
+    }
 }

@@ -30,54 +30,50 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.recordings;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class Recording extends JavaScriptObject {
+import ag3.interfaces.types.MulticastNetworkLocation;
+import ag3.interfaces.types.NetworkLocation;
 
-    public static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+@XmlRootElement(name="address")
+public class XmlNetworkLocation {
 
-    protected Recording() {
+    private String host = null;
+
+    private int port = 0;
+
+    private int ttl = 0;
+
+    public XmlNetworkLocation() {
+
         // Does Nothing
     }
 
-    public static final native Recording parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
+    public XmlNetworkLocation(NetworkLocation location) {
+        host = location.getHost();
+        port = location.getPort();
+        if (location instanceof MulticastNetworkLocation) {
+            ttl = ((MulticastNetworkLocation) location).getTtl();
+        } else {
+            ttl = 127;
+        }
+    }
 
-    public final native String getId() /*-{
-        return this.id;
-    }-*/;
+    @XmlElement
+    public String getHost() {
+        return host;
+    }
 
-    public final native RecordingMetadata getMetadata() /*-{
-        return this.metadata;
-    }-*/;
+    @XmlElement
+    public int getPort() {
+        return port;
+    }
 
-    public final native String getStartDate() /*-{
-        return this.startDate;
-    }-*/;
-
-    public final native String getStopDate() /*-{
-        return this.stopDate;
-    }-*/;
-
-    public final native String getAg3VenueServer() /*-{
-        return this.ag3VenueServer;
-    }-*/;
-
-    public final native String getAg3VenueUrl() /*-{
-        return this.ag3VenueUrl;
-    }-*/;
-
-    public final native JsArray<NetworkLocation> getAddresses() /*-{
-        return this.address;
-    }-*/;
-
-    public final native String getStatus() /*-{
-        return this.status;
-    }-*/;
+    @XmlElement
+    public int getTtl() {
+        return ttl;
+    }
 }

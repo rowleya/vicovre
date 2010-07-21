@@ -51,7 +51,7 @@ import com.sun.jersey.spi.inject.Inject;
 @Path("/folders")
 public class FolderHandler extends AbstractHandler {
 
-    public FolderHandler(@Inject RecordingDatabase database) {
+    public FolderHandler(@Inject("database") RecordingDatabase database) {
         super(database);
     }
 

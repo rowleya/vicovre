@@ -33,51 +33,31 @@
 package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
-public class Recording extends JavaScriptObject {
+public class User extends JavaScriptObject {
 
-    public static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+    public static final String ROLE_GUEST = "User";
 
-    protected Recording() {
+    public static final String ROLE_USER = "AuthUser";
+
+    public static final String ROLE_WRITER = "Writer";
+
+    public static final String ROLE_ADMINISTRATOR = "Administrator";
+
+    protected User() {
         // Does Nothing
     }
 
-    public static final native Recording parse(String json) /*-{
+    public static final native User parse(String json) /*-{
         return eval('(' + json + ')');
     }-*/;
 
-    public final native String getId() /*-{
-        return this.id;
+    public final native String getUsername() /*-{
+        return this.username;
     }-*/;
 
-    public final native RecordingMetadata getMetadata() /*-{
-        return this.metadata;
+    public final native String getRole() /*-{
+        return this.role;
     }-*/;
 
-    public final native String getStartDate() /*-{
-        return this.startDate;
-    }-*/;
-
-    public final native String getStopDate() /*-{
-        return this.stopDate;
-    }-*/;
-
-    public final native String getAg3VenueServer() /*-{
-        return this.ag3VenueServer;
-    }-*/;
-
-    public final native String getAg3VenueUrl() /*-{
-        return this.ag3VenueUrl;
-    }-*/;
-
-    public final native JsArray<NetworkLocation> getAddresses() /*-{
-        return this.address;
-    }-*/;
-
-    public final native String getStatus() /*-{
-        return this.status;
-    }-*/;
 }

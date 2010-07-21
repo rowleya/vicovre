@@ -41,6 +41,7 @@ import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.security.UnauthorizedException;
+import com.googlecode.vicovre.security.db.ReadOnlyACL;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
@@ -66,7 +67,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     protected String getFolderName(File file) {
         File root = database.getTopLevelFolder().getFile();
-        return file.getName().substring(root.getName().length());
+        return file.getAbsolutePath().substring(
+                root.getAbsolutePath().length());
     }
 
     public void addHarvestSource(HarvestSource harvestSource)
@@ -206,5 +208,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 getFolderName(recording.getDirectory().getParentFile()),
                 READ_RECORDING_ID_PREFIX + recording.getId(), isPublic,
                 exceptions);
+    }
+
+    public ReadOnlyACL getRecordingAcl(Recording recording) {
+        return securityDatabase.getAcl(
+                getFolderName(recording.getDirectory().getParentFile()),
+                READ_RECORDING_ID_PREFIX + recording.getId());
     }
 }

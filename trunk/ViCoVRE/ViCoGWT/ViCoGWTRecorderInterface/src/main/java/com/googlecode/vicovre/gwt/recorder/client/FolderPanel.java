@@ -74,6 +74,8 @@ public class FolderPanel extends HorizontalPanel
 
     private String url = null;
 
+    private String currentPath = null;
+
     public FolderPanel(String url) {
         this.url = url;
 
@@ -148,6 +150,12 @@ public class FolderPanel extends HorizontalPanel
     }
 
     public void setFolder(String path) {
+        GWT.log("Current path = " + currentPath + " path = " + path);
+        if (currentPath != null && currentPath.equals(path)) {
+            return;
+        }
+        currentPath = path;
+
         ActionLoader loader = new ActionLoader(null, 3,
                 "Loading Folder",
                 "There was an error loading the folder.\n"
@@ -162,6 +170,14 @@ public class FolderPanel extends HorizontalPanel
         RecordingItemLoader.loadRecordingItems(path, this, recordPanel, loader,
                 url);
         HarvestItemLoader.loadHarvestItems(path, this, harvestPanel, loader);
+    }
+
+    public void reload() {
+        currentPath = null;
+        TreeItem folderItem = folders.getSelectedItem();
+        if (folderItem != null) {
+            setFolder((String) folderItem.getUserObject());
+        }
     }
 
     public void onSelection(SelectionEvent<TreeItem> event) {

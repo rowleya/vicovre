@@ -40,8 +40,11 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import ag3.interfaces.Venue;
 import ag3.interfaces.types.BridgeDescription;
@@ -61,6 +64,7 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @version 1.0
  */
 @XmlRootElement(name="unfinishedrecording")
+@XmlAccessorType(XmlAccessType.NONE)
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
@@ -252,6 +256,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @return the addresses
      */
     @XmlElement(name="address")
+    @XmlJavaTypeAdapter(NetworkLocationAdapter.class)
     public NetworkLocation[] getAddresses() {
         return addresses;
     }
