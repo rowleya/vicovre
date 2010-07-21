@@ -30,54 +30,25 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.recordings;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class Recording extends JavaScriptObject {
+import ag3.interfaces.types.MulticastNetworkLocation;
+import ag3.interfaces.types.NetworkLocation;
 
-    public static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+public class NetworkLocationAdapter
+        extends XmlAdapter<XmlNetworkLocation, NetworkLocation> {
 
-    protected Recording() {
-        // Does Nothing
+    public XmlNetworkLocation marshal(NetworkLocation location) {
+        return new XmlNetworkLocation(location);
     }
 
-    public static final native Recording parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
-
-    public final native String getId() /*-{
-        return this.id;
-    }-*/;
-
-    public final native RecordingMetadata getMetadata() /*-{
-        return this.metadata;
-    }-*/;
-
-    public final native String getStartDate() /*-{
-        return this.startDate;
-    }-*/;
-
-    public final native String getStopDate() /*-{
-        return this.stopDate;
-    }-*/;
-
-    public final native String getAg3VenueServer() /*-{
-        return this.ag3VenueServer;
-    }-*/;
-
-    public final native String getAg3VenueUrl() /*-{
-        return this.ag3VenueUrl;
-    }-*/;
-
-    public final native JsArray<NetworkLocation> getAddresses() /*-{
-        return this.address;
-    }-*/;
-
-    public final native String getStatus() /*-{
-        return this.status;
-    }-*/;
+    public NetworkLocation unmarshal(XmlNetworkLocation xmlLocation) {
+        MulticastNetworkLocation location = new MulticastNetworkLocation();
+        location.setHost(xmlLocation.getHost());
+        location.setPort(xmlLocation.getPort());
+        location.setTtl(xmlLocation.getTtl());
+        return location;
+    }
 }

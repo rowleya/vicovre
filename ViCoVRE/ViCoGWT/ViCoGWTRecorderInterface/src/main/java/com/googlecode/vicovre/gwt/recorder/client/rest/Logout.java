@@ -30,60 +30,43 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.rest;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Cookie;
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Preference;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
 import org.restlet.gwt.data.Response;
 
-import com.google.gwt.user.client.Cookies;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public abstract class AbstractRestCall implements Callback {
+public class Logout extends AbstractRestCall {
 
-    protected void go(String url, Method method, MediaType mediaType) {
-        Client client = new Client(Protocol.HTTP);
-        Request request = new Request(method, url);
-        String sessionid = Cookies.getCookie("JSESSIONID");
-        if (sessionid != null) {
-            request.getCookies().add(new Cookie("JSESSIONID", sessionid));
-        }
-        request.getClientInfo().getAcceptedMediaTypes().add(
-                new Preference<MediaType>(mediaType));
-        client.handle(request, this);
+    private StatusPanel panel = null;
+
+    private String url = null;
+
+    public static void logout(StatusPanel panel, String url) {
+        Logout logout = new Logout(panel, url);
+        logout.go();
     }
 
-    protected void go(String url, Method method) {
-        go(url, method, MediaType.APPLICATION_JSON);
+    public Logout(StatusPanel panel, String url) {
+        this.panel = panel;
+        this.url = url + "auth/logout";
     }
 
-    protected void go(String url) {
-        go(url, Method.GET);
+    public void go() {
+        go(url);
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().isSuccess()) {
-            onSuccess(response);
-        } else {
-            onError(response.getStatus().getCode() + ": "
-                    + response.getStatus().getDescription());
-        }
-    }
-
-    protected abstract void onError(String message);
-
-    protected abstract void onSuccess(Response response);
-
-    protected void displayError(String error) {
-        MessagePopup popup = new MessagePopup(error, null, MessagePopup.ERROR,
-                MessageResponse.OK);
+    protected void onError(String message) {
+        MessagePopup popup = new MessagePopup("Error logging out: " + message,
+                null, MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
+
+    protected void onSuccess(Response response) {
+        panel.loggedOut();
+    }
+
 }

@@ -30,60 +30,52 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.rest;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Cookie;
 import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Preference;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
 import org.restlet.gwt.data.Response;
 
-import com.google.gwt.user.client.Cookies;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.google.gwt.http.client.URL;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public abstract class AbstractRestCall implements Callback {
+public class Login extends AbstractRestCall {
 
-    protected void go(String url, Method method, MediaType mediaType) {
-        Client client = new Client(Protocol.HTTP);
-        Request request = new Request(method, url);
-        String sessionid = Cookies.getCookie("JSESSIONID");
-        if (sessionid != null) {
-            request.getCookies().add(new Cookie("JSESSIONID", sessionid));
-        }
-        request.getClientInfo().getAcceptedMediaTypes().add(
-                new Preference<MediaType>(mediaType));
-        client.handle(request, this);
+    private StatusPanel panel = null;
+
+    private String url = null;
+
+    private String username = null;
+
+    public static void login(StatusPanel panel, String url, String username,
+            String password) {
+        Login login = new Login(panel, url, username, password);
+        login.go();
     }
 
-    protected void go(String url, Method method) {
-        go(url, method, MediaType.APPLICATION_JSON);
+    public Login(StatusPanel panel, String url, String username,
+            String password) {
+        this.panel = panel;
+        this.url = url + "auth/form?username=" + URL.encodeComponent(username)
+            + "&password=" + URL.encodeComponent(password);
+        this.username = username;
     }
 
-    protected void go(String url) {
-        go(url, Method.GET);
+    public void go() {
+        go(url, Method.POST, MediaType.TEXT_PLAIN);
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().isSuccess()) {
-            onSuccess(response);
+    protected void onError(String message) {
+        if (message.startsWith("403")) {
+            panel.loginFailed(null);
         } else {
-            onError(response.getStatus().getCode() + ": "
-                    + response.getStatus().getDescription());
+            panel.loginFailed("Error logging in: " + message);
         }
     }
 
-    protected abstract void onError(String message);
-
-    protected abstract void onSuccess(Response response);
-
-    protected void displayError(String error) {
-        MessagePopup popup = new MessagePopup(error, null, MessagePopup.ERROR,
-                MessageResponse.OK);
-        popup.center();
+    protected void onSuccess(Response response) {
+        String role = response.getEntity().getText();
+        panel.loginSuccessful(username, role);
     }
 }

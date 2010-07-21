@@ -69,7 +69,8 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
 
     private RtpTypeRepository typeRepository = null;
 
-    public UnfinishedRecordingHandler(@Inject RecordingDatabase database,
+    public UnfinishedRecordingHandler(
+            @Inject("database") RecordingDatabase database,
             @Inject RtpTypeRepository typeRepository) {
         super(database);
         this.typeRepository = typeRepository;

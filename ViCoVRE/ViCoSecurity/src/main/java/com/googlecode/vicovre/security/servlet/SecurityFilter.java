@@ -40,6 +40,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -56,19 +57,36 @@ public class SecurityFilter implements Filter {
 
     public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException {
+        boolean userFound = false;
+
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpSession session = httpRequest.getSession(false);
             if (session != null) {
+                System.err.println("Session " + session.getId() + " found");
                 User user = (User) session.getAttribute(SESSION_USER);
                 if (user != null) {
+                    userFound = true;
+                    System.err.println("User logged in");
                     CurrentUser.set(user);
-                } else {
-                    CurrentUser.set(User.GUEST);
                 }
+            } else {
+                String sessionid = null;
+                for (Cookie cookie : httpRequest.getCookies()) {
+                    if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
+                        sessionid = cookie.getValue();
+                    }
+                }
+                System.err.println("Session " + sessionid + " not found");
             }
         }
+
+        if (!userFound) {
+            System.err.println("Using guest");
+            CurrentUser.set(User.GUEST);
+        }
         chain.doFilter(request, response);
+        CurrentUser.set(null);
     }
 
     public void init(FilterConfig filterConfig) throws ServletException {

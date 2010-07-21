@@ -63,7 +63,7 @@ public class VenueHandler {
     private static final HashMap<String, Long> KNOWN_VENUES_CACHE_TIME =
         new HashMap<String, Long>();
 
-    @Inject
+    @Inject("database")
     private RecordingDatabase database = null;
 
     private String fillInVenueServer(String server) throws MalformedURLException {

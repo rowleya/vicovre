@@ -46,9 +46,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
+import com.googlecode.vicovre.security.rest.responses.UserResponse;
 import com.sun.jersey.core.util.Base64;
 import com.sun.jersey.spi.inject.Inject;
 
@@ -57,24 +59,27 @@ public class Auth {
 
     private static final String BASIC = "Basic ";
 
-    @Inject
+    @Inject("realm")
     private String realm = null;
 
-    @Inject
+    @Inject("securityDatabase")
     private SecurityDatabase securityDatabase = null;
 
     @Path("form")
     @POST
+    @Produces("text/plain")
     public Response formLogin(@QueryParam("username") String username,
             @QueryParam("password") String password,
             @QueryParam("onSuccess") String successUrl,
             @QueryParam("onFail") String failUrl,
             @Context HttpServletRequest request) throws URISyntaxException {
-        if (securityDatabase.login(username, password, request)) {
+        String role = securityDatabase.login(username, password, request);
+        if (role != null) {
+            ResponseBuilder response = Response.ok(role);
             if (successUrl == null) {
-                return Response.ok().build();
+                return response.build();
             }
-            return Response.ok().location(new URI(successUrl)).build();
+            return response.location(new URI(successUrl)).build();
         }
         if (failUrl == null) {
             return Response.status(Status.FORBIDDEN).build();
@@ -84,60 +89,59 @@ public class Auth {
 
     @Path("basic")
     @GET
+    @Produces("text/plain")
     public Response basicLogin(@QueryParam("onSuccess") String successUrl,
             @Context HttpServletRequest request) throws URISyntaxException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        boolean failed = false;
-        if ((authHeader == null) || !authHeader.startsWith(BASIC)) {
-            failed = true;
-        } else {
+        String role = null;
+        if ((authHeader != null) && authHeader.startsWith(BASIC)) {
             String key = authHeader.substring(BASIC.length());
             key = Base64.base64Decode(key);
             String[] parts = key.split(":", 2);
             String username = parts[0];
             String password = parts[1];
-            if (!securityDatabase.login(username, password, request)) {
-                failed = true;
-            }
+            role = securityDatabase.login(username, password, request);
         }
-        if (failed) {
+        if (role == null) {
             return Response.status(Status.UNAUTHORIZED).header(
                 HttpHeaders.WWW_AUTHENTICATE, "Basic realm=" + realm).build();
         }
+
+        ResponseBuilder response = Response.ok(role);
         if (successUrl == null) {
-            return Response.ok().build();
+            return response.build();
         }
-        return Response.ok().location(new URI(successUrl)).build();
+        return response.location(new URI(successUrl)).build();
     }
 
     @Path("cert")
     @GET
+    @Produces("text/plain")
     public Response certLogin(@QueryParam("onSuccess") String successUrl,
             @QueryParam("onFail") String failUrl,
             @Context HttpServletRequest request)
             throws CertificateEncodingException, URISyntaxException {
          X509Certificate[] certs = (X509Certificate[])
              request.getAttribute("javax.servlet.request.X509Certificate");
-         boolean failed = false;
-         if (certs == null) {
-             failed = true;
-         } else {
-             failed = true;
+         String role = null;
+         if (certs != null) {
              for (X509Certificate cert : certs) {
                  String username = cert.getSubjectX500Principal().getName();
                  String password = new String(Base64.encode(cert.getEncoded()));
-                 if (securityDatabase.login(username, password, request)) {
-                     failed = false;
+
+                 role = securityDatabase.login(username, password, request);
+                 if (role != null) {
                      break;
                  }
              }
          }
 
-         if (!failed) {
+         if (role != null) {
+             ResponseBuilder response = Response.ok(role);
              if (successUrl == null) {
-                 return Response.ok().build();
+                 return response.build();
              }
-             return Response.ok().location(new URI(successUrl)).build();
+             return response.location(new URI(successUrl)).build();
          }
          if (failUrl == null) {
              return Response.status(Status.FORBIDDEN).build();
@@ -145,11 +149,12 @@ public class Auth {
          return Response.ok().location(new URI(failUrl)).build();
     }
 
-    @Path("role")
+    @Path("user")
     @GET
-    @Produces("text/plain")
-    public Response getRole() {
-        return Response.ok(securityDatabase.getRole()).build();
+    @Produces({"application/json", "text/xml"})
+    public Response getUser() {
+        return Response.ok(new UserResponse(securityDatabase.getUsername(),
+                securityDatabase.getRole())).build();
     }
 
     @Path("logout")
