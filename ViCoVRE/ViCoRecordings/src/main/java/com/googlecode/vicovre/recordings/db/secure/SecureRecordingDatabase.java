@@ -34,6 +34,7 @@ package com.googlecode.vicovre.recordings.db.secure;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
@@ -44,6 +45,7 @@ import com.googlecode.vicovre.security.AlreadyExistsException;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.UnknownException;
 import com.googlecode.vicovre.security.db.ReadOnlyACL;
+import com.googlecode.vicovre.security.db.ReadOnlyEntity;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
@@ -149,12 +151,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         String folder = getFolderName(recording.getFile().getParentFile());
         securityDatabase.deleteAcl(folder,
                 UNFINISHED_ID_PREFIX + recording.getId());
-        try {
-            securityDatabase.deleteAcl(folder,
-                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId());
-        } catch (UnknownException e) {
-            // Do Nothing
-        }
+        securityDatabase.deleteAcl(folder,
+            READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId());
         database.deleteUnfinishedRecording(recording);
     }
 
@@ -210,11 +208,31 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void updateUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
-        if (!securityDatabase.isAllowed(
-                getFolderName(recording.getFile().getParentFile()),
-                UNFINISHED_ID_PREFIX + recording.getId())) {
+        String folder = getFolderName(recording.getFile().getParentFile());
+        String id = UNFINISHED_ID_PREFIX + recording.getId();
+        if (!securityDatabase.isAllowed(folder, id)) {
             throw new UnauthorizedException(
                     "Only the owner of the recording can edit it");
+        }
+        if ((recording.getOldFinishedRecordingId() != null) &&
+                !recording.getOldFinishedRecordingId().equals(
+                        recording.getFinishedRecordingId())) {
+            String oldId = READ_RECORDING_ID_PREFIX
+                + recording.getOldFinishedRecordingId();
+            String newId = READ_RECORDING_ID_PREFIX
+                + recording.getFinishedRecordingId();
+            ReadOnlyACL acl = securityDatabase.getAcl(folder, oldId, false);
+            securityDatabase.deleteAcl(folder, oldId);
+            List<ReadOnlyEntity> aclExceptions = acl.getExceptions();
+            WriteOnlyEntity[] exceptions =
+                new WriteOnlyEntity[aclExceptions.size()];
+            for (int i = 0; i < exceptions.length; i++) {
+                ReadOnlyEntity entity = aclExceptions.get(i);
+                exceptions[i] = new WriteOnlyEntity(entity.getName(),
+                        entity.getType());
+            }
+            securityDatabase.createAcl(folder, id, folder, newId, acl.isAllow(),
+                    false, exceptions);
         }
         database.updateUnfinishedRecording(recording);
     }
@@ -237,20 +255,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             String oldId, boolean isPublic, WriteOnlyEntity... exceptions)
             throws IOException {
         String folder = getFolderName(recording.getFile().getParentFile());
-        if (oldId != null) {
-            securityDatabase.deleteAcl(folder,
-                    READ_RECORDING_ID_PREFIX + oldId);
-        }
-        try {
-            securityDatabase.setAcl(folder,
-                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                isPublic, exceptions);
-        } catch (UnknownException e) {
-            securityDatabase.createAcl(folder,
-                UNFINISHED_ID_PREFIX + recording.getId(), folder,
-                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                isPublic, false, exceptions);
-        }
+        securityDatabase.setAcl(folder,
+            READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+            isPublic, exceptions);
     }
 
     public ReadOnlyACL getRecordingAcl(UnfinishedRecording recording) {
