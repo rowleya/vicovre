@@ -70,6 +70,9 @@ If text/xml is requested as the content type, the recording list will be produce
  
         <!-- The current status of the recording (see below) -->
         <status>...</status>
+
+        <!-- The email address to notify when the recording is complete (optional) -->
+        <emailAddress>...</emailAddress>
     </recording>
     
     ...
@@ -131,6 +134,9 @@ If application/json is requested as the content type, the recording list will be
 
     /* The current status of the recording (see below) */
     "status":"..."
+
+    /* The email address to notify when the recording is complete */
+    "emailAddress":"..."
     },
     ...
 ]}
@@ -156,7 +162,7 @@ The recording details are specified as URL-Encoded parameters (e.g. key=value) p
 || host || The IP address to record from. || IP address. || One for each address. || Required if venue not specified; One required for each address. ||
 || port || The port to record from. || Even number between 2 and 65534. || One for each address. || One required for each address. ||
 || ttl || The Time-to-live to record using. || Number between 0 and 256. || One for each address. || One required for each address. ||
-|| notify || An email address to notify when the recording is complete. || An e-mail address || 0 or 1 || ||
+|| emailAddress || An email address to notify when the recording is complete. || An e-mail address || 0 or 1 || ||
 
 == Date / Time Format ==
 Dates and Times are represented as ISO8601 combined date time extended format without the timezone i.e. YYYY-MM-DDTHH:MM:SS.
