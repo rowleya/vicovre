@@ -24,6 +24,7 @@
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
         <constructor-arg><value>${recording.readOnly}</value></constructor-arg>
+        <constructor-arg><value>0</value></constructor-arg>
     </bean>
 
     <bean id="realm" class="java.lang.String">

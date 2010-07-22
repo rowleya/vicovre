@@ -66,6 +66,11 @@ public interface RecordingConstants {
     String METADATA = ".rec_metadata";
 
     /**
+     * The name of the recording lifetime
+     */
+    String LIFETIME = ".rec_lifetime";
+
+    /**
      * The extension of the recording layout file
      */
     String LAYOUT = ".rec_layout";

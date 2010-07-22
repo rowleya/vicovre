@@ -30,56 +30,49 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import com.googlecode.vicovre.recordings.HarvestSource;
-import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
-public interface RecordingDatabase {
+public class LifetimeHandler {
 
-    public String[] getKnownVenueServers();
+    private Recording recording;
 
-    public void addVenueServer(String url);
+    private RecordingDatabase database = null;
 
-    public Folder getTopLevelFolder();
+    private Timer timer = null;
 
-    public void addHarvestSource(HarvestSource harvestSource)
-            throws IOException;
+    private class DeleteTask extends TimerTask {
 
-    public void deleteHarvestSource(HarvestSource harvestSource)
-            throws IOException;
+        public void run() {
+            try {
+                database.deleteRecording(recording);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-    public void updateHarvestSource(HarvestSource harvestSource)
-            throws IOException;
+    public LifetimeHandler(Recording recording, RecordingDatabase database) {
+        this.recording = recording;
+        this.database = database;
+        updateLifetime();
+    }
 
-    public void addUnfinishedRecording(UnfinishedRecording recording,
-            HarvestSource creator)
-            throws IOException;
-
-    public void deleteUnfinishedRecording(UnfinishedRecording recording)
-            throws IOException;
-
-    public void updateUnfinishedRecording(UnfinishedRecording recording)
-            throws IOException;
-
-    public void addRecording(Recording recording, UnfinishedRecording creator)
-            throws IOException;
-
-    public void deleteRecording(Recording recording) throws IOException;
-
-    public void updateRecordingMetadata(Recording recording)
-            throws IOException;
-
-    public void updateRecordingLayouts(Recording recording) throws IOException;
-
-    public void updateRecordingLifetime(Recording recording)
-            throws IOException;
-
-    public Folder getFolder(File path);
-
-    public void shutdown();
+    public void updateLifetime() {
+        if (timer != null) {
+            timer.cancel();
+        }
+        if (recording.getLifetime() > 0) {
+            timer = new Timer();
+            timer.schedule(new DeleteTask(), new Date(
+                    recording.getStartTime().getTime() + recording.getDuration()
+                        + recording.getLifetime()));
+        }
+    }
 }

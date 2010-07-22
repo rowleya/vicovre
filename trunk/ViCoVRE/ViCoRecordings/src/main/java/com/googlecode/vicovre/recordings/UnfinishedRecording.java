@@ -395,7 +395,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
             return;
         }
         manager = new RecordArchiveManager(typeRepository, folder,
-                finishedRecordingId);
+                finishedRecordingId, database);
         try {
             NetworkLocation[] addrs = addresses;
             if (ag3VenueUrl != null) {

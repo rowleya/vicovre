@@ -87,6 +87,8 @@ public class InsecureFolder implements Folder {
 
     private RecordingDatabase database = null;
 
+    private long defaultRecordingLifetime = 0;
+
     private boolean readOnly = false;
 
     /**
@@ -96,13 +98,16 @@ public class InsecureFolder implements Folder {
     public InsecureFolder(File file, RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository,
-            RecordingDatabase database, boolean readOnly) {
+            RecordingDatabase database, boolean readOnly,
+            long defaultRecordingLifetime) {
         this.file = file;
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
         this.database = database;
         this.readOnly = readOnly;
+        this.defaultRecordingLifetime = LifetimeReader.readLifetime(file,
+                defaultRecordingLifetime);
 
         readRecordings();
         if (!readOnly) {
@@ -206,7 +211,7 @@ public class InsecureFolder implements Folder {
         for (File folderFile : files) {
             InsecureFolder folder = new InsecureFolder(folderFile, typeRepository,
                     layoutRepository, harvestFormatRepository, database,
-                    readOnly);
+                    readOnly, defaultRecordingLifetime);
             folders.add(folder);
         }
         Collections.sort(folders);
@@ -242,7 +247,8 @@ public class InsecureFolder implements Folder {
                         new File(recordingFile,
                                 RecordingConstants.RECORDING_INDEX));
                     Recording recording = RecordingReader.readRecording(input,
-                            this, typeRepository, layoutRepository);
+                            this, database, typeRepository, layoutRepository,
+                            defaultRecordingLifetime);
                     if (recording == null) {
                         throw new Exception("Recording "
                                 + recordingFile.getName()

@@ -49,6 +49,7 @@ import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.ExtensionFilter;
@@ -69,12 +70,14 @@ public class RecordingReader {
      * @throws IOException
      * @throws SAXException
      */
-    public static Recording readRecording(InputStream input, InsecureFolder folder,
-            RtpTypeRepository typeRepository, LayoutRepository layoutRepository)
+    public static Recording readRecording(InputStream input,
+            InsecureFolder folder, RecordingDatabase database,
+            RtpTypeRepository typeRepository, LayoutRepository layoutRepository,
+            long defaultLifetime)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
         String id = XmlIo.readValue(doc, "id");
-        Recording recording = new Recording(folder, id);
+        Recording recording = new Recording(folder, id, database);
 
         String[] pauseTimes = XmlIo.readValues(doc, "pauseTime");
         for (String time : pauseTimes) {
@@ -133,6 +136,10 @@ public class RecordingReader {
             }
         }
         recording.updateTimes();
+
+        recording.setLifetime(LifetimeReader.readLifetime(
+                recording.getDirectory(), defaultLifetime));
+
         return recording;
     }
 
@@ -171,6 +178,9 @@ public class RecordingReader {
             RecordingMetadataReader.writeMetadata(metadata, outputStream);
             outputStream.close();
         }
+
+        LifetimeReader.writeLifetime(recording.getDirectory(),
+                recording.getLifetime());
 
         writer.println("</recording>");
         writer.flush();

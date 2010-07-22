@@ -30,56 +30,45 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.PrintWriter;
 
-import com.googlecode.vicovre.recordings.HarvestSource;
-import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.UnfinishedRecording;
+public class LifetimeReader {
 
-public interface RecordingDatabase {
+    public static long readLifetime(File directory, long defaultLifetime) {
+        File lifetimeFile = new File(directory, RecordingConstants.LIFETIME);
+        if (lifetimeFile.exists()) {
+            try {
+                BufferedReader reader = new BufferedReader(
+                        new FileReader(lifetimeFile));
+                String lifetime = reader.readLine();
+                reader.close();
+                if (lifetime != null) {
+                    return Long.parseLong(lifetime);
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: error reading lifetime "
+                        + lifetimeFile);
+                e.printStackTrace();
+            }
+        }
+        return defaultLifetime;
+    }
 
-    public String[] getKnownVenueServers();
+    public static void writeLifetime(File directory, long lifetime)
+            throws FileNotFoundException {
+        File lifetimeFile = new File(directory,
+                RecordingConstants.LIFETIME);
+        PrintWriter lifeWriter = new PrintWriter(lifetimeFile);
+        lifeWriter.println(lifetime);
+        lifeWriter.close();
+    }
 
-    public void addVenueServer(String url);
-
-    public Folder getTopLevelFolder();
-
-    public void addHarvestSource(HarvestSource harvestSource)
-            throws IOException;
-
-    public void deleteHarvestSource(HarvestSource harvestSource)
-            throws IOException;
-
-    public void updateHarvestSource(HarvestSource harvestSource)
-            throws IOException;
-
-    public void addUnfinishedRecording(UnfinishedRecording recording,
-            HarvestSource creator)
-            throws IOException;
-
-    public void deleteUnfinishedRecording(UnfinishedRecording recording)
-            throws IOException;
-
-    public void updateUnfinishedRecording(UnfinishedRecording recording)
-            throws IOException;
-
-    public void addRecording(Recording recording, UnfinishedRecording creator)
-            throws IOException;
-
-    public void deleteRecording(Recording recording) throws IOException;
-
-    public void updateRecordingMetadata(Recording recording)
-            throws IOException;
-
-    public void updateRecordingLayouts(Recording recording) throws IOException;
-
-    public void updateRecordingLifetime(Recording recording)
-            throws IOException;
-
-    public Folder getFolder(File path);
-
-    public void shutdown();
 }
