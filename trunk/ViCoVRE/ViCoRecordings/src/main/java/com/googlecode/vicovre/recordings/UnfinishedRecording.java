@@ -133,6 +133,8 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private String finishedRecordingId = null;
 
+    private String oldFinishedRecordingId = null;
+
     private class VenueUpdater extends Thread {
         public void run() {
             synchronized (venueSync) {
@@ -181,6 +183,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         this.typeRepository = typeRepository;
         this.folder = folder;
         this.file = file;
+        this.finishedRecordingId = getId();
     }
 
     public File getFile() {
@@ -297,8 +300,9 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
         if (!recordingStarted) {
+            oldFinishedRecordingId = finishedRecordingId;
             if (startDate == null) {
-                finishedRecordingId = null;
+                finishedRecordingId = getId();
             }
             finishedRecordingId = ID_DATE_FORMAT.format(startDate) + getId();
         }
@@ -306,6 +310,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     public void setStartDateString(String startDate) throws ParseException {
         setStartDate(DATE_FORMAT.parse(startDate));
+    }
+
+    public boolean hasStarted() {
+        return recordingStarted;
     }
 
     /**
@@ -385,9 +393,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     public synchronized void startRecording() {
         if (recordingStarted) {
             return;
-        }
-        if (finishedRecordingId == null) {
-            finishedRecordingId = ID_DATE_FORMAT.format(startDate) + getId();
         }
         manager = new RecordArchiveManager(typeRepository, folder,
                 finishedRecordingId);
@@ -504,9 +509,12 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         return null;
     }
 
-    @XmlElement
     public String getFinishedRecordingId() {
         return finishedRecordingId;
+    }
+
+    public String getOldFinishedRecordingId() {
+        return oldFinishedRecordingId;
     }
 
 }
