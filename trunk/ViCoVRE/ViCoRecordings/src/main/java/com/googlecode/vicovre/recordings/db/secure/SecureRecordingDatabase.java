@@ -40,7 +40,9 @@ import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.security.AlreadyExistsException;
 import com.googlecode.vicovre.security.UnauthorizedException;
+import com.googlecode.vicovre.security.UnknownException;
 import com.googlecode.vicovre.security.db.ReadOnlyACL;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
@@ -87,12 +89,16 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorFolder = getFolderName(creator.getFile().getParentFile());
             creatorId = creator.getId();
         }
-        securityDatabase.createAcl(creatorFolder, creatorId,
-                getFolderName(recording.getDirectory().getParentFile()),
+        String folder = getFolderName(recording.getDirectory().getParentFile());
+        securityDatabase.createAcl(creatorFolder,
+                UNFINISHED_ID_PREFIX + creatorId, folder,
                 CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, false);
-        securityDatabase.createAcl(creatorFolder, creatorId,
-                getFolderName(recording.getDirectory().getParentFile()),
+        try {
+            securityDatabase.createAcl(creatorFolder, creatorId, folder,
                 CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, false);
+        } catch (AlreadyExistsException e) {
+            // Do Nothing
+        }
         database.addRecording(recording, creator);
     }
 
@@ -105,9 +111,14 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorFolder = getFolderName(creator.getFile().getParentFile());
             creatorId = creator.getId();
         }
-        securityDatabase.createAcl(creatorFolder, creatorId,
-                getFolderName(recording.getFile()),
+        String folder = getFolderName(recording.getFile());
+        securityDatabase.createAcl(creatorFolder,
+                HARVEST_ID_PREFIX + creatorId, folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), false, true);
+        securityDatabase.createAcl(folder,
+                UNFINISHED_ID_PREFIX + recording.getId(), folder,
+                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+                false, false);
         database.addUnfinishedRecording(recording, creator);
     }
 
@@ -135,9 +146,15 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void deleteUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
-        securityDatabase.deleteAcl(
-                getFolderName(recording.getFile().getParentFile()),
+        String folder = getFolderName(recording.getFile().getParentFile());
+        securityDatabase.deleteAcl(folder,
                 UNFINISHED_ID_PREFIX + recording.getId());
+        try {
+            securityDatabase.deleteAcl(folder,
+                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId());
+        } catch (UnknownException e) {
+            // Do Nothing
+        }
         database.deleteUnfinishedRecording(recording);
     }
 
@@ -206,13 +223,40 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             WriteOnlyEntity... exceptions) throws IOException {
         securityDatabase.setAcl(
                 getFolderName(recording.getDirectory().getParentFile()),
-                READ_RECORDING_ID_PREFIX + recording.getId(), isPublic,
-                exceptions);
+                READ_RECORDING_ID_PREFIX + recording.getId(),
+                isPublic, exceptions);
     }
 
     public ReadOnlyACL getRecordingAcl(Recording recording) {
         return securityDatabase.getAcl(
                 getFolderName(recording.getDirectory().getParentFile()),
-                READ_RECORDING_ID_PREFIX + recording.getId());
+                READ_RECORDING_ID_PREFIX + recording.getId(), true);
+    }
+
+    public void setRecordingAcl(UnfinishedRecording recording,
+            String oldId, boolean isPublic, WriteOnlyEntity... exceptions)
+            throws IOException {
+        String folder = getFolderName(recording.getFile().getParentFile());
+        if (oldId != null) {
+            securityDatabase.deleteAcl(folder,
+                    READ_RECORDING_ID_PREFIX + oldId);
+        }
+        try {
+            securityDatabase.setAcl(folder,
+                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+                isPublic, exceptions);
+        } catch (UnknownException e) {
+            securityDatabase.createAcl(folder,
+                UNFINISHED_ID_PREFIX + recording.getId(), folder,
+                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+                isPublic, false, exceptions);
+        }
+    }
+
+    public ReadOnlyACL getRecordingAcl(UnfinishedRecording recording) {
+        return securityDatabase.getAcl(
+                getFolderName(recording.getFile().getParentFile()),
+                READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+                true);
     }
 }

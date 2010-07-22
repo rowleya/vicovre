@@ -617,7 +617,7 @@ public class SecurityDatabase {
         }
     }
 
-    private ACL obtainAcl(File folderFile, String id) {
+    private ACL obtainAcl(File folderFile, String id, boolean createIfAdmin) {
         ACL acl = null;
         try {
             HashMap<String, ACL> aclList = acls.get(folderFile);
@@ -629,7 +629,9 @@ public class SecurityDatabase {
                 throw new UnknownException("Unknown ACL " + id);
             }
         } catch (UnknownException e) {
-            if (CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
+
+            if (createIfAdmin
+                    && CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
                 acl = new ACL(id, CurrentUser.get(), false, false);
             } else {
                 throw e;
@@ -650,7 +652,7 @@ public class SecurityDatabase {
 
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id);
+            ACL acl = obtainAcl(folderFile, id, true);
 
             Vector<Entity> entities = getEntities(exceptions);
             acl.setAllow(allow);
@@ -668,7 +670,7 @@ public class SecurityDatabase {
             throws IOException {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id);
+            ACL acl = obtainAcl(folderFile, id, true);
 
             User user = users.get(owner);
             if (user == null) {
@@ -685,7 +687,7 @@ public class SecurityDatabase {
     public void deleteAcl(String folder, String id) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id);
+            ACL acl = obtainAcl(folderFile, id, true);
             synchronized (acl) {
                 acl.delete();
                 HashMap<String, ACL> aclList = acls.get(folderFile);
@@ -699,10 +701,10 @@ public class SecurityDatabase {
         }
     }
 
-    public ReadOnlyACL getAcl(String folder, String id) {
+    public ReadOnlyACL getAcl(String folder, String id, boolean createIfAdmin) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id);
+            ACL acl = obtainAcl(folderFile, id, createIfAdmin);
             synchronized (acl) {
                 return new ReadOnlyACL(acl);
             }
@@ -713,7 +715,7 @@ public class SecurityDatabase {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
             try {
-                ACL acl = obtainAcl(folderFile, id);
+                ACL acl = obtainAcl(folderFile, id, true);
                 synchronized (acl) {
                     return acl.isAllowed();
                 }
