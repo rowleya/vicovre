@@ -72,12 +72,15 @@ public class SecurityFilter implements Filter {
                 }
             } else {
                 String sessionid = null;
-                for (Cookie cookie : httpRequest.getCookies()) {
-                    if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
-                        sessionid = cookie.getValue();
+                Cookie[] cookies = httpRequest.getCookies();
+                if (cookies != null) {
+                    for (Cookie cookie : cookies) {
+                        if (cookie.getName().equalsIgnoreCase("JSESSIONID")) {
+                            sessionid = cookie.getValue();
+                        }
                     }
+                    System.err.println("Session " + sessionid + " not found");
                 }
-                System.err.println("Session " + sessionid + " not found");
             }
         }
 
