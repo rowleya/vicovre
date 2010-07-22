@@ -47,7 +47,7 @@ public abstract class BasicMultiplexer implements Multiplexer,
 
     private ContentDescriptor[] contentTypes = null;
 
-    private MultiplexerDataSource dataSource = new MultiplexerDataSource(this);
+    private MultiplexerDataSource dataSource = null;
 
     private Format[] supportedFormats = null;
 
@@ -87,6 +87,10 @@ public abstract class BasicMultiplexer implements Multiplexer,
     }
 
     public DataSource getDataOutput() {
+        if (dataSource == null) {
+            dataSource = new MultiplexerDataSource(this,
+                    contentType.getContentType());
+        }
         return dataSource;
     }
 

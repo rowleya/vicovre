@@ -36,8 +36,6 @@ import javax.media.Time;
 import javax.media.protocol.PullDataSource;
 import javax.media.protocol.PullSourceStream;
 
-import com.googlecode.vicovre.codecs.multiplexers.flv.JavaMultiplexer;
-
 /**
  * A Data source for the FLV Multiplexer
  * @author Andrew G D Rowley
@@ -47,11 +45,13 @@ public class MultiplexerDataSource extends PullDataSource {
 
     private MultiplexerStream stream = null;
 
+    private String contentType = null;
+
     /**
      * Creates a new FLVDataSource
      * @param stream The stream of the source
      */
-    public MultiplexerDataSource(MultiplexerStream stream) {
+    public MultiplexerDataSource(MultiplexerStream stream, String contentType) {
         this.stream = stream;
     }
 
@@ -86,7 +86,7 @@ public class MultiplexerDataSource extends PullDataSource {
      * @see javax.media.protocol.DataSource#getContentType()
      */
     public String getContentType() {
-        return JavaMultiplexer.CONTENT_TYPE;
+        return contentType;
     }
 
     /**
