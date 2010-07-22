@@ -158,8 +158,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public Folder getFolder(File path) {
-        return new SecureFolder(database.getFolder(path),
-                securityDatabase, this);
+        Folder folder = database.getFolder(path);
+        folder.setDatabase(this);
+        return new SecureFolder(folder, securityDatabase, this);
     }
 
     public String[] getKnownVenueServers() {

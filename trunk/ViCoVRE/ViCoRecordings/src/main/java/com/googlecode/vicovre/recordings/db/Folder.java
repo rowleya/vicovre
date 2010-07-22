@@ -91,4 +91,6 @@ public interface Folder extends Comparable<Folder> {
 
     public List<DefaultLayout> getDefaultLayouts() throws IOException,
             SAXException;
+
+    public void setDatabase(RecordingDatabase database);
 }
