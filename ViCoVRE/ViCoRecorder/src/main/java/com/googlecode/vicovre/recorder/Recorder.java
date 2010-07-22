@@ -497,7 +497,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void loadDatabase() {
         try {
             recordingDatabase = new InsecureRecordingDatabase(dataDirectory,
-                    typeRepository, layoutRepository, null, false);
+                    typeRepository, layoutRepository, null, false, 0);
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null,
@@ -690,7 +690,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void startRecording() {
         archiveManager = new RecordArchiveManager(typeRepository,
                 recordingDatabase.getTopLevelFolder(),
-                RecordArchiveManager.generateId(new Date()));
+                RecordArchiveManager.generateId(new Date()),
+                recordingDatabase);
         File annotationDir = new File(annotationDirectory,
                 archiveManager.getRecording().getId());
         liveAnnotationsServer.setStoreDirectory(annotationDir);

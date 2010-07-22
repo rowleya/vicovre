@@ -43,9 +43,9 @@ import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.security.AlreadyExistsException;
 import com.googlecode.vicovre.security.UnauthorizedException;
-import com.googlecode.vicovre.security.UnknownException;
 import com.googlecode.vicovre.security.db.ReadOnlyACL;
 import com.googlecode.vicovre.security.db.ReadOnlyEntity;
+import com.googlecode.vicovre.security.db.Role;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
@@ -94,10 +94,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         String folder = getFolderName(recording.getDirectory().getParentFile());
         securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
-                CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, false);
+                CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true);
         try {
-            securityDatabase.createAcl(creatorFolder, creatorId, folder,
-                CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, false);
+            securityDatabase.createAcl(creatorFolder,
+                UNFINISHED_ID_PREFIX + creatorId, folder,
+                READ_RECORDING_ID_PREFIX + recording.getId(), false, true);
         } catch (AlreadyExistsException e) {
             // Do Nothing
         }
@@ -120,7 +121,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         securityDatabase.createAcl(folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), folder,
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                false, false);
+                false, true);
         database.addUnfinishedRecording(recording, creator);
     }
 
@@ -195,6 +196,15 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         database.updateRecordingLayouts(recording);
     }
 
+    public void updateRecordingLifetime(Recording recording)
+            throws IOException {
+        if (!securityDatabase.hasRole(Role.ADMINISTRATOR)) {
+            throw new UnauthorizedException(
+                "Only an administrator can update the lifetime of a recording");
+        }
+        database.updateRecordingLifetime(recording);
+    }
+
     public void updateRecordingMetadata(Recording recording)
             throws IOException {
         if (!securityDatabase.isAllowed(
@@ -232,7 +242,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                         entity.getType());
             }
             securityDatabase.createAcl(folder, id, folder, newId, acl.isAllow(),
-                    false, exceptions);
+                    true, exceptions);
         }
         database.updateUnfinishedRecording(recording);
     }

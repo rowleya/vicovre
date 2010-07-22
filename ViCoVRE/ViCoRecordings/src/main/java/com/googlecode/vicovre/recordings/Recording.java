@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Vector;
 
 import com.googlecode.vicovre.recordings.db.Folder;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 
 /**
@@ -77,13 +78,19 @@ public class Recording implements Comparable<Recording> {
     // The folder holding the recording
     private Folder folder = null;
 
-    public Recording(Folder folder, String id) {
+    // The lifetime of the recording
+    private long lifetime = 0;
+
+    private LifetimeHandler lifetimeHandler = null;
+
+    public Recording(Folder folder, String id, RecordingDatabase database) {
         this.folder = folder;
         this.id = id;
         this.directory = new File(folder.getFile(), id);
         if (id == null) {
             throw new RuntimeException("Null id recording in folder " + folder);
         }
+        lifetimeHandler = new LifetimeHandler(this, database);
     }
 
     /**
@@ -255,6 +262,15 @@ public class Recording implements Comparable<Recording> {
 
     public void addPauseTime(Long time) {
         pauseTimes.add(time);
+    }
+
+    public void setLifetime(long lifetime) {
+        this.lifetime = lifetime;
+        lifetimeHandler.updateLifetime();
+    }
+
+    public long getLifetime() {
+        return lifetime;
     }
 
     public boolean equals(Recording recording) {

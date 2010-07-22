@@ -78,6 +78,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     private boolean readOnly = false;
 
+    private long defaultRecordingLifetime = 0;
+
     /**
      * Creates a Database
      * @param directory The directory containing the database
@@ -89,16 +91,20 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
     public InsecureRecordingDatabase(String directory,
             RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
-            HarvestFormatRepository harvestFormatRepository, boolean readOnly)
+            HarvestFormatRepository harvestFormatRepository, boolean readOnly,
+            long defaultRecordingLifetime)
             throws SAXException, IOException {
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
         this.readOnly = readOnly;
+        this.defaultRecordingLifetime = defaultRecordingLifetime;
+
         File topLevel = new File(directory);
         topLevel.mkdirs();
-        topLevelFolder = new InsecureFolder(topLevel, typeRepository, layoutRepository,
-                harvestFormatRepository, this, readOnly);
+        topLevelFolder = new InsecureFolder(topLevel, typeRepository,
+                layoutRepository, harvestFormatRepository, this, readOnly,
+                defaultRecordingLifetime);
         traverseFolders(topLevelFolder);
 
         File venueServerFile = new File(topLevel, VENUE_SERVER_FILE);
@@ -303,6 +309,12 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
+    public void updateRecordingLifetime(Recording recording)
+            throws IOException {
+        LifetimeReader.writeLifetime(recording.getDirectory(),
+                recording.getLifetime());
+    }
+
     public Folder getFolder(File path) {
         if (path == null || path.equals(topLevelFolder.getFile())) {
             return topLevelFolder;
@@ -319,8 +331,9 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                 if (!recordingIndex.exists()
                         && !unfinishedRecordingIndex.exists()) {
                     folder = new InsecureFolder(path, typeRepository,
-                            layoutRepository,
-                        harvestFormatRepository, this, readOnly);
+                        layoutRepository,
+                        harvestFormatRepository, this, readOnly,
+                        defaultRecordingLifetime);
                     folderCache.put(path, folder);
                 }
             }

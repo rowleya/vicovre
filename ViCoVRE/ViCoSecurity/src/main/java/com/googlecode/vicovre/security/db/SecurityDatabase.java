@@ -726,4 +726,8 @@ public class SecurityDatabase {
             }
         }
     }
+
+    public boolean hasRole(Role role) {
+        return CurrentUser.get().getRole().is(role);
+    }
 }
