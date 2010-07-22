@@ -44,6 +44,7 @@ import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 
@@ -80,6 +81,7 @@ public class SecureFolder implements Folder {
         List<Folder> folders = folder.getFolders();
         List<Folder> secureFolders = new Vector<Folder>();
         for (Folder folder : folders) {
+            folder.setDatabase(recordingDatabase);
             secureFolders.add(new SecureFolder(folder, securityDatabase,
                     recordingDatabase));
         }
@@ -177,6 +179,10 @@ public class SecureFolder implements Folder {
 
     public int compareTo(Folder f) {
         return folder.compareTo(f);
+    }
+
+    public void setDatabase(RecordingDatabase database) {
+        folder.setDatabase(database);
     }
 
 }

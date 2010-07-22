@@ -209,9 +209,9 @@ public class InsecureFolder implements Folder {
         Vector<Folder> folders = new Vector<Folder>();
         File[] files = file.listFiles(new FolderFilter(false));
         for (File folderFile : files) {
-            InsecureFolder folder = new InsecureFolder(folderFile, typeRepository,
-                    layoutRepository, harvestFormatRepository, database,
-                    readOnly, defaultRecordingLifetime);
+            InsecureFolder folder = new InsecureFolder(folderFile,
+                    typeRepository, layoutRepository, harvestFormatRepository,
+                    database, readOnly, defaultRecordingLifetime);
             folders.add(folder);
         }
         Collections.sort(folders);
@@ -381,6 +381,10 @@ public class InsecureFolder implements Folder {
         if (!readOnly) {
             harvestSources.remove(id);
         }
+    }
+
+    public void setDatabase(RecordingDatabase database) {
+        this.database = database;
     }
 
     public boolean equals(InsecureFolder folder) {
