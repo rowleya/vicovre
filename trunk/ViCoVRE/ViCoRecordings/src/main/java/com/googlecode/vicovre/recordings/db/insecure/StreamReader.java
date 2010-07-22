@@ -209,7 +209,10 @@ public class StreamReader {
         XmlIo.setString(doc, stream, "ssrc");
         XmlIo.setDate(doc, stream, "startTime");
         XmlIo.setDate(doc, stream, "endTime");
-        stream.setRtpType(Integer.valueOf(XmlIo.readValue(doc, "rtpType")));
+        String rtpType = XmlIo.readValue(doc, "rtpType");
+        if (rtpType != null) {
+            stream.setRtpType(Integer.valueOf(rtpType));
+        }
         XmlIo.setLong(doc, stream, "firstTimestamp");
         XmlIo.setLong(doc, stream, "packetsSeen");
         XmlIo.setLong(doc, stream, "packetsMissed");
