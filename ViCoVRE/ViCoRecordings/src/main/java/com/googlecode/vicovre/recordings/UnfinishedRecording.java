@@ -70,6 +70,9 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
             "yyyy-MM-dd'T'HH:mm:ss");
 
+    private static final SimpleDateFormat ID_DATE_FORMAT =
+        new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
+
     private static final String STOPPED = "Stopped";
 
     private static final String RECORDING = "Recording";
@@ -127,6 +130,8 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     private boolean recordingFinished = false;
 
     private RecordingDatabase database = null;
+
+    private String finishedRecordingId = null;
 
     private class VenueUpdater extends Thread {
         public void run() {
@@ -291,10 +296,16 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      */
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
+        if (!recordingStarted) {
+            if (startDate == null) {
+                finishedRecordingId = null;
+            }
+            finishedRecordingId = ID_DATE_FORMAT.format(startDate) + getId();
+        }
     }
 
     public void setStartDateString(String startDate) throws ParseException {
-        this.startDate = DATE_FORMAT.parse(startDate);
+        setStartDate(DATE_FORMAT.parse(startDate));
     }
 
     /**
@@ -375,7 +386,11 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         if (recordingStarted) {
             return;
         }
-        manager = new RecordArchiveManager(typeRepository, folder);
+        if (finishedRecordingId == null) {
+            finishedRecordingId = ID_DATE_FORMAT.format(startDate) + getId();
+        }
+        manager = new RecordArchiveManager(typeRepository, folder,
+                finishedRecordingId);
         try {
             NetworkLocation[] addrs = addresses;
             if (ag3VenueUrl != null) {
@@ -487,6 +502,11 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
             return manager.getRecording();
         }
         return null;
+    }
+
+    @XmlElement
+    public String getFinishedRecordingId() {
+        return finishedRecordingId;
     }
 
 }

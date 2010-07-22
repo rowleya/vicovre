@@ -125,15 +125,9 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
     // The time to subtract to take account of pauses
     private long subtractTime = 0;
 
-    /**
-     * Creates a new RecordArchiveManager
-     * @param typeRepository The RTPTypes to use
-     */
-    public RecordArchiveManager(RtpTypeRepository typeRepository,
-            Folder folder) {
-        this(typeRepository, folder,
-                DATE_FORMAT.format(new Date())
-                + (int) (Math.random() * RecordingConstants.ID_NORMALIZATION));
+    public static final String generateId(Date date) {
+       return DATE_FORMAT.format(date)
+                + (int) (Math.random() * RecordingConstants.ID_NORMALIZATION);
     }
 
     /**

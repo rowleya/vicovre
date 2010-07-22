@@ -52,6 +52,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -688,7 +689,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private void startRecording() {
         archiveManager = new RecordArchiveManager(typeRepository,
-                recordingDatabase.getTopLevelFolder());
+                recordingDatabase.getTopLevelFolder(),
+                RecordArchiveManager.generateId(new Date()));
         File annotationDir = new File(annotationDirectory,
                 archiveManager.getRecording().getId());
         liveAnnotationsServer.setStoreDirectory(annotationDir);
