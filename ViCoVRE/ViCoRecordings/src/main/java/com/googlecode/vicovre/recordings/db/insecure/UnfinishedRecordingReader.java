@@ -52,6 +52,7 @@ import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
@@ -71,10 +72,11 @@ public class UnfinishedRecordingReader {
      */
     public static UnfinishedRecording readRecording(InputStream input,
             File file, InsecureFolder folder,
-            RtpTypeRepository typeRepository, RecordingDatabase database)
+            RtpTypeRepository typeRepository, RecordingDatabase database,
+            Emailer emailer)
             throws SAXException, IOException {
         UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
-                folder, file, database);
+                folder, file, database, emailer);
         Node doc = XmlIo.read(input);
         XmlIo.setDate(doc, recording, "startDate");
         XmlIo.setDate(doc, recording, "stopDate");

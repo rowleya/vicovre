@@ -18,6 +18,12 @@
         <constructor-arg><value>/liveannotations.xml</value></constructor-arg>
     </bean>
 
+    <bean id="emailer" class="com.googlecode.vicovre.utils.Emailer">
+        <constructor-arg><value>${email.server.host}</value></constructor-arg>
+        <constructor-arg><value>${email.server.port}</value></constructor-arg>
+        <constructor-arg><value>${email.from}</value></constructor-arg>
+    </bean>
+
     <bean id="insecureDatabase" class="com.googlecode.vicovre.recordings.db.insecure.InsecureRecordingDatabase">
         <constructor-arg><value>${recording.location}</value></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
@@ -25,6 +31,7 @@
         <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
         <constructor-arg><value>${recording.readOnly}</value></constructor-arg>
         <constructor-arg><value>0</value></constructor-arg>
+        <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
     <bean id="realm" class="java.lang.String">

@@ -51,6 +51,7 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 public class HarvestHandler extends AbstractHandler {
 
@@ -58,12 +59,16 @@ public class HarvestHandler extends AbstractHandler {
 
     private RtpTypeRepository typeRepository = null;
 
+    private Emailer emailer = null;
+
     public HarvestHandler(RecordingDatabase recordingDatabase,
             HarvestFormatRepository harvestFormatRepository,
-            RtpTypeRepository typeRepository) {
+            RtpTypeRepository typeRepository,
+            Emailer emailer) {
         super(recordingDatabase);
         this.harvestFormatRepository = harvestFormatRepository;
         this.typeRepository = typeRepository;
+        this.emailer = emailer;
     }
 
     private void fillIn(HarvestSource harvestSource,
@@ -180,7 +185,7 @@ public class HarvestHandler extends AbstractHandler {
             HarvestSource harvestSource = new HarvestSource(folder,
                 File.createTempFile("harvest",
                         RecordingConstants.HARVEST_SOURCE, folder.getFile()),
-                        typeRepository);
+                        typeRepository, emailer);
             getDatabase().addHarvestSource(harvestSource);
             return harvestSource.getId();
         } catch (IOException e) {

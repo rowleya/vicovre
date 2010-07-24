@@ -19,11 +19,13 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+        <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
     <bean id="unfinishedRecordingHandler" class="com.googlecode.vicovre.web.xmlrpc.UnfinishedRecordingHandler">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+        <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
     <bean id="recordingHandler" class="com.googlecode.vicovre.web.xmlrpc.RecordingHandler">

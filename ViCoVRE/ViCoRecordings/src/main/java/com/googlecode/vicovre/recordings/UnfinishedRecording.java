@@ -46,6 +46,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import org.apache.commons.mail.EmailException;
+
 import ag3.interfaces.Venue;
 import ag3.interfaces.types.BridgeDescription;
 import ag3.interfaces.types.ClientProfile;
@@ -57,6 +59,7 @@ import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 /**
  * Represents a recording to be made
@@ -135,6 +138,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private String oldFinishedRecordingId = null;
 
+    private String emailAddress = null;
+
+    private Emailer emailer = null;
+
     private class VenueUpdater extends Thread {
         public void run() {
             synchronized (venueSync) {
@@ -178,12 +185,14 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @param manager The manager used to start and stop the recording
      */
     public UnfinishedRecording(RtpTypeRepository typeRepository,
-            Folder folder, File file, RecordingDatabase database) {
+            Folder folder, File file, RecordingDatabase database,
+            Emailer emailer) {
         this.database = database;
         this.typeRepository = typeRepository;
         this.folder = folder;
         this.file = file;
         this.finishedRecordingId = getId();
+        this.emailer = emailer;
     }
 
     public File getFile() {
@@ -395,7 +404,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
             return;
         }
         manager = new RecordArchiveManager(typeRepository, folder,
-                finishedRecordingId, database);
+                finishedRecordingId, database, emailer);
         try {
             NetworkLocation[] addrs = addresses;
             if (ag3VenueUrl != null) {
@@ -452,13 +461,33 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         finishedRecording.setMetadata(getMetadata());
         if (!finishedRecording.getStreams().isEmpty()) {
             try {
+                if (emailAddress != null) {
+                    finishedRecording.setEmailAddress(emailAddress);
+                }
                 database.addRecording(finishedRecording, this);
                 recordingFinished = true;
                 database.deleteUnfinishedRecording(this);
                 status = COMPLETED;
+
+                if ((emailAddress != null) && (emailer != null)) {
+                    String message = MessageReader.readMessage(
+                            "recordingComplete.txt", file.getParentFile(),
+                            database.getTopLevelFolder().getFile());
+                    if (message != null) {
+                        String path = file.getParent().substring(
+                                database.getTopLevelFolder().getFile()
+                                    .getPath().length());
+                        message.replaceAll("${recording}",
+                                path + finishedRecordingId);
+                        emailer.send(emailAddress, "Recording completed",
+                            message);
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 status = "Error: " + e.getMessage();
+            } catch (EmailException e) {
+                e.printStackTrace();
             }
         } else {
             recordingStarted = false;
@@ -515,6 +544,15 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     public String getOldFinishedRecordingId() {
         return oldFinishedRecordingId;
+    }
+
+    @XmlElement
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
 }
