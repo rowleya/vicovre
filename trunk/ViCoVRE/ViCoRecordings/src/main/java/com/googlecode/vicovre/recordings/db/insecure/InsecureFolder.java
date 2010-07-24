@@ -55,6 +55,7 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 import com.googlecode.vicovre.utils.XmlIo;
 
@@ -91,6 +92,8 @@ public class InsecureFolder implements Folder {
 
     private boolean readOnly = false;
 
+    private Emailer emailer = null;
+
     /**
      * Creates a folder
      * @param file The real folder
@@ -99,7 +102,7 @@ public class InsecureFolder implements Folder {
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository,
             RecordingDatabase database, boolean readOnly,
-            long defaultRecordingLifetime) {
+            long defaultRecordingLifetime, Emailer emailer) {
         this.file = file;
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
@@ -108,6 +111,7 @@ public class InsecureFolder implements Folder {
         this.readOnly = readOnly;
         this.defaultRecordingLifetime = LifetimeReader.readLifetime(file,
                 defaultRecordingLifetime);
+        this.emailer = emailer;
 
         readRecordings();
         if (!readOnly) {
@@ -211,7 +215,7 @@ public class InsecureFolder implements Folder {
         for (File folderFile : files) {
             InsecureFolder folder = new InsecureFolder(folderFile,
                     typeRepository, layoutRepository, harvestFormatRepository,
-                    database, readOnly, defaultRecordingLifetime);
+                    database, readOnly, defaultRecordingLifetime, emailer);
             folders.add(folder);
         }
         Collections.sort(folders);
@@ -248,7 +252,7 @@ public class InsecureFolder implements Folder {
                                 RecordingConstants.RECORDING_INDEX));
                     Recording recording = RecordingReader.readRecording(input,
                             this, database, typeRepository, layoutRepository,
-                            defaultRecordingLifetime);
+                            defaultRecordingLifetime, emailer);
                     if (recording == null) {
                         throw new Exception("Recording "
                                 + recordingFile.getName()
@@ -283,7 +287,8 @@ public class InsecureFolder implements Folder {
                 FileInputStream input = new FileInputStream(recordingFile);
                 UnfinishedRecording recording =
                     UnfinishedRecordingReader.readRecording(input,
-                            recordingFile, this, typeRepository, database);
+                            recordingFile, this, typeRepository, database,
+                            emailer);
                 input.close();
                 if (recording == null) {
                     throw new Exception("Could not read unfinished recording");
@@ -317,7 +322,7 @@ public class InsecureFolder implements Folder {
                 HarvestSource harvestSource =
                     HarvestSourceReader.readHarvestSource(input,
                             harvestFormatRepository, typeRepository, this,
-                            sourceFile);
+                            sourceFile, emailer);
                 input.close();
                 if (harvestSource == null) {
                     throw new Exception("Could not read harvest source");

@@ -42,6 +42,7 @@ import java.util.Vector;
 
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.utils.Emailer;
 
 
 /**
@@ -81,16 +82,18 @@ public class Recording implements Comparable<Recording> {
     // The lifetime of the recording
     private long lifetime = 0;
 
+    // The handler of the lifetime
     private LifetimeHandler lifetimeHandler = null;
 
-    public Recording(Folder folder, String id, RecordingDatabase database) {
+    public Recording(Folder folder, String id, RecordingDatabase database,
+            Emailer emailer) {
         this.folder = folder;
         this.id = id;
         this.directory = new File(folder.getFile(), id);
         if (id == null) {
             throw new RuntimeException("Null id recording in folder " + folder);
         }
-        lifetimeHandler = new LifetimeHandler(this, database);
+        lifetimeHandler = new LifetimeHandler(this, database, emailer);
     }
 
     /**
@@ -271,6 +274,10 @@ public class Recording implements Comparable<Recording> {
 
     public long getLifetime() {
         return lifetime;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        lifetimeHandler.setEmailAddress(emailAddress);
     }
 
     public boolean equals(Recording recording) {

@@ -52,6 +52,7 @@ import com.googlecode.vicovre.media.rtp.RTPPacketSink;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 /**
  * Manages the saving of stream errors and streams
@@ -136,9 +137,10 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
      * @param typeRepository The RTPTypes to use
      */
     public RecordArchiveManager(RtpTypeRepository typeRepository,
-            Folder folder, String recordingId, RecordingDatabase database) {
+            Folder folder, String recordingId, RecordingDatabase database,
+            Emailer emailer) {
         this.typeRepository = typeRepository;
-        recording = new Recording(folder, recordingId, database);
+        recording = new Recording(folder, recordingId, database, emailer);
         directory = recording.getDirectory();
         start();
     }

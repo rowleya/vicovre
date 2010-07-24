@@ -52,6 +52,7 @@ import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 import com.googlecode.vicovre.utils.XmlIo;
 
@@ -73,11 +74,11 @@ public class RecordingReader {
     public static Recording readRecording(InputStream input,
             InsecureFolder folder, RecordingDatabase database,
             RtpTypeRepository typeRepository, LayoutRepository layoutRepository,
-            long defaultLifetime)
+            long defaultLifetime, Emailer emailer)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
         String id = XmlIo.readValue(doc, "id");
-        Recording recording = new Recording(folder, id, database);
+        Recording recording = new Recording(folder, id, database, emailer);
 
         String[] pauseTimes = XmlIo.readValues(doc, "pauseTime");
         for (String time : pauseTimes) {

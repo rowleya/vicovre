@@ -53,6 +53,7 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 /**
  * A database for recordings
@@ -80,6 +81,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     private long defaultRecordingLifetime = 0;
 
+    private Emailer emailer = null;
+
     /**
      * Creates a Database
      * @param directory The directory containing the database
@@ -92,19 +95,21 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
             RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository, boolean readOnly,
-            long defaultRecordingLifetime)
+            long defaultRecordingLifetime,
+            Emailer emailer)
             throws SAXException, IOException {
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
         this.readOnly = readOnly;
         this.defaultRecordingLifetime = defaultRecordingLifetime;
+        this.emailer = emailer;
 
         File topLevel = new File(directory);
         topLevel.mkdirs();
         topLevelFolder = new InsecureFolder(topLevel, typeRepository,
                 layoutRepository, harvestFormatRepository, this, readOnly,
-                defaultRecordingLifetime);
+                defaultRecordingLifetime, emailer);
         traverseFolders(topLevelFolder);
 
         File venueServerFile = new File(topLevel, VENUE_SERVER_FILE);
@@ -333,7 +338,7 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                     folder = new InsecureFolder(path, typeRepository,
                         layoutRepository,
                         harvestFormatRepository, this, readOnly,
-                        defaultRecordingLifetime);
+                        defaultRecordingLifetime, emailer);
                     folderCache.put(path, folder);
                 }
             }

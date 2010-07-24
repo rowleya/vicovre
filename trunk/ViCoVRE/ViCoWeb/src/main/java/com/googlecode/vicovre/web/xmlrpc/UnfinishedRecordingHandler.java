@@ -51,15 +51,19 @@ import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 public class UnfinishedRecordingHandler extends AbstractHandler {
 
     private RtpTypeRepository typeRepository = null;
 
+    private Emailer emailer = null;
+
     public UnfinishedRecordingHandler(RecordingDatabase database,
-            RtpTypeRepository typeRepository) {
+            RtpTypeRepository typeRepository, Emailer emailer) {
         super(database);
         this.typeRepository = typeRepository;
+        this.emailer = emailer;
     }
 
     private void fillIn(UnfinishedRecording recording,
@@ -117,7 +121,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
                     RecordingConstants.UNFINISHED_RECORDING_INDEX,
                     folder.getFile());
             UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
-                    folder, file, getDatabase());
+                    folder, file, getDatabase(), emailer);
             fillIn(recording, details);
             RecordingMetadata metadata = new RecordingMetadata();
             fillIn(metadata, (Map<String, Object>)

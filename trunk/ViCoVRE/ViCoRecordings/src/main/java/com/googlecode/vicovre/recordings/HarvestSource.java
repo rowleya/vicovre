@@ -51,6 +51,7 @@ import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.Emailer;
 
 
 /**
@@ -126,6 +127,8 @@ public class HarvestSource {
 
     private String subFolderMetadataItem = null;
 
+    private Emailer emailer = null;
+
     private class HarvestTask extends TimerTask {
 
         /**
@@ -139,10 +142,11 @@ public class HarvestSource {
     }
 
     public HarvestSource(Folder folder, File file,
-            RtpTypeRepository typeRepository) {
+            RtpTypeRepository typeRepository, Emailer emailer) {
         this.file = file;
         this.folder = folder;
         this.typeRepostory = typeRepository;
+        this.emailer = emailer;
     }
 
     public String getId() {
@@ -492,7 +496,8 @@ public class HarvestSource {
                                 RecordingConstants.UNFINISHED_RECORDING_INDEX,
                                 eventFolder.getFile());
                         UnfinishedRecording recording = new UnfinishedRecording(
-                                typeRepostory, eventFolder, file, database);
+                                typeRepostory, eventFolder, file, database,
+                                emailer);
                         recording.setMetadata(event.getMetadata());
                         recording.setStartDate(event.getStartDate());
                         recording.setStopDate(event.getEndDate());
