@@ -1,7 +1,35 @@
-#summary The REST Interface for controlling recording
+#summary Description of the REST Interface for recording playback control
 
 = Introduction =
 
 This page details the REST interface used to list, delete and set permissions on who can play back recordings
 
 = Details =
+
+|| *HTTP Method* || *URL Format* || *Description* || *Return Content Types* || *Return Entity* ||
+|| GET || {{{http://<url>/recording/}}} || Lists the recordings || application/json, text/xml || The list of recordings.  See below for details. ||
+|| GET || {{{http://<url>/recording/<id>/streams}}} || Lists the streams in the recording. || application/json, text/xml || The list of streams.  See below for details. ||
+|| GET || {{{http://<url>/recording/<id>/layouts}}} || Lists the layouts of the recording. ||
+application/json, text/xml || The list of layouts.  See below for details. ||
+|| GET || {{{http://<url>/recording/<id>/acl}}} || Gets the Access Control List of the recording. || application/json, text/xml || The acl.  See below for details. ||
+|| PUT || {{{http://<url>/recording/<id>?<metadata-details>}}} || Sets the recording metadata.  See below for details accepted. || None || None ||
+|| PUT || {{{http://<url>/recording/<id>/acl?<acl-details>}}} || Sets the recording ACL.  See below for details accepted. || None || None ||
+|| DELETE || {{{http://<url>/recording/<id>}}} || Deletes the recording. || None || None ||
+
+== List of Recordings == 
+If the return type is text/xml, the list is formatted as follows:
+{{{
+<recordings>
+
+    <!-- One for each recording -->
+    <recording>
+
+        <!-- The id of the recording -->
+        <id>...</id>
+
+        <metadata>
+        </metadata>
+
+    </recording>
+</recordings>
+}}}
