@@ -34,10 +34,32 @@ If the return type is text/xml, the list is formatted as follows:
             <!-- The description of the recording (optional) -->
             <description>...</description>
 
+            <!-- True if the description is editable, false otherwise (optional) -->
+            <descriptionEditable>...</descriptionEditable>
+
         </metadata>
 
+        <!-- The time at which the recording was made (see [RecordingInterface here] for format details) -->
         <startTime>...</startTime>
+
+        <!-- The duration of the recording in milliseconds -->
+        <duration>...</duration>
+
+        <!-- The amount of time in milliseconds after then end of the recording after which it will be automatically deleted (0 = infinite) -->
+        <lifetime>...</lifetime>
+        
+        <!-- True if the recording can be edited by the current user, false otherwise -->
+        <isEditable>...</isEditable>
 
     </recording>
 </recordings>
+}}}
+
+If the return type is application/json, the list is formatted as follows:
+{{{
+{
+    recording: {
+        
+    }
+}
 }}}
