@@ -10,9 +10,9 @@ This page details the REST interface used to list, delete and set permissions on
 || GET || {{{http://<url>/recording/}}} || Lists the recordings || application/json, text/xml || The list of recordings.  See below for details. ||
 || GET || {{{http://<url>/recording/<id>/streams}}} || Lists the streams in the recording. || application/json, text/xml || The list of streams.  See below for details. ||
 || GET || {{{http://<url>/recording/<id>/layouts}}} || Lists the layouts of the recording. || application/json, text/xml || The list of layouts.  See below for details. ||
-|| GET || {{{http://<url>/recording/<id>/acl}}} || Gets the Access Control List of the recording. || application/json, text/xml || The acl.  See below for details. ||
+|| GET || {{{http://<url>/recording/<id>/acl}}} || Gets the Access Control List of the recording. || application/json, text/xml || The acl.  See [RecordingInterface here] for details. ||
 || PUT || {{{http://<url>/recording/<id>?<metadata-details>}}} || Sets the recording metadata.  See below for details accepted. || None || None ||
-|| PUT || {{{http://<url>/recording/<id>/acl?<acl-details>}}} || Sets the recording ACL.  See below for details accepted. || None || None ||
+|| PUT || {{{http://<url>/recording/<id>/acl?<acl-details>}}} || Sets the recording ACL.  See [RecordingInterface here] for details accepted. || None || None ||
 || DELETE || {{{http://<url>/recording/<id>}}} || Deletes the recording. || None || None ||
 
 == List of Recordings == 
@@ -262,59 +262,8 @@ If the return type is text/xml, the list will be formatted as follows:
 ]}
 }}}
 
-== Access Control List ==
-If the return type is text/xml, the ACL will be formatted as follows:
-{{{
-<acl>
-    
-    <!-- True if the acl will allow access by default, false if it will deny -->
-    <allow>...</allow>
-
-    <!-- One for each exception -->
-    <exception>
-
-        <!-- The type of the exception, one of user, group or role -->
-        <type>...</type>
-
-        <!-- The username, group name or role of the exception -->
-        <name>...</name>
-
-    </exception>
-    ...
-    
-</acl>
-}}}
-
-If the return type is application/json, the ACL will be formatted as follows:
-{{{
-{
-    /* True if the acl will allow access by default, false if it will deny */
-    "allow":"...",
-
-    "exception":{[
-
-        /* One for each exception */
-        {
-
-        /* The type of the exception, one of user, group or role */
-        "type":"...",
-        
-        /* The username, group name or role of the exception */
-        "name":"..."
-        },
-        ...
-    ]}
-}
-}}}
-
 == Recording Metadata Parameters ==
 The parameters that can be set when setting the recording metadata are as follows:
 || *Key* || *Description* || *Type* || *Count* || *Requirement* ||
 || metadata_name || The name of the recording || String || 1 || Required ||
 || metadata_description || The description of the recording || String || 0 or 1 || ||
-
-== Access Control List Parameters ==
-|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
-|| public || true if the recording should be public, false otherwise || String || 1 || Required ||
-|| exceptionType || The type of the corresponding exceptionName. One of user, group or role || String || 0 or more || Should be equal number of exceptionType and exceptionName parameters. ||
-|| exceptionName || The username, group name or role of the exception || String || 0 or more || Should be equal number of exceptionType and exceptionName parameters. ||
