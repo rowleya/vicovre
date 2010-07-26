@@ -1,0 +1,7 @@
+#summary The REST Interface for controlling recording
+
+= Introduction =
+
+This page details the REST interface used to list, delete and set permissions on who can play back recordings
+
+= Details =
