@@ -39,7 +39,7 @@ If the return type is text/xml, the list is formatted as follows:
 
         </metadata>
 
-        <!-- The date/time at which the recording was made (see [RecordingInterface here] for format) -->
+        <!-- The date/time at which the recording was made (see RecordingInterface for format) -->
         <startTime>...</startTime>
 
         <!-- The duration of the recording in milliseconds -->
@@ -78,7 +78,7 @@ If the return type is application/json, the list is formatted as follows:
         "descriptionEditable":...,
         },
     
-    /* The date / time that the recording was made (see [RecordingInterface here] for format) */
+    /* The date / time that the recording was made (see RecordingInterface for format) */
     "startTime":"...",
 
     /* The duration of the recording in milliseconds */
@@ -89,7 +89,91 @@ If the return type is application/json, the list is formatted as follows:
         
     /* True if the recording can be edited by the current user, false otherwise */
     "isEditable":"..."
-    }
+    },
+    ...
+]}
+}}}
+
+== List of Layouts == 
+If the return type is text/xml, the list will be formatted as follows:
+
+{{{
+<replayLayouts>
+    
+    <!-- 0 or more layouts -->
+    <replayLayout>
+        
+        <!-- The name of the layout (will match a known layout name - see LayoutInterface for details) -->
+        <name>...</name>
+
+        <!-- The time in milliseconds from the start of the recording that the layout takes effect -->
+        <time>...</time>
+
+        <!-- The time in milliseconds from the start of the recording that the layout stops taking effect -->
+        <endTime>...</endTime>
+
+        <!-- One for each position in the layout -->
+        <position>
+             
+            <!-- The name of the position (will match the name of a position in the layout - see LayoutInterface for details) -->
+            <name>...</name>
+
+            <!-- The id of the stream in the named position -->
+            <stream>...</stream>
+
+        </position>
+        ...
+
+        <!-- The id of an audio stream in the layout - one for each audio stream -->
+        <audioStream>...</audioStream>
+        ...
+
+    </replayLayout>
+
+    ...
+</replayLayouts>
+}}}
+
+If the return type is text/xml, the list will be formatted as follows:
+{{{
+{replayLayout:[
+
+    /* 0 or more layouts */
+    {
+
+    /* The name of the layout (will match a known layout name - see LayoutInterface for details) */
+    "name":"...",
+
+    /* The time in milliseconds from the start of the recording that the layout takes effect */
+    "time":"...",
+
+    /* The time in milliseconds from the start of the recording that the layout stops taking effect */
+    "endTime":"...",
+
+    position:{[
+
+        /* One for each position in the layout */
+        {
+             
+        /* The name of the position (will match the name of a position in the layout - see LayoutInterface for details) */
+        "name":"...",
+
+        /* The id of the stream in the named position */
+        "stream":"..."
+        },
+        ...
+
+    ]},
+    
+
+    "audioStream":{[
+    
+        /* The id of an audio stream in the layout - one for each audio stream */
+        "...",
+        ...
+    ]}
+
+    },
     ...
 ]}
 }}}
