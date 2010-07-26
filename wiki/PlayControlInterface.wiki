@@ -137,6 +137,47 @@ If the return type is text/xml, the list will be formatted as follows:
 </streams>
 }}}
 
+If the return type is application/json, the list will be formatted as follows:
+{{{
+{stream:[
+    
+    /* 0 or more streams */
+    {
+
+    /* The id of the stream */
+    "ssrc":"...",
+
+    /* The start date/time of the stream */
+    "startTime":"...",
+
+    /* The end date/time of the stream */
+    "endTime":"...",
+
+    /* The c-name of the stream (optional) */
+    "cname":"...",
+        
+    /* The name of the stream (optional) */
+    "name":"...",
+
+    /* The email address of the stream sender (optional) */
+    "email":"...",
+
+    /* The phone number of the stream sender (optional) */
+    "phone":"...",
+
+    /* The location of the stream sender (optional) */
+    "location":"...",
+
+    /* The tool that sent the stream (optional) */
+    "tool":"...",
+
+    /* A note about the stream (optional) */
+    "note":"..."
+    }
+    ...
+]}
+}}}
+
 == List of Layouts == 
 If the return type is text/xml, the list will be formatted as follows:
 
