@@ -307,4 +307,14 @@ If the return type is application/json, the ACL will be formatted as follows:
 }
 }}}
 
-== Recording Metadata ==
+== Recording Metadata Parameters ==
+The parameters that can be set when setting the recording metadata are as follows:
+|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
+|| metadata_name || The name of the recording || String || 1 || Required ||
+|| metadata_description || The description of the recording || String || 0 or 1 || ||
+
+== Access Control List Parameters ==
+|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
+|| public || true if the recording should be public, false otherwise || String || 1 || Required ||
+|| exceptionType || The type of the corresponding exceptionName. One of user, group or role || String || 0 or more || Should be equal number of exceptionType and exceptionName parameters. ||
+|| exceptionName || The username, group name or role of the exception || String || 0 or more || Should be equal number of exceptionType and exceptionName parameters. ||
