@@ -39,7 +39,7 @@ If the return type is text/xml, the list is formatted as follows:
 
         </metadata>
 
-        <!-- The time at which the recording was made (see [RecordingInterface here] for format details) -->
+        <!-- The date/time at which the recording was made (see [RecordingInterface here] for format) -->
         <startTime>...</startTime>
 
         <!-- The duration of the recording in milliseconds -->
@@ -57,9 +57,39 @@ If the return type is text/xml, the list is formatted as follows:
 
 If the return type is application/json, the list is formatted as follows:
 {{{
-{
-    recording: {
+{"recording":[
+    
+    /* 0 or more recordings */
+    {
+
+    /* The id of the recording */
+    "id":"...",
+
+    "metadata":
+        {
+
+        /* The name of the recording */
+        "name":"...",
+
+        /* The description of the recording (optional) */
+        "description":"...",
+
+        /* true if the description is editable, false otherwise (optional) */
+        "descriptionEditable":...,
+        },
+    
+    /* The date / time that the recording was made (see [RecordingInterface here] for format) */
+    "startTime":"...",
+
+    /* The duration of the recording in milliseconds */
+    "duration":"...",
+
+    /* The amount of time in milliseconds after then end of the recording after which it will be automatically deleted (0 = infinite) */
+    "lifetime":"...",
         
+    /* True if the recording can be edited by the current user, false otherwise */
+    "isEditable":"..."
     }
-}
+    ...
+]}
 }}}
