@@ -94,6 +94,49 @@ If the return type is application/json, the list is formatted as follows:
 ]}
 }}}
 
+== List of Streams ==
+If the return type is text/xml, the list will be formatted as follows:
+
+{{{
+<streams>
+     
+    <!-- One for each streams -->
+    <stream>
+        
+        <!-- The id of the stream -->
+        <ssrc>...</ssrc>
+
+        <!-- The start date/time of the stream -->
+        <startTime>...</startTime>
+
+        <!-- The end date/time of the stream -->
+        <endTime>...</endTime>
+
+        <!-- The c-name of the stream (optional) -->
+        <cname>...</cname>
+        
+        <!-- The name of the stream (optional) --> 
+        <name>...</name>
+
+        <!-- The email address of the stream sender (optional) -->
+        <email>...</email>
+
+        <!-- The phone number of the stream sender (optional) -->
+        <phone>...</phone>
+
+        <!-- The location of the stream sender (optional) -->
+        <location>...</location>
+
+        <!-- The tool that sent the stream (optional) -->
+        <tool>...</tool>
+
+        <!-- A note about the stream (optional) -->
+        <note>...</note>
+        
+    </stream>
+</streams>
+}}}
+
 == List of Layouts == 
 If the return type is text/xml, the list will be formatted as follows:
 
@@ -150,7 +193,7 @@ If the return type is text/xml, the list will be formatted as follows:
     /* The time in milliseconds from the start of the recording that the layout stops taking effect */
     "endTime":"...",
 
-    position:{[
+    "position":{[
 
         /* One for each position in the layout */
         {
