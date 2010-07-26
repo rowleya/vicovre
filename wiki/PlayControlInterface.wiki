@@ -139,7 +139,7 @@ If the return type is text/xml, the list will be formatted as follows:
 
 If the return type is application/json, the list will be formatted as follows:
 {{{
-{stream:[
+{"stream":[
     
     /* 0 or more streams */
     {
@@ -220,7 +220,7 @@ If the return type is text/xml, the list will be formatted as follows:
 
 If the return type is text/xml, the list will be formatted as follows:
 {{{
-{replayLayout:[
+{"replayLayout":[
 
     /* 0 or more layouts */
     {
@@ -261,3 +261,50 @@ If the return type is text/xml, the list will be formatted as follows:
     ...
 ]}
 }}}
+
+== Access Control List ==
+If the return type is text/xml, the ACL will be formatted as follows:
+{{{
+<acl>
+    
+    <!-- True if the acl will allow access by default, false if it will deny -->
+    <allow>...</allow>
+
+    <!-- One for each exception -->
+    <exception>
+
+        <!-- The type of the exception, one of user, group or role -->
+        <type>...</type>
+
+        <!-- The username, group name or role of the exception -->
+        <name>...</name>
+
+    </exception>
+    ...
+    
+</acl>
+}}}
+
+If the return type is application/json, the ACL will be formatted as follows:
+{{{
+{
+    /* True if the acl will allow access by default, false if it will deny */
+    "allow":"...",
+
+    "exception":{[
+
+        /* One for each exception */
+        {
+
+        /* The type of the exception, one of user, group or role */
+        "type":"...",
+        
+        /* The username, group name or role of the exception */
+        "name":"..."
+        },
+        ...
+    ]}
+}
+}}}
+
+== Recording Metadata ==
