@@ -35,6 +35,10 @@ package com.googlecode.vicovre.security.db;
 import java.util.List;
 import java.util.Vector;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name="acl")
 public class ReadOnlyACL {
 
     private boolean allow = false;
@@ -61,10 +65,12 @@ public class ReadOnlyACL {
         }
     }
 
+    @XmlElement(name="allow")
     public boolean isAllow() {
         return allow;
     }
 
+    @XmlElement(name="exceptions")
     public List<ReadOnlyEntity> getExceptions() {
         return exceptions;
     }

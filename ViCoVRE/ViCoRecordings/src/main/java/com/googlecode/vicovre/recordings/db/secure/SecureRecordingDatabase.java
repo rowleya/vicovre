@@ -263,7 +263,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public void setRecordingAcl(UnfinishedRecording recording,
-            String oldId, boolean isPublic, WriteOnlyEntity... exceptions)
+            boolean isPublic, WriteOnlyEntity... exceptions)
             throws IOException {
         String folder = getFolderName(recording.getFile().getParentFile());
         securityDatabase.setAcl(folder,
@@ -276,5 +276,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 getFolderName(recording.getFile().getParentFile()),
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
                 true);
+    }
+
+    public boolean canEditRecording(Recording recording) {
+        return securityDatabase.isAllowed(
+                getFolderName(recording.getDirectory().getParentFile()),
+                CHANGE_RECORDING_ID_PREFIX + recording.getId());
     }
 }

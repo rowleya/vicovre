@@ -34,11 +34,14 @@ package com.googlecode.vicovre.web.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
+import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
@@ -82,5 +85,37 @@ public abstract class AbstractHandler {
             }
         }
         return folder;
+    }
+
+    protected void fillIn(RecordingMetadata metadata,
+            MultivaluedMap<String, String> details) throws IOException {
+        Class<?> cls = metadata.getClass();
+        Method[] methods = cls.getMethods();
+        for (Method method : methods) {
+            if (method.getName().startsWith("get")
+                    && method.getParameterTypes().length == 0) {
+                String field = method.getName().substring("get".length());
+                try {
+                    Method setMethod = cls.getMethod("set" + field,
+                            String.class);
+                    if (setMethod != null) {
+                        field = field.substring(0, 1).toLowerCase()
+                            + field.substring(1);
+                        String value = details.getFirst("metadata_" + field);
+                        if (value != null) {
+                            try {
+                                setMethod.invoke(metadata, value);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                throw new IOException(
+                                    "Error setting metadata value " + field);
+                            }
+                        }
+                    }
+                } catch (NoSuchMethodException e) {
+                    // Do Nothing
+                }
+            }
+        }
     }
 }
