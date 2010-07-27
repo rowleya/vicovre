@@ -32,8 +32,15 @@
 
 package com.googlecode.vicovre.recordings;
 
+import java.text.ParseException;
 import java.util.Date;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
@@ -43,6 +50,8 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlRootElement(name="stream")
+@XmlAccessorType(XmlAccessType.NONE)
 public class Stream implements Comparable<Stream> {
 
     // The RTP SSRC of the stream
@@ -104,6 +113,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the ssrc
      */
+    @XmlElement
     public String getSsrc() {
         return ssrc;
     }
@@ -146,6 +156,14 @@ public class Stream implements Comparable<Stream> {
         return startTime;
     }
 
+    @XmlElement(name="startTime")
+    public String getStartTimeString() {
+        if (startTime != null) {
+            return RecordingConstants.DATE_FORMAT.format(startTime);
+        }
+        return null;
+    }
+
     /**
      * Sets the startTime
      *
@@ -154,6 +172,10 @@ public class Stream implements Comparable<Stream> {
      */
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
+    }
+
+    public void setStartTimeString(String startTime) throws ParseException {
+        setStartTime(RecordingConstants.DATE_FORMAT.parse(startTime));
     }
 
     /**
@@ -165,6 +187,14 @@ public class Stream implements Comparable<Stream> {
         return endTime;
     }
 
+    @XmlElement(name="endTime")
+    public String getEndTimeString() {
+        if (endTime != null) {
+            return RecordingConstants.DATE_FORMAT.format(endTime);
+        }
+        return null;
+    }
+
     /**
      * Sets the endTime
      *
@@ -173,6 +203,10 @@ public class Stream implements Comparable<Stream> {
      */
     public void setEndTime(long endTime) {
         this.endTime = new Date(endTime);
+    }
+
+    public void setEndTimeString(String endTime) throws ParseException {
+        setEndTime(RecordingConstants.DATE_FORMAT.parse(endTime));
     }
 
     /**
@@ -298,6 +332,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the cname
      */
+    @XmlElement
     public String getCname() {
         return cname;
     }
@@ -317,6 +352,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the name
      */
+    @XmlElement
     public String getName() {
         return name;
     }
@@ -336,6 +372,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the email
      */
+    @XmlElement
     public String getEmail() {
         return email;
     }
@@ -355,6 +392,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the phone
      */
+    @XmlElement
     public String getPhone() {
         return phone;
     }
@@ -374,6 +412,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the location
      */
+    @XmlElement
     public String getLocation() {
         return location;
     }
@@ -393,6 +432,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the tool
      */
+    @XmlElement
     public String getTool() {
         return tool;
     }
@@ -412,6 +452,7 @@ public class Stream implements Comparable<Stream> {
      *
      * @return the note
      */
+    @XmlElement
     public String getNote() {
         return note;
     }
@@ -424,6 +465,11 @@ public class Stream implements Comparable<Stream> {
      */
     public void setNote(String note) {
         this.note = note;
+    }
+
+    @XmlElement
+    public String getMediaType() {
+        return rtpType.getMediaType();
     }
 
     /**

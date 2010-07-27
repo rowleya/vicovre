@@ -35,7 +35,6 @@ package com.googlecode.vicovre.web.rest;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.List;
 
@@ -46,10 +45,12 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response.Status;
 
 import ag3.interfaces.types.MulticastNetworkLocation;
 import ag3.interfaces.types.NetworkLocation;
@@ -60,7 +61,9 @@ import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.UnfinishedRecordingsResponse;
 import com.sun.jersey.spi.inject.Inject;
@@ -146,37 +149,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         recording.setEmailAddress(details.getFirst("emailAddress"));
     }
 
-    public void fillIn(RecordingMetadata metadata,
-            MultivaluedMap<String, String> details) throws IOException {
-        Class<?> cls = metadata.getClass();
-        Method[] methods = cls.getMethods();
-        for (Method method : methods) {
-            if (method.getName().startsWith("get")
-                    && method.getParameterTypes().length == 0) {
-                String field = method.getName().substring("get".length());
-                try {
-                    Method setMethod = cls.getMethod("set" + field,
-                            String.class);
-                    if (setMethod != null) {
-                        field = field.substring(0, 1).toLowerCase()
-                            + field.substring(1);
-                        String value = details.getFirst("metadata_" + field);
-                        if (value != null) {
-                            try {
-                                setMethod.invoke(metadata, value);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                throw new IOException(
-                                    "Error setting metadata value " + field);
-                            }
-                        }
-                    }
-                } catch (NoSuchMethodException e) {
-                    // Do Nothing
-                }
-            }
-        }
-    }
+
 
     @Path("{folder: .*}")
     @POST
@@ -334,5 +307,64 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         }
         recording.resumeRecording();
         return Response.ok(recording.getStatus()).build();
+    }
+
+    @Path("{folder:.*}/acl")
+    @PUT
+    public Response setAcl(@Context UriInfo uriInfo,
+            @QueryParam("public") boolean isPublic,
+            @QueryParam("exceptionType") List<String> exceptionTypes,
+            @QueryParam("exceptionName") List<String> exceptionNames)
+            throws IOException {
+        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Folder folder = getFolder(folderPath);
+        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            if (exceptionTypes.size() != exceptionNames.size()) {
+                return Response.status(Status.BAD_REQUEST).entity(
+                        "The number of exceptionType parameters must match"
+                        + " the number of exceptionName parameters").build();
+            }
+            WriteOnlyEntity[] exceptions =
+                new WriteOnlyEntity[exceptionTypes.size()];
+            for (int i = 0; i < exceptionTypes.size(); i++) {
+                String type = exceptionTypes.get(i);
+                String name = exceptionNames.get(i);
+                exceptions[i] = new WriteOnlyEntity(name, type);
+            }
+            secureDb.setRecordingAcl(recording, isPublic, exceptions);
+        }
+        return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/acl")
+    @GET
+    @Produces({"application/json", "text/xml"})
+    public Response getAcl(@Context UriInfo uriInfo) throws IOException {
+        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Folder folder = getFolder(folderPath);
+        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            return Response.ok(secureDb.getRecordingAcl(recording)).build();
+        }
+        return Response.ok().build();
     }
 }

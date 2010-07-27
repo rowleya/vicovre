@@ -40,6 +40,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -50,6 +55,8 @@ import com.googlecode.vicovre.repositories.layout.LayoutRepository;
  * @author Tobias M Schiebeck
  * @version 1.0
  */
+@XmlRootElement(name="replayLayout")
+@XmlAccessorType(XmlAccessType.NONE)
 public class ReplayLayout implements Comparable<ReplayLayout> {
 
     // The recording the layout belongs to
@@ -83,6 +90,7 @@ public class ReplayLayout implements Comparable<ReplayLayout> {
      * Returns the name
      * @return the name
      */
+    @XmlElement
     public String getName() {
         return name;
     }
@@ -141,10 +149,20 @@ public class ReplayLayout implements Comparable<ReplayLayout> {
         return audioStreams;
     }
 
+    @XmlElement(name="audioStream")
+    public List<String> getAudioStreamIds() {
+        List<String> streams = new Vector<String>();
+        for (Stream stream : audioStreams) {
+            streams.add(stream.getSsrc());
+        }
+        return streams;
+    }
+
     public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
 
+    @XmlElement
     public long getEndTime() {
         return endTime;
     }
@@ -153,6 +171,7 @@ public class ReplayLayout implements Comparable<ReplayLayout> {
      * Gets the layout positions
      * @return The layout positions
      */
+    @XmlElement(name="positions")
     public List<ReplayLayoutPosition> getLayoutPositions() {
         return new Vector<ReplayLayoutPosition>(replayPosition.values());
     }
@@ -161,6 +180,7 @@ public class ReplayLayout implements Comparable<ReplayLayout> {
      * Returns the time
      * @return the time
      */
+    @XmlElement
     public long getTime() {
         return time;
     }

@@ -30,28 +30,31 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.web.rest.response;
+
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class ReadOnlyEntity {
+import com.googlecode.vicovre.recordings.Stream;
 
-    private String name = null;
+@XmlRootElement(name="streams")
+public class StreamsResponse {
 
-    private String type = null;
+    private List<Stream> streams = null;
 
-    protected ReadOnlyEntity(String name, String type) {
-        this.name = name;
-        this.type = type;
+    public StreamsResponse() {
+        // Does Nothing
     }
 
-    @XmlElement
-    public String getName() {
-        return name;
+    public StreamsResponse(List<Stream> streams) {
+        this.streams = streams;
     }
 
-    @XmlElement
-    public String getType() {
-        return type;
+    @XmlElement(name="stream")
+    public List<Stream> getStreams() {
+        return streams;
     }
+
 }

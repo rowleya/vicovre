@@ -34,6 +34,10 @@
 
 package com.googlecode.vicovre.recordings;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+
 
 /**
  * Represents one of the streams of the recording
@@ -41,6 +45,7 @@ package com.googlecode.vicovre.recordings;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlAccessorType(XmlAccessType.NONE)
 public class ReplayLayoutPosition {
 
     // The RTP SSRC of the stream
@@ -74,6 +79,11 @@ public class ReplayLayoutPosition {
         return stream;
     }
 
+    @XmlElement(name="stream")
+    public String getStreamId() {
+        return stream.getSsrc();
+    }
+
     /**
      * Sets the stream
      * @param stream the stream to set
@@ -86,6 +96,7 @@ public class ReplayLayoutPosition {
      * Returns the name
      * @return the name
      */
+    @XmlElement
     public String getName() {
         return name;
     }

@@ -40,8 +40,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.utils.Emailer;
 
 
@@ -51,6 +58,8 @@ import com.googlecode.vicovre.utils.Emailer;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlRootElement(name="recording")
+@XmlAccessorType(XmlAccessType.NONE)
 public class Recording implements Comparable<Recording> {
 
     // The recording metadata
@@ -85,11 +94,16 @@ public class Recording implements Comparable<Recording> {
     // The handler of the lifetime
     private LifetimeHandler lifetimeHandler = null;
 
+    // The recording database holding the recording
+    private RecordingDatabase database = null;
+
     public Recording(Folder folder, String id, RecordingDatabase database,
             Emailer emailer) {
         this.folder = folder;
         this.id = id;
         this.directory = new File(folder.getFile(), id);
+        this.database = database;
+
         if (id == null) {
             throw new RuntimeException("Null id recording in folder " + folder);
         }
@@ -108,6 +122,7 @@ public class Recording implements Comparable<Recording> {
      * Returns the id
      * @return the id
      */
+    @XmlElement
     public String getId() {
         return id;
     }
@@ -120,10 +135,19 @@ public class Recording implements Comparable<Recording> {
         return startTime;
     }
 
+    @XmlElement(name="startTime")
+    public String getStartTimeString() {
+        if (startTime != null) {
+            return RecordingConstants.DATE_FORMAT.format(startTime);
+        }
+        return null;
+    }
+
     /**
      * Returns the duration in ms
      * @return the duration
      */
+    @XmlElement
     public long getDuration() {
         return duration;
     }
@@ -242,6 +266,7 @@ public class Recording implements Comparable<Recording> {
      * Gets the metadata
      * @return The metadata
      */
+    @XmlElement
     public RecordingMetadata getMetadata() {
         return metadata;
     }
@@ -272,12 +297,21 @@ public class Recording implements Comparable<Recording> {
         lifetimeHandler.updateLifetime();
     }
 
+    @XmlElement
     public long getLifetime() {
         return lifetime;
     }
 
     public void setEmailAddress(String emailAddress) {
         lifetimeHandler.setEmailAddress(emailAddress);
+    }
+
+    @XmlElement
+    public boolean isEditable() {
+        if (database instanceof SecureRecordingDatabase) {
+            return ((SecureRecordingDatabase) database).canEditRecording(this);
+        }
+        return true;
     }
 
     public boolean equals(Recording recording) {

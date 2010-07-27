@@ -70,8 +70,7 @@ import com.googlecode.vicovre.utils.Emailer;
 @XmlAccessorType(XmlAccessType.NONE)
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss");
+
 
     private static final SimpleDateFormat ID_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
@@ -293,7 +292,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     @XmlElement(name="startDate")
     public String getStartDateString() {
         if (startDate != null) {
-            return DATE_FORMAT.format(startDate);
+            return RecordingConstants.DATE_FORMAT.format(startDate);
         }
         return null;
     }
@@ -318,7 +317,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     }
 
     public void setStartDateString(String startDate) throws ParseException {
-        setStartDate(DATE_FORMAT.parse(startDate));
+        setStartDate(RecordingConstants.DATE_FORMAT.parse(startDate));
     }
 
     public boolean hasStarted() {
@@ -332,7 +331,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     @XmlElement(name="stopDate")
     public String getStopDateString() {
         if (stopDate != null) {
-            return DATE_FORMAT.format(stopDate);
+            return RecordingConstants.DATE_FORMAT.format(stopDate);
         }
         return null;
     }
@@ -350,7 +349,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     }
 
     public void setStopDateString(String stopDate) throws ParseException {
-        this.stopDate = DATE_FORMAT.parse(stopDate);
+        this.stopDate = RecordingConstants.DATE_FORMAT.parse(stopDate);
     }
 
     /**

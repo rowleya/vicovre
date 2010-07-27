@@ -33,12 +33,20 @@
  */
 package com.googlecode.vicovre.media.protocol.memetic;
 
+import java.text.SimpleDateFormat;
+
 /**
  * Recording constants
  * @author Andrew G D Rowley
  * @version 1.0
  */
 public interface RecordingConstants {
+
+    /**
+     * The date and time format
+     */
+    SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss");
 
     /**
      * The name of the SAX Parser class

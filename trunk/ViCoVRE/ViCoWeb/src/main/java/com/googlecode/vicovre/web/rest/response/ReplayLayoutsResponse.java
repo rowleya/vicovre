@@ -30,28 +30,30 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.web.rest.response;
+
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class ReadOnlyEntity {
+import com.googlecode.vicovre.recordings.ReplayLayout;
 
-    private String name = null;
+@XmlRootElement(name="replayLayouts")
+public class ReplayLayoutsResponse {
 
-    private String type = null;
+    public List<ReplayLayout> layouts = null;
 
-    protected ReadOnlyEntity(String name, String type) {
-        this.name = name;
-        this.type = type;
+    public ReplayLayoutsResponse() {
+        // Does Nothing
     }
 
-    @XmlElement
-    public String getName() {
-        return name;
+    public ReplayLayoutsResponse(List<ReplayLayout> layouts) {
+        this.layouts = layouts;
     }
 
-    @XmlElement
-    public String getType() {
-        return type;
+    @XmlElement(name="replayLayout")
+    public List<ReplayLayout> getLayouts() {
+        return layouts;
     }
 }
