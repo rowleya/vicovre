@@ -40,10 +40,10 @@ import java.util.Vector;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.fredhat.gwt.xmlrpc.client.XmlRpcRequest;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.Application;
-import com.googlecode.vicovre.gwt.recorder.client.Layout;
-import com.googlecode.vicovre.gwt.recorder.client.LayoutPosition;
 
 public class LayoutLoader implements AsyncCallback<List<Object>> {
 
@@ -98,7 +98,7 @@ public class LayoutLoader implements AsyncCallback<List<Object>> {
                 Integer height = (Integer) positionMap.get("height");
                 Boolean assignable = (Boolean) positionMap.get("assignable");
                 LayoutPosition position = new LayoutPosition(posName, x, y,
-                        width, height, assignable);
+                        width, height, assignable, false, false);
                 positions.add(position);
             }
             Layout layout = new Layout(name, positions);

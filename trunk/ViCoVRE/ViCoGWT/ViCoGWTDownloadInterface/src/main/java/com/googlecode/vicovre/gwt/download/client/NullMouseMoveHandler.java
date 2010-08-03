@@ -30,53 +30,15 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client;
+package com.googlecode.vicovre.gwt.download.client;
 
-public class LayoutPosition {
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
 
-    private String name = null;
+public class NullMouseMoveHandler implements MouseMoveHandler {
 
-    private int x = 0;
-
-    private int y = 0;
-
-    private int width = 0;
-
-    private int height = 0;
-
-    private boolean assignable = false;
-
-    public LayoutPosition(String name, int x, int y, int width, int height,
-            boolean assignable) {
-        this.name = name;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.assignable = assignable;
+    public void onMouseMove(MouseMoveEvent event) {
+        event.stopPropagation();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public boolean isAssignable() {
-        return assignable;
-    }
 }

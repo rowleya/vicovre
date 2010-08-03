@@ -51,6 +51,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.LayoutChanger;
 import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.LayoutLoader;
@@ -184,26 +186,10 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
             }
             Layout layoutSelected = LayoutLoader.getLayouts().get(value);
             List<LayoutPosition> positionList = layoutSelected.getPositions();
-            int maxX = 0;
-            int maxY = 0;
-            int minX = Integer.MAX_VALUE;
-            int minY = Integer.MAX_VALUE;
-            for (LayoutPosition position : positionList) {
-                if ((position.getX() + position.getWidth()) > maxX) {
-                    maxX = position.getX() + position.getWidth();
-                }
-                if ((position.getY() + position.getHeight()) > maxY) {
-                    maxY = position.getY() + position.getHeight();
-                }
-                if (position.getX() < minX) {
-                    minX = position.getX();
-                }
-                if (position.getY() < minY) {
-                    minY = position.getY();
-                }
-            }
-            int width = maxX + minX;
-            int height = maxY + minY + (40 * audioBoxes.size()) + 160;
+
+            int width = layoutSelected.getWidth();
+            int height = layoutSelected.getHeight()
+                + (40 * audioBoxes.size()) + 160;
             double scaleWidth = 1.0;
             double scaleHeight = 1.0;
             if (Window.getClientWidth() < width) {
@@ -244,8 +230,8 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                         (int) (position.getY() * scale));
 
             }
-            layout.setWidth((int) ((maxX + minX) * scale) + "px");
-            layout.setHeight((int) ((maxY + minY) * scale) + "px");
+            layout.setWidth((int) (width * scale) + "px");
+            layout.setHeight((int) (height * scale) + "px");
         }
         if (isShowing()) {
             super.center();

@@ -36,15 +36,24 @@ package com.googlecode.vicovre.repositories.layout;
 
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name="layout")
+@XmlAccessorType(XmlAccessType.NONE)
 public class Layout {
 
     private String name;
+
     private List<LayoutPosition> streamPositions;
 
     public void setName(String name) {
         this.name = name;
     }
 
+    @XmlElement
     public String getName() {
         return name;
     }
@@ -53,6 +62,7 @@ public class Layout {
         this.streamPositions = streamPositions;
     }
 
+    @XmlElement(name="position")
     public List<LayoutPosition> getStreamPositions() {
         return streamPositions;
     }

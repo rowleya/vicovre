@@ -34,7 +34,11 @@
 
 package com.googlecode.vicovre.repositories.layout;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 
+@XmlAccessorType(XmlAccessType.NONE)
 public class LayoutPosition {
 
     private int x = 0;
@@ -58,6 +62,7 @@ public class LayoutPosition {
         this.name = name;
     }
 
+    @XmlElement
     public String getName() {
         return name;
     }
@@ -66,6 +71,7 @@ public class LayoutPosition {
         this.x = x;
     }
 
+    @XmlElement
     public int getX() {
         return x;
     }
@@ -74,6 +80,7 @@ public class LayoutPosition {
         this.y = y;
     }
 
+    @XmlElement
     public int getY() {
         return y;
     }
@@ -82,6 +89,7 @@ public class LayoutPosition {
         this.width = width;
     }
 
+    @XmlElement
     public int getWidth() {
         return width;
     }
@@ -90,6 +98,7 @@ public class LayoutPosition {
         this.height = height;
     }
 
+    @XmlElement
     public int getHeight() {
         return height;
     }
@@ -98,6 +107,7 @@ public class LayoutPosition {
         this.assignable = assignable;
     }
 
+    @XmlElement
     public boolean isAssignable() {
         return assignable;
     }
@@ -118,8 +128,18 @@ public class LayoutPosition {
         return changes;
     }
 
+    @XmlElement
+    public boolean getHasChanges() {
+        return hasChanges();
+    }
+
     public boolean hasAudio() {
         return audio;
+    }
+
+    @XmlElement
+    public boolean getHasAudio() {
+        return hasAudio();
     }
 
     public void setAudio(boolean audio) {

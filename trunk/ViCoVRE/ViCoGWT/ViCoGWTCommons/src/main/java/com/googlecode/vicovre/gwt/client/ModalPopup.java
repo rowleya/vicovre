@@ -60,6 +60,8 @@ public class ModalPopup<T extends Widget> extends PopupPanel
         DOM.setStyleAttribute(getElement(), "backgroundColor", "#000");
         DOM.setStyleAttribute(getElement(), "opacity", "0.70");
         DOM.setStyleAttribute(getElement(), "filter",  " alpha(opacity=70)");
+        DOM.setStyleAttribute(getElement(), "zIndex", "65535");
+        DOM.setStyleAttribute(popup.getElement(), "zIndex", "65535");
 
         popup.add(widget);
     }
