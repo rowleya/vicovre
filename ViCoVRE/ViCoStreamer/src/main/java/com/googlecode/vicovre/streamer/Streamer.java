@@ -232,7 +232,7 @@ public class Streamer extends JFrame implements ActionListener {
         System.err.println("Connecting to " + location);
     }
 
-    private void editProfile() throws IOException {
+    private boolean editProfile() throws IOException {
         profileDialog.setVisible(true);
         if (!profileDialog.wasCancelled()) {
             clientProfile.setName(profileDialog.getName());
@@ -242,8 +242,12 @@ public class Streamer extends JFrame implements ActionListener {
             profileDialog.storeConfiguration(config);
             config.saveParameters(configFile);
             agController.updateProfile(clientProfile);
-            localDeviceDialog.changeClientProfile(clientProfile);
+            if (localDeviceDialog != null) {
+                localDeviceDialog.changeClientProfile(clientProfile);
+            }
+            return true;
         }
+        return false;
     }
 
     public void setConfiguration(String configFile)
@@ -259,7 +263,9 @@ public class Streamer extends JFrame implements ActionListener {
             clientProfile.setLocation(profileDialog.getLoc());
         } else {
             config = new Config();
-            editProfile();
+            if (!editProfile()) {
+                throw new SAXException("You must enter a profile!");
+            }
         }
     }
 

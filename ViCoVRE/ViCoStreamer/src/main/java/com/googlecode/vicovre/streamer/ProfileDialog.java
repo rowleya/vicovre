@@ -44,6 +44,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -143,8 +144,14 @@ public class ProfileDialog extends JDialog implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(okButton)) {
-            cancelled = false;
-            setVisible(false);
+            if (name.getText().equals("")) {
+                JOptionPane.showMessageDialog(this,
+                        "Please enter a name",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                cancelled = false;
+                setVisible(false);
+            }
         } else if (e.getSource().equals(cancelButton)) {
             cancelled = true;
             name.setText(initialName);
