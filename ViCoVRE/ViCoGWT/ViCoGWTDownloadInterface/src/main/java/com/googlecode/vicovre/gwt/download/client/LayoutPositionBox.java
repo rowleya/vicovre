@@ -30,63 +30,43 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.download.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
+import com.google.gwt.event.dom.client.HasMouseUpHandlers;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 
-public class WaitPopup extends ModalPopup<VerticalPanel>
-        implements ClickHandler {
+public class LayoutPositionBox extends AbsolutePanel
+        implements HasClickHandlers, HasMouseMoveHandlers, HasMouseUpHandlers,
+        HasMouseDownHandlers {
 
-    private static final String PROGRESS = "images/progress.gif";
-
-    private boolean cancelled = false;
-
-    private Image progress = new Image(PROGRESS);
-
-    private Button cancel = new Button("Cancel");
-
-    public WaitPopup(String msg, boolean cancellable) {
-        super(new VerticalPanel());
-
-
-        DOM.setStyleAttribute(getElement(), "width", "100%");
-        DOM.setStyleAttribute(getElement(), "height", "100%");
-        DOM.setStyleAttribute(getElement(), "backgroundColor", "#000");
-        DOM.setStyleAttribute(getElement(), "opacity", "0.70");
-        DOM.setStyleAttribute(getElement(), "filter",  " alpha(opacity=70)");
-
-        VerticalPanel panel = getWidget();
-        panel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
-        panel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
-
-        Label message = new Label(msg);
-        panel.add(message);
-        panel.add(progress);
-        if (cancellable) {
-            panel.add(cancel);
-            cancel.addClickHandler(this);
-        }
-
-        DOM.setStyleAttribute(progress.getElement(), "marginBottom", "20px");
-
+    public HandlerRegistration addClickHandler(ClickHandler handler) {
+        return addDomHandler(handler, ClickEvent.getType());
     }
 
-    public void onClick(ClickEvent event) {
-        cancelled = true;
-        hide();
+    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+        return addDomHandler(handler, MouseMoveEvent.getType());
     }
 
-    public boolean wasCancelled() {
-        return cancelled;
+    public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+        return addDomHandler(handler, MouseUpEvent.getType());
     }
 
-    public void setBaseUrl(String baseUrl) {
-        progress.setUrl(baseUrl + PROGRESS);
+    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+        return addDomHandler(handler, MouseDownEvent.getType());
     }
+
+
+
 }

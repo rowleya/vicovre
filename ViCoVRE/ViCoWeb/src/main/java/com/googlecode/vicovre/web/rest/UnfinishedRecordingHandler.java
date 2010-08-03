@@ -88,6 +88,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             MultivaluedMap<String, String> details) throws IOException {
 
         String startDateString = details.getFirst("startDate");
+        System.err.println("Start date = " + startDateString);
         if (startDateString != null) {
             try {
                 recording.setStartDateString(startDateString);

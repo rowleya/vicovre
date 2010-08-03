@@ -35,22 +35,16 @@
 package com.googlecode.vicovre.repositories.layout.impl;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.repositories.layout.Layout;
-import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 
 /**
@@ -73,57 +67,11 @@ public class LayoutRepositoryXmlImpl implements LayoutRepository {
      * @throws ParserConfigurationException
      */
     public LayoutRepositoryXmlImpl(String file) throws SAXException,
-            IOException, ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(getClass().getResourceAsStream(file));
-        NodeList list = document.getElementsByTagName("layout");
-        for (int i = 0; i < list.getLength(); i++) {
-            Layout layout = new Layout();
-            Node node = list.item(i);
-            NamedNodeMap attributes = node.getAttributes();
-            layout.setName(attributes.getNamedItem("name").getNodeValue());
-            NodeList streams = node.getChildNodes();
-            List<LayoutPosition> layoutPostions = new Vector<LayoutPosition>();
-            for (int j = 0; j < streams.getLength(); j++) {
-                Node streamnode = streams.item(j);
-                if ((streamnode.getNodeType() == Node.ELEMENT_NODE)
-                        && streamnode.getLocalName().equals("element")) {
-                    NamedNodeMap streamAttributes = streamnode.getAttributes();
-                    LayoutPosition pos = new LayoutPosition();
-                    pos.setName(streamAttributes.getNamedItem(
-                            "name").getNodeValue());
-                    pos.setX(Integer.parseInt(
-                            streamAttributes.getNamedItem("x").getNodeValue()));
-                    pos.setY(Integer.parseInt(
-                            streamAttributes.getNamedItem("y").getNodeValue()));
-                    pos.setWidth(Integer.parseInt(
-                            streamAttributes.getNamedItem(
-                                    "width").getNodeValue()));
-                    pos.setHeight(Integer.parseInt(
-                            streamAttributes.getNamedItem(
-                                    "height").getNodeValue()));
-                    if (streamAttributes.getNamedItem("assignable") != null) {
-                        pos.setAssignable(Boolean.parseBoolean(
-                            streamAttributes.getNamedItem(
-                                    "assignable").getNodeValue()));
-                    }
-                    if (streamAttributes.getNamedItem("changes") != null) {
-                        pos.setChanges(Boolean.parseBoolean(
-                                streamAttributes.getNamedItem(
-                                        "changes").getNodeValue()));
-                    }
-                    if (streamAttributes.getNamedItem("audio") != null) {
-                        pos.setAudio(Boolean.parseBoolean(
-                                streamAttributes.getNamedItem(
-                                        "audio").getNodeValue()));
-                    }
-                    layoutPostions.add(pos);
-                }
-            }
-            layout.setStreamPostions(layoutPostions);
-            layouts.put(layout.getName(), layout);
+            IOException {
+        InputStream input = getClass().getResourceAsStream(file);
+        Layout[] layouts = LayoutReader.readLayouts(input);
+        for (Layout layout : layouts) {
+            this.layouts.put(layout.getName(), layout);
         }
     }
 

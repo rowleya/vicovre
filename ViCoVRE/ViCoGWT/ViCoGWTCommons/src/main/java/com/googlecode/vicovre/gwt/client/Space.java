@@ -30,36 +30,28 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client;
+package com.googlecode.vicovre.gwt.client;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-public class Layout {
+public class Space {
 
-    private String name = null;
-
-    private HashMap<String, LayoutPosition> positions =
-        new HashMap<String, LayoutPosition>();
-
-    public Layout(String name, List<LayoutPosition> positions) {
-        this.name = name;
-        for (LayoutPosition position : positions) {
-            this.positions.put(position.getName(), position);
-        }
+    private Space() {
+        // Does Nothing
     }
 
-    public String getName() {
-        return name;
+    public static Widget getHorizontalSpace(int width) {
+        VerticalPanel panel = new VerticalPanel();
+        panel.setWidth(width + "px");
+        return panel;
     }
 
-    public LayoutPosition getPosition(String name) {
-        return positions.get(name);
-    }
-
-    public List<LayoutPosition> getPositions() {
-        return new Vector<LayoutPosition>(positions.values());
+    public static Widget getVerticalSpace(int height) {
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.setHeight(height + "px");
+        return panel;
     }
 
 }

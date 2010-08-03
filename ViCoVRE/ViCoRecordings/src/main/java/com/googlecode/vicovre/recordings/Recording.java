@@ -262,6 +262,10 @@ public class Recording implements Comparable<Recording> {
         return replayLayouts.get(time);
     }
 
+    public void removeLayout(Long time) {
+        replayLayouts.remove(time);
+    }
+
     /**
      * Gets the metadata
      * @return The metadata

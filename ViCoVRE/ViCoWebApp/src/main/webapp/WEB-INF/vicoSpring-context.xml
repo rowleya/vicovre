@@ -10,6 +10,11 @@
         <constructor-arg><value>/layouts.xml</value></constructor-arg>
     </bean>
 
+    <bean id="editableLayoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.EditableLayoutRepositoryXmlImpl">
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+        <constructor-arg><value>${layout.location}</value></constructor-arg>
+    </bean>
+
     <bean id="harvestFormatRepository" class="com.googlecode.vicovre.repositories.harvestFormat.impl.HarvestFormatRepositoryXmlImpl">
         <constructor-arg><value>/harvestFormats.xml</value></constructor-arg>
     </bean>

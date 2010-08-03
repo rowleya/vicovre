@@ -1,0 +1,30 @@
+<!DOCTYPE module PUBLIC "//gwt-module/" "http://google-web-toolkit.googlecode.com/svn/tags/1.6.2/distro-source/core/src/gwt-module.dtd">
+<module>
+
+      <!-- Inherit the core Web Toolkit stuff.                        -->
+      <inherits name='com.google.gwt.user.User'/>
+
+      <!-- Inherit AJAX calling -->
+      <inherits name="com.google.gwt.http.HTTP"/>
+
+      <!-- Inherit Restlet GWT -->
+      <inherits name='org.restlet.GWT'/>
+
+      <!-- Inherit JSON -->
+      <inherits name="com.google.gwt.json.JSON" />
+
+      <!-- Inherit css based theme -->
+      <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+
+      <!-- Inherit Dictionary -->
+      <inherits name="com.google.gwt.i18n.I18N"/>
+
+      <!-- Inherit Graphics -->
+      <inherits name='com.google.gwt.widgetideas.GWTCanvas'/>
+
+      <inherits name="com.googlecode.vicovre.gwt.Module"/>
+
+      <!-- Specify the app entry point class.                         -->
+      <entry-point class='com.googlecode.vicovre.gwt.download.client.Application'/>
+
+</module>

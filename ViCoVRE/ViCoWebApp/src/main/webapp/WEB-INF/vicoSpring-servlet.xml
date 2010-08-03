@@ -88,4 +88,9 @@
         <constructor-arg><ref bean="annotationDao"/></constructor-arg>
         <constructor-arg><value>${recording.prefix}</value></constructor-arg>
     </bean>
+    <bean name="/**/downloadRecording.do" class="com.googlecode.vicovre.web.play.DownloadRecordingController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+        <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
+    </bean>
 </beans>
