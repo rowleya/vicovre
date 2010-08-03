@@ -557,13 +557,14 @@ public class SecurityDatabase {
         return entities;
     }
 
-    private User getCurrentUser(File folderFile, String requesterId) {
+    private User getCurrentUser(String requesterFolder, String requesterId) {
         User user = CurrentUser.get();
         if (user != null) {
             return user;
         }
 
         if (requesterId != null) {
+            File folderFile = new File(topLevelFolder, requesterFolder);
             HashMap<String, ACL> aclList = acls.get(folderFile);
             if (aclList != null) {
                 ACL acl = aclList.get(requesterId);
@@ -582,8 +583,7 @@ public class SecurityDatabase {
             String folder, String id, boolean allow, boolean canProxy,
             WriteOnlyEntity... exceptions)
             throws IOException {
-        User currentUser = getCurrentUser(
-                new File(topLevelFolder, creatorFolder), creatorId);
+        User currentUser = getCurrentUser(creatorFolder, creatorId);
         if (!currentUser.getRole().is(Role.WRITER)) {
             throw new UnauthorizedException(
                     "You must have write permission to perform this operation");
