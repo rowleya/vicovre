@@ -421,6 +421,10 @@ public class HarvestSource {
         }
     }
 
+    public void setDatabase(RecordingDatabase database) {
+        this.database = database;
+    }
+
     /**
      * Stops the updating of the source
      */

@@ -70,8 +70,6 @@ import com.googlecode.vicovre.utils.Emailer;
 @XmlAccessorType(XmlAccessType.NONE)
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
-
-
     private static final SimpleDateFormat ID_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
 
@@ -194,6 +192,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         this.emailer = emailer;
     }
 
+    public void setDatabase(RecordingDatabase database) {
+        this.database = database;
+    }
+
     public File getFile() {
         return file;
     }
@@ -204,7 +206,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      */
     @XmlElement
     public String getId() {
-        return file.getName().substring(0, file.getName().indexOf(
+        return file.getName().substring(9, file.getName().indexOf(
                 RecordingConstants.UNFINISHED_RECORDING_INDEX));
     }
 
@@ -311,8 +313,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
             oldFinishedRecordingId = finishedRecordingId;
             if (startDate == null) {
                 finishedRecordingId = getId();
+            } else {
+                finishedRecordingId =
+                    ID_DATE_FORMAT.format(startDate) + getId();
             }
-            finishedRecordingId = ID_DATE_FORMAT.format(startDate) + getId();
         }
     }
 

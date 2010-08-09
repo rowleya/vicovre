@@ -49,15 +49,15 @@ public class ACLReader {
             HashMap<String, Group> groups, HashMap<String, Role> roles)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
-        String id = XmlIo.readValue(doc, "id");
-        String ownerName = XmlIo.readValue(doc, "owner");
+        String id = XmlIo.readContent(doc, "id");
+        String ownerName = XmlIo.readContent(doc, "owner");
         User owner = users.get(ownerName);
         if (owner == null) {
             throw new SAXException("Unknown owner " + owner);
         }
-        String allowString = XmlIo.readValue(doc, "allow");
+        String allowString = XmlIo.readContent(doc, "allow");
         boolean allow = Boolean.parseBoolean(allowString);
-        String proxyString = XmlIo.readValue(doc, "canProxy");
+        String proxyString = XmlIo.readContent(doc, "canProxy");
         boolean canProxy = Boolean.parseBoolean(proxyString);
 
         ACL acl = new ACL(id, owner, allow, canProxy);
@@ -100,7 +100,7 @@ public class ACLReader {
         writer.println("<acl>");
         writer.println("<id>" + acl.getId() + "</id>");
         writer.println("<owner>" + acl.getOwner().getUsername() + "</owner>");
-        writer.println("<allow>" + acl.isAllow() + "</owner>");
+        writer.println("<allow>" + acl.isAllow() + "</allow>");
         writer.println("<canProxy>" + acl.canProxy() + "</canProxy>");
         for (Entity entity : acl.getExceptions()) {
             String type = null;

@@ -48,14 +48,14 @@ public class UserReader {
     public static final User readUser(InputStream input,
             HashMap<String, Role> roles) throws SAXException, IOException {
         Node doc = XmlIo.read(input);
-        String username = XmlIo.readValue(doc, "username");
-        String roleName = XmlIo.readValue(doc, "role");
+        String username = XmlIo.readContent(doc, "username");
+        String roleName = XmlIo.readContent(doc, "role");
         Role role = roles.get(roleName);
         if (role == null) {
             throw new SAXException("Unknown role " + role);
         }
         User user = new User(username, role);
-        String passwordHash = XmlIo.readValue(doc, "password");
+        String passwordHash = XmlIo.readContent(doc, "password");
         user.setPasswordHash(passwordHash);
         return user;
     }
