@@ -52,6 +52,7 @@ public class ACL {
     private Set<Entity> exceptions = new HashSet<Entity>();
 
     protected ACL(String id, User owner, boolean allow, boolean canProxy) {
+        this.id = id;
         this.owner = owner;
         this.allow = allow;
         this.canProxy = canProxy;

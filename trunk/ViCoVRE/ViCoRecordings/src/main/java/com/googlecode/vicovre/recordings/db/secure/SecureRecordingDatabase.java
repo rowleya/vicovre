@@ -67,10 +67,30 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             SecurityDatabase securityDatabase) {
         this.database = database;
         this.securityDatabase = securityDatabase;
+        traverseFolders(database.getTopLevelFolder());
+    }
+
+    private void traverseFolders(Folder folder) {
+        folder.setDatabase(this);
+        List<HarvestSource> harvestSources = folder.getHarvestSources();
+        for (HarvestSource harvestSource : harvestSources) {
+            harvestSource.setDatabase(this);
+        }
+        List<UnfinishedRecording> unfinishedRecordings =
+            folder.getUnfinishedRecordings();
+        for (UnfinishedRecording recording : unfinishedRecordings) {
+            recording.setDatabase(this);
+        }
+        for (Folder subFolder : folder.getFolders()) {
+            traverseFolders(subFolder);
+        }
     }
 
     protected String getFolderName(File file) {
         File root = database.getTopLevelFolder().getFile();
+        if (file.equals(root)) {
+            return "";
+        }
         return file.getAbsolutePath().substring(
                 root.getAbsolutePath().length());
     }
@@ -114,7 +134,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorFolder = getFolderName(creator.getFile().getParentFile());
             creatorId = creator.getId();
         }
-        String folder = getFolderName(recording.getFile());
+        String folder = getFolderName(recording.getFile().getParentFile());
         securityDatabase.createAcl(creatorFolder,
                 HARVEST_ID_PREFIX + creatorId, folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), false, true);

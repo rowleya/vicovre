@@ -34,6 +34,7 @@
 
 package com.googlecode.vicovre.recordings;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -282,6 +283,8 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
                     streamArchive.handleRTPPacket(packet, packetRecievedTime);
                 }
             }
+        } catch (EOFException e) {
+            // Do Nothing
         } catch (IOException e) {
             e.printStackTrace();
         }

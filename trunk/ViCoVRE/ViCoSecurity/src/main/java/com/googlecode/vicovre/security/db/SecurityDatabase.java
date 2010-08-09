@@ -617,7 +617,8 @@ public class SecurityDatabase {
         }
     }
 
-    private ACL obtainAcl(File folderFile, String id, boolean createIfAdmin) {
+    private ACL obtainAcl(File folderFile, String id, boolean createIfAdmin,
+            boolean check) {
         ACL acl = null;
         try {
             HashMap<String, ACL> aclList = acls.get(folderFile);
@@ -638,11 +639,13 @@ public class SecurityDatabase {
             }
         }
 
-        if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)
-                && !CurrentUser.get().equals(acl.getOwner())) {
-            throw new UnauthorizedException(
-                "You must be an administrator or"
-                + " the owner of this object to perform this operation");
+        if (check) {
+            if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)
+                    && !CurrentUser.get().equals(acl.getOwner())) {
+                throw new UnauthorizedException(
+                    "You must be an administrator or"
+                    + " the owner of this object to perform this operation");
+            }
         }
         return acl;
     }
@@ -652,7 +655,7 @@ public class SecurityDatabase {
 
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true);
+            ACL acl = obtainAcl(folderFile, id, true, true);
 
             Vector<Entity> entities = getEntities(exceptions);
             acl.setAllow(allow);
@@ -670,7 +673,7 @@ public class SecurityDatabase {
             throws IOException {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true);
+            ACL acl = obtainAcl(folderFile, id, true, true);
 
             User user = users.get(owner);
             if (user == null) {
@@ -687,7 +690,17 @@ public class SecurityDatabase {
     public void deleteAcl(String folder, String id) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true);
+            ACL acl = obtainAcl(folderFile, id, true, false);
+
+            User currentUser = getCurrentUser(folder, id);
+
+            if (!currentUser.getRole().is(Role.ADMINISTRATOR)
+                    && !currentUser.equals(acl.getOwner())) {
+                throw new UnauthorizedException(
+                    "You must be an administrator or"
+                    + " the owner of this object to perform this operation");
+            }
+
             synchronized (acl) {
                 acl.delete();
                 HashMap<String, ACL> aclList = acls.get(folderFile);
@@ -704,7 +717,7 @@ public class SecurityDatabase {
     public ReadOnlyACL getAcl(String folder, String id, boolean createIfAdmin) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, createIfAdmin);
+            ACL acl = obtainAcl(folderFile, id, createIfAdmin, true);
             synchronized (acl) {
                 return new ReadOnlyACL(acl);
             }
@@ -715,7 +728,7 @@ public class SecurityDatabase {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
             try {
-                ACL acl = obtainAcl(folderFile, id, true);
+                ACL acl = obtainAcl(folderFile, id, true, false);
                 synchronized (acl) {
                     return acl.isAllowed();
                 }

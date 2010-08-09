@@ -48,15 +48,15 @@ public class GroupReader {
     public static Group readGroup(InputStream input,
             HashMap<String, User> users) throws SAXException, IOException {
         Node doc = XmlIo.read(input);
-        String name = XmlIo.readValue(doc, "name");
-        String ownerName = XmlIo.readValue(doc, "owner");
+        String name = XmlIo.readContent(doc, "name");
+        String ownerName = XmlIo.readContent(doc, "owner");
         User owner = users.get(ownerName);
         if (owner == null) {
             throw new SAXException("Unknown owner " + ownerName + " of group "
                     + name);
         }
         Group group = new Group(name, owner);
-        String[] userNames = XmlIo.readValues(doc, "user");
+        String[] userNames = XmlIo.readContents(doc, "user");
         for (String username : userNames) {
             User user = users.get(username);
             if (user == null) {
