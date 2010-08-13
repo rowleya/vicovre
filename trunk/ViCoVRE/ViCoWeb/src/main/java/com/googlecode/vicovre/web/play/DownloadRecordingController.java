@@ -33,6 +33,8 @@
 package com.googlecode.vicovre.web.play;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.StringWriter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,7 +48,9 @@ import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.web.rest.response.LayoutsResponse;
+import com.googlecode.vicovre.web.rest.response.StreamsResponse;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
@@ -59,12 +63,41 @@ public class DownloadRecordingController implements Controller {
 
     private EditableLayoutRepository editableLayoutRepository = null;
 
+    private RtpTypeRepository typeRepository = null;
+
     public DownloadRecordingController(RecordingDatabase database,
             LayoutRepository layoutRepository,
-            EditableLayoutRepository editableLayoutRepository) {
+            EditableLayoutRepository editableLayoutRepository,
+            RtpTypeRepository typeRepository) {
         this.database = database;
         this.layoutRepository = layoutRepository;
         this.editableLayoutRepository = editableLayoutRepository;
+        this.typeRepository = typeRepository;
+    }
+
+    public void doDownload(String format, Recording recording,
+            HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        if (format.equals("application/x-agvcr")) {
+            OutputStream output = response.getOutputStream();
+            String[] streams = request.getParameterValues("stream");
+            response.setContentType("application/x-agvcr");
+            String name = recording.getId();
+            if ((recording.getMetadata() != null)
+                    && (recording.getMetadata().getName() != null)) {
+                name = recording.getMetadata().getName();
+            }
+            response.setHeader("Content-Disposition", "inline; filename="
+                    + name + ".agvcr" + ";");
+            response.flushBuffer();
+            AGVCRWriter writer = new AGVCRWriter(typeRepository,
+                    recording, streams, output);
+            writer.write();
+        } else if (format.startsWith("audio")) {
+
+        } else if (format.startsWith("video")) {
+
+        }
     }
 
     public ModelAndView handleRequest(HttpServletRequest request,
@@ -80,24 +113,41 @@ public class DownloadRecordingController implements Controller {
             recording = folder.getRecording(path.getName());
         }
 
+        String format = request.getParameter("format");
+        if (format != null) {
+            doDownload(format, recording, request, response);
+            return null;
+        }
+
         String folderPath = folder.getFile().getAbsolutePath().substring(
             database.getTopLevelFolder().getFile().getAbsolutePath().length()).
                 replace(File.separator, "/");
 
         JSONJAXBContext context = new JSONJAXBContext(
-                JSONConfiguration.natural().build(), LayoutsResponse.class);
+                JSONConfiguration.natural().build(), LayoutsResponse.class,
+                Recording.class, StreamsResponse.class);
         JSONMarshaller marshaller = context.createJSONMarshaller();
+
         StringWriter layoutWriter = new StringWriter();
         marshaller.marshallToJSON(
                 new LayoutsResponse(layoutRepository.findLayouts()),
                 layoutWriter);
+
         StringWriter customLayoutWriter = new StringWriter();
         marshaller.marshallToJSON(
                 new LayoutsResponse(editableLayoutRepository.findLayouts()),
                 customLayoutWriter);
 
+        StringWriter recordingWriter = new StringWriter();
+        marshaller.marshallToJSON(recording, recordingWriter);
+
+        StringWriter streamsWriter = new StringWriter();
+        marshaller.marshallToJSON(new StreamsResponse(recording.getStreams()),
+                streamsWriter);
+
         ModelAndView modelAndView = new ModelAndView("downloadRecording");
         modelAndView.addObject("recording", recording);
+        modelAndView.addObject("streamsJSON", streamsWriter.toString());
         modelAndView.addObject("folder", folderPath);
         modelAndView.addObject("layoutsJSON", layoutWriter.toString());
         modelAndView.addObject("customLayoutsJSON",

@@ -355,6 +355,10 @@ public class MemeticFileReader {
                 + (noTimestampLoops * maxTimestamp);
     }
 
+    public long getRealTimestamp() {
+        return lastRealTimestamp;
+    }
+
     /**
      * Gets the time at which the first packet was recorded
      * @return The time as a java timestamp
@@ -398,6 +402,10 @@ public class MemeticFileReader {
         inputBuffer.setFlags(flags);
         inputBuffer.setFormat(getFormat());
         return inputBuffer;
+    }
+
+    public RTPHeader getHeader() {
+        return header;
     }
 
     protected String getFilename() {

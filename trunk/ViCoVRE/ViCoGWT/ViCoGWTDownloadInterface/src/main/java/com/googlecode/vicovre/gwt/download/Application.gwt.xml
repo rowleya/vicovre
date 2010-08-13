@@ -19,8 +19,8 @@
       <!-- Inherit Dictionary -->
       <inherits name="com.google.gwt.i18n.I18N"/>
 
-      <!-- Inherit Graphics -->
-      <inherits name='com.google.gwt.widgetideas.GWTCanvas'/>
+      <!-- Inherit gwt-dnd support                   -->
+      <inherits name='com.allen_sauer.gwt.dnd.gwt-dnd'/>
 
       <inherits name="com.googlecode.vicovre.gwt.Module"/>
 

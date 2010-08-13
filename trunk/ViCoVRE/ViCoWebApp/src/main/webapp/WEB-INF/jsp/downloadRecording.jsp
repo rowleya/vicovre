@@ -16,6 +16,8 @@
         var Parameters = {
             url: "/rest/",
             recording: "${recording.id}",
+            duration: ${recording.duration},
+            streams: '${streamsJSON}',
             folder: "${folder}",
             layouts: '${layoutsJSON}',
             customLayouts: '${customLayoutsJSON}',
