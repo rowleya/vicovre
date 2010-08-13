@@ -44,13 +44,9 @@ public class FormatSelectionPage extends WizardPage implements ClickHandler {
     private String format = null;
 
     private FormRadioButton[] options = new FormRadioButton[]{
-        new FormRadioButton("format", "Microsoft WMV Video",
-                "video/x-ms-asf", this),
-        new FormRadioButton("format", "Adobe Flash FLV Video",
-                "video/x-flv", this),
-        new FormRadioButton("format", "MP4 Video",
-                "video/mp4", this),
-        new FormRadioButton("format", "MP3 Audio",
+        new FormRadioButton("format", "Video File (wmv, flv, mp4)",
+                "video", this),
+        new FormRadioButton("format", "Audio File (mp3)",
                 "audio/mp3", this),
         new FormRadioButton("format", "AG-VCR Recording",
                 "application/x-agvcr", this)

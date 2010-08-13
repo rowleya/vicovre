@@ -84,6 +84,8 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
         }
         width = (noLayoutsPerWidth * LAYOUT_WIDTH) + "px";
 
+        add(new Label("Select a layout for the video:"));
+
         Label predefLabel = new Label("Predefined Layouts");
         DOM.setStyleAttribute(predefLabel.getElement(), "fontWeight", "bold");
         add(predefLabel);
@@ -168,7 +170,8 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
             return -1;
         }
         wizard.setAttribute("layout", selection.getLayout());
-        return Application.AUDIO_SELECTION;
+
+        return Application.VIDEO_SELECTION;
     }
 
     public void show(Wizard wizard) {

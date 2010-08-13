@@ -104,6 +104,10 @@ public class Stream implements Comparable<Stream> {
 
     private RtpTypeRepository rtpTypeRepository = null;
 
+    public Stream() {
+        // Does Nothing
+    }
+
     public Stream(RtpTypeRepository rtpTypeRepository) {
         this.rtpTypeRepository = rtpTypeRepository;
     }

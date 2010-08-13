@@ -32,6 +32,8 @@
 
 package com.googlecode.vicovre.gwt.download.client;
 
+import java.util.Arrays;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -41,6 +43,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONLayout;
 import com.googlecode.vicovre.gwt.client.json.JSONLayouts;
+import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.client.json.JSONStreams;
 
 public class Application implements EntryPoint {
 
@@ -48,15 +52,15 @@ public class Application implements EntryPoint {
 
     protected static final int LAYOUT_SELECTION = 1;
 
-    protected static final int LAYOUT_CUSTOMIZATION = 2;
+    protected static final int VIDEO_SELECTION = 2;
 
-    protected static final int VIDEO_SELECTION = 3;
+    protected static final int AUDIO_SELECTION = 3;
 
-    protected static final int AUDIO_SELECTION = 4;
+    protected static final int STREAM_SELECTION = 4;
 
-    protected static final int STREAM_SELECTION = 5;
+    protected static final int DOWNLOAD_VIDEO = 5;
 
-    protected static final int DOWNLOAD = 6;
+    protected static final int DOWNLOAD_AUDIO = 6;
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
@@ -105,6 +109,21 @@ public class Application implements EntryPoint {
         return new Layout[0];
     }
 
+    protected JSONStream[] getStreams() {
+        String streamsJSON = parameters.get("streams");
+        if (streamsJSON != null) {
+            JSONStreams jsonStreams = JSONStreams.parse(streamsJSON);
+            JsArray<JSONStream> streamArray = jsonStreams.getStreams();
+            JSONStream[] streams = new JSONStream[streamArray.length()];
+            for (int i = 0; i < streamArray.length(); i++) {
+                streams[i] = streamArray.get(i);
+            }
+            Arrays.sort(streams, new StreamComparator());
+            return streams;
+        }
+        return new JSONStream[0];
+    }
+
     public void onModuleLoad() {
         VerticalPanel mainPanel = new VerticalPanel();
         mainPanel.setWidth("100%");
@@ -112,11 +131,20 @@ public class Application implements EntryPoint {
         RootPanel.get().add(mainPanel);
 
         String url = getUrl();
+        String baseUrl = getBaseUrl();
+        String recordingId = getRecordingId();
+        String folder = getFolder();
+        JSONStream[] streams = getStreams();
 
         Wizard wizard = new Wizard(getBaseUrl());
         wizard.addPage(new FormatSelectionPage(), FORMAT_SELECTION);
         wizard.addPage(new LayoutSelectionPage(getLayouts("layouts"),
                 getLayouts("customLayouts"), url), LAYOUT_SELECTION);
+        wizard.addPage(new VideoStreamSelectionPage(baseUrl, folder,
+                recordingId, streams), VIDEO_SELECTION);
+        wizard.addPage(new AudioSelectionPage(streams), AUDIO_SELECTION);
+        wizard.addPage(new StreamsSelectionPage(streams,
+                baseUrl, folder, recordingId), STREAM_SELECTION);
         wizard.selectPage(FORMAT_SELECTION);
         wizard.center();
     }

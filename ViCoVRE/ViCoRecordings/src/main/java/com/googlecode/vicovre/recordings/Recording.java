@@ -97,6 +97,10 @@ public class Recording implements Comparable<Recording> {
     // The recording database holding the recording
     private RecordingDatabase database = null;
 
+    public Recording() {
+        // Does Nothing
+    }
+
     public Recording(Folder folder, String id, RecordingDatabase database,
             Emailer emailer) {
         this.folder = folder;

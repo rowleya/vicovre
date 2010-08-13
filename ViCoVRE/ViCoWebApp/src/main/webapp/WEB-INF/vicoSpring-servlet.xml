@@ -92,5 +92,10 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
+        <constructor-arg><ref bean="rtpTypeRepository"></ref></constructor-arg>
+    </bean>
+    <bean name="/**/preview.do" class="com.googlecode.vicovre.web.play.PreviewController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
     </bean>
 </beans>
