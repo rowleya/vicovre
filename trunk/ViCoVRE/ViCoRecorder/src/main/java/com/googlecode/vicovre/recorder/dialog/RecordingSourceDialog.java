@@ -42,7 +42,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 
 import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
@@ -50,12 +49,11 @@ import javax.media.protocol.DataSource;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 import com.googlecode.vicovre.media.rtp.LocalRTPConnector;
 import com.googlecode.vicovre.media.rtp.StreamListener;
@@ -81,13 +79,9 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String LAST_SOURCE = "lastSource";
+    private static final String LAST_SOURCE_LOCAL = "lastSourceLocal";
 
-    private static final String LAST_SOURCE_NONE = "NONE";
-
-    private static final String LAST_SOURCE_LOCAL = "LOCAL";
-
-    private static final String LAST_SOURCE_AG = "AG";
+    private static final String LAST_SOURCE_AG = "lastSourceAG";
 
     // The width of the dialog
     private static final int DIALOG_WIDTH = 620;
@@ -99,9 +93,9 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
     private static final int BORDER_WIDTH = 5;
 
     // The video rtp type
-    private static final int VIDEO_RTP_TYPE = 77;
+    private static final int[] VIDEO_RTP_TYPES = new int[]{77, 96, 31};
 
-    private static final int AUDIO_RTP_TYPE = 84;
+    private static final int[] AUDIO_RTP_TYPES = new int[]{84, 112};
 
     private final ClientProfile clientProfile = new ClientProfile();
 
@@ -117,15 +111,15 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
 
     private LocalDevicePanel localDevicePanel = null;
 
-    private JRadioButton localStreamsRadio = new JRadioButton(
+    private JCheckBox localStreams = new JCheckBox(
             "Recording from Local Cameras");
 
-    private boolean initialLocalStreamsRadio = false;
+    private boolean initialLocalStreams = false;
 
-    private JRadioButton accessGridRadio = new JRadioButton(
+    private JCheckBox accessGrid = new JCheckBox(
             "Recording from Access Grid");
 
-    private boolean initialAccessGridRadio = false;
+    private boolean initialAccessGrid = false;
 
     private AccessGridPanel accessGridPanel = null;
 
@@ -156,11 +150,16 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
                 new Capability[]{AUDIO_CAPABILITY},
                 clientProfile, "Recorder");
         accessGridPanel.init(configuration);
-        RTPType audioRtpType = typeRepository.findRtpType(AUDIO_RTP_TYPE);
-        RTPType videoRtpType = typeRepository.findRtpType(VIDEO_RTP_TYPE);
+        RTPType[] audioRtpTypes = new RTPType[AUDIO_RTP_TYPES.length];
+        for (int i = 0; i < audioRtpTypes.length; i++) {
+            audioRtpTypes[i] = typeRepository.findRtpType(AUDIO_RTP_TYPES[i]);
+        }
+        RTPType[] videoRtpTypes = new RTPType[VIDEO_RTP_TYPES.length];
+        for (int i = 0; i < videoRtpTypes.length; i++) {
+            videoRtpTypes[i] = typeRepository.findRtpType(VIDEO_RTP_TYPES[i]);
+        }
         localDevicePanel = new LocalDevicePanel(this,
-                new RTPType[]{videoRtpType},
-                new RTPType[]{audioRtpType}, false,
+                videoRtpTypes, audioRtpTypes, true,
                 localConnector, localConnector,
                 clientProfile, "Recorder");
         localDevicePanel.init(configuration);
@@ -168,8 +167,10 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
         localDevicePanel.addLocalStreamListener(parent);
 
         this.configuration = configuration;
-        String source = configuration.getParameter(LAST_SOURCE,
-                LAST_SOURCE_NONE);
+        String agEnabled = configuration.getParameter(LAST_SOURCE_AG,
+                "false");
+        String localEnabled = configuration.getParameter(LAST_SOURCE_LOCAL,
+                "false");
 
         MULTICAST.setName("Use Multicast");
         MULTICAST.setServerType("multicast");
@@ -183,10 +184,10 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
                 BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH, BORDER_WIDTH));
         add(mainPanel);
 
-        localStreamsRadio.setAlignmentX(0.1f);
-        accessGridRadio.setAlignmentX(0.1f);
-        localStreamsRadio.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-        accessGridRadio.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        localStreams.setAlignmentX(0.1f);
+        accessGrid.setAlignmentX(0.1f);
+        localStreams.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        accessGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
@@ -200,22 +201,22 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
         buttonPanel.setAlignmentX(0.1f);
 
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.add(localStreamsRadio);
+        mainPanel.add(localStreams);
         mainPanel.add(localDevicePanel);
-        mainPanel.add(accessGridRadio);
+        mainPanel.add(accessGrid);
         mainPanel.add(accessGridPanel);
         mainPanel.add(buttonPanel);
 
-        ButtonGroup buttonGroup = new ButtonGroup();
-        buttonGroup.add(localStreamsRadio);
-        buttonGroup.add(accessGridRadio);
-        localStreamsRadio.addActionListener(this);
-        accessGridRadio.addActionListener(this);
+        /*ButtonGroup buttonGroup = new ButtonGroup();
+        buttonGroup.add(localStreams);
+        buttonGroup.add(accessGrid);*/
+        localStreams.addActionListener(this);
+        accessGrid.addActionListener(this);
 
-        localStreamsRadio.setSelected(source.equals(LAST_SOURCE_LOCAL));
-        accessGridRadio.setSelected(source.equals(LAST_SOURCE_AG));
-        setPanelEnabled(localDevicePanel, source.equals(LAST_SOURCE_LOCAL));
-        setPanelEnabled(accessGridPanel, source.equals(LAST_SOURCE_AG));
+        localStreams.setSelected(localEnabled.equals("true"));
+        accessGrid.setSelected(agEnabled.equals("true"));
+        setPanelEnabled(localDevicePanel, localStreams.isSelected());
+        setPanelEnabled(accessGridPanel, accessGrid.isSelected());
     }
 
     /**
@@ -237,18 +238,18 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
         stopPreview();
 
         if (visible) {
-            initialAccessGridRadio = accessGridRadio.isSelected();
+            initialAccessGrid = accessGrid.isSelected();
             accessGridPanel.captureInitialValues();
             localDevicePanel.captureInitialValues();
-            initialLocalStreamsRadio = localStreamsRadio.isSelected();
+            initialLocalStreams = localStreams.isSelected();
             cancelled = true;
         } else if (cancelled) {
-            accessGridRadio.setSelected(initialAccessGridRadio);
-            setPanelEnabled(accessGridPanel, initialAccessGridRadio);
+            accessGrid.setSelected(initialAccessGrid);
+            setPanelEnabled(accessGridPanel, initialAccessGrid);
             accessGridPanel.resetToInitialValues();
             localDevicePanel.resetToInitialValues();
-            localStreamsRadio.setSelected(initialLocalStreamsRadio);
-            setPanelEnabled(localDevicePanel, initialLocalStreamsRadio);
+            localStreams.setSelected(initialLocalStreams);
+            setPanelEnabled(localDevicePanel, initialLocalStreams);
         } else {
             storeConfiguration();
         }
@@ -256,11 +257,10 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
     }
 
     private void storeConfiguration() {
-        if (accessGridRadio.isSelected()) {
-            configuration.setParameter(LAST_SOURCE, LAST_SOURCE_AG);
-        } else if (localStreamsRadio.isSelected()) {
-            configuration.setParameter(LAST_SOURCE, LAST_SOURCE_LOCAL);
-        }
+        configuration.setParameter(LAST_SOURCE_LOCAL,
+                String.valueOf(localStreams.isSelected()));
+        configuration.setParameter(LAST_SOURCE_AG,
+                String.valueOf(accessGrid.isSelected()));
         localDevicePanel.storeConfiguration(configuration);
         accessGridPanel.storeConfiguration(configuration);
     }
@@ -288,27 +288,32 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
      *     java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent e) {
-        if ((e.getSource() == localStreamsRadio)
-                || (e.getSource() == accessGridRadio)) {
-            setPanelEnabled(localDevicePanel, localStreamsRadio.isSelected());
-            setPanelEnabled(accessGridPanel, accessGridRadio.isSelected());
-            if (e.getSource() == localStreamsRadio) {
+        if ((e.getSource() == localStreams)
+                || (e.getSource() == accessGrid)) {
+            setPanelEnabled(localDevicePanel, localStreams.isSelected());
+            setPanelEnabled(accessGridPanel, accessGrid.isSelected());
+            if (e.getSource() == localStreams) {
                 localDevicePanel.disablePreviewForRunningDevices();
             }
             stopPreview();
         } else if (e.getActionCommand().equals("OK")) {
-            if (localStreamsRadio.isSelected()) {
+            boolean ok = false;
+            if (localStreams.isSelected()) {
                 if (localDevicePanel.verify()) {
+                    ok = true;
                     if (streamListener != null) {
                         streamListener.removeAllStreams();
                     }
                     cancelled = false;
-                    accessGridPanel.stopConnection();
                     localDevicePanel.changeDevices();
                     setVisible(false);
                 }
-            } else if (accessGridRadio.isSelected()) {
+            } else {
+                localDevicePanel.stopDevices();
+            }
+            if (accessGrid.isSelected()) {
                 if (accessGridPanel.verify()) {
+                    ok = true;
                     accessGridPanel.stopConnection();
                     if (streamListener != null) {
                         streamListener.removeAllStreams();
@@ -317,7 +322,6 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
                     try {
                         accessGridPanel.startConnection(streamListener);
                         cancelled = false;
-                        localDevicePanel.stopDevices();
                         setVisible(false);
                     } catch (Exception error) {
                         error.printStackTrace();
@@ -327,6 +331,10 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
                     }
                 }
             } else {
+                accessGridPanel.stopConnection();
+            }
+            if ((!accessGrid.isSelected() && !localStreams.isSelected())
+                    || !ok) {
                 JOptionPane.showMessageDialog(this,
                         "No source has been selected!",
                         "Error", JOptionPane.ERROR_MESSAGE);

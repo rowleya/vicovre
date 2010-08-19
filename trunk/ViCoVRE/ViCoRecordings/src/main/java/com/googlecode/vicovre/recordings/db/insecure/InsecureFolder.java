@@ -74,6 +74,9 @@ public class InsecureFolder implements Folder {
 
     private HashSet<File> recordingsLoaded = new HashSet<File>();
 
+    private HashMap<File, Long> recordingLastModified =
+        new HashMap<File, Long>();
+
     private HashMap<String, HarvestSource> harvestSources =
         new HashMap<String, HarvestSource>();
 
@@ -244,12 +247,15 @@ public class InsecureFolder implements Folder {
 
     private void readRecordings() {
         File[] recordingFiles = file.listFiles(new FolderFilter(true));
+        HashSet<File> recordingsSeen = new HashSet<File>();
         for (File recordingFile : recordingFiles) {
             try {
-                if (!recordingsLoaded.contains(recordingFile)) {
-                    FileInputStream input = new FileInputStream(
-                        new File(recordingFile,
-                                RecordingConstants.RECORDING_INDEX));
+                File index = new File(recordingFile,
+                        RecordingConstants.RECORDING_INDEX);
+                if (!recordingsLoaded.contains(recordingFile)
+                        || recordingLastModified.get(recordingFile)
+                            < index.lastModified()) {
+                    FileInputStream input = new FileInputStream(index);
                     Recording recording = RecordingReader.readRecording(input,
                             this, database, typeRepository, layoutRepository,
                             defaultRecordingLifetime, emailer);
@@ -259,11 +265,23 @@ public class InsecureFolder implements Folder {
                                 + " could not be read");
                     }
                     recordings.put(recording.getId(), recording);
+                    recordingsLoaded.add(recordingFile);
+                    recordingLastModified.put(recordingFile,
+                            index.lastModified());
+                    recordingsSeen.add(recordingFile);
                 }
             } catch (Exception e) {
                 System.err.println("Warning: error reading recording "
                         + recordingFile);
                 e.printStackTrace();
+            }
+        }
+
+        for (File recordingFile : recordingsLoaded) {
+            if (!recordingsSeen.contains(recordingFile)) {
+                recordings.remove(recordingFile);
+                recordingsLoaded.remove(recordingFile);
+                recordingLastModified.remove(recordingFile);
             }
         }
     }

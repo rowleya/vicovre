@@ -42,27 +42,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-war</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.googlecode.vicovre</groupId>
-                                    <artifactId>ViCoLiveAnnotations</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>war</type>
-                                </artifactItem>
-                            </artifactItems>
-                            <stripVersion>true</stripVersion>
-                            <outputDirectory>
-                                ${project.build.directory}/classes/webapps
-                            </outputDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>copy-resources</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -126,11 +105,6 @@
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoRecordings</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.vicovre</groupId>
-            <artifactId>ViCoAnnotations</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -201,46 +175,5 @@
             <artifactId>tcpbridge</artifactId>
             <version>1.0.1</version>
        </dependency>
-       <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-plus</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-naming</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-management</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1-jetty</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-annotations</artifactId>
-            <version>6.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>start</artifactId>
-            <version>6.1.15</version>
-        </dependency>
      </dependencies>
 </project>

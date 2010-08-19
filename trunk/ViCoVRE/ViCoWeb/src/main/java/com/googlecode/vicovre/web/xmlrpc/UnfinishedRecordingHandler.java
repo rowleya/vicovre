@@ -120,13 +120,12 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             File file = File.createTempFile("recording",
                     RecordingConstants.UNFINISHED_RECORDING_INDEX,
                     folder.getFile());
-            UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
+            UnfinishedRecording recording = new UnfinishedRecording(
+                    typeRepository,
                     folder, file, getDatabase(), emailer);
             fillIn(recording, details);
-            RecordingMetadata metadata = new RecordingMetadata();
-            fillIn(metadata, (Map<String, Object>)
-                    details.get("metadata"));
-            recording.setMetadata(metadata);
+            recording.setMetadata(getMetadata((Map<String, Object>)
+                    details.get("metadata")));
             getDatabase().addUnfinishedRecording(recording, null);
 
             return recording.getId();
@@ -145,8 +144,8 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             throw new XmlRpcException("Unknown id " + id);
         }
         fillIn(recording, details);
-        fillIn(recording.getMetadata(),
-                (Map<String, Object>) details.get("metadata"));
+        recording.setMetadata(getMetadata((Map<String, Object>)
+                details.get("metadata")));
         try {
             getDatabase().updateUnfinishedRecording(recording);
         } catch (IOException e) {

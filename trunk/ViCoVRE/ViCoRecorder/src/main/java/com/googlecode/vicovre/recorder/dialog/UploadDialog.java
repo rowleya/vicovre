@@ -45,18 +45,23 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.PasswordAuthentication;
 import java.net.URL;
-import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -73,25 +78,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
-import org.apache.commons.httpclient.methods.multipart.StringPart;
-
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.ui.OtherThread;
 import com.googlecode.vicovre.media.ui.ProgressDialog;
 import com.googlecode.vicovre.recorder.dialog.data.RecordingTableModel;
-import com.googlecode.vicovre.recorder.dialog.data.StreamProgress;
-import com.googlecode.vicovre.recorder.dialog.data.StreamsPart;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
-import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.utils.Config;
@@ -103,7 +96,13 @@ import com.googlecode.vicovre.utils.Config;
  * @version 1.0
  */
 public class UploadDialog extends JDialog implements ActionListener,
-        ItemListener, StreamProgress {
+        ItemListener{
+
+    private static final long ZIP_HEADER_LENGTH = 22;
+
+    private static final long ZIP_FILE_HEADER_LENGTH = 30;
+
+    private static final long ZIP_CENTRAL_HEADER_LENGTH = 46;
 
     private static final long serialVersionUID = 1L;
 
@@ -113,24 +112,32 @@ public class UploadDialog extends JDialog implements ActionListener,
 
     private static final int DIALOG_HEIGHT = 415;
 
-    private static final String RECORDING_UPLOAD_URL = "recordingUpload.do?"
-        + "folder=<folder>";
+    private static final String LOGIN_URL =
+        "rest/auth/form?username=<username>&password=<password>";
 
-    private static final String STREAM_UPLOAD_URL = "streamUpload.do";
+    private static final String LOGOUT_URL =
+        "rest/auth/logout";
 
-    private static final String ANNOTATION_UPLOAD_URL = "annotationUpload.do";
+    private static final String RECORDING_URL = "rest/recording/<folder>";
 
-    private static final String LAYOUT_UPLOAD_URL = "replayLayout.do?"
-        + "streamId=<streamId>&timestamp=<timestamp>&layoutName=<layoutName>"
-        + "&positionName=<positionName>";
+    private static final String RECORDING_UPLOAD_URL =
+        RECORDING_URL + "?startDate=<startDate>";
 
-    private static final int AFTER_RECORDING_PROGRESS = 10;
+    private static final String METADATA_UPLOAD_URL =
+        "rest/recording/<folder>/<id>";
 
-    private static final int AFTER_STREAM_PROGRESS = 80;
+    private static final String LAYOUT_UPLOAD_URL =
+        "rest/recording/<folder>/<id>/layout/<time>";
 
-    private static final int AFTER_LAYOUT_PROGRESS = 85;
+    private static final int AFTER_LOGIN_PROGRESS = 1;
 
-    private static final int AFTER_ANNOTATIONS_PROGRESS = 100;
+    private static final int AFTER_RECORDING_PROGRESS = 90;
+
+    private static final int AFTER_METADATA_PROGRESS = 95;
+
+    private static final int AFTER_LAYOUT_PROGRESS = 99;
+
+    private static final int AFTER_LOGOUT_PROGRESS = 100;
 
     private JComboBox server = new JComboBox();
 
@@ -155,8 +162,6 @@ public class UploadDialog extends JDialog implements ActionListener,
 
     private ProgressDialog progress = null;
 
-    private File annotationDirectory = null;
-
     private JTextField username = new JTextField();
 
     private JPasswordField password = new JPasswordField();
@@ -176,10 +181,9 @@ public class UploadDialog extends JDialog implements ActionListener,
      * @param annotationDirectory The directory where the annotations are stored
      */
     public UploadDialog(JFrame parent, RecordingDatabase database,
-            File annotationDirectory, Config configuration) {
+            Config configuration) {
         super(parent, "Upload Recordings", true);
         this.database = database;
-        this.annotationDirectory = annotationDirectory;
         this.configuration = configuration;
         servers = new Vector<String>();
         for (String server : configuration.getParameters(SERVER_CONFIG_PARAM)) {
@@ -310,15 +314,20 @@ public class UploadDialog extends JDialog implements ActionListener,
         MetadataDialog dialog = new MetadataDialog(this, metadata);
         dialog.setVisible(true);
         if (!dialog.wasCancelled()) {
-            if (metadata == null) {
-                metadata = new RecordingMetadata();
-            }
-            metadata.setName(dialog.getName());
-            metadata.setDescription(dialog.getDescription());
+            metadata = dialog.getMetadata();
             if (recording == null) {
                 recordingModel.setCurrentRecordingMetadata(metadata);
             } else {
+                recording.setMetadata(metadata);
                 recordingModel.indicateMetadataUpdate(recording);
+                try {
+                    database.updateRecordingMetadata(recording);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this,
+                            "Error updating database: " + e.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
@@ -467,107 +476,236 @@ public class UploadDialog extends JDialog implements ActionListener,
         }
     }
 
-    private void uploadRecording(Recording recording, String urlString)
-            throws IOException {
-        progress.setMessage("Uploading Recording");
-        Authenticator.setDefault(new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username.getText(),
-                        password.getPassword());
-            }
-        });
-
-        progress.setMessage("Uploading Recording");
-        String recUrl = RECORDING_UPLOAD_URL;
-        recUrl = recUrl.replaceAll("<folder>",
-           recording.getDirectory().getParentFile().getAbsolutePath().substring(
-               database.getTopLevelFolder().getFile().getAbsolutePath().length()));
-        recUrl = recUrl.replaceAll("<id>", recording.getId());
-        URL recordingUpload = new URL(urlString + recUrl);
-        URLConnection connection = recordingUpload.openConnection();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                connection.getInputStream()));
-        String recordingUri = reader.readLine();
-        progress.setProgress(AFTER_RECORDING_PROGRESS);
-
-        progress.setMessage("Uploading Streams");
-        String streamUrl = STREAM_UPLOAD_URL;
-        URL streamUpload = new URL(urlString + streamUrl);
-        HttpClient client = new HttpClient();
-        client.getState().setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials(username.getText(),
-                        new String(password.getPassword())));
-        PostMethod httppost = new PostMethod(streamUpload.toString());
-        StringPart recUriParam = new StringPart("recordingUri", recordingUri);
-        StreamsPart streamsParam = new StreamsPart(recording.getStreams(),
-                recording.getDirectory());
-        streamsParam.setStreamProgress(this);
-        MultipartRequestEntity multipart = new MultipartRequestEntity(
-                new Part[]{recUriParam, streamsParam}, httppost.getParams());
-        httppost.setRequestEntity(multipart);
-        httppost.setContentChunked(true);
-        client.executeMethod(httppost);
-        if (httppost.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Error uploading streams: "
-                    + httppost.getStatusText());
+    private String login(String urlString) throws IOException {
+        progress.setMessage("Logging in");
+        String loginUrl = LOGIN_URL;
+        loginUrl = loginUrl.replace("<username>",
+                URLEncoder.encode(username.getText(), "UTF-8"));
+        loginUrl = loginUrl.replace("<password>",
+                URLEncoder.encode(new String(password.getPassword()), "UTF-8"));
+        URL login = new URL(urlString + loginUrl);
+        HttpURLConnection authConnection =
+            (HttpURLConnection) login.openConnection();
+        authConnection.setRequestMethod("POST");
+        if (authConnection.getResponseCode() != 200) {
+            throw new IOException(
+                    "Your login credentials have not been recognized: "
+                    + authConnection.getResponseCode() + ": "
+                    + authConnection.getResponseMessage());
         }
-        BufferedReader streamReader = new BufferedReader(
-                new InputStreamReader(httppost.getResponseBodyAsStream()));
-        for (int i = 0; i < recording.getStreams().size(); i++) {
-            streamReader.readLine();
-        }
-        httppost.releaseConnection();
-        progress.setProgress(AFTER_STREAM_PROGRESS);
-
-        progress.setMessage("Uploading Layouts");
-        for (ReplayLayout layout : recording.getReplayLayouts()) {
-            for (ReplayLayoutPosition position : layout.getLayoutPositions()) {
-                Stream stream = position.getStream();
-                String layoutUrl = LAYOUT_UPLOAD_URL;
-                layoutUrl = layoutUrl.replaceAll("<streamId>",
-                        stream.getSsrc());
-                layoutUrl = layoutUrl.replaceAll("<timestamp>",
-                        String.valueOf(layout.getTime()));
-                layoutUrl = layoutUrl.replaceAll("<layoutName>",
-                        layout.getName());
-                layoutUrl = layoutUrl.replaceAll("<positionName>",
-                        position.getName());
-                URL layoutUpload = new URL(urlString + layoutUrl);
-                HttpURLConnection conn = (HttpURLConnection)
-                    layoutUpload.openConnection();
-                if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    throw new IOException("Error setting layout: "
-                            + conn.getResponseMessage());
+        Map<String, List<String>> headers = authConnection.getHeaderFields();
+        String sessionId = null;
+        for (String header : headers.keySet()) {
+            if ((header != null) && header.equals("Set-Cookie")) {
+                for (String setCookie : headers.get(header)) {
+                    int index = setCookie.indexOf(';');
+                    if (index == -1) {
+                        index = setCookie.length();
+                    }
+                    String cookie = setCookie.substring(0, index);
+                    if (cookie.startsWith("JSESSIONID=")) {
+                        sessionId = cookie.substring("JSESSIONID=".length());
+                    }
                 }
             }
         }
-        progress.setProgress(AFTER_LAYOUT_PROGRESS);
+        if (sessionId == null) {
+            throw new IOException("Missing JSESSIONID cookie in response!");
+        }
+        progress.setProgress(AFTER_LOGIN_PROGRESS);
+        return sessionId;
+    }
 
-        File annotationFile = new File(annotationDirectory,
-                recording.getId() + ".xml");
-        if (annotationFile.exists()) {
-            progress.setMessage("Uploading Annotations");
-            String annotationUrl = ANNOTATION_UPLOAD_URL;
-            URL annotationUpload = new URL(urlString + annotationUrl);
-            client = new HttpClient();
-            client.getState().setCredentials(AuthScope.ANY,
-                    new UsernamePasswordCredentials(username.getText(),
-                            new String(password.getPassword())));
-            httppost = new PostMethod(annotationUpload.toString());
-            FilePart annotationsParam = new FilePart("annotations",
-                    annotationFile);
-            multipart = new MultipartRequestEntity(
-                    new Part[]{recUriParam, annotationsParam},
-                    httppost.getParams());
-            httppost.setRequestEntity(multipart);
-            httppost.setContentChunked(true);
-            client.executeMethod(httppost);
-            if (httppost.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException("Error uploading streams: "
-                        + httppost.getStatusText());
+    private String uploadRecording(Recording recording, String folder,
+            String urlString, String sessionId) throws IOException {
+        progress.setMessage("Uploading recording");
+        long totalBytes = ZIP_HEADER_LENGTH;
+        Vector<File> files = new Vector<File>();
+        Vector<Long> crcs = new Vector<Long>();
+        String[] exts = new String[]{"", RecordingConstants.STREAM_INDEX,
+                RecordingConstants.STREAM_METADATA};
+        for (Stream stream : recording.getStreams()) {
+            for (String ext : exts) {
+                File file = new File(recording.getDirectory(),
+                        stream.getSsrc() + ext);
+                if (file.exists()) {
+                    String name = file.getName();
+                    files.add(file);
+                    totalBytes += file.length();
+                    totalBytes += ZIP_FILE_HEADER_LENGTH + name.length();
+                    totalBytes += ZIP_CENTRAL_HEADER_LENGTH + name.length();
+
+                    CRC32 crc = new CRC32();
+                    FileInputStream input = new FileInputStream(file);
+                    byte[] buffer = new byte[8096];
+                    int bytesRead = input.read(buffer);
+                    while (bytesRead != -1) {
+                        crc.update(buffer, 0, bytesRead);
+                        bytesRead = input.read(buffer);
+                    }
+                    input.close();
+                    crcs.add(crc.getValue());
+                }
             }
         }
-        progress.setProgress(AFTER_ANNOTATIONS_PROGRESS);
+
+        String url = RECORDING_UPLOAD_URL;
+        url = url.replace("<folder>", folder);
+        url = url.replace("<startDate>", recording.getStartTimeString());
+
+        URL upload = new URL(urlString + url);
+        HttpURLConnection connection =
+            (HttpURLConnection) upload.openConnection();
+        connection.setDoOutput(true);
+        connection.setDoInput(true);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/zip");
+        connection.setRequestProperty("Content-Length",
+                String.valueOf(totalBytes));
+        connection.setRequestProperty("Cookie", "JSESSIONID=" + sessionId);
+
+        ZipOutputStream output = new ZipOutputStream(
+                connection.getOutputStream());
+        output.setLevel(ZipOutputStream.STORED);
+        for (int i = 0; i < files.size(); i++) {
+            File file = files.get(i);
+            ZipEntry entry = new ZipEntry(file.getName());
+            entry.setMethod(ZipEntry.STORED);
+            entry.setSize(file.length());
+            entry.setCompressedSize(file.length());
+            entry.setCrc(crcs.get(i));
+            entry.setTime(file.lastModified());
+            entry.setComment("");
+            entry.setExtra(new byte[0]);
+            output.putNextEntry(entry);
+
+            FileInputStream input = new FileInputStream(file);
+            byte[] buffer = new byte[8096];
+            int bytesRead = input.read(buffer);
+            int totalBytesRead = 0;
+            while (bytesRead != -1) {
+                totalBytesRead += bytesRead;
+                output.write(buffer, 0, bytesRead);
+                updateProgress(totalBytes, totalBytesRead);
+                bytesRead = input.read(buffer);
+            }
+            input.close();
+            output.closeEntry();
+        }
+        output.close();
+
+        if (connection.getResponseCode() != 200) {
+            throw new IOException("Error uploading recording: "
+                    + connection.getResponseCode() + ": "
+                    + connection.getResponseMessage());
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                connection.getInputStream()));
+        String id = reader.readLine();
+        String recordingUrl = urlString + RECORDING_URL;
+        recordingUrl = recordingUrl.replace("<folder>", folder);
+        progress.setProgress(AFTER_RECORDING_PROGRESS);
+        return id.substring(recordingUrl.length());
+    }
+
+    private void uploadMetadata(Recording recording, String folder,
+            String urlString, String sessionId) throws IOException {
+        String url = METADATA_UPLOAD_URL;
+        url = url.replace("<folder>", folder);
+        url = url.replace("<id>", recording.getId());
+
+        RecordingMetadata metadata = recording.getMetadata();
+        String content = "";
+        if (metadata != null) {
+            content += "metadataPrimaryKey="
+                + URLEncoder.encode(metadata.getPrimaryKey(), "UTF-8");
+            for (String key : metadata.getKeys()) {
+                String meta = "&" + URLEncoder.encode("metadata" + key,
+                        "UTF-8");
+                content += meta + "="
+                    + URLEncoder.encode(metadata.getValue(key), "UTF-8");
+                content += meta + "Visible=" + metadata.isVisible(key);
+                content += meta + "Editable=" + metadata.isEditable(key);
+                content += meta + "Multiline=" + metadata.isMultiline(key);
+            }
+
+            URL upload = new URL(urlString + url);
+            HttpURLConnection connection =
+                (HttpURLConnection) upload.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("PUT");
+            connection.setRequestProperty("Content-Type",
+                    "application/x-www-form-urlencoded");
+            connection.setRequestProperty("Content-Length",
+                    String.valueOf(content.length()));
+            connection.setRequestProperty("Cookie", "JSESSIONID=" + sessionId);
+            DataOutputStream output = new DataOutputStream(
+                    connection.getOutputStream());
+            output.writeBytes(content);
+            output.close();
+
+            if (connection.getResponseCode() != 200) {
+                throw new IOException("Error setting recording metadata: "
+                        + connection.getResponseCode() + ": "
+                        + connection.getResponseMessage());
+            }
+        }
+        progress.setProgress(AFTER_METADATA_PROGRESS);
+    }
+
+    private void uploadLayouts(Recording recording, String folder,
+            String urlString, String sessionId) throws IOException {
+
+        for (ReplayLayout layout : recording.getReplayLayouts()) {
+            String url = LAYOUT_UPLOAD_URL;
+            url = url.replace("<folder>", folder);
+            url = url.replace("<id>", recording.getId());
+            url = url.replace("<time>", String.valueOf(layout.getTime()));
+
+            URL upload = new URL(urlString + url);
+            HttpURLConnection connection =
+                (HttpURLConnection) upload.openConnection();
+            connection.setRequestMethod("PUT");
+            connection.setRequestProperty("Cookie", "JSESSIONID=" + sessionId);
+            if (connection.getResponseCode() != 200) {
+                throw new IOException("Error setting layout: "
+                        + connection.getResponseCode() + ": "
+                        + connection.getResponseMessage());
+            }
+        }
+        progress.setProgress(AFTER_LAYOUT_PROGRESS);
+    }
+
+    private void logout(String urlString, String sessionId) throws IOException {
+        progress.setMessage("Logging out");
+        String logoutUrl = LOGOUT_URL;
+        URL logout = new URL(urlString + logoutUrl);
+        HttpURLConnection authConnection =
+            (HttpURLConnection) logout.openConnection();
+        authConnection.setRequestProperty("Cookie",
+                "JSESSIONID=" + sessionId);
+        if (authConnection.getResponseCode() != 200) {
+            throw new IOException("Could not logout");
+        }
+        progress.setProgress(AFTER_LOGOUT_PROGRESS);
+    }
+
+    private void uploadRecording(Recording recording, String urlString)
+            throws IOException {
+        String folder =
+            recording.getDirectory().getParentFile().getAbsolutePath();
+        String baseFolder =
+            database.getTopLevelFolder().getFile().getAbsolutePath();
+        folder = folder.substring(baseFolder.length());
+
+        String sessionId = login(urlString);
+        String recordingId = uploadRecording(recording, folder, urlString,
+                sessionId);
+        recording.setId(recordingId);
+        database.addRecording(recording, null);
+        uploadMetadata(recording, folder, urlString, sessionId);
+        uploadLayouts(recording, folder, urlString, sessionId);
+        logout(urlString, sessionId);
     }
 
     /**
@@ -586,7 +724,7 @@ public class UploadDialog extends JDialog implements ActionListener,
                 currentUrlInvalid = false;
                 if (!servers.contains(url)) {
                     servers.add(url);
-                    configuration.addParameterValue(STREAM_UPLOAD_URL, url);
+                    configuration.addParameterValue(SERVER_CONFIG_PARAM, url);
                 }
             } catch (MalformedURLException error) {
                 currentUrlInvalid = true;
@@ -596,15 +734,10 @@ public class UploadDialog extends JDialog implements ActionListener,
         }
     }
 
-    /**
-     *
-     * @see net.crew_vre.recorder.dialog.data.StreamProgress#updateProgress(
-     *     long, long)
-     */
     public void updateProgress(long totalBytes, long currentBytes) {
         float fraction = (float) currentBytes / (float) totalBytes;
-        int extra = (int) ((AFTER_STREAM_PROGRESS - AFTER_RECORDING_PROGRESS)
+        int extra = (int) ((AFTER_RECORDING_PROGRESS - AFTER_LOGIN_PROGRESS)
             * fraction);
-        progress.setProgress(AFTER_RECORDING_PROGRESS + extra);
+        progress.setProgress(AFTER_LOGIN_PROGRESS + extra);
     }
 }

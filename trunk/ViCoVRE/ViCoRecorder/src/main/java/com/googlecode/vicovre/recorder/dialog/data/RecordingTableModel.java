@@ -174,7 +174,7 @@ public class RecordingTableModel extends AbstractTableModel {
                 return "";
             } else if (column.equals(NAME_COLUMN)) {
                 if (currentRecordingMetadata != null) {
-                    return currentRecordingMetadata.getName();
+                    return currentRecordingMetadata.getPrimaryValue();
                 }
                 return "Double click to enter metadata";
             } else if (column.equals(UPLOADED_COLUMN)) {
@@ -191,7 +191,7 @@ public class RecordingTableModel extends AbstractTableModel {
         } else if (column.equals(NAME_COLUMN)) {
             RecordingMetadata metadata = recording.getMetadata();
             if (metadata != null) {
-                return metadata.getName();
+                return metadata.getPrimaryValue();
             }
             return "Double click to enter metadata";
         } else if (column.equals(UPLOADED_COLUMN)) {

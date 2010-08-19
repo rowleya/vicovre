@@ -70,7 +70,7 @@ import com.googlecode.vicovre.utils.Emailer;
 @XmlAccessorType(XmlAccessType.NONE)
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
-    private static final SimpleDateFormat ID_DATE_FORMAT =
+    public static final SimpleDateFormat ID_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
 
     private static final String STOPPED = "Stopped";
@@ -375,16 +375,16 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
                 ((stopDate == null) || stopDate.after(now))) {
             startTimer = new Timer();
             startTimer.schedule(new StartRecording(), startDate);
-            System.err.println("Recording of " + getMetadata().getName() + " scheduled to start at " + startDate);
+            System.err.println("Recording of " + getMetadata().getPrimaryValue() + " scheduled to start at " + startDate);
         } else if (startDate != null) {
-            System.err.println("Not scheduling start of recording of " + getMetadata().getName() + " as already recording or finished");
+            System.err.println("Not scheduling start of recording of " + getMetadata().getPrimaryValue() + " as already recording or finished");
         }
         if ((stopDate != null) && !recordingFinished && stopDate.after(now)) {
             stopTimer = new Timer();
             stopTimer.schedule(new StopRecording(), stopDate);
-            System.err.println("Recording of " + getMetadata().getName() + " scheduled to stop at " + stopDate);
+            System.err.println("Recording of " + getMetadata().getPrimaryValue() + " scheduled to stop at " + stopDate);
         } else if (stopDate != null) {
-            System.err.println("Not scheduling stop of recording of " + getMetadata().getName() + " as already finished");
+            System.err.println("Not scheduling stop of recording of " + getMetadata().getPrimaryValue() + " as already finished");
         }
     }
 

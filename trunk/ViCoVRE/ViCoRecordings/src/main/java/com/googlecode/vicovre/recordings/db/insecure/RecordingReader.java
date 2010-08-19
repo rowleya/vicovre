@@ -123,13 +123,33 @@ public class RecordingReader {
         recording.setReplayLayouts(layouts);
 
         File metadataFile = new File(directory, RecordingConstants.METADATA);
+        File oldMetadataFile = new File(directory,
+                RecordingConstants.OLD_METADATA);
         if (metadataFile.exists()) {
             try {
                 FileInputStream inputStream = new FileInputStream(metadataFile);
-                RecordingMetadata metadata = RecordingMetadataReader.readMetadata(
-                        inputStream);
+                RecordingMetadata metadata =
+                    RecordingMetadataReader.readMetadata(inputStream);
                 recording.setMetadata(metadata);
                 inputStream.close();
+            } catch (Exception e) {
+                System.err.println("Warning: error reading metadata "
+                        + metadataFile);
+                e.printStackTrace();
+            }
+        } else if (oldMetadataFile.exists()) {
+            try {
+                FileInputStream inputStream = new FileInputStream(
+                        oldMetadataFile);
+                RecordingMetadata metadata =
+                    RecordingMetadataReader.readOldMetadata(inputStream);
+                recording.setMetadata(metadata);
+                inputStream.close();
+                FileOutputStream outputStream = new FileOutputStream(
+                        metadataFile);
+                RecordingMetadataReader.writeMetadata(metadata, outputStream);
+                outputStream.close();
+                oldMetadataFile.delete();
             } catch (Exception e) {
                 System.err.println("Warning: error reading metadata "
                         + metadataFile);
