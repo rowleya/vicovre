@@ -49,6 +49,8 @@ public class DataSource extends PushBufferDataSource {
 
     private JavaSoundStream stream = new JavaSoundStream();
 
+    private boolean inited = false;
+
     /**
      * @see javax.media.protocol.PushBufferDataSource#getStreams()
      */
@@ -60,13 +62,15 @@ public class DataSource extends PushBufferDataSource {
      * @see javax.media.protocol.DataSource#connect()
      */
     public void connect() throws IOException {
-        try {
-            stream.init(getLocator());
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-            IOException exception = new IOException(e.getMessage());
-            exception.initCause(e);
-            throw exception;
+        if (!inited) {
+            try {
+                stream.init(getLocator());
+                inited = true;
+            } catch (LineUnavailableException e) {
+                IOException exception = new IOException(e.getMessage());
+                exception.initCause(e);
+                throw exception;
+            }
         }
     }
 
@@ -74,8 +78,11 @@ public class DataSource extends PushBufferDataSource {
      * @see javax.media.protocol.DataSource#disconnect()
      */
     public void disconnect() {
-        stop();
-        stream.uninit();
+        if (inited) {
+            stop();
+            stream.uninit();
+            inited = false;
+        }
     }
 
     /**

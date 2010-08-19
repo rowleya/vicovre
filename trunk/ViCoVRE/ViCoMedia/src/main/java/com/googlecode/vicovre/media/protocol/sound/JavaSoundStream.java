@@ -164,6 +164,21 @@ public class JavaSoundStream implements PushBufferStream {
         targetDataLine.close();
     }
 
+    private static Mixer getPortMixerByName(String name) {
+        String nameToFind = name;
+        String extra = "";
+        if (nameToFind.matches(".* #//d+")) {
+            int index = nameToFind.lastIndexOf(" #");
+            nameToFind = name.substring(0, index);
+            extra = name.substring(index);
+        }
+        if (nameToFind.length() > 31) {
+            nameToFind = nameToFind.substring(0, 31);
+        }
+        nameToFind += extra;
+        return portMixers.get("Port " + nameToFind);
+    }
+
     /**
      * Searches for mixers
      */
@@ -176,13 +191,24 @@ public class JavaSoundStream implements PushBufferStream {
 
         for (int i = 0; i < mixerInfos.length; i++) {
             Mixer mixer = AudioSystem.getMixer(mixerInfos[i]);
+            String name = mixerInfos[i].getName();
             if (mixer.isLineSupported(portInfo)) {
                 if (mixer.getSourceLineInfo().length > 0) {
-                    portMixers.put(mixerInfos[i].getName(), mixer);
+                    int extra = 2;
+                    String mixerName = name;
+                    while (portMixers.containsKey(mixerName)) {
+                        mixerName = name + " #" + extra;
+                    }
+                    portMixers.put(mixerName, mixer);
                 }
             } else if (mixer.isLineSupported(targetInfo)) {
                 if (mixer.getTargetLineInfo().length > 0) {
-                    listenMixers.put(mixerInfos[i].getName(), mixer);
+                    int extra = 2;
+                    String mixerName = name;
+                    while (listenMixers.containsKey(mixerName)) {
+                        mixerName = name + " #" + extra;
+                    }
+                    listenMixers.put(mixerName, mixer);
                 }
             }
         }
@@ -190,7 +216,7 @@ public class JavaSoundStream implements PushBufferStream {
         Iterator<String> iter = listenMixers.keySet().iterator();
         while (iter.hasNext()) {
             String name = iter.next();
-            Mixer portMixer = portMixers.get("Port " + name);
+            Mixer portMixer = getPortMixerByName(name);
             if (portMixer == null) {
                 mixersToRemove.add(name);
             }
@@ -233,7 +259,7 @@ public class JavaSoundStream implements PushBufferStream {
         if (portMixers == null) {
             findMixers();
         }
-        return portMixers.get("Port " + name);
+        return getPortMixerByName(name);
     }
 
     /**

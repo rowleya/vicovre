@@ -116,6 +116,7 @@ public class Packetizer implements Codec {
             AudioFormat inputFormat = (AudioFormat) input.getFormat();
             double sampleRate = inputFormat.getSampleRate();
             double frameRate = inputFormat.getFrameRate();
+            packetSize = (int) (sampleRate * DURATION);
             outputFormat = new AudioFormat(OUT_FORMAT.getEncoding(), sampleRate,
                     OUT_FORMAT.getSampleSizeInBits(), OUT_FORMAT.getChannels(),
                     OUT_FORMAT.getEndian(), OUT_FORMAT.getSigned(),
@@ -192,7 +193,6 @@ public class Packetizer implements Codec {
                           || (channels != Format.NOT_SPECIFIED))
                     && ((signed != AudioFormat.SIGNED)
                           || (signed != Format.NOT_SPECIFIED))) {
-                packetSize = (int) (af.getSampleRate() * DURATION);
                 return format;
             }
         }

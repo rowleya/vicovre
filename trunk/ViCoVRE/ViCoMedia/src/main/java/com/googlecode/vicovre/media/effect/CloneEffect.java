@@ -101,12 +101,18 @@ public class CloneEffect extends PushBufferDataSource
                         // Does Nothing
                     }
                 }
+                format = input.getFormat();
                 readBuffer = input;
                 bufferSync.notifyAll();
             }
 
             if (!done && (handler != null)) {
                 handler.transferData(this);
+            }
+        } else {
+            synchronized (bufferSync) {
+                format = input.getFormat();
+                bufferSync.notifyAll();
             }
         }
         output.copy(input);
@@ -118,7 +124,6 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.Codec#setInputFormat(javax.media.Format)
      */
     public Format setInputFormat(Format format) {
-        this.format = format;
         return format;
     }
 
@@ -127,7 +132,6 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.Codec#setOutputFormat(javax.media.Format)
      */
     public Format setOutputFormat(Format format) {
-        this.format = format;
         return format;
     }
 
@@ -187,6 +191,15 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.protocol.PushBufferStream#getFormat()
      */
     public Format getFormat() {
+        synchronized (bufferSync) {
+            while ((format == null) && !done) {
+                try {
+                    bufferSync.wait();
+                } catch (InterruptedException e) {
+                    // Does Nothing
+                }
+            }
+        }
         return format;
     }
 

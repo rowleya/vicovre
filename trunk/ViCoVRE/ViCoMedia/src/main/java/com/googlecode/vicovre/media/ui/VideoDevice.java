@@ -336,13 +336,6 @@ public class VideoDevice implements ControllerListener,
     public void start(LocalStreamListener listener) throws IOException {
         if (!deviceStarted && prepared) {
             this.listener = listener;
-            if (listener != null) {
-                long ssrc = sendStream.getSSRC();
-                if (ssrc < 0) {
-                    ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
-                }
-                listener.addLocalVideo(device.getName(), cloneEffect, ssrc);
-            }
             dataSource.connect();
             sendStream.start();
             if (!USE_SIMPLE_PROCESSOR) {
@@ -351,6 +344,13 @@ public class VideoDevice implements ControllerListener,
                 processor.start(dataSource, 0);
             }
             deviceStarted = true;
+            if (listener != null) {
+                long ssrc = sendStream.getSSRC();
+                if (ssrc < 0) {
+                    ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
+                }
+                listener.addLocalVideo(device.getName(), cloneEffect, ssrc);
+            }
         } else if (!prepared) {
             throw new IOException("Device not prepared!");
         }

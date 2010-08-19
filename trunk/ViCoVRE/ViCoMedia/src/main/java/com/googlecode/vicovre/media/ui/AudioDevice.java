@@ -73,6 +73,7 @@ import ag3.interfaces.types.ClientProfile;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.effect.CloneEffect;
+import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
 
 /**
@@ -82,9 +83,13 @@ import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
  */
 public class AudioDevice implements ControllerListener {
 
+    private static final boolean USE_SIMPLE_PROCESSOR = true;
+
     private RTPManager sendManager = null;
 
-    private Processor processor = null;
+    private SimpleProcessor processor = null;
+
+    private Processor sendProcessor = null;
 
     private SendStream sendStream = null;
 
@@ -202,65 +207,48 @@ public class AudioDevice implements ControllerListener {
         PushBufferStream[] datastreams =
             ((PushBufferDataSource) dataSource).getStreams();
 
-        // Configure the processor
-        processor = javax.media.Manager.createProcessor(
-                dataSource);
-        processor.addControllerListener(this);
-        processor.configure();
-        processorFailed = false;
-        while (!processorFailed
-                && (processor.getState() < Processor.Configured)) {
-            synchronized (stateLock) {
-                try {
-                    stateLock.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
+        if (USE_SIMPLE_PROCESSOR) {
+            try {
+                processor = new SimpleProcessor(datastreams[0].getFormat(),
+                        audioFormat);
+
+                processor.printChain(System.err);
+
+                System.err.println();
+                System.err.println("Adding clone effect");
+                cloneEffect = new CloneEffect();
+                if (!processor.insertEffect(cloneEffect)) {
+                    System.err.println("Couldn't clone");
                 }
-            }
-        }
-        if (processorFailed) {
-            throw new CannotRealizeException(
-                    "Could not configure processor for audio");
-        }
 
-        // Set to send in RTP
-        sendManager = RTPManager.newInstance();
-        sendManager.addFormat(audioFormat, audioRtpType);
-        sendManager.initialize(rtpConnector);
-        ContentDescriptor cd = new ContentDescriptor(ContentDescriptor.RAW_RTP);
-        processor.setContentDescriptor(cd);
+                processor.printChain(System.err);
 
-        try {
-            // Set the format of the transmission to the selected value
-            TrackControl[] tracks = processor.getTrackControls();
+                sendManager = RTPManager.newInstance();
+                sendManager.addFormat(audioFormat, audioRtpType);
+                sendManager.initialize(rtpConnector);
 
-            for (int j = 0; j < tracks.length; j++) {
-                if (tracks[j].isEnabled()) {
-
-                    // set codec chain -- add the change effect
-                    if (datastreams[0].getFormat()
-                            instanceof AudioFormat) {
-                        if (tracks[j].setFormat(audioFormat) == null) {
-                            throw new CannotRealizeException(
-                                    "Format " + audioFormat
-                                    + " unsupported by audio device");
-                        }
-                        try {
-                            cloneEffect = new CloneEffect();
-                            tracks[j].setCodecChain(new Codec[]{
-                                    cloneEffect});
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                DataSource data = processor.getDataOutput(dataSource, 0);
+                sendStream = sendManager.createSendStream(data, 0);
+                sendStream.setSourceDescription(Misc.createSourceDescription(
+                        profile, name, tool));
+                dataSource.disconnect();
+                prepared = true;
+            } finally {
+                if (!prepared) {
+                    if (sendProcessor != null) {
+                        sendProcessor.close();
                     }
                 }
             }
-
-            // Realise the processor
-            processor.realize();
+        } else {
+            // Configure the processor
+            sendProcessor = javax.media.Manager.createProcessor(
+                    dataSource);
+            sendProcessor.addControllerListener(this);
+            sendProcessor.configure();
             processorFailed = false;
             while (!processorFailed
-                    && (processor.getState() < Processor.Realized)) {
+                    && (sendProcessor.getState() < Processor.Configured)) {
                 synchronized (stateLock) {
                     try {
                         stateLock.wait();
@@ -271,21 +259,73 @@ public class AudioDevice implements ControllerListener {
             }
             if (processorFailed) {
                 throw new CannotRealizeException(
-                        "Could not realize processor for audio");
+                        "Could not configure processor for audio");
             }
 
-            DataSource data = processor.getDataOutput();
-            sendStream = sendManager.createSendStream(data, 0);
-            sendStream.setSourceDescription(Misc.createSourceDescription(
-                    profile, name, tool));
-            dataSource.disconnect();
-            prepared = true;
-        } finally {
-            if (!prepared) {
-                try {
-                    processor.close();
-                } catch (Throwable t) {
-                    // Do Nothing
+            // Set to send in RTP
+            sendManager = RTPManager.newInstance();
+            sendManager.addFormat(audioFormat, audioRtpType);
+            sendManager.initialize(rtpConnector);
+            ContentDescriptor cd = new ContentDescriptor(ContentDescriptor.RAW_RTP);
+            sendProcessor.setContentDescriptor(cd);
+
+            try {
+                // Set the format of the transmission to the selected value
+                TrackControl[] tracks = sendProcessor.getTrackControls();
+
+                for (int j = 0; j < tracks.length; j++) {
+                    if (tracks[j].isEnabled()) {
+
+                        // set codec chain -- add the change effect
+                        if (datastreams[0].getFormat()
+                                instanceof AudioFormat) {
+                            if (tracks[j].setFormat(audioFormat) == null) {
+                                throw new CannotRealizeException(
+                                        "Format " + audioFormat
+                                        + " unsupported by audio device");
+                            }
+                            try {
+                                cloneEffect = new CloneEffect();
+                                tracks[j].setCodecChain(new Codec[]{
+                                        cloneEffect});
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+
+                // Realise the processor
+                sendProcessor.realize();
+                processorFailed = false;
+                while (!processorFailed
+                        && (sendProcessor.getState() < Processor.Realized)) {
+                    synchronized (stateLock) {
+                        try {
+                            stateLock.wait();
+                        } catch (InterruptedException e) {
+                            // Do Nothing
+                        }
+                    }
+                }
+                if (processorFailed) {
+                    throw new CannotRealizeException(
+                            "Could not realize processor for audio");
+                }
+
+                DataSource data = sendProcessor.getDataOutput();
+                sendStream = sendManager.createSendStream(data, 0);
+                sendStream.setSourceDescription(Misc.createSourceDescription(
+                        profile, name, tool));
+                dataSource.disconnect();
+                prepared = true;
+            } finally {
+                if (!prepared) {
+                    try {
+                        sendProcessor.close();
+                    } catch (Throwable t) {
+                        // Do Nothing
+                    }
                 }
             }
         }
@@ -383,13 +423,17 @@ public class AudioDevice implements ControllerListener {
             ssrc = ssrc + (((long) Integer.MAX_VALUE + 1) * 2);
         }
         if (!started) {
+            dataSource.connect();
+            sendStream.start();
+            if (!USE_SIMPLE_PROCESSOR) {
+                sendProcessor.start();
+            } else {
+                processor.start(dataSource, 0);
+            }
             if (listener != null) {
                 listener.addLocalAudio(name + " - " + line, cloneEffect,
                     volumeControls.get(line), ssrc);
             }
-            dataSource.connect();
-            sendStream.start();
-            processor.start();
             started = true;
         } else {
             if (listener != null) {
@@ -409,7 +453,11 @@ public class AudioDevice implements ControllerListener {
             if (listener != null) {
                 listener.removeLocalAudio(cloneEffect);
             }
-            processor.stop();
+            if (!USE_SIMPLE_PROCESSOR) {
+                sendProcessor.stop();
+            } else {
+                processor.stop();
+            }
             try {
                 sendStream.stop();
             } catch (IOException e) {

@@ -36,6 +36,8 @@ import java.util.Vector;
 
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 
 
@@ -43,7 +45,10 @@ public class AudioSelectionPage extends WizardPage {
 
     private Vector<CheckBox> streamBoxes = new Vector<CheckBox>();
 
-    public AudioSelectionPage(JSONStream[] streams) {
+    private String baseUrl = null;
+
+    public AudioSelectionPage(String baseUrl, JSONStream[] streams) {
+        this.baseUrl = baseUrl;
         add(new Label(
             "Select the audio streams that you would like to include:"));
         for (JSONStream stream : streams) {
@@ -83,14 +88,21 @@ public class AudioSelectionPage extends WizardPage {
     }
 
     public int next(Wizard wizard) {
+        String format = (String) wizard.getAttribute("format");
         Vector<String> audioStreams = new Vector<String>();
         for (CheckBox box : streamBoxes) {
             if (box.getValue()) {
                 audioStreams.add(box.getFormValue());
             }
         }
+        if (audioStreams.isEmpty() && !format.startsWith("video")) {
+            MessagePopup error = new MessagePopup(
+                    "You must select at least one audio stream",
+                    null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+            error.center();
+            return -1;
+        }
         wizard.setAttribute("audioStreams", audioStreams);
-        String format = (String) wizard.getAttribute("format");
         if (format.startsWith("video")) {
             return Application.DOWNLOAD_VIDEO;
         }
