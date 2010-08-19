@@ -102,7 +102,7 @@ public class VideoWebServer extends Thread {
      *
      * @throws IOException
      */
-    public VideoWebServer(int port) throws IOException {
+    public VideoWebServer(int port) {
 
         // Load the offline image
         BufferedInputStream input = new BufferedInputStream(getClass()
@@ -126,12 +126,6 @@ public class VideoWebServer extends Thread {
             System.arraycopy(tmpData, 0, offlineData, 0, bufPos);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        serverSocket = new ServerSocket(port);
-        for (int i = 0; i < threads; i++) {
-            threadPool[i] = new VideoWebHandler(this);
-            threadPool[i].start();
         }
     }
 
@@ -176,19 +170,21 @@ public class VideoWebServer extends Thread {
      */
     public void run() {
 
-        System.err.println("Starting Web Server on Port "
-                + serverSocket.getLocalPort());
-
         // Continue serving clients until stopped
         while (!done) {
             try {
                 synchronized (pauseSync) {
-                    while (paused) {
+                    boolean wasPaused = paused;
+                    while (paused || (serverSocket == null)) {
                         try {
                             pauseSync.wait(1000);
                         } catch (InterruptedException e) {
                             // Do Nothing
                         }
+                    }
+                    if (wasPaused) {
+                        System.err.println("Starting Web Server on Port "
+                            + serverSocket.getLocalPort());
                     }
                 }
                 Socket client = serverSocket.accept();
@@ -243,7 +239,7 @@ public class VideoWebServer extends Thread {
      * @throws IOException
      */
     public void setPort(int port) throws IOException {
-        if (port == serverSocket.getLocalPort()) {
+        if ((serverSocket != null) && (port == serverSocket.getLocalPort())) {
             return;
         }
         pause(true);
@@ -260,17 +256,27 @@ public class VideoWebServer extends Thread {
             throw e;
         }
 
-        try {
-            oldServerSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (oldServerSocket != null) {
+            try {
+                oldServerSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            for (int i = 0; i < threads; i++) {
+                threadPool[i] = new VideoWebHandler(this);
+                threadPool[i].start();
+            }
         }
 
         pause(false);
     }
 
     public int getPort() {
-        return serverSocket.getLocalPort();
+        if (serverSocket != null) {
+            return serverSocket.getLocalPort();
+        }
+        return 0;
     }
 
     private void indicateNewStream() {
