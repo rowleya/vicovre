@@ -36,14 +36,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
 
+import javax.media.ResourceUnavailableException;
+import javax.media.format.UnsupportedFormatException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
+import org.xml.sax.SAXException;
 
+import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
@@ -57,6 +63,16 @@ import com.sun.jersey.api.json.JSONMarshaller;
 
 public class DownloadRecordingController implements Controller {
 
+    private static final HashMap<String, String> FORMAT_EXT_MAP =
+        new HashMap<String, String>();
+    static {
+        FORMAT_EXT_MAP.put("audio/mpeg", "mp3");
+        FORMAT_EXT_MAP.put("audio/x-ms-wma", "wma");
+        FORMAT_EXT_MAP.put("video/x-flv", "flv");
+        FORMAT_EXT_MAP.put("video/x-ms-wmv", "wmv");
+        FORMAT_EXT_MAP.put("video/mp4", "mp4");
+    }
+
     private RecordingDatabase database = null;
 
     private LayoutRepository layoutRepository = null;
@@ -68,7 +84,10 @@ public class DownloadRecordingController implements Controller {
     public DownloadRecordingController(RecordingDatabase database,
             LayoutRepository layoutRepository,
             EditableLayoutRepository editableLayoutRepository,
-            RtpTypeRepository typeRepository) {
+            RtpTypeRepository typeRepository) throws IOException, SAXException {
+        if (!Misc.isCodecsConfigured()) {
+            Misc.configureCodecs("/knownCodecs.xml");
+        }
         this.database = database;
         this.layoutRepository = layoutRepository;
         this.editableLayoutRepository = editableLayoutRepository;
@@ -77,15 +96,16 @@ public class DownloadRecordingController implements Controller {
 
     public void doDownload(String format, Recording recording,
             HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws IOException, UnsupportedFormatException,
+            ResourceUnavailableException {
         if (format.equals("application/x-agvcr")) {
             OutputStream output = response.getOutputStream();
             String[] streams = request.getParameterValues("stream");
             response.setContentType("application/x-agvcr");
             String name = recording.getId();
             if ((recording.getMetadata() != null)
-                    && (recording.getMetadata().getName() != null)) {
-                name = recording.getMetadata().getName();
+                    && (recording.getMetadata().getPrimaryValue() != null)) {
+                name = recording.getMetadata().getPrimaryValue();
             }
             response.setHeader("Content-Disposition", "inline; filename="
                     + name + ".agvcr" + ";");
@@ -94,7 +114,61 @@ public class DownloadRecordingController implements Controller {
                     recording, streams, output);
             writer.write();
         } else if (format.startsWith("audio")) {
+            String[] audioStreams = request.getParameterValues("audio");
 
+            String offsetString = request.getParameter("offset");
+            if (offsetString == null) {
+                offsetString = "0";
+            }
+            long offset = Long.parseLong(offsetString);
+
+            long minStart = Long.MAX_VALUE;
+            long maxEnd = 0;
+            for (int i = 0; i < audioStreams.length; i++) {
+                Stream stream = recording.getStream(audioStreams[i]);
+                minStart = Math.min(minStart, stream.getStartTime().getTime());
+                maxEnd = Math.max(maxEnd, stream.getEndTime().getTime());
+            }
+            long maxDuration = maxEnd - minStart;
+            if (offset > maxDuration) {
+                offset = maxDuration;
+            }
+            maxDuration -= offset;
+
+            String durationString = request.getParameter("duration");
+            if (durationString == null) {
+                durationString = String.valueOf(maxDuration);
+            }
+            long duration = Long.parseLong(durationString);
+            if (duration > maxDuration) {
+                duration = maxDuration;
+            }
+
+            String genSpeed = request.getParameter("genSpeed");
+            if (genSpeed == null) {
+                genSpeed = "0";
+            }
+
+            String[] audioFilenames = new String[audioStreams.length];
+            for (int i = 0; i < audioStreams.length; i++) {
+                File file = new File(recording.getDirectory(), audioStreams[i]);
+                audioFilenames[i] = file.getAbsolutePath();
+            }
+            VideoExtractor extractor = new VideoExtractor(format, null, null,
+                    audioFilenames, null, 0, typeRepository);
+            extractor.setGenerationSpeed(Double.parseDouble(genSpeed));
+
+            response.setContentType(format);
+            String name = recording.getId();
+            if ((recording.getMetadata() != null)
+                    && (recording.getMetadata().getPrimaryValue() != null)) {
+                name = recording.getMetadata().getPrimaryValue();
+            }
+            response.setHeader("Content-Disposition", "inline; filename="
+                    + name + "." + FORMAT_EXT_MAP.get(format) + ";");
+            response.flushBuffer();
+            extractor.transferToStream(response.getOutputStream(), 0, offset,
+                    duration, null);
         } else if (format.startsWith("video")) {
 
         }

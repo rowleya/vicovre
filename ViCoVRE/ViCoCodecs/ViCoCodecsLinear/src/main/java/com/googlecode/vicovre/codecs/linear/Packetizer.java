@@ -48,7 +48,7 @@ public class Packetizer implements Codec {
 
     private static final AudioFormat OUT_FORMAT = new AudioFormat(
             AudioFormat.LINEAR + "/RTP", Format.NOT_SPECIFIED, 16, 1,
-            AudioFormat.LITTLE_ENDIAN, AudioFormat.SIGNED, Format.NOT_SPECIFIED,
+            -1, AudioFormat.SIGNED, Format.NOT_SPECIFIED,
             Format.NOT_SPECIFIED, Format.byteArray);
 
     private double duration = DEFAULT_DURATION;

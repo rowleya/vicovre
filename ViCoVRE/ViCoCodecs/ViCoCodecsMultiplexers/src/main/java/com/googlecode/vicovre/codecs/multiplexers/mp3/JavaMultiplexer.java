@@ -46,7 +46,7 @@ public class JavaMultiplexer extends BasicMultiplexer {
         super(new ContentDescriptor[]{new ContentDescriptor("audio/mpeg")},
             new Format[]{new VideoFormat(null),
                          new AudioFormat(AudioFormat.MPEGLAYER3)},
-            1);
+            2);
     }
 
     public int process(Buffer buf, int track) {

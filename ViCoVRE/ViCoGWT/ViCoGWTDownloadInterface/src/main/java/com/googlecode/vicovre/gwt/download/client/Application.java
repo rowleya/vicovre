@@ -58,9 +58,9 @@ public class Application implements EntryPoint {
 
     protected static final int STREAM_SELECTION = 4;
 
-    protected static final int DOWNLOAD_VIDEO = 5;
+    protected static final int DOWNLOAD_AUDIO = 5;
 
-    protected static final int DOWNLOAD_AUDIO = 6;
+    protected static final int DOWNLOAD_VIDEO = 6;
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
@@ -142,9 +142,12 @@ public class Application implements EntryPoint {
                 getLayouts("customLayouts"), url), LAYOUT_SELECTION);
         wizard.addPage(new VideoStreamSelectionPage(baseUrl, folder,
                 recordingId, streams), VIDEO_SELECTION);
-        wizard.addPage(new AudioSelectionPage(streams), AUDIO_SELECTION);
+        wizard.addPage(new AudioSelectionPage(baseUrl, streams),
+                AUDIO_SELECTION);
         wizard.addPage(new StreamsSelectionPage(streams,
                 baseUrl, folder, recordingId), STREAM_SELECTION);
+        wizard.addPage(new DownloadAudioPage(baseUrl, folder, recordingId,
+                streams), DOWNLOAD_AUDIO);
         wizard.selectPage(FORMAT_SELECTION);
         wizard.center();
     }

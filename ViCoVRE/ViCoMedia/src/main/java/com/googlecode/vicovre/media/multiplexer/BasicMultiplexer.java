@@ -155,6 +155,9 @@ public abstract class BasicMultiplexer implements Multiplexer,
     }
 
     public int process(Buffer buf, int trk) {
+        if (trk >= noTracks) {
+            return BUFFER_PROCESSED_OK;
+        }
         synchronized (tracksSync) {
             if (tracksToSee > 0) {
                 bufferedBuffers.addLast((Buffer) buf.clone());
@@ -198,7 +201,9 @@ public abstract class BasicMultiplexer implements Multiplexer,
     public Format setInputFormat(Format format, int track) {
         for (int i = 0; i < supportedFormats.length; i++) {
             if (format.matches(supportedFormats[i])) {
-                trackFormats[track] = format;
+                if (track < noTracks) {
+                    trackFormats[track] = format;
+                }
                 return format;
             }
         }

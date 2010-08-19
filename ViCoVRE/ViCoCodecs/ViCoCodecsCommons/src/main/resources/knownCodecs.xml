@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <codecs>
     <demultiplexer>
-        <class>com.googlecode.vicovre.codecs.ffmpeg.demuxer.FFMPEGDemuxer</class>
-    </demultiplexer>
-    <demultiplexer>
         <class>com.sun.media.parser.RawBufferParser</class>
     </demultiplexer>
     <demultiplexer>
@@ -14,6 +11,9 @@
     </demultiplexer>
     <demultiplexer>
         <class>com.sun.media.parser.RawPullStreamParser</class>
+    </demultiplexer>
+    <demultiplexer>
+        <class>com.googlecode.vicovre.codecs.ffmpeg.demuxer.FFMPEGDemuxer</class>
     </demultiplexer>
     <multiplexer>
         <class>com.googlecode.vicovre.codecs.multiplexers.flv.JavaMultiplexer</class>

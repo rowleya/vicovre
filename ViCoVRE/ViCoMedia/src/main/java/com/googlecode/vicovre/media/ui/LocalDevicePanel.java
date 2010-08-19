@@ -122,7 +122,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
     private static final int DEVICE_BOX_HEIGHT = 90;
 
     // The height of an audio device line
-    private static final int AUDIO_DEVICE_HEIGHT = 20;
+    private static final int DEVICE_HEIGHT = 20;
 
     private JPanel videoDeviceBox = new JPanel();
 
@@ -219,9 +219,9 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         JPanel videoPanel = new JPanel();
         videoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.X_AXIS));
-        videoPanel.setMaximumSize(new Dimension(DEVICE_BOX_WIDTH,
+        videoPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE,
                 DEVICE_BOX_HEIGHT));
-        videoPanel.setPreferredSize(new Dimension(DEVICE_BOX_WIDTH,
+        videoPanel.setPreferredSize(new Dimension(Integer.MAX_VALUE,
                 DEVICE_BOX_HEIGHT));
         previewPanel.setLayout(null);
         Dimension previewSize = new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT);
@@ -239,9 +239,9 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         JScrollPane audioScroll = new JScrollPane(audioDeviceBox);
         audioScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         audioScroll.setMaximumSize(new Dimension(
-                DEVICE_BOX_WIDTH + PREVIEW_WIDTH, DEVICE_BOX_HEIGHT));
+                Integer.MAX_VALUE, DEVICE_BOX_HEIGHT));
         audioScroll.setPreferredSize(new Dimension(
-                DEVICE_BOX_WIDTH + PREVIEW_WIDTH, DEVICE_BOX_HEIGHT));
+                Integer.MAX_VALUE, DEVICE_BOX_HEIGHT));
         add(new JLabel("Select audio devices to use:"));
         add(audioScroll);
 
@@ -324,25 +324,27 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
                 JComboBox formatBox = videoFormat.get(videoDevs[i]);
-                formatBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
                 formatBox.setEditable(false);
                 formatBox.setSelectedIndex(0);
+                formatBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
                 JButton preview = videoPreview.get(videoDevs[i]);
                 preview.addActionListener(this);
                 devicePanel.add(checkBox);
                 devicePanel.add(Box.createHorizontalGlue());
+                devicePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                        DEVICE_HEIGHT));
                 if (allowTypeSelection) {
                     devicePanel.add(formatBox);
                 }
                 devicePanel.add(preview);
                 videoDeviceBox.add(devicePanel);
             } catch (Exception e) {
-                e.printStackTrace();
                 JPanel devicePanel = new JPanel();
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
                 JLabel errorLabel = new JLabel(" Error starting device "
                         + videoDevs[i].getDevice().getName());
+                errorLabel.setToolTipText("Error: " + e.getMessage());
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 devicePanel.add(errorLabel);
@@ -363,17 +365,21 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                     inputBox.addItem(line);
                 }
                 inputBox.addItemListener(this);
+                inputBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
+                inputBox.setMinimumSize(new Dimension(100, Integer.MAX_VALUE));
 
                 JCheckBox checkBox = audioSelected.get(device);
                 JComboBox formatBox = audioFormat.get(device);
                 formatBox.setEditable(false);
                 formatBox.setSelectedIndex(0);
+                formatBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
+                formatBox.setMinimumSize(new Dimension(100, Integer.MAX_VALUE));
 
                 JPanel devicePanel = new JPanel();
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
                 devicePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE,
-                        AUDIO_DEVICE_HEIGHT));
+                        DEVICE_HEIGHT));
                 devicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 devicePanel.add(checkBox);
                 devicePanel.add(Box.createHorizontalGlue());
@@ -384,12 +390,15 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 audioDeviceBox.add(devicePanel);
 
             } catch (Exception e) {
-                e.printStackTrace();
                 JPanel devicePanel = new JPanel();
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
+                devicePanel.setMaximumSize(new Dimension(481,
+                        DEVICE_HEIGHT));
+                devicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 JLabel errorLabel = new JLabel(" Error starting device "
-                        + device);
+                        + device.getName());
+                errorLabel.setToolTipText("Error: " + e.getMessage());
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                 devicePanel.add(errorLabel);

@@ -71,7 +71,9 @@ public interface RecordingConstants {
     /**
      * The name of the recording metadata
      */
-    String METADATA = ".rec_metadata";
+    String METADATA = ".rec_metadata2";
+
+    String OLD_METADATA = ".rec_metadata";
 
     /**
      * The name of the recording lifetime

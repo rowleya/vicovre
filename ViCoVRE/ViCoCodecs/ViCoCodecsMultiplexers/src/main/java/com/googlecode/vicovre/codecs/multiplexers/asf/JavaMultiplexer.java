@@ -55,7 +55,11 @@ import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
 public class JavaMultiplexer extends BasicMultiplexer
         implements SetDurationControl {
 
-    public static final String CONTENT_TYPE = "video/x-ms-asf";
+    private static final ContentDescriptor[] CONTENT_TYPES =
+        new ContentDescriptor[]{
+            new ContentDescriptor("video/x-ms-asf"),
+            new ContentDescriptor("video/x-ms-wmv"),
+            new ContentDescriptor("audio/x-ms-wma")};
 
     private static final long INDEX_TIME_INTERVAL = 1000;
 
@@ -233,7 +237,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     private boolean lastRead = false;
 
     public JavaMultiplexer() {
-        super(new ContentDescriptor[]{new ContentDescriptor(CONTENT_TYPE)},
+        super(CONTENT_TYPES,
             new Format[]{
                 new VideoFormat("msmpeg4"),
                 new AudioFormat(AudioFormat.MPEGLAYER3)
