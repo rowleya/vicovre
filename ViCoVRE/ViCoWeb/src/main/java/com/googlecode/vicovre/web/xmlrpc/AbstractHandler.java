@@ -67,42 +67,57 @@ public abstract class AbstractHandler {
         return folder;
     }
 
-    public static void fillIn(Object object,
+    public static RecordingMetadata getMetadata(
             Map<String, Object> details) throws XmlRpcException {
-        Class<?> cls = object.getClass();
-        Method[] methods = cls.getMethods();
-        for (Method method : methods) {
-            if (method.getName().startsWith("get")
-                    && method.getParameterTypes().length == 0) {
-                String field = method.getName().substring("get".length());
-                try {
-                    Method setMethod = cls.getMethod("set" + field,
-                            method.getReturnType());
-                    if (setMethod != null) {
-                        field = field.substring(0, 1).toLowerCase()
-                            + field.substring(1);
-                        Object value = details.get(field);
-                        if (value != null) {
-                            try {
-                                setMethod.invoke(object, value);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                throw new XmlRpcException(
-                                        "Error setting metadata value " + field);
-                            }
-                        }
-                    }
-                } catch (NoSuchMethodException e) {
-                    // Do Nothing
+        String primaryKey = (String) details.get("primaryKey");
+        if (primaryKey == null) {
+            throw new XmlRpcException("Missing metadata primary key");
+        }
+        String primaryValue = (String) details.get(primaryKey);
+        if (primaryValue == null) {
+            throw new XmlRpcException("Missing metadata primary value");
+        }
+
+        RecordingMetadata metadata = new RecordingMetadata(primaryKey,
+                primaryValue);
+        for (String key : details.keySet()) {
+            if (!key.equals("primaryKey") && !key.equals(primaryKey)
+                    && !key.endsWith("Editable") && !key.endsWith("Visible")
+                    && !key.endsWith("Multiline")) {
+                String value = (String) details.get(key);
+                boolean visible = true;
+                String visibleString = (String) details.get(key + "Visible");
+                if (visibleString != null) {
+                    visible = visibleString.equals("true");
                 }
+                boolean editable = true;
+                String editableString = (String) details.get(key + "Editable");
+                if (editableString != null) {
+                    editable = editableString.equals("true");
+                }
+                boolean multiline = false;
+                String multilineString = (String) details.get(
+                        key + "Multiline");
+                if (multilineString != null) {
+                    multiline = multilineString.equals("true");
+                }
+                metadata.setValue(key, value, visible, editable,
+                        multiline);
             }
         }
+        return metadata;
     }
 
-    public static Map<String, Object> getDetails(RecordingMetadata metadata)
-            throws XmlRpcException {
-        Map<String, Object> details = getDetails((Object) metadata);
-        details.put("descriptionIsEditable", metadata.isDescriptionEditable());
+    public static Map<String, Object> getDetails(RecordingMetadata metadata) {
+        Map<String, Object> details = new HashMap<String, Object>();
+        details.put("primaryKey", metadata.getPrimaryKey());
+        for (String key : metadata.getKeys()) {
+            details.put(key, metadata.getValue(key));
+            if (!key.equals(metadata.getPrimaryKey())) {
+                details.put(key + "Visible", metadata.isVisible(key));
+                details.put(key + "Editable", metadata.isEditable(key));
+            }
+        }
         return details;
     }
 

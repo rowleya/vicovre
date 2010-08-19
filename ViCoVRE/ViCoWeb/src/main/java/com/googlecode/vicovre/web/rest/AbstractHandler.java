@@ -34,7 +34,6 @@ package com.googlecode.vicovre.web.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -87,35 +86,45 @@ public abstract class AbstractHandler {
         return folder;
     }
 
-    protected void fillIn(RecordingMetadata metadata,
+    protected RecordingMetadata getMetadata(
             MultivaluedMap<String, String> details) throws IOException {
-        Class<?> cls = metadata.getClass();
-        Method[] methods = cls.getMethods();
-        for (Method method : methods) {
-            if (method.getName().startsWith("get")
-                    && method.getParameterTypes().length == 0) {
-                String field = method.getName().substring("get".length());
-                try {
-                    Method setMethod = cls.getMethod("set" + field,
-                            String.class);
-                    if (setMethod != null) {
-                        field = field.substring(0, 1).toLowerCase()
-                            + field.substring(1);
-                        String value = details.getFirst("metadata_" + field);
-                        if (value != null) {
-                            try {
-                                setMethod.invoke(metadata, value);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                throw new IOException(
-                                    "Error setting metadata value " + field);
-                            }
-                        }
-                    }
-                } catch (NoSuchMethodException e) {
-                    // Do Nothing
+        String primaryKey = details.getFirst("metadataPrimaryKey");
+        if (primaryKey == null) {
+            throw new IOException("Missing metadata primary key");
+        }
+        String primaryValue = details.getFirst("metadata" + primaryKey);
+        if (primaryValue == null) {
+            throw new IOException("Missing metadata primary value");
+        }
+
+        RecordingMetadata metadata = new RecordingMetadata(primaryKey,
+                primaryValue);
+        for (String key : details.keySet()) {
+            if (key.startsWith("metadata") && !key.equals("metadataPrimaryKey")
+                    && !key.equals("metadata" + primaryKey)
+                    && !key.endsWith("Editable") && !key.endsWith("Visible")
+                    && !key.endsWith("Multiline")) {
+                String actualKey = key.substring("metadata".length());
+                String value = details.getFirst(key);
+                boolean visible = true;
+                String visibleString = details.getFirst(key + "Visible");
+                if (visibleString != null) {
+                    visible = visibleString.equals("true");
                 }
+                boolean editable = true;
+                String editableString = details.getFirst(key + "Editable");
+                if (editableString != null) {
+                    editable = editableString.equals("true");
+                }
+                boolean multiline = false;
+                String multilineString = details.getFirst(key + "Multiline");
+                if (multilineString != null) {
+                    multiline = multilineString.equals("true");
+                }
+                metadata.setValue(actualKey, value, visible, editable,
+                        multiline);
             }
         }
+        return metadata;
     }
 }

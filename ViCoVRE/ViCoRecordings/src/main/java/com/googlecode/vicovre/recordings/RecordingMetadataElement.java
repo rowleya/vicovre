@@ -30,78 +30,81 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.formats;
+package com.googlecode.vicovre.recordings;
 
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Metadata for MAGIC lectures
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class MAGICMetadata extends RecordingMetadata {
+@XmlRootElement(name="key")
+public class RecordingMetadataElement {
 
-    private String url = null;
+    private String name = null;
 
-    private String type = null;
+    private String value = null;
 
-    private String location = null;
+    private boolean visible = true;
 
-    /**
-     *
-     * @see com.googlecode.vicovre.recordings.RecordingMetadata#
-     *     isDescriptionEditable()
-     */
-    public boolean isDescriptionEditable() {
-        return false;
+    private boolean editable = true;
+
+    private boolean multiline = false;
+
+    public RecordingMetadataElement() {
+        // Does Nothing
     }
 
-    /**
-     * Returns the url
-     * @return the url
-     */
-    public String getUrl() {
-        return url;
+    public RecordingMetadataElement(String name, String value) {
+        this.name = name;
+        this.value = value;
     }
 
-    /**
-     * Sets the url
-     * @param url the url to set
-     */
-    public void setUrl(String url) {
-        this.url = url;
+    public RecordingMetadataElement(String name, String value, boolean visible,
+            boolean editable, boolean multiline) {
+        this(name, value);
+        this.visible = visible;
+        this.editable = editable;
+        this.multiline = multiline;
     }
 
-    /**
-     * Returns the type
-     * @return the type
-     */
-    public String getType() {
-        return type;
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
-    /**
-     * Sets the type
-     * @param type the type to set
-     */
-    public void setType(String type) {
-        this.type = type;
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 
-    /**
-     * Returns the location
-     * @return the location
-     */
-    public String getLocation() {
-        return location;
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 
-    /**
-     * Sets the location
-     * @param location the location to set
-     */
-    public void setLocation(String location) {
-        this.location = location;
+    public void setMultiline(boolean multiline) {
+        this.multiline = multiline;
     }
 
+    @XmlElement
+    public String getName() {
+        return name;
+    }
+
+    @XmlElement
+    public String getValue() {
+        return value;
+    }
+
+    @XmlElement
+    public boolean isEditable() {
+        return editable;
+    }
+
+    @XmlElement
+    public boolean isVisible() {
+        return visible;
+    }
+
+    @XmlElement
+    public boolean isMultiline() {
+        return multiline;
+    }
 }

@@ -32,6 +32,13 @@
 
 package com.googlecode.vicovre.recordings;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Vector;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -42,57 +49,163 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @version 1.0
  */
 @XmlRootElement(name="metadata")
+@XmlAccessorType(XmlAccessType.NONE)
 public class RecordingMetadata implements Comparable<RecordingMetadata> {
 
-    private String name = null;
+    private String primaryKey = null;
 
-    private String description = null;
+    private Vector<String> keys = new Vector<String>();
 
-    /**
-     * Determines if the description of the recording is editable
-     * @return True if editable, false if not
-     */
+    private HashMap<String, RecordingMetadataElement> data =
+        new HashMap<String, RecordingMetadataElement>();
+
+    public RecordingMetadata(String primaryKey, String primaryValue) {
+        this.primaryKey = primaryKey;
+        data.put(primaryKey, new RecordingMetadataElement(primaryKey,
+                primaryValue, true, true, false));
+        keys.add(primaryKey);
+    }
+
     @XmlElement
-    public boolean isDescriptionEditable() {
-        return true;
+    public String getPrimaryKey() {
+        return primaryKey;
     }
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    @XmlElement
-    public String getName() {
-        return name;
+    public String getPrimaryValue() {
+        return getValue(primaryKey);
     }
 
-    /**
-     * Sets the name
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
+    public List<String> getKeys() {
+        return new Vector<String>(keys);
     }
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    @XmlElement
-    public String getDescription() {
-        return description;
+    @XmlElement(name="key")
+    public List<RecordingMetadataElement> getElements() {
+        Vector<RecordingMetadataElement> elements =
+            new Vector<RecordingMetadataElement>();
+        for (String key : keys) {
+            elements.add(data.get(key));
+        }
+        return elements;
     }
 
-    /**
-     * Sets the description
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
+    private String getActualValue(String key) {
+        RecordingMetadataElement element = data.get(key);
+        if (element != null) {
+            return element.getValue();
+        }
+        return null;
+    }
+
+    public static String getDisplayName(String key) {
+        String displayName = "";
+        displayName += Character.toUpperCase(key.charAt(0));
+        for (int i = 1; i < key.length(); i++) {
+            char c = key.charAt(i);
+            if (Character.isUpperCase(c)) {
+                displayName += " ";
+                displayName += c;
+            } else {
+                displayName += c;
+            }
+        }
+        return displayName;
+    }
+
+    public static String getKey(String displayName) {
+        String key = "";
+        key += Character.toLowerCase(displayName.charAt(0));
+        for (int i = 1; i < displayName.length(); i++) {
+            char c = displayName.charAt(i);
+            if (Character.isWhitespace(c)) {
+                i++;
+                key += Character.toUpperCase(displayName.charAt(i));
+            } else {
+                key += c;
+            }
+        }
+        return key;
+    }
+
+    public String getValue(String key) {
+        String value = getActualValue(key);
+        if (value != null) {
+            for (String otherKey : data.keySet()) {
+                if (!key.equals(otherKey)) {
+                    String otherValue = getActualValue(key);
+                    if (otherValue != null) {
+                        value.replace("${" + otherKey + "}", otherValue);
+                    }
+                }
+            }
+        }
+        return value;
+    }
+
+    public boolean isVisible(String key) {
+        return data.get(key).isVisible();
+    }
+
+    public boolean isEditable(String key) {
+        return data.get(key).isEditable();
+    }
+
+    public boolean isMultiline(String key) {
+        return data.get(key).isMultiline();
+    }
+
+    public void setValue(String key, String value) {
+        RecordingMetadataElement element = data.get(key);
+        if (element == null) {
+            element = new RecordingMetadataElement(key, value);
+            data.put(key, element);
+            keys.add(key);
+        } else if (element.isEditable()) {
+            element.setValue(value);
+        }
+    }
+
+    public void setValueVisible(String key, boolean visible) {
+        RecordingMetadataElement element = data.get(key);
+        if (element == null) {
+            element = new RecordingMetadataElement(key, "");
+            data.put(key, element);
+            keys.add(key);
+        }
+        element.setVisible(visible);
+    }
+
+    public void setValueEditable(String key, boolean editable) {
+        RecordingMetadataElement element = data.get(key);
+        if (element == null) {
+            element = new RecordingMetadataElement(key, "");
+            data.put(key, element);
+            keys.add(key);
+        }
+        element.setEditable(editable);
+    }
+
+    public void setValueMultiline(String key, boolean multiline) {
+        RecordingMetadataElement element = data.get(key);
+        if (element == null) {
+            element = new RecordingMetadataElement(key, "");
+            data.put(key, element);
+            keys.add(key);
+        }
+        element.setMultiline(multiline);
+    }
+
+    public void setValue(String key, String value, boolean visible,
+            boolean editable, boolean multiline) {
+        data.put(key, new RecordingMetadataElement(key, value, visible,
+                editable, multiline));
+        if (!keys.contains(key)) {
+            keys.add(key);
+        }
     }
 
     public int compareTo(RecordingMetadata m) {
-        return name.compareTo(m.name);
+        return getValue(primaryKey).compareTo(m.getValue(m.primaryKey));
     }
 
 }

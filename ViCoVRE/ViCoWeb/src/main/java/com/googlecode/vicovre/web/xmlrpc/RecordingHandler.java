@@ -140,7 +140,8 @@ public class RecordingHandler extends AbstractHandler {
         if (recording == null) {
             throw new XmlRpcException("Recording " + id + " not found");
         }
-        fillIn(recording.getMetadata(), details);
+        recording.setMetadata(getMetadata((Map<String, Object>)
+                details.get("metadata")));
         try {
             getDatabase().updateRecordingMetadata(recording);
         } catch (IOException e) {

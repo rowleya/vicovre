@@ -36,8 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -55,36 +55,59 @@ public class RecordingMetadataReader {
     public static RecordingMetadata readMetadata(InputStream input)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
+        Node primaryKeyNode = XmlIo.readNode(doc, "primaryKey");
+        String primaryKey = XmlIo.readAttr(primaryKeyNode, "name", null);
+        String primaryValue = XmlIo.readAttr(primaryKeyNode, "value", null);
+        if (primaryKey == null) {
+            throw new SAXException("Missing primaryKey");
+        }
+        if (primaryValue == null) {
+            throw new SAXException("Missing primaryValue");
+        }
+        RecordingMetadata metadata = new RecordingMetadata(primaryKey,
+                primaryValue);
+        Node[] keys = XmlIo.readNodes(doc, "key");
+        for (Node keyNode : keys) {
+            String key = XmlIo.readAttr(keyNode, "name", null);
+            String value = XmlIo.readAttr(keyNode, "value", null);
+            String visible = XmlIo.readAttr(keyNode, "visible", "true");
+            String editable = XmlIo.readAttr(keyNode, "editable", "true");
+            String multiline = XmlIo.readAttr(keyNode, "multiline", "false");
+            metadata.setValue(key, value, visible.equals("true"),
+                    editable.equals("true"), multiline.equals("true"));
+        }
+        return metadata;
+    }
+
+    public static RecordingMetadata readOldMetadata(InputStream input)
+            throws IOException, SAXException{
+        Node doc = XmlIo.read(input);
+        RecordingMetadata metadata = new RecordingMetadata("name", "");
         String className = XmlIo.readValue(doc, "class");
-        try {
-            Class<?> cls = Class.forName(className);
-            Object object = cls.newInstance();
-            if (!(object instanceof RecordingMetadata)) {
-                throw new RuntimeException("Type " + className
-                        + " not RecordingMetadata");
-            }
-            RecordingMetadata metadata = (RecordingMetadata) object;
-            Method[] methods = cls.getMethods();
-            for (Method method : methods) {
-                if (method.getName().startsWith("get")
-                        && method.getParameterTypes().length == 0) {
-                    String field = method.getName().substring("get".length());
-                    try {
-                        Method setMethod = cls.getMethod("set" + field,
-                                method.getReturnType());
-                        if (setMethod != null) {
-                            String value = XmlIo.readValue(doc, field);
-                            setMethod.invoke(object, value);
-                        }
-                    } catch (NoSuchMethodException e) {
-                        // Do Nothing
+        String[] fields = XmlIo.readFields(doc);
+        for (String field : fields) {
+            if (!field.equals("class")) {
+                Node node = XmlIo.readNode(doc, field);
+                String value = XmlIo.readAttr(node, "value", null);
+                String key = RecordingMetadata.getKey(field);
+                boolean editable = true;
+                boolean visible = true;
+                boolean multiline = false;
+                if (className.startsWith(
+                        "com.googlecode.vicovre.recordings.formats.MAGIC")) {
+                    if (field.equals("Description")) {
+                        editable = false;
+                    } else {
+                        visible = false;
                     }
                 }
+                if (field.equals("Description")) {
+                    multiline = true;
+                }
+                metadata.setValue(key, value, visible, editable, multiline);
             }
-            return metadata;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+        return metadata;
     }
 
     public static void writeMetadata(RecordingMetadata metadata,
@@ -92,28 +115,19 @@ public class RecordingMetadataReader {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         writer.println("<metadata>");
-        Class<?> cls = metadata.getClass();
-        XmlIo.writeValue("class", cls.getCanonicalName(), writer);
-        Method[] methods = cls.getMethods();
-        try {
-            for (Method method : methods) {
-                if (method.getName().startsWith("get")
-                        && method.getParameterTypes().length == 0) {
-                    String field = method.getName().substring("get".length());
-                    try {
-                        Method setMethod = cls.getMethod("set" + field,
-                                method.getReturnType());
-                        if (setMethod != null) {
-                            String value = (String) method.invoke(metadata);
-                            XmlIo.writeValue(field, value, writer);
-                        }
-                    } catch (NoSuchMethodException e) {
-                        // Do Nothing
-                    }
-                }
+        String primaryKey = metadata.getPrimaryKey();
+        writer.println("<primaryKey name=\"" + primaryKey
+                + "\" value=\"" + metadata.getPrimaryValue() + "\"/>");
+        for (String key : metadata.getKeys()) {
+            if (!key.equals(primaryKey)) {
+                writer.println("<key name=\"" + StringEscapeUtils.escapeXml(key)
+                    + "\" value=\"" + StringEscapeUtils.escapeXml(
+                            metadata.getValue(key))
+                    + "\" visible=\"" + metadata.isVisible(key)
+                    + "\" editable=\"" + metadata.isEditable(key)
+                    + "\" mutliline=\"" + metadata.isMultiline(key)
+                    + "\"/>");
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
         writer.println("</metadata>");
         writer.flush();

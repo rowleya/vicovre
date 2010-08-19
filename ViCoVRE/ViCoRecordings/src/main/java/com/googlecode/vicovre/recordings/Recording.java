@@ -337,4 +337,11 @@ public class Recording implements Comparable<Recording> {
         }
         return value;
     }
+
+    public void setId(String id) {
+        File oldDir = directory;
+        directory = new File(directory.getParent(), id);
+        oldDir.renameTo(directory);
+        this.id = id;
+    }
 }

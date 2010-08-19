@@ -83,10 +83,6 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.webapp.WebAppContext;
 import org.netbeans.api.wizard.WizardDisplayer;
 import org.netbeans.spi.wizard.Wizard;
 import org.netbeans.spi.wizard.WizardPage;
@@ -100,7 +96,6 @@ import com.googlecode.vicovre.recorder.dialog.RecordingSourceDialog;
 import com.googlecode.vicovre.recorder.dialog.UploadDialog;
 import com.googlecode.vicovre.recorder.dialog.component.ArrowCanvas;
 import com.googlecode.vicovre.recorder.dialog.component.TickCanvas;
-import com.googlecode.vicovre.recorder.firstrunwizard.AnnotationServerPage;
 import com.googlecode.vicovre.recorder.firstrunwizard.DataDirectoryPage;
 import com.googlecode.vicovre.recorder.firstrunwizard.IntroPage;
 import com.googlecode.vicovre.recorder.utils.VideoDragListener;
@@ -151,7 +146,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private static final int SIZE_WIDTH = 900;
 
     // The height of the interface
-    private static final int SIZE_HEIGHT = 600;
+    private static final int SIZE_HEIGHT = 700;
 
     // The file separator
     private static final String SLASH = System.getProperty("file.separator");
@@ -258,21 +253,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private JPanel volumePanel = new JPanel();
 
-    private Server webServer = null;
-
-    private com.googlecode.vicovre.annotations.live.Server liveAnnotationsServer
-        = null;
-
-    private File annotationDirectory = null;
-
-    private File notRecordingAnnotationsDir = null;
-
-    private boolean databaseLoaded = false;
-
-    private boolean annotationServerStarted = false;
-
-    private Integer threadsFinishedSync = new Integer(0);
-
     /**
      * Creates a new recorder
      * @param args The program arguments
@@ -303,28 +283,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         }
 
         // Load the database
-        Thread databaseStarter = new Thread() {
-            public void run() {
-                loadDatabase();
-                synchronized (threadsFinishedSync) {
-                    databaseLoaded = true;
-                    threadsFinishedSync.notifyAll();
-                }
-            }
-        };
-        databaseStarter.start();
-
-        // Load the Annotation server
-        Thread liveAnnotationServerStarter = new Thread() {
-            public void run() {
-                loadAnnotationServer();
-                synchronized (threadsFinishedSync) {
-                    annotationServerStarted = true;
-                    threadsFinishedSync.notifyAll();
-                }
-            }
-        };
-        liveAnnotationServerStarter.start();
+        loadDatabase();
 
         // Set up the buttons
         JPanel toolPanel = new JPanel();
@@ -362,7 +321,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         JPanel displayPanel = new JPanel();
         displayPanel.setLayout(new TableLayout(
                 new double[]{20, 200, 5, TableLayout.FILL, 20},
-                new double[]{20, 20, 5, TableLayout.FILL, 30, 5, 30, 5, 30}));
+                new double[]{20, 20, 5, TableLayout.FILL, 30, 5, 100, 5, 30}));
         layoutPanel.setBorder(BorderFactory.createEtchedBorder());
         layoutPanel.setLayout(null);
         previewPanel.setLayout(new PreviewLayout(180, 135));
@@ -393,16 +352,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         });
         setSize(SIZE_WIDTH, SIZE_HEIGHT);
         setLocationRelativeTo(null);
-
-        synchronized (threadsFinishedSync) {
-            while (!databaseLoaded || !annotationServerStarted) {
-                try {
-                    threadsFinishedSync.wait();
-                } catch (InterruptedException e) {
-                    // Do Nothing
-                }
-            }
-        }
 
         recordingSource = new RecordingSourceDialog(this,
                 configuration, typeRepository);
@@ -446,52 +395,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 false);
         progress.setMessage("Loading Existing Recordings...");
         progress.setVisible(true);
-        uploadDialog = new UploadDialog(this, recordingDatabase,
-                annotationDirectory, configuration);
+        uploadDialog = new UploadDialog(this, recordingDatabase, configuration);
         progress.dispose();
-    }
-
-    // Start the annotation server
-    private void loadAnnotationServer() {
-        ProgressDialog progress = new ProgressDialog(TITLE_PREFIX, false, true,
-                false);
-        try {
-            progress.setMessage("Starting Live Annotation Server...");
-            progress.setVisible(true);
-            webServer = new Server();
-            Connector connector = new SelectChannelConnector();
-            connector.setPort(configuration.getIntegerParameter(CONFIG_PORT,
-                    8080));
-            connector.setMaxIdleTime(60000);
-            webServer.setConnectors(new Connector[]{connector});
-            WebAppContext webapp = new WebAppContext();
-            webapp.setContextPath("/");
-            webapp.setWar(getClass().getResource(
-                   "/webapps/ViCoLiveAnnotations.war").toExternalForm());
-            webapp.setDefaultsDescriptor(getClass().getResource(
-                   "/org/mortbay/jetty/webapp/webdefault.xml").toExternalForm());
-            webapp.setParentLoaderPriority(true);
-            webServer.setHandler(webapp);
-            webServer.start();
-            liveAnnotationsServer =
-                (com.googlecode.vicovre.annotations.live.Server)
-                webapp.getServletContext().getAttribute("server");
-            annotationDirectory = new File(dataDirectory, "annotations");
-            annotationDirectory.mkdirs();
-            notRecordingAnnotationsDir = new File(annotationDirectory,
-                    "notrecorded");
-            liveAnnotationsServer.setStoreDirectory(
-                    notRecordingAnnotationsDir);
-            progress.dispose();
-        } catch (Throwable e) {
-            progress.dispose();
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null,
-                    "Error Starting Annotation Server " + e.getMessage(),
-                    TITLE_PREFIX + " - Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        }
-
     }
 
     private void loadDatabase() {
@@ -589,8 +494,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private boolean doConfig() throws IOException {
         Wizard wizard = WizardPage.createWizard(new Class[]{
-            IntroPage.class, DataDirectoryPage.class,
-            AnnotationServerPage.class});
+            IntroPage.class, DataDirectoryPage.class});
         Map<String, String> configMap = configuration.getConfigMap();
         Map<String, String> results = (Map<String, String>)
             WizardDisplayer.showWizard(wizard, null, null, configMap);
@@ -608,8 +512,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                     "No location could be found to save the settings to!",
                     "Warning!", JOptionPane.WARNING_MESSAGE);
         }
-        configuration.setParameter(CONFIG_PORT,
-                results.get(AnnotationServerPage.PORT_KEY));
         configuration.saveParameters(configFile);
         return true;
     }
@@ -692,9 +594,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 recordingDatabase.getTopLevelFolder(),
                 RecordArchiveManager.generateId(new Date()),
                 recordingDatabase, null);
-        File annotationDir = new File(annotationDirectory,
-                archiveManager.getRecording().getId());
-        liveAnnotationsServer.setStoreDirectory(annotationDir);
         archiveManager.enableRecording();
         recordingSource.setArchiveManager(archiveManager);
         recordButton.setText("Stop Recording");
@@ -707,8 +606,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         try {
             archiveManager.disableRecording(false);
             archiveManager.terminate();
-            liveAnnotationsServer.setStoreDirectory(
-                    notRecordingAnnotationsDir);
             recordingSource.setArchiveManager(null);
             isRecordedCanvas.setTick(true);
             recordButton.setText("Start Recording");
@@ -722,6 +619,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 layout.setName(currentLayout.getName());
                 layout.setTime(recording.getStartTime().getTime());
 
+                boolean allPositionsSet = true;
                 for (LayoutPosition position
                         : currentLayout.getStreamPositions()) {
                     String name = position.getName();
@@ -736,12 +634,16 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                             }
                         }
                         layout.setStream(name, selectedStream);
+                    } else {
+                        allPositionsSet = false;
                     }
                 }
 
-                Vector<ReplayLayout> layouts = new Vector<ReplayLayout>();
-                layouts.add(layout);
-                recording.setReplayLayouts(layouts);
+                if (allPositionsSet) {
+                    Vector<ReplayLayout> layouts = new Vector<ReplayLayout>();
+                    layouts.add(layout);
+                    recording.setReplayLayouts(layouts);
+                }
             }
 
             uploadDialog.finishRecording(recording);
@@ -762,13 +664,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             configuration.saveParameters(configFile);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        if (webServer != null) {
-            try {
-                webServer.stop();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
         dispose();
     }
@@ -902,7 +797,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                     / volumeControl.getMaximum()));
             muteBox.addActionListener(this);
             volumeSlider.addChangeListener(this);
-            audioPanel.add(Box.createHorizontalStrut(5));
+            audioPanel.add(Box.createHorizontalGlue());
             audioPanel.add(volumeSlider);
             audioPanel.add(muteBox);
             audioSliders.add(volumeSlider);

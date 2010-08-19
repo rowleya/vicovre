@@ -32,13 +32,22 @@
 
 package com.googlecode.vicovre.web.rest;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -51,15 +60,18 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
+import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.RecordingsResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsResponse;
 import com.sun.jersey.spi.inject.Inject;
@@ -69,10 +81,14 @@ public class RecordingHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
+    private Emailer emailer = null;
+
     public RecordingHandler(@Inject("database") RecordingDatabase database,
-            @Inject("layoutRepository") LayoutRepository layoutRepository) {
+            @Inject("layoutRepository") LayoutRepository layoutRepository,
+            @Inject Emailer emailer) {
         super(database);
         this.layoutRepository = layoutRepository;
+        this.emailer = emailer;
         if (!Misc.isCodecsConfigured()) {
             try {
                 Misc.configureCodecs("/knownCodecs.xml");
@@ -128,6 +144,62 @@ public class RecordingHandler extends AbstractHandler {
 
         recording.removeLayout(time);
         return Response.ok().build();
+    }
+
+    @Path("{folder:.*}")
+    @POST
+    @Consumes("application/zip")
+    @Produces("text/plain")
+    public Response addRecording(@Context UriInfo uriInfo,
+            @PathParam("folder") String folderPath,
+            @Context HttpServletRequest request,
+            @QueryParam("startDate") String startDate)
+            throws IOException, ParseException {
+        Folder folder = getFolder(folderPath);
+
+        Date start = RecordingConstants.DATE_FORMAT.parse(startDate);
+        File unfinishedFile = File.createTempFile("upload",
+                RecordingConstants.UNFINISHED_RECORDING_INDEX,
+                folder.getFile());
+        String name = unfinishedFile.getName();
+        String recordingId = UnfinishedRecording.ID_DATE_FORMAT.format(start)
+            + name.substring(6, name.length()
+                - RecordingConstants.UNFINISHED_RECORDING_INDEX.length() - 1);
+        unfinishedFile.delete();
+
+        Recording recording = new Recording(folder, recordingId, getDatabase(),
+                emailer);
+        getDatabase().addRecording(recording, null);
+
+        ZipInputStream input = new ZipInputStream(request.getInputStream());
+        ZipEntry entry = input.getNextEntry();
+        while (entry != null) {
+            File streamFile = new File(recording.getDirectory(),
+                    entry.getName());
+            FileOutputStream output = new FileOutputStream(streamFile);
+            byte[] buffer = new byte[8096];
+            int bytesRead = input.read(buffer);
+            while (bytesRead != -1) {
+                output.write(buffer, 0, bytesRead);
+                bytesRead = input.read(buffer);
+            }
+            output.close();
+            entry = input.getNextEntry();
+        }
+
+        return Response.ok(
+                uriInfo.getAbsolutePathBuilder().path(
+                        recordingId).build().toString()).build();
+    }
+
+    @POST
+    @Consumes("application/zip")
+    @Produces("text/plain")
+    public Response addRecording(@Context UriInfo uriInfo,
+            @Context HttpServletRequest request,
+            @QueryParam("startDate") String startDate)
+            throws IOException, ParseException {
+        return addRecording(uriInfo, "", request, startDate);
     }
 
     @Path("{folder:.*}/layout/{time}")
@@ -197,19 +269,28 @@ public class RecordingHandler extends AbstractHandler {
 
     @Path("{folder: .*}")
     @PUT
-    public Response updateMetadata(@Context UriInfo uriInfo)
+    @Consumes("application/x-www-form-urlencoded")
+    public Response updateMetadata(@Context UriInfo uriInfo,
+            MultivaluedMap<String, String> formParams)
             throws IOException {
         String folderPath = getFolderPath(uriInfo, 1, 1);
-        String id = getId(uriInfo, 1);
+        String id = getId(uriInfo, 0);
 
         Folder folder = getFolder(folderPath);
         Recording recording = folder.getRecording(id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
-        fillIn(recording.getMetadata(), uriInfo.getQueryParameters());
+        recording.setMetadata(getMetadata(formParams));
         getDatabase().updateRecordingMetadata(recording);
         return Response.ok().build();
+    }
+
+    @Path("{folder: .*}")
+    @PUT
+    public Response updateMetadata(@Context UriInfo uriInfo)
+            throws IOException {
+        return updateMetadata(uriInfo, uriInfo.getQueryParameters());
     }
 
     @Path("{folder: .*}")
@@ -217,7 +298,7 @@ public class RecordingHandler extends AbstractHandler {
     public Response deleteRecording(@Context UriInfo uriInfo)
             throws IOException {
         String folderPath = getFolderPath(uriInfo, 1, 1);
-        String id = getId(uriInfo, 1);
+        String id = getId(uriInfo, 0);
 
         Folder folder = getFolder(folderPath);
         Recording recording = folder.getRecording(id);

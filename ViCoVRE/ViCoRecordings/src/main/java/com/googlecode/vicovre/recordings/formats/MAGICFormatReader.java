@@ -40,6 +40,7 @@ import java.util.Vector;
 import org.w3c.dom.Node;
 
 import com.googlecode.vicovre.recordings.HarvestedEvent;
+import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
 import com.googlecode.vicovre.utils.XmlIo;
@@ -63,33 +64,56 @@ public class MAGICFormatReader implements HarvestFormatReader {
                             XmlIo.readContent(node, "dtend")));
 
                     String type = XmlIo.readContent(node, "type");
-                    MAGICMetadata metadata = null;
-                    if (type.equals("regular lecture")) {
-                        MAGICLectureMetadata data = new MAGICLectureMetadata();
-                        metadata = data;
-                        data.setCourseCode(XmlIo.readContent(node,
-                                "course_code"));
-                        data.setCourseTitle(XmlIo.readContent(node,
-                                "course_title"));
-                        data.setLecturerName(XmlIo.readContent(node,
-                                "lecturer_name"));
+                    String name = XmlIo.readContent(node, "summary");
+                    String url = XmlIo.readContent(node, "url");
+                    String location = XmlIo.readContent(node, "location");
+
+                    RecordingMetadata metadata =
+                        new RecordingMetadata("name", name);
+                    metadata.setValue("type", type, false, true, false);
+                    metadata.setValue("url", url, false, true, false);
+                    metadata.setValue("location", location, false, true, false);
+                    type = type.substring(0, 1).toUpperCase()
+                        + type.substring(1);
+
+                    if (type.equalsIgnoreCase("regular lecture")) {
+                        metadata.setValue("courseCode",
+                                XmlIo.readContent(node, "course_code"),
+                                false, true, false);
+                        metadata.setValue("courseTitle",
+                                XmlIo.readContent(node, "course_title"),
+                                false, true, false);
+                        metadata.setValue("lecturerName",
+                                XmlIo.readContent(node, "lecturer_name"),
+                                false, true, false);
+                        String description =
+                            "<b><a target='_blank' href='${url}'>"
+                                + "${coursCode}: ${courseTitle}</a></b>\n"
+                                + "${type} given by ${lecturerName}"
+                                + " at ${location}";
+                        metadata.setValue("description", description,
+                                true, false, true);
                     } else if (type.equals("extra event")) {
-                        MAGICExtraEventMetadata data =
-                            new MAGICExtraEventMetadata();
-                        metadata = data;
-                        data.setOrganiserName(XmlIo.readContent(node,
-                                "orgainser_name"));
-                        data.setSpeakerName(XmlIo.readContent(node,
-                                "speaker_name"));
+                        metadata.setValue("organiserName",
+                                XmlIo.readContent(node, "orgainser_name"),
+                                false, true, true);
+                        metadata.setValue("speakerName",
+                                XmlIo.readContent(node, "speaker_name"),
+                                false, true, true);
+                        String description =
+                            "<b><a target='_blank' href='${url}'>"
+                            + "Extra Event: ${speakerName}</a></b>\n"
+                            + "${type} organised by ${organiserName}"
+                            + "at ${location}";
+                        metadata.setValue("description", description,
+                                true, false, true);
                     } else {
                         throw new IOException("Unknown event type " + type);
                     }
-                    metadata.setType(type);
-                    metadata.setName(XmlIo.readContent(node, "summary"));
-                    metadata.setUrl(XmlIo.readContent(node, "url"));
-                    metadata.setLocation(XmlIo.readContent(node, "location"));
+
                     event.setMetadata(metadata);
-                    if (event.getEndDate().getTime() > System.currentTimeMillis()) {
+                    if (event.getEndDate().getTime()
+                            > System.currentTimeMillis()) {
                         events.add(event);
                     }
                 } catch (Exception e) {

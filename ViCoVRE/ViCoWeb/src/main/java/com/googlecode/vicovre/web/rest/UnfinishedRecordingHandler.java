@@ -57,7 +57,6 @@ import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -167,9 +166,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         UnfinishedRecording recording = new UnfinishedRecording(
                 typeRepository, folder, file, getDatabase(), emailer);
         fillIn(recording, uriInfo.getQueryParameters());
-        RecordingMetadata metadata = new RecordingMetadata();
-        fillIn(metadata, uriInfo.getQueryParameters());
-        recording.setMetadata(metadata);
+        recording.setMetadata(getMetadata(uriInfo.getQueryParameters()));
         getDatabase().addUnfinishedRecording(recording, null);
 
         return Response.ok(
@@ -197,7 +194,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             throw new FileNotFoundException("Unknown id " + id);
         }
         fillIn(recording, uriInfo.getQueryParameters());
-        fillIn(recording.getMetadata(), uriInfo.getQueryParameters());
+        recording.setMetadata(getMetadata(uriInfo.getQueryParameters()));
         getDatabase().updateUnfinishedRecording(recording);
         return Response.ok().build();
     }

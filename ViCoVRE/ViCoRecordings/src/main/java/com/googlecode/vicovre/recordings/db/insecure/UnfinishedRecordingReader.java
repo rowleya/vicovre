@@ -108,12 +108,24 @@ public class UnfinishedRecordingReader {
                         RecordingConstants.UNFINISHED_RECORDING_INDEX));
         File metadataFile = new File(folder.getFile(),
                 prefix + RecordingConstants.METADATA);
+        File oldMetadataFile = new File(folder.getFile(),
+                prefix + RecordingConstants.OLD_METADATA);
         if (metadataFile.exists()) {
             FileInputStream inputStream = new FileInputStream(metadataFile);
             RecordingMetadata metadata = RecordingMetadataReader.readMetadata(
                     inputStream);
             recording.setMetadata(metadata);
             inputStream.close();
+        } else if (oldMetadataFile.exists()) {
+            FileInputStream inputStream = new FileInputStream(oldMetadataFile);
+            RecordingMetadata metadata =
+                RecordingMetadataReader.readOldMetadata(inputStream);
+            recording.setMetadata(metadata);
+            inputStream.close();
+            FileOutputStream outputStream = new FileOutputStream(metadataFile);
+            RecordingMetadataReader.writeMetadata(metadata, outputStream);
+            outputStream.close();
+            oldMetadataFile.delete();
         }
         return recording;
     }
