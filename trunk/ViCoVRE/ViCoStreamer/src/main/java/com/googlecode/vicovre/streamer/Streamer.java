@@ -286,12 +286,14 @@ public class Streamer extends JFrame implements ActionListener {
     }
 
     private void setWebPort(int webPort) {
+        int oldPort = webServer.getPort();
         try {
             System.err.println("Setting port to " + webPort);
             webServer.setPort(webPort);
+            localDeviceDialog.setWebPort(webPort);
             System.err.println("Port set");
         } catch (IOException e1) {
-            localDeviceDialog.setWebPort(webPort);
+            localDeviceDialog.setWebPort(oldPort);
             e1.printStackTrace();
             JOptionPane.showMessageDialog(this,
                     "Error setting web port: " + e1.getMessage(),
