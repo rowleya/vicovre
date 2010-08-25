@@ -318,6 +318,14 @@ public class WiimoteControl implements WiimoteListener, ActionListener {
         return calibrationFrame;
     }
 
+    public int getSensitivity() {
+        return sensitivity;
+    }
+
+    public boolean isAboveScreen() {
+        return aboveScreen;
+    }
+
     public void onMotionSensingEvent(MotionSensingEvent event) {
         // Does Nothing
 
