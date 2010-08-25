@@ -146,6 +146,15 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
      */
     public static final String CONFIG_PORT = "Port";
 
+    private static final String CONFIG_WIIMOTE_SENSITIVITY =
+        "WiimoteSensitivity";
+
+    private static final String CONFIG_WIIMOTE_SENSOR_BAR_ABOVE =
+        "WiimoteSensorBarAbove";
+
+    private static final String CONFIG_SCREEN =
+        "Screen";
+
     private static final int BORDER_SIZE = 5;
 
     // The prefix for the title of the application
@@ -404,7 +413,12 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         for (int i = 0; i < FullScreenFrame.getNoScreens(); i++) {
             screen.addItem(i + 1);
         }
-        screen.setSelectedIndex(screen.getItemCount() - 1);
+        int screenSelected = configuration.getIntegerParameter(CONFIG_SCREEN,
+                screen.getItemCount() - 1);
+        if (screenSelected >= screen.getItemCount()) {
+            screenSelected = screen.getItemCount();
+        }
+        screen.setSelectedIndex(screenSelected);
         fullScreenFrame.addComponentListener(new ComponentAdapter() {
             public void componentHidden(ComponentEvent e) {
                 enableFullScreen.setSelected(false);
@@ -459,6 +473,13 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         });
 
         setVisible(true);
+
+        int sensitivity = configuration.getIntegerParameter(
+                CONFIG_WIIMOTE_SENSITIVITY, 3);
+        String aboveScreen = configuration.getParameter(
+                CONFIG_WIIMOTE_SENSOR_BAR_ABOVE, "true");
+        wiimoteControl.setSensitivity(sensitivity);
+        wiimoteControl.setAboveScreen(aboveScreen.equals("true"));
         wiimoteControl.connectToWiimote();
     }
 
@@ -772,9 +793,25 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             }
         } else if (e.getSource().equals(calibrateWiimote)) {
             synchronized (enablePointer) {
-                FullScreenFrame frame = wiimoteControl.getCalibrationFrame();
+                final FullScreenFrame frame =
+                    wiimoteControl.getCalibrationFrame();
                 int screenSelected = screen.getSelectedIndex();
                 frame.setScreen(screenSelected);
+                frame.addComponentListener(new ComponentAdapter() {
+                    public void componentHidden(ComponentEvent e) {
+                        configuration.setParameter(CONFIG_WIIMOTE_SENSITIVITY,
+                            String.valueOf(wiimoteControl.getSensitivity()));
+                        configuration.setParameter(
+                            CONFIG_WIIMOTE_SENSOR_BAR_ABOVE,
+                            String.valueOf(wiimoteControl.isAboveScreen()));
+                        try {
+                            configuration.saveParameters(configFile);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                        frame.removeComponentListener(this);
+                    }
+                });
                 frame.setVisible(true);
             }
         } else if (e.getSource().equals(redetectScreens)) {
@@ -1190,6 +1227,13 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             synchronized (enablePointer) {
                 if (enableFullScreen.isSelected()) {
                     fullScreenFrame.setScreen(screen.getSelectedIndex());
+                }
+                configuration.setParameter(CONFIG_SCREEN,
+                        String.valueOf(screen.getSelectedIndex()));
+                try {
+                    configuration.saveParameters(configFile);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
                 }
             }
         } else if (e.getSource().equals(pointerSource)) {
