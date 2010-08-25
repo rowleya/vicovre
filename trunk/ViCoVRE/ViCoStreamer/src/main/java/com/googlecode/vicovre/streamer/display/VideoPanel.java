@@ -284,6 +284,7 @@ public class VideoPanel extends JPanel implements MouseListener, ItemListener,
             previewComp = player.getPreviewComponent();
             preview.add(previewComp);
             previewComp.setSize(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+            previewComp.setLocation(0, 0);
 
             video = createVideoWindow(name.getText(), this);
             video.setVisible(false);

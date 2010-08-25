@@ -82,6 +82,7 @@ import ag3.interfaces.types.ClientProfile;
 
 import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
+import com.googlecode.vicovre.media.wiimote.WiimoteControl;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.utils.Config;
 import com.lti.civil.CaptureException;
@@ -114,9 +115,6 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     // The default width of the preview window
     private static final int PREVIEW_WIDTH = 104;
-
-    // The width of the device listing box
-    private static final int DEVICE_BOX_WIDTH = 585;
 
     // The height of the device listing box
     private static final int DEVICE_BOX_HEIGHT = 90;

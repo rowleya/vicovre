@@ -71,6 +71,7 @@ import javax.sound.sampled.FloatControl;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -78,8 +79,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -89,15 +92,21 @@ import org.netbeans.spi.wizard.WizardPage;
 import org.xml.sax.SAXParseException;
 
 import com.googlecode.vicovre.media.Misc;
+import com.googlecode.vicovre.media.controls.WiimotePointerControl;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
+import com.googlecode.vicovre.media.ui.FullScreenFrame;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
 import com.googlecode.vicovre.media.ui.ProgressDialog;
+import com.googlecode.vicovre.media.wiimote.PointsListener;
+import com.googlecode.vicovre.media.wiimote.WiimoteComponent;
+import com.googlecode.vicovre.media.wiimote.WiimoteControl;
 import com.googlecode.vicovre.recorder.dialog.RecordingSourceDialog;
 import com.googlecode.vicovre.recorder.dialog.UploadDialog;
 import com.googlecode.vicovre.recorder.dialog.component.ArrowCanvas;
 import com.googlecode.vicovre.recorder.dialog.component.TickCanvas;
 import com.googlecode.vicovre.recorder.firstrunwizard.DataDirectoryPage;
 import com.googlecode.vicovre.recorder.firstrunwizard.IntroPage;
+import com.googlecode.vicovre.recorder.utils.PointerSource;
 import com.googlecode.vicovre.recorder.utils.VideoDragListener;
 import com.googlecode.vicovre.recordings.RecordArchiveManager;
 import com.googlecode.vicovre.recordings.Recording;
@@ -248,10 +257,38 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private Vector<JCheckBox> audioMutes = new Vector<JCheckBox>();
 
+    private HashMap<DataSource, PointerSource> pointerSources =
+        new HashMap<DataSource, PointerSource>();
+
     private JCheckBox playerListen = new JCheckBox(
             "Listen to recorded audio");
 
+    private JComboBox pointerSource = new JComboBox();
+
+    private JCheckBox enablePointer = new JCheckBox(
+            "Enable Pointer");
+
+    private JComboBox screen = new JComboBox();
+
+    private JCheckBox enableFullScreen = new JCheckBox("Enable Full Screen");
+
+    private JRadioButton selectPointerSource =
+        new JRadioButton("Pointer Source", true);
+
+    private JRadioButton selectOverlay =
+        new JRadioButton("Pointer Overlay", false);
+
+    private FullScreenFrame fullScreenFrame = new FullScreenFrame();
+
+    private WiimoteControl wiimoteControl = new WiimoteControl();
+
+    private WiimoteComponent wiimoteComponent = new WiimoteComponent();
+
     private JPanel volumePanel = new JPanel();
+
+    private JButton redetectScreens = new JButton("Redetect");
+
+    private JButton calibrateWiimote = new JButton("Calibrate");
 
     /**
      * Creates a new recorder
@@ -318,10 +355,66 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         }
         layoutChooser.addItemListener(this);
 
+        JPanel monitorLabelPanel = new JPanel();
+        monitorLabelPanel.setLayout(new BoxLayout(monitorLabelPanel,
+                BoxLayout.X_AXIS));
+        setupLinkButton(redetectScreens);
+        monitorLabelPanel.add(new JLabel("Use Monitor ("));
+        monitorLabelPanel.add(redetectScreens);
+        monitorLabelPanel.add(new JLabel("): "));
+        monitorLabelPanel.add(Box.createHorizontalGlue());
+        redetectScreens.addActionListener(this);
+
+        JPanel enablePointerPanel = new JPanel();
+        enablePointerPanel.setLayout(new BoxLayout(enablePointerPanel,
+                BoxLayout.X_AXIS));
+        setupLinkButton(calibrateWiimote);
+        enablePointerPanel.add(enablePointer);
+        enablePointerPanel.add(new JLabel("("));
+        enablePointerPanel.add(calibrateWiimote);
+        enablePointerPanel.add(new JLabel(")"));
+        enablePointerPanel.add(Box.createHorizontalGlue());
+        calibrateWiimote.addActionListener(this);
+
+        JPanel videoControlPanel = new JPanel();
+        videoControlPanel.setLayout(new TableLayout(
+                new double[]{5, 10, TableLayout.FILL},
+                new double[]{25, 15, 20, 5, 25, 15, 20, 20, 20}));
+        videoControlPanel.add(enablePointerPanel, "0, 0, 2, 0");
+        videoControlPanel.add(new JLabel("Overlay pointer on:"), "1, 1, 2, 1");
+        videoControlPanel.add(pointerSource, "2, 2");
+        videoControlPanel.add(enableFullScreen, "0, 4, 2, 4");
+        videoControlPanel.add(monitorLabelPanel, "1, 5, 2, 5");
+        videoControlPanel.add(screen, "2, 6");
+        videoControlPanel.add(selectPointerSource, "1, 7, 2, 7");
+        videoControlPanel.add(selectOverlay, "1, 8, 2, 8");
+        enablePointer.addActionListener(this);
+        enableFullScreen.addActionListener(this);
+        pointerSource.addItemListener(this);
+        screen.addItemListener(this);
+        selectPointerSource.addActionListener(this);
+        selectOverlay.addActionListener(this);
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(selectPointerSource);
+        group.add(selectOverlay);
+        enablePointer.setEnabled(false);
+        enableFullScreen.setEnabled(false);
+
+        for (int i = 0; i < FullScreenFrame.getNoScreens(); i++) {
+            screen.addItem(i + 1);
+        }
+        screen.setSelectedIndex(screen.getItemCount() - 1);
+        fullScreenFrame.addComponentListener(new ComponentAdapter() {
+            public void componentHidden(ComponentEvent e) {
+                enableFullScreen.setSelected(false);
+            }
+        });
+
         JPanel displayPanel = new JPanel();
         displayPanel.setLayout(new TableLayout(
                 new double[]{20, 200, 5, TableLayout.FILL, 20},
-                new double[]{20, 20, 5, TableLayout.FILL, 30, 5, 100, 5, 30}));
+                new double[]{20, 20, 5, TableLayout.FILL, 30, 5, 130, 5, 30}));
         layoutPanel.setBorder(BorderFactory.createEtchedBorder());
         layoutPanel.setLayout(null);
         previewPanel.setLayout(new PreviewLayout(180, 135));
@@ -334,7 +427,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         previewScroll.setBorder(BorderFactory.createEtchedBorder());
         displayPanel.add(layoutChooser, "1, 1");
         displayPanel.add(layoutPanel, "3, 1, 3, 3");
-        displayPanel.add(previewScroll, "1, 3, 1, 6");
+        displayPanel.add(previewScroll, "1, 3, 1, 3");
+        displayPanel.add(videoControlPanel, "1, 4, 1, 6");
         displayPanel.add(playerListen, "3, 4");
         displayPanel.add(volumeScroll, "3, 6");
         displayPanel.add(recordStatus, "1, 8, 3, 8, c, c");
@@ -365,6 +459,17 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         });
 
         setVisible(true);
+        wiimoteControl.connectToWiimote();
+    }
+
+    private void setupLinkButton(JButton button) {
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setBorder(null);
+        button.setOpaque(false);
+        button.setBackground(Color.WHITE);
+        button.setForeground(Color.BLUE);
     }
 
     private void loadRepositories() {
@@ -527,6 +632,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             isSourceSelectedCanvas.setTick(true);
             isSourceSelectedCanvas.repaint();
             recordButton.setEnabled(true);
+            enablePointer.setEnabled(true);
         }
     }
 
@@ -545,6 +651,65 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                         / slider.getMaximum());
             }
         }
+    }
+
+    private void enablePointer(PointerSource source) {
+        WiimotePointerControl control = source.getControl();
+        control.enableWiimote(wiimoteControl);
+        System.err.println("Size = " + source.getSize());
+        wiimoteComponent.setResolution(source.getSize());
+    }
+
+    private void disablePointer(PointerSource source) {
+        WiimotePointerControl control = source.getControl();
+        control.disableWiimote(wiimoteControl);
+        wiimoteComponent.setResolution(null);
+    }
+
+    private Component getFullScreenComponent() {
+        PointerSource pSource = (PointerSource)
+            pointerSource.getSelectedItem();
+        if (selectOverlay.isSelected() || (pSource == null)) {
+            return wiimoteComponent;
+        }
+        return pSource.getComponent();
+    }
+
+    private Component getNotFullScreenComponent() {
+        PointerSource pSource = (PointerSource)
+            pointerSource.getSelectedItem();
+        if (selectOverlay.isSelected() && (pSource != null)) {
+            return pSource.getComponent();
+        }
+        return wiimoteComponent;
+    }
+
+    private void setFullscreenComponent(Component component) {
+
+        if (component instanceof PointsListener) {
+            wiimoteControl.addPointsListener(
+                    (PointsListener) component);
+        }
+        fullScreenFrame.setComponent(component);
+    }
+
+    private void enableFullScreen(int screen) {
+        fullScreenFrame.setScreen(screen);
+        setFullscreenComponent(getFullScreenComponent());
+        fullScreenFrame.setVisible(true);
+    }
+
+    private void removeFullscreenComponent(Component component) {
+        fullScreenFrame.remove(component);
+        if (component instanceof PointsListener) {
+            wiimoteControl.removePointsListener(
+                    (PointsListener) component);
+        }
+    }
+
+    private void disableFullScreen() {
+        fullScreenFrame.setVisible(false);
+        removeFullscreenComponent(getFullScreenComponent());
     }
 
     /**
@@ -571,6 +736,55 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                     control.setMute(!playerListen.isSelected());
                 }
             }
+        } else if (source == enablePointer) {
+            synchronized (enablePointer) {
+                PointerSource pSource = (PointerSource)
+                    pointerSource.getSelectedItem();
+                if (pSource != null) {
+                    if (enablePointer.isSelected()) {
+                        enablePointer(pSource);
+                        enableFullScreen.setEnabled(true);
+                    } else {
+                        disablePointer(pSource);
+                        if (enableFullScreen.isSelected()) {
+                            enableFullScreen.doClick();
+                        }
+                        enableFullScreen.setEnabled(false);
+                    }
+                }
+            }
+        } else if (source == enableFullScreen) {
+            synchronized (enablePointer) {
+                if (enableFullScreen.isSelected()) {
+                    int screenSelected = screen.getSelectedIndex();
+                    enableFullScreen(screenSelected);
+                } else {
+                    disableFullScreen();
+                }
+            }
+        } else if ((source == selectOverlay)
+                || (source == selectPointerSource)) {
+            synchronized (enablePointer) {
+                if (enableFullScreen.isSelected()) {
+                    removeFullscreenComponent(getNotFullScreenComponent());
+                    setFullscreenComponent(getFullScreenComponent());
+                }
+            }
+        } else if (e.getSource().equals(calibrateWiimote)) {
+            synchronized (enablePointer) {
+                FullScreenFrame frame = wiimoteControl.getCalibrationFrame();
+                int screenSelected = screen.getSelectedIndex();
+                frame.setScreen(screenSelected);
+                frame.setVisible(true);
+            }
+        } else if (e.getSource().equals(redetectScreens)) {
+            int index = screen.getSelectedIndex();
+            screen.removeAllItems();
+            FullScreenFrame.detectScreens();
+            for (int i = 0; i < FullScreenFrame.getNoScreens(); i++) {
+                screen.addItem(i + 1);
+            }
+            screen.setSelectedIndex(index);
         } else {
             for (int i = 0; i < audioMutes.size(); i++) {
                 JCheckBox mute = audioMutes.get(i);
@@ -684,7 +898,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         previewRenderer.setDataSource(dataSource, 0);
         previewRenderer.setInputFormat(
                 datastreams[0].getFormat());
-        Component c = previewRenderer.getPreviewRenderer().getComponent();
+        Component c = previewRenderer.getPreviewComponent();
         previewPanel.add(c);
         c.setVisible(true);
         VideoDragListener listener = new VideoDragListener(this,
@@ -694,6 +908,16 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         previewRenderer.start();
         dataSources.add(dataSource);
         renderers.add(previewRenderer);
+
+        WiimotePointerControl control = (WiimotePointerControl)
+            dataSource.getControl(
+                WiimotePointerControl.class.getName());
+        if (control != null) {
+            PointerSource source = new PointerSource(name, control,
+                    previewRenderer.getComponent());
+            pointerSource.addItem(source);
+            pointerSources.put(dataSource, source);
+        }
         validate();
         repaint();
     }
@@ -753,9 +977,13 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         if (index != -1) {
             RGBRenderer renderer = renderers.get(index);
             removeCurrentLayoutRenderer(dataSource);
-            previewPanel.remove(renderer.getPreviewRenderer().getComponent());
+            previewPanel.remove(renderer.getPreviewComponent());
             dataSources.remove(index);
             renderers.remove(index);
+            PointerSource pSource = pointerSources.remove(dataSource);
+            if (pSource != null) {
+                pointerSource.removeItem(pSource);
+            }
         }
     }
 
@@ -956,6 +1184,29 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 currentLayoutWidth = maxX + minX;
                 currentLayoutHeight = maxY + minY;
                 drawCurrentLayout();
+            }
+        } else if (e.getSource().equals(screen)
+                && (e.getStateChange() == ItemEvent.SELECTED)) {
+            synchronized (enablePointer) {
+                if (enableFullScreen.isSelected()) {
+                    fullScreenFrame.setScreen(screen.getSelectedIndex());
+                }
+            }
+        } else if (e.getSource().equals(pointerSource)) {
+            synchronized (enablePointer) {
+                if (enablePointer.isSelected()) {
+                    PointerSource pSource = (PointerSource) e.getItem();
+                    if (pSource != null) {
+                        if (e.getStateChange() == ItemEvent.SELECTED) {
+                            enablePointer(pSource);
+                        } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+                            disablePointer(pSource);
+                        }
+                    }
+                    if (enableFullScreen.isSelected()) {
+
+                    }
+                }
             }
         }
     }

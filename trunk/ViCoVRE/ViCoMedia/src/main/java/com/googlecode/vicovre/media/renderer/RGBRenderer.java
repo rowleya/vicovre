@@ -35,8 +35,9 @@
 package com.googlecode.vicovre.media.renderer;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.util.Vector;
+import java.awt.image.BufferedImage;
 
 import javax.media.Buffer;
 import javax.media.Effect;
@@ -59,6 +60,10 @@ import com.googlecode.vicovre.media.processor.SimpleProcessor;
 public class RGBRenderer implements VideoRenderer, BitRateControl,
         FrameRateControl {
 
+    private static final RGBFormat DISPLAY_FORMAT =
+        new RGBFormat(null, -1, Format.intArray, -1, 32, 0xFF0000, 0xFF00, 0xFF,
+                1, -1, -1, -1);
+
     private static final boolean DISABLE_PREVIEW = false;
 
     private static final int UPDATE_TIME = 1000;
@@ -67,11 +72,13 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
 
     private SimpleProcessor processor = null;
 
+    private SimpleProcessor toRGBProcessor = null;
+
     private SimpleProcessor[] effectProcessors = new SimpleProcessor[0];
 
-    private VideoRenderer renderer = null;
+    private VideoComponent component = new VideoComponent();
 
-    private VideoRenderer preview = null;
+    private VideoComponent previewComponent = new VideoComponent();
 
     private Effect[] renderEffects = new Effect[0];
 
@@ -95,6 +102,8 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
     private boolean firstFrameSeen = false;
 
     private Integer firstFrameSync = new Integer(0);
+
+    private BufferedImage image = null;
 
     /**
      * Creates a new Renderer of RGB Data
@@ -142,43 +151,22 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 }
             }
         }
-        Vector<String> renderers = new Vector<String>();
-        renderers.add("net.sf.fmj.media.renderer.video.Java2dRenderer");
-        for (int i = 0; (i < renderers.size()) && (renderer == null); i++) {
-            String rendererClassName = renderers.get(i);
 
-            try {
-                Class< ? > rendererClass = Class.forName(rendererClassName);
-                VideoRenderer r = (VideoRenderer) rendererClass.newInstance();
-                Format input = r.setInputFormat(inputFormat);
-                if (input == null) {
-                    processor = new SimpleProcessor(inputFormat, r);
-                } else {
-                    r.open();
-                }
-                if ((input != null) || (processor != null)) {
-                    renderer = r;
-                    renderer.start();
-                    if (!DISABLE_PREVIEW) {
-                        preview = (VideoRenderer) rendererClass.newInstance();
-                        if (processor != null) {
-                            preview.setInputFormat(processor.getOutputFormat());
-                        } else if (input != null) {
-                            preview.setInputFormat(input);
-                        }
-                        preview.open();
-                        preview.start();
-                    }
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
-                renderer = null;
+        try {
+            processor = new SimpleProcessor(inputFormat, (Format) null);
+            toRGBProcessor = new SimpleProcessor(processor.getOutputFormat(),
+                    DISPLAY_FORMAT);
+            VideoFormat vf = (VideoFormat) toRGBProcessor.getOutputFormat();
+            Dimension size = vf.getSize();
+            if (size != null) {
+                component.setPreferredSize(size);
+                previewComponent.setPreferredSize(size);
             }
-        }
-        if (renderer != null) {
             return inputFormat;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     /**
@@ -194,7 +182,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * @see javax.media.renderer.VideoRenderer#getComponent()
      */
     public Component getComponent() {
-        return renderer.getComponent();
+        return component;
     }
 
     /**
@@ -210,7 +198,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * @see javax.media.renderer.VideoRenderer#setBounds(java.awt.Rectangle)
      */
     public void setBounds(Rectangle rect) {
-        renderer.setBounds(rect);
+        component.setBounds(rect);
     }
 
     /**
@@ -218,7 +206,7 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * @see javax.media.renderer.VideoRenderer#getBounds()
      */
     public Rectangle getBounds() {
-        return renderer.getBounds();
+        return component.getBounds();
     }
 
     /**
@@ -300,31 +288,41 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
         }
 
         // Run the final processor
-        if ((processor != null) && ((retval == BUFFER_PROCESSED_OK)
-                || (retval == INPUT_BUFFER_NOT_CONSUMED))) {
+        if ((retval == BUFFER_PROCESSED_OK)
+                || (retval == INPUT_BUFFER_NOT_CONSUMED)) {
             retval = processor.process(input, false);
         }
-
-
 
         if ((retval == BUFFER_PROCESSED_OK)
                 || (retval == INPUT_BUFFER_NOT_CONSUMED)) {
             framesRead += 1;
-            if (visible || !firstFrameSeen) {
-                if (processor != null) {
-
-                    retval = renderer.process(processor.getOutputBuffer());
-                } else {
-                    retval = renderer.process(input);
+            if (visible || !firstFrameSeen || updatePreview) {
+                retval = toRGBProcessor.process(processor.getOutputBuffer());
+                Buffer outputBuffer = toRGBProcessor.getOutputBuffer();
+                RGBFormat outputFormat = (RGBFormat)
+                    outputBuffer.getFormat();
+                Dimension size = outputFormat.getSize();
+                if (image == null) {
+                    if (size != null) {
+                        image = new BufferedImage(size.width, size.height,
+                                BufferedImage.TYPE_INT_RGB);
+                        component.setPreferredSize(size);
+                        previewComponent.setPreferredSize(size);
+                    }
                 }
-            }
-            if (updatePreview) {
-                lastUpdateTime = System.currentTimeMillis();
-                if (!DISABLE_PREVIEW) {
-                    if (processor != null) {
-                        retval = preview.process(processor.getOutputBuffer());
-                    } else {
-                        retval = preview.process(input);
+                if (image != null) {
+                    image.getRaster().setDataElements(0, 0, size.width,
+                            size.height, outputBuffer.getData());
+                    if (visible) {
+                        component.setImage(image);
+                        component.repaint();
+                    }
+                    if (updatePreview) {
+                        lastUpdateTime = System.currentTimeMillis();
+                        if (!DISABLE_PREVIEW) {
+                            previewComponent.setImage(image);
+                            previewComponent.repaint();
+                        }
                     }
                 }
             }
@@ -360,11 +358,8 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
      * Gets the video renderer for the preview
      * @return the preview video renderer
      */
-    public VideoRenderer getPreviewRenderer() {
-        if (!DISABLE_PREVIEW) {
-            return preview;
-        }
-        return null;
+    public VideoComponent getPreviewComponent() {
+        return previewComponent;
     }
 
     /**
@@ -393,7 +388,13 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 return control;
             }
         }
-        return renderer.getControl(className);
+        if (toRGBProcessor != null) {
+            Object control = toRGBProcessor.getControl(className);
+            if (control != null) {
+                return control;
+            }
+        }
+        return null;
     }
 
     /**

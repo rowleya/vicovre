@@ -36,6 +36,7 @@
 package com.googlecode.vicovre.media.effect;
 
 import javax.media.Buffer;
+import javax.media.Control;
 import javax.media.Effect;
 import javax.media.Format;
 import javax.media.Time;
@@ -54,6 +55,8 @@ import javax.media.protocol.PushBufferStream;
 public class CloneEffect extends PushBufferDataSource
         implements Effect, PushBufferStream {
 
+    private Control[] controls = new Control[0];
+
     // The format
     private Format format = null;
 
@@ -67,6 +70,14 @@ public class CloneEffect extends PushBufferDataSource
     private BufferTransferHandler handler = null;
 
     private boolean done = false;
+
+    public CloneEffect() {
+        // Does Nothing
+    }
+
+    public CloneEffect(Control[] controls) {
+        this.controls = controls;
+    }
 
     /**
      *
@@ -175,6 +186,16 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.protocol.DataSource#getControl(java.lang.String)
      */
     public Object getControl(String s) {
+        try {
+            for (Control control : controls) {
+                if (Class.forName(s).isInstance(control)) {
+                    return control;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Warning on CloneEffect.getControl: "
+                    + e.getMessage());
+        }
         return null;
     }
 
@@ -183,7 +204,7 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.protocol.DataSource#getControls()
      */
     public Object[] getControls() {
-        return new Object[0];
+        return controls;
     }
 
     /**
