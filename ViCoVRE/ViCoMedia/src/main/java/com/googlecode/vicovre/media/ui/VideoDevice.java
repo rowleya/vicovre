@@ -39,6 +39,7 @@ import java.io.IOException;
 import javax.media.CannotRealizeException;
 import javax.media.CaptureDeviceInfo;
 import javax.media.Codec;
+import javax.media.Control;
 import javax.media.ControllerClosedEvent;
 import javax.media.ControllerEvent;
 import javax.media.ControllerListener;
@@ -66,6 +67,7 @@ import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.media.effect.CloneEffect;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
+import com.googlecode.vicovre.media.wiimote.WiimoteEffect;
 
 /**
  * An object containing a video device
@@ -88,6 +90,8 @@ public class VideoDevice implements ControllerListener,
     private SendStream sendStream = null;
 
     private CloneEffect cloneEffect = null;
+
+    private WiimoteEffect wiimoteEffect = null;
 
     private DataSource dataSource = null;
 
@@ -167,9 +171,15 @@ public class VideoDevice implements ControllerListener,
             try {
                 processor = new SimpleProcessor(datastreams[0].getFormat(),
                         videoFormat);
-                cloneEffect = new CloneEffect();
+                wiimoteEffect = new WiimoteEffect();
+                cloneEffect = new CloneEffect(new Control[]{wiimoteEffect});
                 if (!processor.insertEffect(cloneEffect)) {
                     System.err.println("Couldn't clone");
+                }
+                if (!processor.insertEffect(wiimoteEffect)) {
+                    System.err.println("Couldn't add wiimote");
+                } else {
+                    System.err.println("Wiimote effect added");
                 }
 
                 sendManager = RTPManager.newInstance();

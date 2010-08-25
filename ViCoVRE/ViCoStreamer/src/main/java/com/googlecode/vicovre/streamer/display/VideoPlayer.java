@@ -151,15 +151,7 @@ class VideoPlayer {
      * @return The preview graphical component
      */
     public Component getPreviewComponent() {
-        VideoRenderer preview = renderer.getPreviewRenderer();
-        Component comp = null;
-        if (preview != null) {
-            preview.setBounds(new Rectangle(0, 0, previewwidth, previewheight));
-            comp = preview.getComponent();
-        } else {
-            comp = new JLabel("<html><p>Preview Disabled in Code!</p></html>");
-        }
-        comp.setSize(previewwidth, previewheight);
+        Component comp = renderer.getPreviewComponent();
         return comp;
     }
 
