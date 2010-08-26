@@ -277,12 +277,17 @@ public class InsecureFolder implements Folder {
             }
         }
 
+        Vector<File> recordingsToRemove = new Vector<File>();
         for (File recordingFile : recordingsLoaded) {
             if (!recordingsSeen.contains(recordingFile)) {
-                recordings.remove(recordingFile);
-                recordingsLoaded.remove(recordingFile);
-                recordingLastModified.remove(recordingFile);
+                recordingsToRemove.add(recordingFile);
             }
+        }
+
+        for (File recordingFile : recordingsToRemove) {
+            recordings.remove(recordingFile);
+            recordingsLoaded.remove(recordingFile);
+            recordingLastModified.remove(recordingFile);
         }
     }
 
