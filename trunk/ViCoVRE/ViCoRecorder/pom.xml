@@ -126,6 +126,21 @@
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsFFMpeg</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsH264</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsVic</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoCodecsULaw</artifactId>
             <version>${project.version}</version>
         </dependency>
