@@ -184,8 +184,7 @@ public class WiimoteControl implements WiimoteListener, ActionListener {
             cancelled = false;
             while ((wiimote == null) && !cancelled) {
                 if (!cancelled) {
-                    Wiimote[] wiimotes = WiiUseApiManager.getWiimotes(1, false,
-                        WiiUseApiManager.WIIUSE_STACK_MS);
+                    Wiimote[] wiimotes = WiiUseApiManager.getWiimotes(1, false);
                     if (wiimotes != null && wiimotes.length > 0) {
                         synchronized (wiimoteSync) {
                             wiimote = wiimotes[0];
