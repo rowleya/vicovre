@@ -34,25 +34,25 @@
 
 package com.googlecode.vicovre.media.ui;
 
+import java.awt.Dimension;
 import java.io.IOException;
 
 import javax.media.CannotRealizeException;
-import javax.media.CaptureDeviceInfo;
 import javax.media.Codec;
 import javax.media.Control;
 import javax.media.ControllerClosedEvent;
 import javax.media.ControllerEvent;
 import javax.media.ControllerListener;
 import javax.media.Format;
-import javax.media.Manager;
-import javax.media.MediaLocator;
 import javax.media.NoDataSourceException;
 import javax.media.NoProcessorException;
 import javax.media.Processor;
+import javax.media.control.FormatControl;
 import javax.media.control.KeyFrameControl;
 import javax.media.control.TrackControl;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.VideoFormat;
+import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
@@ -79,7 +79,7 @@ public class VideoDevice implements ControllerListener,
 
     private static final boolean USE_SIMPLE_PROCESSOR = true;
 
-    private CaptureDeviceInfo device = null;
+    private VideoCaptureDevice device = null;
 
     private RTPManager sendManager = null;
 
@@ -107,6 +107,8 @@ public class VideoDevice implements ControllerListener,
 
     private VideoFormat lastFormat = null;
 
+    private int lastInput = -1;
+
     private ClientProfile profile = null;
 
     private String tool = null;
@@ -117,22 +119,30 @@ public class VideoDevice implements ControllerListener,
      * Creates a new VideoDevice
      * @param device The device
      */
-    public VideoDevice(CaptureDeviceInfo device, ClientProfile profile,
+    public VideoDevice(VideoCaptureDevice device, ClientProfile profile,
             String tool) {
         this.device = device;
         this.profile = profile;
         this.tool = tool;
     }
 
-    public CaptureDeviceInfo getDevice() {
+    public VideoCaptureDevice getDevice() {
         return device;
     }
 
-    public void test() throws NoDataSourceException, IOException {
-        MediaLocator locator = device.getLocator();
-        dataSource = Manager.createDataSource(locator);
+    public Format[] getFormats(int input) throws NoDataSourceException,
+            IOException {
+        DataSource dataSource = device.getDataSource(input);
         dataSource.connect();
+        FormatControl formatControl = (FormatControl) dataSource.getControl(
+                FormatControl.class.getName());
+        if (formatControl != null) {
+            Format[] formats = formatControl.getSupportedFormats();
+            dataSource.disconnect();
+            return formats;
+        }
         dataSource.disconnect();
+        return new Format[0];
     }
 
     /**
@@ -146,26 +156,30 @@ public class VideoDevice implements ControllerListener,
      * @throws CannotRealizeException
      * @throws UnsupportedFormatException
      */
-    public void prepare(RTPConnector rtpConnector, VideoFormat videoFormat,
-            int videoRtpType) throws NoDataSourceException, IOException,
+    public void prepare(int input, RTPConnector rtpConnector,
+            VideoFormat videoFormat, int videoRtpType, Format captureFormat)
+            throws NoDataSourceException, IOException,
             NoProcessorException, CannotRealizeException,
             UnsupportedFormatException {
         if (prepared && (lastFormat != null)
-                && lastFormat.equals(videoFormat)) {
+                && lastFormat.equals(videoFormat)
+                && (lastInput == input)) {
             return;
         }
         stop();
         deviceStarted = false;
         lastFormat = videoFormat;
         String deviceName = device.getName();
-        if (dataSource == null) {
-            MediaLocator locator = device.getLocator();
-            dataSource = Manager.createDataSource(locator);
-        } else {
-            dataSource.connect();
-        }
+        dataSource = device.getDataSource(input);
+        dataSource.connect();
         PushBufferStream[] datastreams =
             ((PushBufferDataSource) dataSource).getStreams();
+
+        FormatControl formatControl = (FormatControl) dataSource.getControl(
+                FormatControl.class.getName());
+        if (formatControl != null) {
+            formatControl.setFormat(captureFormat);
+        }
 
         if (USE_SIMPLE_PROCESSOR) {
             try {
@@ -416,9 +430,10 @@ public class VideoDevice implements ControllerListener,
     /**
      * Gets the datasource
      * @return The datasource
+     * @throws NoDataSourceException
      */
-    public DataSource getDataSource() {
-        return dataSource;
+    public DataSource getDataSource(int input) throws NoDataSourceException {
+        return device.getDataSource(input);
     }
 
     /**

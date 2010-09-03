@@ -212,10 +212,17 @@ public class WiimoteEffect implements Effect, PointsListener,
         return new Object[0];
     }
 
-    private void addLine(Point p1, Point p2) {
+    private void addLine(Point p1, Point p2, int thickness) {
+
         if (p1.equals(p2)) {
             points.add(p1);
             return;
+        }
+
+        int tStart = -thickness / 2;
+        int tEnd = thickness / 2;
+        if (thickness % 2 == 0) {
+            tEnd -= 1;
         }
 
         double deltaX = Math.abs(p1.x - p2.x);
@@ -256,11 +263,14 @@ public class WiimoteEffect implements Effect, PointsListener,
 
         double error = 0;
         for (int i = start; i <= end; i++) {
-            if (deltaX > deltaY) {
-                points.add(new Point(i, other));
-            } else {
-                points.add(new Point(other, i));
+            for (int j = tStart; j <= tEnd; j++) {
+                if (deltaX > deltaY) {
+                    points.add(new Point(i + j, other));
+                } else {
+                    points.add(new Point(other, i + j));
+                }
             }
+
             error += deltaErr;
             if (error >= 0.5) {
                 if (other > otherEnd) {
@@ -279,7 +289,7 @@ public class WiimoteEffect implements Effect, PointsListener,
             if (points.size() > 0) {
                 Point last = points.get(0);
                 for (Point point : points) {
-                    addLine(last, point);
+                    addLine(last, point, 5);
                     last = point;
                 }
             }

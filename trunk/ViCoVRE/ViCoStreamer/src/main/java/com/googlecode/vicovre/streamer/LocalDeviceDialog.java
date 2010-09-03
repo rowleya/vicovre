@@ -39,7 +39,11 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 import javax.media.CannotRealizeException;
+import javax.media.Format;
 import javax.media.NoPlayerException;
+import javax.media.format.RGBFormat;
+import javax.media.format.VideoFormat;
+import javax.media.format.YUVFormat;
 import javax.media.protocol.DataSource;
 import javax.media.rtp.rtcp.SourceDescription;
 import javax.sound.sampled.FloatControl;
@@ -103,7 +107,14 @@ public class LocalDeviceDialog extends JDialog implements ActionListener,
                 audioTypes, allowTypeSelection,
                 new SendOnlyRTPSocketAdapter(videoConnector),
                 new SendOnlyRTPSocketAdapter(audioConnector),
-                profile, "ViCoStreamer");
+                profile, "ViCoStreamer",
+                new VideoFormat[]{
+                    new YUVFormat(YUVFormat.YUV_420),
+                    new RGBFormat(null, -1, Format.intArray, -1, 32, -1, -1,
+                            -1, -1, -1, -1, -1),
+                    new RGBFormat(null, -1, Format.byteArray, -1, 24, -1, -1,
+                            -1, -1, -1, -1, -1)
+                });
         content.add(panel);
 
         JPanel webPanel = new JPanel();

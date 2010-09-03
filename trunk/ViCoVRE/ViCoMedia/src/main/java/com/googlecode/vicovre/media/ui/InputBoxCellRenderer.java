@@ -30,53 +30,36 @@
  *
  */
 
-package com.googlecode.vicovre.media.renderer;
+package com.googlecode.vicovre.media.ui;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Point;
-import java.util.List;
+import java.awt.Component;
 
-import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
-import com.googlecode.vicovre.media.wiimote.PointsListener;
+public class InputBoxCellRenderer implements ListCellRenderer {
 
-public class VideoComponent extends JComponent implements PointsListener {
+    private ListCellRenderer defaultRenderer = null;
 
-    private Image image = null;
-
-    private Point currentPoint = null;
-
-    public VideoComponent() {
-        setOpaque(false);
-        setDoubleBuffered(false);
+    public InputBoxCellRenderer(ListCellRenderer defaultRenderer) {
+        this.defaultRenderer = defaultRenderer;
     }
 
-    protected void setImage(Image image) {
-        this.image = image;
-    }
-
-    public void paint(Graphics g) {
-        if (isVisible()) {
-            if (image != null) {
-                g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
-                        image.getWidth(this), image.getHeight(this), this);
-                if (currentPoint != null) {
-                    g.setColor(Color.BLUE);
-                    double scaleX = (double) getWidth()
-                        / image.getWidth(this);
-                    double scaleY = (double) getHeight()
-                        / image.getHeight(this);
-                    int x = (int) (currentPoint.x * scaleX);
-                    int y = (int) (currentPoint.y * scaleY);
-                    g.fillOval(x, y, 10, 10);
-                }
+    public Component getListCellRendererComponent(JList list, Object value,
+            int index, boolean isSelected, boolean cellHasFocus) {
+        if (value instanceof Component) {
+            Component component = (Component) value;
+            if (isSelected) {
+                component.setBackground(list.getSelectionBackground());
+            } else {
+                component.setBackground(list.getBackground());
             }
+            return component;
         }
+        return defaultRenderer.getListCellRendererComponent(list, value, index,
+                isSelected, cellHasFocus);
     }
 
-    public void updatePoints(List<Point> points, Point currentPoint) {
-        this.currentPoint = currentPoint;
-    }
+
+
 }

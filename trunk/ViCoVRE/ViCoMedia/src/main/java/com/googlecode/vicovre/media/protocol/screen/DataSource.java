@@ -35,6 +35,7 @@
 
 package com.googlecode.vicovre.media.protocol.screen;
 
+import javax.media.MediaLocator;
 import javax.media.Time;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
@@ -74,6 +75,13 @@ public class DataSource extends PushBufferDataSource {
      */
     public DataSource() {
         // Does Nothing
+    }
+
+    public void setLocator(MediaLocator source) {
+        super.setLocator(source);
+        streams = new LiveStream[1];
+        streams[0] = new LiveStream(getLocator());
+        stream = streams[0];
     }
 
     /**
@@ -159,11 +167,6 @@ public class DataSource extends PushBufferDataSource {
      * @see javax.media.protocol.PushBufferDataSource#getStreams()
      */
     public PushBufferStream[] getStreams() {
-        if (streams == null) {
-            streams = new LiveStream[1];
-            streams[0] = new LiveStream(getLocator());
-            stream = streams[0];
-        }
         return streams;
     }
 }

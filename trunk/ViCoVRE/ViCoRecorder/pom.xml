@@ -41,29 +41,6 @@
                             </outputDirectory>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.googlecode.vicovre</groupId>
-                                    <artifactId>ViCoSharedResources</artifactId>
-                                    <version>${project.version}</version>
-                                </artifactItem>
-                            </artifactItems>
-                            <includes>
-                                **\/civil.dll,**\/civil.so
-                            </includes>
-                            <stripVersion>true</stripVersion>
-                            <outputDirectory>
-                                ${project.build.directory}
-                            </outputDirectory>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>

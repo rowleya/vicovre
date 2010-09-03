@@ -243,10 +243,5 @@
             <artifactId>start</artifactId>
             <version>6.1.15</version>
         </dependency>
-        <dependency>
-            <groupId>com.lti</groupId>
-            <artifactId>civil-native-windows32</artifactId>
-            <version>1.0</version>
-        </dependency>
      </dependencies>
 </project>
