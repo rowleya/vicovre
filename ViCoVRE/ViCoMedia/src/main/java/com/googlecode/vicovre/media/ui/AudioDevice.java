@@ -174,9 +174,13 @@ public class AudioDevice implements ControllerListener {
             }
         }
 
-        dataSource = Manager.createDataSource(
+        dataSource =
+            new com.googlecode.vicovre.media.protocol.sound.DataSource();
+        dataSource.setLocator(
                 new MediaLocator("sound://rate=44100&channels=1&bits=16&mixer="
-                        + name));
+                + name));
+        dataSource.connect();
+        dataSource.disconnect();
     }
 
     /**

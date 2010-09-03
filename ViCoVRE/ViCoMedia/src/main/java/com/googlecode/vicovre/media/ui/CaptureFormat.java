@@ -30,53 +30,54 @@
  *
  */
 
-package com.googlecode.vicovre.media.renderer;
+package com.googlecode.vicovre.media.ui;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Point;
-import java.util.List;
+import java.awt.Dimension;
 
-import javax.swing.JComponent;
+import javax.media.format.VideoFormat;
 
-import com.googlecode.vicovre.media.wiimote.PointsListener;
+public class CaptureFormat implements Comparable<CaptureFormat> {
 
-public class VideoComponent extends JComponent implements PointsListener {
+    private VideoFormat format = null;
 
-    private Image image = null;
-
-    private Point currentPoint = null;
-
-    public VideoComponent() {
-        setOpaque(false);
-        setDoubleBuffered(false);
+    public CaptureFormat(VideoFormat format) {
+        this.format = format;
     }
 
-    protected void setImage(Image image) {
-        this.image = image;
+    public Dimension getSize() {
+        return format.getSize();
     }
 
-    public void paint(Graphics g) {
-        if (isVisible()) {
-            if (image != null) {
-                g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
-                        image.getWidth(this), image.getHeight(this), this);
-                if (currentPoint != null) {
-                    g.setColor(Color.BLUE);
-                    double scaleX = (double) getWidth()
-                        / image.getWidth(this);
-                    double scaleY = (double) getHeight()
-                        / image.getHeight(this);
-                    int x = (int) (currentPoint.x * scaleX);
-                    int y = (int) (currentPoint.y * scaleY);
-                    g.fillOval(x, y, 10, 10);
-                }
-            }
+    public String toString() {
+        Dimension size = format.getSize();
+        if (size == null) {
+            return "Unknown";
         }
+        return size.width + " x " + size.height;
     }
 
-    public void updatePoints(List<Point> points, Point currentPoint) {
-        this.currentPoint = currentPoint;
+    public VideoFormat getFormat() {
+        return format;
     }
+
+    public boolean equals(Object o) {
+        if (o instanceof CaptureFormat) {
+            CaptureFormat c = (CaptureFormat) o;
+            return c.toString().equals(toString());
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    public int compareTo(CaptureFormat c) {
+        Dimension size = getSize();
+        Dimension csize = c.getSize();
+        int area = size.width * size.height;
+        int carea = csize.width * csize.height;
+        return carea - area;
+    }
+
 }

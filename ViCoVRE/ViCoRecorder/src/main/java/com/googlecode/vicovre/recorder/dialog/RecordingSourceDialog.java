@@ -43,8 +43,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.media.Format;
 import javax.media.format.AudioFormat;
+import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
+import javax.media.format.YUVFormat;
 import javax.media.protocol.DataSource;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -84,7 +87,7 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
     private static final String LAST_SOURCE_AG = "lastSourceAG";
 
     // The width of the dialog
-    private static final int DIALOG_WIDTH = 620;
+    private static final int DIALOG_WIDTH = 800;
 
     // The height of the dialog
     private static final int DIALOG_HEIGHT = 565;
@@ -161,7 +164,14 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
         localDevicePanel = new LocalDevicePanel(this,
                 videoRtpTypes, audioRtpTypes, true,
                 localConnector, localConnector,
-                clientProfile, "Recorder");
+                clientProfile, "Recorder",
+                new VideoFormat[]{
+                    new YUVFormat(YUVFormat.YUV_420),
+                    new RGBFormat(null, -1, Format.intArray, -1, 32, -1, -1,
+                            -1, -1, -1, -1, -1),
+                    new RGBFormat(null, -1, Format.byteArray, -1, 24, -1, -1,
+                            -1, -1, -1, -1, -1)
+                });
         localDevicePanel.init(configuration);
 
         localDevicePanel.addLocalStreamListener(parent);

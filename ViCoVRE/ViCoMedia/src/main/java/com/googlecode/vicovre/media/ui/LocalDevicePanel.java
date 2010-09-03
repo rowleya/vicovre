@@ -45,23 +45,19 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
 
 import javax.media.CannotRealizeException;
-import javax.media.CaptureDeviceInfo;
-import javax.media.CaptureDeviceManager;
 import javax.media.Effect;
 import javax.media.Format;
 import javax.media.MediaLocator;
 import javax.media.NoPlayerException;
-import javax.media.PackageManager;
 import javax.media.format.AudioFormat;
-import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
-import javax.media.format.YUVFormat;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
@@ -80,9 +76,9 @@ import javax.swing.JScrollPane;
 
 import ag3.interfaces.types.ClientProfile;
 
+import com.googlecode.vicovre.media.processor.ClosestFormatComparator;
 import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
-import com.googlecode.vicovre.media.wiimote.WiimoteControl;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.utils.Config;
 import com.lti.civil.CaptureException;
@@ -126,6 +122,8 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     private JPanel previewPanel = new JPanel();
 
+    private VideoFormat[] preferredCaptureFormats = null;
+
     private HashSet<VideoDevice> videoDevices = new HashSet<VideoDevice>();
 
     private HashMap<VideoDevice, JCheckBox> videoSelected =
@@ -139,6 +137,15 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     private HashMap<VideoDevice, JComboBox> videoFormat =
         new HashMap<VideoDevice, JComboBox>();
+
+    private HashMap<VideoDevice, JComboBox> videoInput =
+        new HashMap<VideoDevice, JComboBox>();
+
+    private HashMap<VideoDevice, JComboBox> videoCaptureFormat =
+        new HashMap<VideoDevice, JComboBox>();
+
+    private HashMap<VideoDevice, CaptureFormat[][]> videoCaptureFormats =
+        new HashMap<VideoDevice, CaptureFormat[][]>();
 
     private JPanel audioDeviceBox = new JPanel();
 
@@ -196,7 +203,8 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
             RTPType[] videoTypes, RTPType[] audioTypes,
             boolean allowTypeSelection,
             RTPConnector videoConnector, RTPConnector audioConnector,
-            ClientProfile profile, String tool) {
+            ClientProfile profile, String tool,
+            VideoFormat[] preferredCaptureFormats) {
         this.parent = parent;
         this.videoConnector = videoConnector;
         this.audioConnector = audioConnector;
@@ -205,6 +213,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         this.allowTypeSelection = allowTypeSelection;
         this.profile = profile;
         this.tool = tool;
+        this.preferredCaptureFormats = preferredCaptureFormats;
 
         detectDevices();
 
@@ -300,6 +309,38 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         listeners.remove(listener);
     }
 
+    private CaptureFormat[] getCaptureFormats(Format[] formats) {
+        Vector<CaptureFormat> captureFormats = new Vector<CaptureFormat>();
+        for (int k = 0; k < formats.length; k++) {
+            if (formats[k] instanceof VideoFormat) {
+                CaptureFormat format =
+                    new CaptureFormat((VideoFormat) formats[k]);
+                int index = captureFormats.indexOf(format);
+                if (index == -1) {
+                    captureFormats.add(format);
+                } else {
+                    CaptureFormat currentFormat = captureFormats.get(index);
+
+                    for (int i = 0; i < preferredCaptureFormats.length; i++) {
+                        ClosestFormatComparator comparator =
+                            new ClosestFormatComparator(
+                                preferredCaptureFormats[i]);
+                        int value = comparator.compare(formats[k],
+                                currentFormat.getFormat());
+                        if (value > 0) {
+                            break;
+                        } else if (value < 0) {
+                            captureFormats.set(index, format);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        Collections.sort(captureFormats);
+        return captureFormats.toArray(new CaptureFormat[0]);
+    }
+
     private void detectDevices() {
         ProgressDialog progress = new ProgressDialog(parent,
                 "Detecting Devices", false, true, false);
@@ -315,7 +356,50 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
         for (int i = 0; i < videoDevs.length; i++) {
             try {
-                videoDevs[i].test();
+                JComboBox inputBox = videoInput.get(videoDevs[i]);
+                inputBox.setRenderer(new InputBoxCellRenderer(
+                        inputBox.getRenderer()));
+                String[] inputs = videoDevs[i].getDevice().getInputs();
+                CaptureFormat[][] captureFormats = videoCaptureFormats.get(
+                        videoDevs[i]);
+
+                if (inputs.length > 0) {
+                    boolean successfulInput = false;
+                    for (int j = 0; j < inputs.length; j++) {
+                        try {
+                            Format[] formats = videoDevs[i].getFormats(j);
+                            inputBox.addItem(inputs[j]);
+                            captureFormats[j] = getCaptureFormats(formats);
+                            successfulInput = true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            JLabel errorLabel =
+                                new JLabel("Error starting input " + inputs[j]);
+                            errorLabel.setToolTipText(
+                                    "Error: " + e.getMessage());
+                            errorLabel.setForeground(Color.RED);
+                            inputBox.addItem(errorLabel);
+                            captureFormats[j] = new CaptureFormat[0];
+                        }
+                    }
+                    if (!successfulInput) {
+                        throw new IOException("Could not find a working input");
+                    }
+                } else {
+                    Format[] formats = videoDevs[i].getFormats(0);
+                    captureFormats[0] = getCaptureFormats(formats);
+                    inputBox.addItem("");
+                }
+                inputBox.addItemListener(this);
+                inputBox.setSelectedIndex(0);
+                inputBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
+                changeCaptureFormats(videoDevs[i], inputBox);
+
+                JComboBox captureFormatBox = videoCaptureFormat.get(
+                        videoDevs[i]);
+                captureFormatBox.setMaximumSize(
+                        new Dimension(100, Integer.MAX_VALUE));
+
                 JCheckBox checkBox = videoSelected.get(videoDevs[i]);
                 checkBox.setAlignmentX(LEFT_ALIGNMENT);
                 JPanel devicePanel = new JPanel();
@@ -331,12 +415,17 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 devicePanel.add(Box.createHorizontalGlue());
                 devicePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE,
                         DEVICE_HEIGHT));
+                if (inputBox.getItemCount() > 1) {
+                    devicePanel.add(inputBox);
+                }
+                devicePanel.add(captureFormatBox);
                 if (allowTypeSelection) {
                     devicePanel.add(formatBox);
                 }
                 devicePanel.add(preview);
                 videoDeviceBox.add(devicePanel);
             } catch (Exception e) {
+                e.printStackTrace();
                 JPanel devicePanel = new JPanel();
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
@@ -526,10 +615,15 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
     private void startVideoDevice(VideoDevice device) {
 
         try {
+            JComboBox inputBox = videoInput.get(device);
             JComboBox formatBox = videoFormat.get(device);
             RTPType type = (RTPType) formatBox.getSelectedItem();
-            device.prepare(videoConnector,
-                    (VideoFormat) type.getFormat(), type.getId());
+            JComboBox captureFormatBox = videoCaptureFormat.get(device);
+            CaptureFormat format = (CaptureFormat)
+                captureFormatBox.getSelectedItem();
+            device.prepare(inputBox.getSelectedIndex(), videoConnector,
+                    (VideoFormat) type.getFormat(), type.getId(),
+                    format.getFormat());
             device.start(this);
         } catch (Exception e) {
             e.printStackTrace();
@@ -585,22 +679,23 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     private void detectVideoDevices() {
 
+        Vector<VideoCaptureDevice> devices = new Vector<VideoCaptureDevice>();
+
         // Screen devices
         GraphicsEnvironment ge = GraphicsEnvironment
                 .getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
         for (int i = 0; i < gs.length; i++) {
-            CaptureDeviceInfo jmfInfo = new CaptureDeviceInfo(
-                    "Local Screen - Monitor " + String.valueOf(i + 1),
-                    new MediaLocator("screen://fullscreen:" + i),
-                    new Format[]{new RGBFormat()});
-            CaptureDeviceManager.removeDevice(jmfInfo);
-            CaptureDeviceManager.addDevice(jmfInfo);
+            VideoCaptureDevice device = new VideoCaptureDevice(
+                "Local Screen - Monitor " + String.valueOf(i + 1),
+                com.googlecode.vicovre.media.protocol.screen.DataSource.class,
+                new MediaLocator("screen://fullscreen:" + i));
+            devices.add(device);
         }
 
         // Civil devices
-        CaptureSystemFactory factory = DefaultCaptureSystemFactorySingleton
-                .instance();
+        CaptureSystemFactory factory =
+            DefaultCaptureSystemFactorySingleton.instance();
         try {
             CaptureSystem system = factory.createCaptureSystem();
             system.init();
@@ -609,18 +704,34 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
             for (int i = 0; i < list.size(); ++i) {
                 com.lti.civil.CaptureDeviceInfo civilInfo = list.get(i);
                 String name = civilInfo.getDescription();
-                CaptureDeviceInfo jmfInfo = new CaptureDeviceInfo(name,
-                    new MediaLocator("civil:" + civilInfo.getDeviceID()),
-                    new Format[]{new YUVFormat()});
-
-                CaptureDeviceManager.removeDevice(jmfInfo);
-                CaptureDeviceManager.addDevice(jmfInfo);
+                String[] outputNames = civilInfo.getOutputNames();
+                if (outputNames.length > 0) {
+                    for (int j = 0; j < outputNames.length; j++) {
+                        String[] inputNames = civilInfo.getInputNames(j);
+                        MediaLocator[] inputLocators =
+                            new MediaLocator[inputNames.length];
+                        for (int k = 0; k < inputNames.length; k++) {
+                            inputLocators[k] = new MediaLocator("civil:"
+                                        + civilInfo.getDeviceID()
+                                        + "?output=" + j
+                                        + "&input=" + k);
+                        }
+                        VideoCaptureDevice device = new VideoCaptureDevice(
+                                name + " - " + outputNames[j],
+                            com.googlecode.vicovre.media.protocol.civil.DataSource.class,
+                            civilInfo.getInputNames(j), inputLocators);
+                        devices.add(device);
+                    }
+                } else {
+                    VideoCaptureDevice device = new VideoCaptureDevice(name,
+                        com.googlecode.vicovre.media.protocol.civil.DataSource.class,
+                        new MediaLocator("civil:" + civilInfo.getDeviceID()));
+                    devices.add(device);
+                }
             }
         } catch (CaptureException e) {
             e.printStackTrace();
         }
-
-        registerDataSource();
 
         HashSet<String> names = new HashSet<String>();
         HashMap<String, String> idMap = new HashMap<String, String>();
@@ -630,19 +741,13 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
             idMap.put(parts[1], parts[0]);
         }
 
-        Vector<CaptureDeviceInfo> devices = CaptureDeviceManager.getDeviceList(
-                new VideoFormat(null));
-        for (CaptureDeviceInfo device : devices) {
+        for (VideoCaptureDevice device : devices) {
             VideoDevice dev = new VideoDevice(device, profile, tool);
             VideoDevice vidDev = null;
             if (!videoDevices.contains(dev)) {
                 String knownDev = idMap.get(device.getLocator().getRemainder());
                 if (knownDev != null) {
-                    CaptureDeviceInfo info = new CaptureDeviceInfo(
-                            knownDev, device.getLocator(),
-                            device.getFormats());
-                    vidDev = new VideoDevice(info, profile, tool);
-                    videoDevices.add(vidDev);
+                    device.setName(knownDev);
                 } else {
                     String name = device.getName();
                     int count = 1;
@@ -650,40 +755,27 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                         count += 1;
                         name = device.getName() + " #" + count;
                     }
-                    CaptureDeviceInfo info = new CaptureDeviceInfo(
-                            name, device.getLocator(),
-                            device.getFormats());
-                    vidDev = new VideoDevice(info, profile, tool);
+                    device.setName(name);
                     knownDevices.add(name + ":"
                             + device.getLocator().getRemainder());
                     names.add(name);
-                    videoDevices.add(vidDev);
                 }
+                vidDev = new VideoDevice(device, profile, tool);
+                videoDevices.add(vidDev);
                 videoSelected.put(vidDev, new JCheckBox(
                         vidDev.getDevice().getName()));
                 videoFormat.put(vidDev, new JComboBox(videoTypes));
                 videoInitiallySelected.put(vidDev, false);
                 videoPreview.put(vidDev, new JButton("Preview"));
-            }
-        }
-    }
-
-    private void registerDataSource() {
-
-        // get registered prefixes
-        Vector<String> prefixes = PackageManager.getProtocolPrefixList();
-
-        // create new prefix
-        String[] newPrefixes = new String[]{"net.sf.fmj",
-                "com.googlecode.vicovre"};
-
-        // Go through existing prefixes and if the new one isn't already there,
-        // then add it
-        for (int i = 0; i < newPrefixes.length; i++) {
-            boolean protocolFound = prefixes.contains(newPrefixes[i]);
-            if (!protocolFound) {
-                prefixes.addElement(newPrefixes[i]);
-                PackageManager.setProtocolPrefixList(prefixes);
+                videoInput.put(vidDev, new JComboBox());
+                if (device.getInputs().length > 0) {
+                    videoCaptureFormats.put(vidDev,
+                        new CaptureFormat[device.getInputs().length][0]);
+                } else {
+                    videoCaptureFormats.put(vidDev,
+                        new CaptureFormat[1][0]);
+                }
+                videoCaptureFormat.put(vidDev, new JComboBox());
             }
         }
     }
@@ -755,7 +847,9 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
             for (VideoDevice device : videoDevices) {
                 if (e.getSource() == videoPreview.get(device)) {
                     try {
-                        DataSource dataSource = device.getDataSource();
+                        JComboBox inputBox = videoInput.get(device);
+                        DataSource dataSource = device.getDataSource(
+                                inputBox.getSelectedIndex());
                         dataSource.connect();
                         PushBufferStream[] datastreams =
                             ((PushBufferDataSource) dataSource).getStreams();
@@ -785,6 +879,21 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         }
     }
 
+    private void changeCaptureFormats(VideoDevice device, JComboBox inputBox) {
+        JComboBox captureFormat = videoCaptureFormat.get(device);
+        captureFormat.removeAllItems();
+        CaptureFormat[][] formats = videoCaptureFormats.get(device);
+        int index = inputBox.getSelectedIndex();
+        for (CaptureFormat f : formats[index]) {
+            captureFormat.addItem(f);
+        }
+        if (captureFormat.getItemCount() > 1) {
+            captureFormat.setVisible(true);
+        } else {
+            captureFormat.setVisible(false);
+        }
+    }
+
     /**
      *
      * @see java.awt.event.ItemListener#itemStateChanged(
@@ -797,6 +906,13 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 if (e.getSource() == inputBox) {
                     String line = (String) inputBox.getSelectedItem();
                     device.selectLine(line);
+                    return;
+                }
+            }
+            for (VideoDevice device : videoDevices) {
+                JComboBox inputBox = videoInput.get(device);
+                if (e.getSource() == inputBox) {
+                    changeCaptureFormats(device, inputBox);
                 }
             }
         }

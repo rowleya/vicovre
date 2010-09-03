@@ -62,19 +62,33 @@ public class ClosestFormatComparator implements Comparator<Format> {
         return 0;
     }
 
+    private int test(int value1, int value2) {
+        if (value1 == -1 && value2 == -1) {
+            return -1;
+        }
+        if (((value1 == -1) && (value2 != -1))
+                || ((value1 != -1) && (value2 == -1))) {
+            return 0;
+        }
+        if (value1 == value2) {
+            return -1;
+        }
+        return 0;
+    }
+
     private int getMatchCount(Format testFormat) {
         if (format.equals(testFormat)) {
-            return Integer.MIN_VALUE;
+            return -100;
         }
 
         int matchCount = 0;
         matchCount += test(format.getEncoding(), testFormat.getEncoding());
         matchCount += test(format.getDataType(), testFormat.getDataType());
 
-        if (format instanceof AudioFormat) {
+        if (testFormat instanceof AudioFormat) {
             return getMatchCount((AudioFormat) testFormat, matchCount);
         }
-        if (format instanceof VideoFormat) {
+        if (testFormat instanceof VideoFormat) {
             return getMatchCount((VideoFormat) testFormat, matchCount);
         }
 
@@ -83,7 +97,7 @@ public class ClosestFormatComparator implements Comparator<Format> {
 
     private int getMatchCount(AudioFormat testFormat, int matchCount) {
         if (!(format instanceof AudioFormat)) {
-            return Integer.MAX_VALUE;
+            return 100;
         }
         AudioFormat af = (AudioFormat) format;
         matchCount += test(af.getChannels(), testFormat.getChannels());
@@ -98,7 +112,7 @@ public class ClosestFormatComparator implements Comparator<Format> {
 
     private int getMatchCount(VideoFormat testFormat, int matchCount) {
         if (!(format instanceof VideoFormat)) {
-            return Integer.MAX_VALUE;
+            return 100;
         }
         VideoFormat vf = (VideoFormat) format;
         matchCount += test(vf.getFrameRate(), testFormat.getFrameRate());
@@ -106,18 +120,18 @@ public class ClosestFormatComparator implements Comparator<Format> {
                 testFormat.getMaxDataLength());
         matchCount += test(vf.getSize(), testFormat.getSize());
 
-        if (format instanceof RGBFormat) {
-            return getMatchCount((RGBFormat) format, matchCount);
+        if (testFormat instanceof RGBFormat) {
+            return getMatchCount((RGBFormat) testFormat, matchCount);
         }
-        if (format instanceof YUVFormat) {
-            return getMatchCount((YUVFormat) format, matchCount);
+        if (testFormat instanceof YUVFormat) {
+            return getMatchCount((YUVFormat) testFormat, matchCount);
         }
         return matchCount;
     }
 
     private int getMatchCount(RGBFormat testFormat, int matchCount) {
         if (!(format instanceof RGBFormat)) {
-            return Integer.MAX_VALUE;
+            return 100;
         }
         RGBFormat rgb = (RGBFormat) format;
         matchCount += test(rgb.getBitsPerPixel(), testFormat.getBitsPerPixel());
@@ -134,7 +148,7 @@ public class ClosestFormatComparator implements Comparator<Format> {
 
     private int getMatchCount(YUVFormat testFormat, int matchCount) {
         if (!(format instanceof YUVFormat)) {
-            return Integer.MAX_VALUE;
+            return 100;
         }
         YUVFormat yuv = (YUVFormat) format;
         matchCount += test(yuv.getOffsetU(), testFormat.getOffsetU());
@@ -142,7 +156,8 @@ public class ClosestFormatComparator implements Comparator<Format> {
         matchCount += test(yuv.getOffsetY(), testFormat.getOffsetY());
         matchCount += test(yuv.getStrideUV(), testFormat.getStrideUV());
         matchCount += test(yuv.getStrideY(), testFormat.getStrideY());
-        matchCount += test(yuv.getYuvType(), testFormat.getYuvType());
+        int yuvCount = test(yuv.getYuvType(), testFormat.getYuvType());
+        matchCount += yuvCount;
         return matchCount;
     }
 

@@ -237,7 +237,7 @@ public class LiveStream implements PushBufferStream, Runnable,
             nativeData = new byte[10][maxDataLength];
             System.err.println("Using native capture system");
         } catch (UnsatisfiedLinkError e) {
-            e.printStackTrace();
+            System.err.println("Native capture not found - using Java Capture");
             // Get the size to send
             size = new Dimension(width, height);
 
