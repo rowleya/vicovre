@@ -69,6 +69,10 @@ public class CloneEffect extends PushBufferDataSource
     // The handler of the transfers
     private BufferTransferHandler handler = null;
 
+    private Integer transferSync = new Integer(0);
+
+    private boolean transferring = false;
+
     private boolean done = false;
 
     public CloneEffect() {
@@ -98,6 +102,24 @@ public class CloneEffect extends PushBufferDataSource
         return new Format[]{format};
     }
 
+    private void doTransfer() {
+        synchronized (transferSync) {
+            if (!transferring) {
+                transferring = true;
+                final CloneEffect effect = this;
+                Thread transferThread = new Thread() {
+                    public void run() {
+                        handler.transferData(effect);
+                        transferring = false;
+                    }
+                };
+                transferThread.start();
+            } else {
+                System.err.println("Not transferring as in progress");
+            }
+        }
+    }
+
     /**
      *
      * @see javax.media.Codec#process(javax.media.Buffer, javax.media.Buffer)
@@ -105,20 +127,20 @@ public class CloneEffect extends PushBufferDataSource
     public int process(Buffer input, Buffer output) {
         if ((handler != null) && !done) {
             synchronized (bufferSync) {
-                while ((readBuffer != null) && !done && (handler != null)) {
+                /*while ((readBuffer != null) && !done && (handler != null)) {
                     try {
                         bufferSync.wait();
                     } catch (InterruptedException e) {
                         // Does Nothing
                     }
-                }
+                }*/
                 format = input.getFormat();
                 readBuffer = input;
                 bufferSync.notifyAll();
             }
 
             if (!done && (handler != null)) {
-                handler.transferData(this);
+                doTransfer();
             }
         } else {
             synchronized (bufferSync) {
