@@ -388,10 +388,10 @@ public class VideoExtractor {
         }
         VideoExtractor extractor = new VideoExtractor(
             //"video/x-ms-asf",
-            //"video/x-flv",
+            "video/x-flv",
             //"audio/mpeg",
             //"video/mp4",
-            "audio/x-ms-wma",
+            //"audio/x-ms-wma",
 
             // Video
             /*new String[]{
@@ -409,13 +409,21 @@ public class VideoExtractor {
                 "../../recordings/127435969591176530449/3521524142",
                 "../../recordings/127435969591176530449/1446065064",
             }, */
-            null,
+            /*new String[]{
+                    //"../../recordings/2010-09-05_195259-0000779294674440362405/3812480598",
+                    "../../recordings/2010-09-05_195259-0000779294674440362405/3812481442"
+            }, */
+            new String[]{
+                "../../recordings/2010-09-07_123054-075045934/3954838557",
+                //"../../recordings/2010-09-07_123054-075045934/3954838307"
+            },
+            //null,
 
             new Rectangle[]{
-                new Rectangle(286, 30, 720, 540),
-                new Rectangle(286, 30, 720, 540),
-                new Rectangle(30, 30, 240, 196),
-                //new Rectangle(640, 480),
+                //new Rectangle(286, 30, 720, 540),
+                //new Rectangle(286, 30, 720, 540),
+                //new Rectangle(30, 30, 240, 196),
+                new Rectangle(640, 480),
             },
 
             // Audio
@@ -435,12 +443,18 @@ public class VideoExtractor {
                 "../../recordings/1273840957545552375448/2217839544",
                 "../../recordings/1273840957545552375448/1184358165",
             }, */
-            new String[]{
+            /*new String[]{
                 "../../recordings/127435969591176530449/1448927216",
                 "../../recordings/127435969591176530449/144994584",
                 "../../recordings/127435969591176530449/199381944",
-            },
+            }, */
             //null,
+            /*new String[]{
+                "../../recordings/2010-09-05_195259-0000779294674440362405/3812482027"
+            }, */
+            new String[]{
+                "../../recordings/2010-09-07_123054-075045934/3954838838"
+            },
 
             // Sync
             null,
@@ -461,13 +475,13 @@ public class VideoExtractor {
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream(
-                //"test.flv"
+                "test.flv"
                 //"test.mp3"
                 //"test.asf"
                 //"test.mp4"
-                "test.wma"
+                //"test.wma"
                 );
-        extractor.transferToStream(testout, 0, 0, 5000, null);
+        extractor.transferToStream(testout, 0, 0, 30000, null);
         System.exit(0);
     }
 }

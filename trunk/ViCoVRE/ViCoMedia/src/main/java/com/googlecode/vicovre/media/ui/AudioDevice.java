@@ -40,20 +40,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.media.CannotRealizeException;
-import javax.media.Codec;
-import javax.media.ControllerClosedEvent;
-import javax.media.ControllerEvent;
-import javax.media.ControllerListener;
-import javax.media.Manager;
 import javax.media.MediaLocator;
 import javax.media.NoDataSourceException;
 import javax.media.NoPlayerException;
 import javax.media.NoProcessorException;
-import javax.media.Processor;
-import javax.media.control.TrackControl;
 import javax.media.format.AudioFormat;
 import javax.media.format.UnsupportedFormatException;
-import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
@@ -81,15 +73,11 @@ import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class AudioDevice implements ControllerListener {
-
-    private static final boolean USE_SIMPLE_PROCESSOR = true;
+public class AudioDevice {
 
     private RTPManager sendManager = null;
 
     private SimpleProcessor processor = null;
-
-    private Processor sendProcessor = null;
 
     private SendStream sendStream = null;
 
@@ -115,10 +103,6 @@ public class AudioDevice implements ControllerListener {
     private boolean started = false;
 
     private boolean prepared = false;
-
-    private boolean processorFailed = false;
-
-    private Integer stateLock = new Integer(0);
 
     private ClientProfile profile = null;
 
@@ -150,7 +134,7 @@ public class AudioDevice implements ControllerListener {
         return currentControls;
     }
 
-    public void test() throws LineUnavailableException, NoDataSourceException,
+    public void test() throws LineUnavailableException,
             IOException {
         Mixer mixer = JavaSoundStream.getPortMixer(name);
         Line.Info[] infos = mixer.getSourceLineInfo();
@@ -197,8 +181,7 @@ public class AudioDevice implements ControllerListener {
      */
     public void prepare(RTPConnector rtpConnector, AudioFormat audioFormat,
             int audioRtpType) throws UnsupportedFormatException, IOException,
-            NoDataSourceException, NoProcessorException,
-            CannotRealizeException, LineUnavailableException {
+            LineUnavailableException {
 
         if (started) {
             return;
@@ -211,145 +194,37 @@ public class AudioDevice implements ControllerListener {
         PushBufferStream[] datastreams =
             ((PushBufferDataSource) dataSource).getStreams();
 
-        if (USE_SIMPLE_PROCESSOR) {
-            try {
-                processor = new SimpleProcessor(datastreams[0].getFormat(),
-                        audioFormat);
+        try {
+            processor = new SimpleProcessor(datastreams[0].getFormat(),
+                    audioFormat);
 
-                processor.printChain(System.err);
+            processor.printChain(System.err);
 
-                System.err.println();
-                System.err.println("Adding clone effect");
-                cloneEffect = new CloneEffect();
-                if (!processor.insertEffect(cloneEffect)) {
-                    System.err.println("Couldn't clone");
-                }
-
-                processor.printChain(System.err);
-
-                sendManager = RTPManager.newInstance();
-                sendManager.addFormat(audioFormat, audioRtpType);
-                sendManager.initialize(rtpConnector);
-
-                DataSource data = processor.getDataOutput(dataSource, 0);
-                sendStream = sendManager.createSendStream(data, 0);
-                sendStream.setSourceDescription(Misc.createSourceDescription(
-                        profile, name, tool));
-                dataSource.disconnect();
-                prepared = true;
-            } finally {
-                if (!prepared) {
-                    if (sendProcessor != null) {
-                        sendProcessor.close();
-                    }
-                }
-            }
-        } else {
-            // Configure the processor
-            sendProcessor = javax.media.Manager.createProcessor(
-                    dataSource);
-            sendProcessor.addControllerListener(this);
-            sendProcessor.configure();
-            processorFailed = false;
-            while (!processorFailed
-                    && (sendProcessor.getState() < Processor.Configured)) {
-                synchronized (stateLock) {
-                    try {
-                        stateLock.wait();
-                    } catch (InterruptedException e) {
-                        // Do Nothing
-                    }
-                }
-            }
-            if (processorFailed) {
-                throw new CannotRealizeException(
-                        "Could not configure processor for audio");
+            System.err.println();
+            System.err.println("Adding clone effect");
+            cloneEffect = new CloneEffect();
+            if (!processor.insertEffect(cloneEffect)) {
+                System.err.println("Couldn't clone");
             }
 
-            // Set to send in RTP
+            processor.printChain(System.err);
+
             sendManager = RTPManager.newInstance();
             sendManager.addFormat(audioFormat, audioRtpType);
             sendManager.initialize(rtpConnector);
-            ContentDescriptor cd = new ContentDescriptor(ContentDescriptor.RAW_RTP);
-            sendProcessor.setContentDescriptor(cd);
 
-            try {
-                // Set the format of the transmission to the selected value
-                TrackControl[] tracks = sendProcessor.getTrackControls();
-
-                for (int j = 0; j < tracks.length; j++) {
-                    if (tracks[j].isEnabled()) {
-
-                        // set codec chain -- add the change effect
-                        if (datastreams[0].getFormat()
-                                instanceof AudioFormat) {
-                            if (tracks[j].setFormat(audioFormat) == null) {
-                                throw new CannotRealizeException(
-                                        "Format " + audioFormat
-                                        + " unsupported by audio device");
-                            }
-                            try {
-                                cloneEffect = new CloneEffect();
-                                tracks[j].setCodecChain(new Codec[]{
-                                        cloneEffect});
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-
-                // Realise the processor
-                sendProcessor.realize();
-                processorFailed = false;
-                while (!processorFailed
-                        && (sendProcessor.getState() < Processor.Realized)) {
-                    synchronized (stateLock) {
-                        try {
-                            stateLock.wait();
-                        } catch (InterruptedException e) {
-                            // Do Nothing
-                        }
-                    }
-                }
-                if (processorFailed) {
-                    throw new CannotRealizeException(
-                            "Could not realize processor for audio");
-                }
-
-                DataSource data = sendProcessor.getDataOutput();
-                sendStream = sendManager.createSendStream(data, 0);
-                sendStream.setSourceDescription(Misc.createSourceDescription(
-                        profile, name, tool));
-                dataSource.disconnect();
-                prepared = true;
-            } finally {
-                if (!prepared) {
-                    try {
-                        sendProcessor.close();
-                    } catch (Throwable t) {
-                        // Do Nothing
-                    }
+            DataSource data = processor.getDataOutput(dataSource, 0);
+            sendStream = sendManager.createSendStream(data, 0);
+            sendStream.setSourceDescription(Misc.createSourceDescription(
+                    profile, name, tool));
+            dataSource.disconnect();
+            prepared = true;
+        } finally {
+            if (!prepared) {
+                if (processor != null) {
+                    processor.close();
                 }
             }
-        }
-    }
-
-    /**
-     * @see javax.media.ControllerListener
-     *      #controllerUpdate(javax.media.ControllerEvent)
-     */
-    public void controllerUpdate(ControllerEvent ce) {
-        // If there was an error during configure or
-        // realize, the processor will be closed
-        if (ce instanceof ControllerClosedEvent) {
-            processorFailed = true;
-        }
-
-        // All controller events, send a notification
-        // to the waiting thread in waitForState method.
-        synchronized (stateLock) {
-            stateLock.notifyAll();
         }
     }
 
@@ -429,11 +304,7 @@ public class AudioDevice implements ControllerListener {
         if (!started) {
             dataSource.connect();
             sendStream.start();
-            if (!USE_SIMPLE_PROCESSOR) {
-                sendProcessor.start();
-            } else {
-                processor.start(dataSource, 0);
-            }
+            processor.start(dataSource, 0);
             if (listener != null) {
                 listener.addLocalAudio(name + " - " + line, cloneEffect,
                     volumeControls.get(line), ssrc);
@@ -457,11 +328,7 @@ public class AudioDevice implements ControllerListener {
             if (listener != null) {
                 listener.removeLocalAudio(cloneEffect);
             }
-            if (!USE_SIMPLE_PROCESSOR) {
-                sendProcessor.stop();
-            } else {
-                processor.stop();
-            }
+            processor.stop();
             try {
                 sendStream.stop();
             } catch (IOException e) {

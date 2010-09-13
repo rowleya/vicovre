@@ -47,8 +47,6 @@ public class RateConverter implements Codec {
 
     private double ratio = 0;
 
-    private int bytesPerSample = 0;
-
     private AudioFormat inputFormat = null;
 
     private AudioFormat outputFormat = null;
@@ -115,9 +113,12 @@ public class RateConverter implements Codec {
         int inOffset = input.getOffset();
         int inEnd = inLength + inOffset;
         byte[] inData = (byte[]) input.getData();
-        int outLength = (int) Math.round(
-                ((inLength * outputFormat.getSampleRate())
+        int bytesPerSample = inputFormat.getSampleSizeInBits() / Byte.SIZE;
+        int noInputSamples = inLength / bytesPerSample;
+        int noOutputSamples = (int) Math.round(
+                ((noInputSamples * outputFormat.getSampleRate())
                 / inputFormat.getSampleRate()) + 0.5);
+        int outLength = noOutputSamples * bytesPerSample;
         byte[] outData = (byte[]) output.getData();
         if ((outData == null)
                 || (outData.length != outLength)) {
@@ -158,6 +159,8 @@ public class RateConverter implements Codec {
         output.setLength(outData.length);
         output.setOffset(0);
         output.setFormat(outputFormat);
+        output.setTimeStamp(input.getTimeStamp());
+        output.setSequenceNumber(input.getSequenceNumber());
 
         return BUFFER_PROCESSED_OK;
     }
@@ -192,7 +195,6 @@ public class RateConverter implements Codec {
                 outputFormat = af;
                 if (inputFormat != null) {
                     ratio = inputFormat.getSampleRate() / af.getSampleRate();
-                    bytesPerSample = outputFormat.getSampleSizeInBits() / 8;
                 }
                 return format;
             }

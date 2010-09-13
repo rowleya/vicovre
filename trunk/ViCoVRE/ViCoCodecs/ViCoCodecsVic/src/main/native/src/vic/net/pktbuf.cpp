@@ -90,7 +90,7 @@ void BufferPool::close() {
 }
 
 void BufferPool::setData(u_int8_t *data, int length) {
-    for (int i = 0; i < length; i += PKTBUF_SIZE) {
+    for (int i = length - PKTBUF_SIZE; i >= 0; i -= PKTBUF_SIZE) {
         pktbuf *pb = new pktbuf;
         pb->len = 0;
         pb->ref = 1;

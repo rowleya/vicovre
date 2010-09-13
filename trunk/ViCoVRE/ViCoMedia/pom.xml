@@ -44,14 +44,14 @@
             <version>2.1.1f</version>
         </dependency>
         <dependency>
-            <groupId>net.sf</groupId>
-            <artifactId>fmj-nojmf</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.lti</groupId>
             <artifactId>civil-no-swt</artifactId>
             <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.epiphan</groupId>
+            <artifactId>vga2usb-jni</artifactId>
+            <version>3.23.7</version>
         </dependency>
         <dependency>
             <groupId>tablelayout</groupId>

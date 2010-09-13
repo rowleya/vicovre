@@ -84,7 +84,7 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
 
     private com.lti.civil.VideoFormat setFormat = null;
 
-    private int sequence = 0;
+    private long sequence = 0;
 
     public LiveStream() throws CaptureException {
         captureSystem =

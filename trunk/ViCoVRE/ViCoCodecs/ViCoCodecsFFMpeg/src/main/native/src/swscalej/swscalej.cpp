@@ -1,4 +1,8 @@
 #include "com_googlecode_vicovre_codecs_ffmpeg_SWScaleCodec.h"
+
+#define INT64_C(val) val##LL
+#define UINT64_C(val) val##ULL
+
 extern "C" {
 #include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
@@ -161,6 +165,9 @@ void getData(AVFrame *frame, uint8_t *inData, enum PixelFormat pix_fmt,
                 frame->data[0] += (height - 1) * width;
             }
             break;
+        default:
+            fprintf(stderr, "Unknown pixel format %i\n", pix_fmt);
+            fflush(stderr);
             break;
     }
 }

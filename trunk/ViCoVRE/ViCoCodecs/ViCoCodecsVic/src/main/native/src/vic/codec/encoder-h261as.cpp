@@ -80,7 +80,7 @@ H261ASEncoder::H261ASEncoder() : TransmitterModule(FT_YUV_420),
         llm[q] = 0;
         clm[q] = 0;
     }
-    setq(10);
+    setq(6);
 }
 
 H261ASEncoder::~H261ASEncoder()

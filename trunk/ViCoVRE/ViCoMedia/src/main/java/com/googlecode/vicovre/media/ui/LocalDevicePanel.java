@@ -623,7 +623,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 captureFormatBox.getSelectedItem();
             device.prepare(inputBox.getSelectedIndex(), videoConnector,
                     (VideoFormat) type.getFormat(), type.getId(),
-                    format.getFormat());
+                    format != null? format.getFormat(): null);
             device.start(this);
         } catch (Exception e) {
             e.printStackTrace();
@@ -680,6 +680,11 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
     private void detectVideoDevices() {
 
         Vector<VideoCaptureDevice> devices = new Vector<VideoCaptureDevice>();
+
+        // VGA2USB
+        devices.add(new VideoCaptureDevice("Epiphan VGA2USB",
+                com.googlecode.vicovre.media.protocol.vga2usb.DataSource.class,
+                new MediaLocator("vga2usb://0")));
 
         // Screen devices
         GraphicsEnvironment ge = GraphicsEnvironment

@@ -59,6 +59,10 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     private HashMap<String, RecordingMetadataElement> data =
         new HashMap<String, RecordingMetadataElement>();
 
+    public RecordingMetadata() {
+        // Does Nothing
+    }
+
     public RecordingMetadata(String primaryKey, String primaryValue) {
         this.primaryKey = primaryKey;
         data.put(primaryKey, new RecordingMetadataElement(primaryKey,

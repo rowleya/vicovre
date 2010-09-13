@@ -34,26 +34,17 @@
 
 package com.googlecode.vicovre.media.ui;
 
-import java.awt.Dimension;
 import java.io.IOException;
 
 import javax.media.CannotRealizeException;
-import javax.media.Codec;
 import javax.media.Control;
-import javax.media.ControllerClosedEvent;
-import javax.media.ControllerEvent;
-import javax.media.ControllerListener;
 import javax.media.Format;
 import javax.media.NoDataSourceException;
 import javax.media.NoProcessorException;
-import javax.media.Processor;
 import javax.media.control.FormatControl;
 import javax.media.control.KeyFrameControl;
-import javax.media.control.TrackControl;
 import javax.media.format.UnsupportedFormatException;
 import javax.media.format.VideoFormat;
-import javax.media.format.YUVFormat;
-import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
@@ -74,18 +65,13 @@ import com.googlecode.vicovre.media.wiimote.WiimoteEffect;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class VideoDevice implements ControllerListener,
-        Comparable<VideoDevice> {
-
-    private static final boolean USE_SIMPLE_PROCESSOR = true;
+public class VideoDevice implements Comparable<VideoDevice> {
 
     private VideoCaptureDevice device = null;
 
     private RTPManager sendManager = null;
 
     private SimpleProcessor processor = null;
-
-    private Processor sendProcessor = null;
 
     private SendStream sendStream = null;
 
@@ -98,10 +84,6 @@ public class VideoDevice implements ControllerListener,
     private boolean deviceStarted = false;
 
     private KeyFrameForceControl keyFrameForce = null;
-
-    private boolean processorFailed = false;
-
-    private Integer stateLock = new Integer(0);
 
     private boolean prepared = false;
 
@@ -159,7 +141,6 @@ public class VideoDevice implements ControllerListener,
     public void prepare(int input, RTPConnector rtpConnector,
             VideoFormat videoFormat, int videoRtpType, Format captureFormat)
             throws NoDataSourceException, IOException,
-            NoProcessorException, CannotRealizeException,
             UnsupportedFormatException {
         if (prepared && (lastFormat != null)
                 && lastFormat.equals(videoFormat)
@@ -181,174 +162,54 @@ public class VideoDevice implements ControllerListener,
             formatControl.setFormat(captureFormat);
         }
 
-        if (USE_SIMPLE_PROCESSOR) {
-            try {
-                processor = new SimpleProcessor(datastreams[0].getFormat(),
-                        videoFormat);
-                wiimoteEffect = new WiimoteEffect();
-                cloneEffect = new CloneEffect(new Control[]{wiimoteEffect});
-                if (!processor.insertEffect(cloneEffect)) {
-                    System.err.println("Couldn't clone");
-                }
-                if (!processor.insertEffect(wiimoteEffect)) {
-                    System.err.println("Couldn't add wiimote");
-                } else {
-                    System.err.println("Wiimote effect added");
-                }
-
-                sendManager = RTPManager.newInstance();
-                sendManager.addFormat(videoFormat, videoRtpType);
-                sendManager.initialize(rtpConnector);
-
-                KeyFrameControl keyFrameControl = (KeyFrameControl)
-                    processor.getControl(
-                            KeyFrameControl.class.getCanonicalName());
-                if (keyFrameControl != null) {
-                    System.err.println(datastreams[0].getFormat());
-                    float rate = ((VideoFormat)
-                            datastreams[0].getFormat()).getFrameRate();
-                    if (rate == Format.NOT_SPECIFIED) {
-                        keyFrameControl.setKeyFrameInterval(250);
-                    } else {
-                        keyFrameControl.setKeyFrameInterval((int) rate * 30);
-                    }
-                }
-
-                keyFrameForce = (KeyFrameForceControl)
-                    processor.getControl(
-                        KeyFrameForceControl.class.getCanonicalName());
-
-                DataSource data = processor.getDataOutput(dataSource, 0);
-                sendStream = sendManager.createSendStream(data, 0);
-                sendStream.setSourceDescription(Misc.createSourceDescription(
-                        profile, deviceName, tool));
-                dataSource.disconnect();
-                prepared = true;
-            } finally {
-                if (!prepared) {
-                    if (processor != null) {
-                        processor.close();
-                    }
-                }
+        try {
+            processor = new SimpleProcessor(datastreams[0].getFormat(),
+                    videoFormat);
+            wiimoteEffect = new WiimoteEffect();
+            cloneEffect = new CloneEffect(new Control[]{wiimoteEffect});
+            if (!processor.insertEffect(cloneEffect)) {
+                System.err.println("Couldn't clone");
             }
-        } else {
-
-
-            // Configure the processor
-            sendProcessor = javax.media.Manager.createProcessor(dataSource);
-            sendProcessor.addControllerListener(this);
-            sendProcessor.configure();
-            processorFailed = false;
-            while (!processorFailed
-                    && (sendProcessor.getState() < Processor.Configured)) {
-                synchronized (stateLock) {
-                    try {
-                        stateLock.wait();
-                    } catch (InterruptedException e) {
-                        // Do Nothing
-                    }
-                }
-            }
-            if (processorFailed) {
-                throw new CannotRealizeException(
-                    "Could not configure processor for device " + deviceName);
+            if (!processor.insertEffect(wiimoteEffect)) {
+                System.err.println("Couldn't add wiimote");
+            } else {
+                System.err.println("Wiimote effect added");
             }
 
-            // Set to send in RTP
             sendManager = RTPManager.newInstance();
             sendManager.addFormat(videoFormat, videoRtpType);
             sendManager.initialize(rtpConnector);
-            ContentDescriptor cd = new ContentDescriptor(
-                    ContentDescriptor.RAW_RTP);
-            sendProcessor.setContentDescriptor(cd);
-            try {
-                // Set the format of the transmission to the selected value
-                TrackControl[] tracks = sendProcessor.getTrackControls();
 
-                for (int i = 0; i < tracks.length; i++) {
-                    if (tracks[i].isEnabled()) {
-
-                        // set codec chain -- add the change effect
-                        if (datastreams[0].getFormat() instanceof VideoFormat) {
-                            if (tracks[i].setFormat(videoFormat) == null) {
-                                throw new CannotRealizeException(
-                                    "Format " + videoFormat
-                                    + " unsupported by device " + deviceName);
-                            }
-                            try {
-                                cloneEffect = new CloneEffect();
-                                tracks[i].setCodecChain(new Codec[]{
-                                        cloneEffect});
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-
-                // Realise the processor
-                sendProcessor.realize();
-                processorFailed = false;
-                while (!processorFailed
-                        && (sendProcessor.getState() < Processor.Realized)) {
-                    synchronized (stateLock) {
-                        try {
-                            stateLock.wait();
-                        } catch (InterruptedException e) {
-                            // Do Nothing
-                        }
-                    }
-                }
-                if (processorFailed) {
-                    throw new CannotRealizeException(
-                            "Could not realize processor for device "
-                            + deviceName);
-                }
-
-                KeyFrameControl keyFrameControl = (KeyFrameControl)
-                    sendProcessor.getControl(
-                            KeyFrameControl.class.getCanonicalName());
-                if (keyFrameControl != null) {
+            KeyFrameControl keyFrameControl = (KeyFrameControl)
+                processor.getControl(
+                        KeyFrameControl.class.getCanonicalName());
+            if (keyFrameControl != null) {
+                System.err.println(datastreams[0].getFormat());
+                float rate = ((VideoFormat)
+                        datastreams[0].getFormat()).getFrameRate();
+                if (rate == Format.NOT_SPECIFIED) {
                     keyFrameControl.setKeyFrameInterval(250);
-                }
-
-                keyFrameForce = (KeyFrameForceControl)
-                    sendProcessor.getControl(
-                        KeyFrameForceControl.class.getCanonicalName());
-
-                DataSource data = sendProcessor.getDataOutput();
-                sendStream = sendManager.createSendStream(data, 0);
-                sendStream.setSourceDescription(Misc.createSourceDescription(
-                        profile, deviceName, tool));
-                dataSource.disconnect();
-                prepared = true;
-            } finally {
-                if (!prepared) {
-                    try {
-                        sendProcessor.close();
-                    } catch (Throwable t) {
-                        // Do Nothing
-                    }
+                } else {
+                    keyFrameControl.setKeyFrameInterval((int) rate * 30);
                 }
             }
-        }
-    }
 
-    /**
-     * @see javax.media.ControllerListener
-     *      #controllerUpdate(javax.media.ControllerEvent)
-     */
-    public void controllerUpdate(ControllerEvent ce) {
-        // If there was an error during configure or
-        // realize, the processor will be closed
-        if (ce instanceof ControllerClosedEvent) {
-            processorFailed = true;
-        }
+            keyFrameForce = (KeyFrameForceControl)
+                processor.getControl(
+                    KeyFrameForceControl.class.getCanonicalName());
 
-        // All controller events, send a notification
-        // to the waiting thread in waitForState method.
-        synchronized (stateLock) {
-            stateLock.notifyAll();
+            DataSource data = processor.getDataOutput(dataSource, 0);
+            sendStream = sendManager.createSendStream(data, 0);
+            sendStream.setSourceDescription(Misc.createSourceDescription(
+                    profile, deviceName, tool));
+            dataSource.disconnect();
+            prepared = true;
+        } finally {
+            if (!prepared) {
+                if (processor != null) {
+                    processor.close();
+                }
+            }
         }
     }
 
@@ -361,13 +222,7 @@ public class VideoDevice implements ControllerListener,
         if (!deviceStarted && prepared) {
             this.listener = listener;
             dataSource.connect();
-            sendStream.start();
-            if (!USE_SIMPLE_PROCESSOR) {
-                sendProcessor.start();
-            } else {
-                processor.start(dataSource, 0);
-            }
-            deviceStarted = true;
+            dataSource.start();
             if (listener != null) {
                 long ssrc = sendStream.getSSRC();
                 if (ssrc < 0) {
@@ -375,6 +230,10 @@ public class VideoDevice implements ControllerListener,
                 }
                 listener.addLocalVideo(device.getName(), cloneEffect, ssrc);
             }
+            sendStream.start();
+            processor.start(dataSource, 0);
+            deviceStarted = true;
+
         } else if (!prepared) {
             throw new IOException("Device not prepared!");
         }
@@ -390,11 +249,7 @@ public class VideoDevice implements ControllerListener,
                 listener.removeLocalVideo(cloneEffect);
             }
             dataSource.disconnect();
-            if (!USE_SIMPLE_PROCESSOR) {
-                sendProcessor.stop();
-            } else {
-                processor.stop();
-            }
+            processor.stop();
             try {
                 sendStream.stop();
             } catch (IOException e) {

@@ -144,5 +144,15 @@ public class Test {
         renderer.start();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+
+        javax.media.Format newFormat = (javax.media.Format)
+            JOptionPane.showInputDialog(null,
+                "Select Format:", "Format",
+                JOptionPane.QUESTION_MESSAGE, null, formats, null);
+        dataSource.stop();
+        dataSource.disconnect();
+        formatControl.setFormat(newFormat);
+        dataSource.connect();
+        dataSource.start();
     }
 }

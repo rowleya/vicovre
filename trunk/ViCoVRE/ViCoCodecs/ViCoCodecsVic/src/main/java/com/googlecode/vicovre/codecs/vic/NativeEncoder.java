@@ -96,12 +96,6 @@ public class NativeEncoder implements Codec,
             }
             return formats;
         }
-        if (codec != -1) {
-            if (CODECS[codec].getOutputFormat().matches(input)) {
-                return new Format[]{CODECS[codec].getInputFormat()};
-            }
-            return new Format[0];
-        }
         Vector<Format> outputFormats = new Vector<Format>();
         for (int i = 0; i < CODECS.length; i++) {
             if (CODECS[i].getOutputFormat().matches(input)) {
@@ -119,8 +113,8 @@ public class NativeEncoder implements Codec,
                 Dimension size = inputFormat.getSize();
                 buffer = new byte[size.width * size.height * 4];
                 setSize(ref, size.width, size.height);
-                frameOffsets = new int[buffer.length / 1024];
-                frameLengths = new int[buffer.length / 1024];
+                frameOffsets = new int[buffer.length / 100];
+                frameLengths = new int[buffer.length / 100];
             }
             Arrays.fill(frameOffsets, -1);
             Arrays.fill(frameLengths, -1);

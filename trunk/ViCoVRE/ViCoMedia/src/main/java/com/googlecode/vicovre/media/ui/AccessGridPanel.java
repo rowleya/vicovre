@@ -733,29 +733,34 @@ public class AccessGridPanel extends JPanel implements ActionListener,
                             // Do Nothing
                         }
                     }
-                    Object result = worker.get();
-                    if (result instanceof Throwable) {
-                        throw (Throwable) result;
+                    if (!progress.wasCancelled()) {
+                        Object result = worker.get();
+                        if (result instanceof Throwable) {
+                            throw (Throwable) result;
+                        }
+
+                        venues = (ConnectionDescription[]) result;
+                        venueServers.put(server, venues);
                     }
-
-                    venues = (ConnectionDescription[]) result;
-                    venueServers.put(server, venues);
                 }
             }
-            Arrays.sort(venues);
-            for (int i = 0; i < venues.length; i++) {
-                accessGridVenue.addItem(venues[i]);
-            }
 
-            boolean isInList = false;
-            for (int i = 0; (i < accessGridServer.getItemCount())
-                    && !isInList; i++) {
-                if (accessGridServer.getItemAt(i).equals(server)) {
-                    isInList = true;
+            if (venues != null) {
+                Arrays.sort(venues);
+                for (int i = 0; i < venues.length; i++) {
+                    accessGridVenue.addItem(venues[i]);
                 }
-            }
-            if (!isInList) {
-                accessGridServer.addItem(server);
+
+                boolean isInList = false;
+                for (int i = 0; (i < accessGridServer.getItemCount())
+                        && !isInList; i++) {
+                    if (accessGridServer.getItemAt(i).equals(server)) {
+                        isInList = true;
+                    }
+                }
+                if (!isInList) {
+                    accessGridServer.addItem(server);
+                }
             }
         } catch (MalformedURLException error) {
             progress.setVisible(false);

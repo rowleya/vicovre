@@ -161,7 +161,32 @@ public class ClosestFormatComparator implements Comparator<Format> {
         return matchCount;
     }
 
+    public static boolean isRaw(Format testFormat) {
+        if (testFormat instanceof YUVFormat) {
+            return true;
+        }
+        if (testFormat instanceof RGBFormat) {
+            return true;
+        }
+        if ((testFormat instanceof AudioFormat)
+                && testFormat.getEncoding().equals(AudioFormat.LINEAR)) {
+            return true;
+        }
+        return false;
+    }
+
     public int compare(Format f1, Format f2) {
+        if (format == null) {
+            boolean f1isRaw = isRaw(f1);
+            boolean f2isRaw = isRaw(f2);
+            if (f1isRaw && f2isRaw) {
+                return 0;
+            }
+            if (f1isRaw) {
+                return -1;
+            }
+            return 1;
+        }
         int f1Count = getMatchCount(f1);
         int f2Count = getMatchCount(f2);
         return f1Count - f2Count;

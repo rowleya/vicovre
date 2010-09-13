@@ -93,6 +93,8 @@ import org.xml.sax.SAXParseException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.WiimotePointerControl;
+import com.googlecode.vicovre.media.processor.SimpleProcessor;
+import com.googlecode.vicovre.media.renderer.AudioRenderer;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
 import com.googlecode.vicovre.media.ui.FullScreenFrame;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
@@ -254,7 +256,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
 
     private Vector<DataSource> audioDataSources = new Vector<DataSource>();
 
-    private Vector<Player> audioPlayers = new Vector<Player>();
+    private Vector<AudioRenderer> audioPlayers = new Vector<AudioRenderer>();
 
     private Vector<FloatControl> volumeControls = new Vector<FloatControl>();
 
@@ -928,7 +930,6 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
      */
     public void addLocalVideo(String name, DataSource dataSource, long ssrc)
             throws IOException {
-        System.err.println("Adding local video");
         PushBufferStream[] datastreams =
             ((PushBufferDataSource) dataSource).getStreams();
         RGBRenderer previewRenderer = new RGBRenderer(new Effect[]{});
@@ -955,8 +956,11 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             pointerSource.addItem(source);
             pointerSources.put(dataSource, source);
         }
+        System.err.println("Validating");
         validate();
+        System.err.println("Repainting");
         repaint();
+        System.err.println("Done adding local video");
     }
 
     private void removeCurrentLayoutRenderer(RGBRenderer renderer) {
@@ -1036,12 +1040,17 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     public void addLocalAudio(String name, DataSource dataSource,
             FloatControl volumeControl, long ssrc)
             throws NoPlayerException, CannotRealizeException, IOException {
-        Player player = Manager.createRealizedPlayer(dataSource);
+
+        PushBufferStream[] datastreams =
+            ((PushBufferDataSource) dataSource).getStreams();
+        AudioRenderer renderer = new AudioRenderer();
+        renderer.setDataSource(dataSource, 0);
+        renderer.setInputFormat(datastreams[0].getFormat());
         audioDataSources.add(dataSource);
-        audioPlayers.add(player);
+        audioPlayers.add(renderer);
         volumeControls.add(volumeControl);
 
-        GainControl gain = (GainControl) player.getControl(
+        GainControl gain = (GainControl) renderer.getControl(
                 GainControl.class.getCanonicalName());
         playerGainControls.add(gain);
         if (gain != null) {
@@ -1075,7 +1084,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
         audioPanels.add(audioPanel);
         volumePanel.add(audioPanel);
 
-        player.start();
+        dataSource.start();
+        renderer.start();
         validate();
     }
 
@@ -1094,7 +1104,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
                 volumePanel.remove(panel);
             }
             audioPanels.remove(index);
-            Player player = audioPlayers.get(index);
+            AudioRenderer player = audioPlayers.get(index);
             if (player != null) {
                 player.stop();
             }

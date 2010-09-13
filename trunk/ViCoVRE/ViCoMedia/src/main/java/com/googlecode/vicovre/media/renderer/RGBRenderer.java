@@ -302,7 +302,9 @@ public class RGBRenderer implements VideoRenderer, BitRateControl,
                 RGBFormat outputFormat = (RGBFormat)
                     outputBuffer.getFormat();
                 Dimension size = outputFormat.getSize();
-                if (image == null) {
+                if (image == null || ((size != null)
+                        && ((image.getWidth() != size.width)
+                                || (image.getHeight() != size.height)))) {
                     if (size != null) {
                         image = new BufferedImage(size.width, size.height,
                                 BufferedImage.TYPE_INT_RGB);

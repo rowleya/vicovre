@@ -46,9 +46,9 @@ import javax.media.protocol.SourceTransferHandler;
 import javax.media.rtp.OutputDataStream;
 import javax.media.rtp.RTPConnector;
 
-import memetic.crypto.AESCrypt;
-import memetic.crypto.DESCrypt;
-import memetic.crypto.RTPCrypt;
+import com.googlecode.vicovre.media.rtp.encryption.AESCrypt;
+import com.googlecode.vicovre.media.rtp.encryption.DESCrypt;
+import com.googlecode.vicovre.media.rtp.encryption.RTPCrypt;
 
 import ag3.bridge.BridgeClient;
 import ag3.bridge.BridgeClientCreator;
