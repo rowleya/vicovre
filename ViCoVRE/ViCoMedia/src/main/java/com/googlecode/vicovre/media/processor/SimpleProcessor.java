@@ -79,9 +79,19 @@ public class SimpleProcessor {
 
     private LinkedList<Buffer> outputBuffers = null;
 
+    private Format inputFormat = null;
+
+    private Format outputFormat = null;
+
+    private Buffer outputBuffer = null;
+
+    private Vector<Effect> insertedEffects = new Vector<Effect>();
+
     private Renderer renderer = null;
 
     private Multiplexer multiplexer = null;
+
+    private Format requestedOutputFormat = null;
 
     private int track = 0;
 
@@ -116,17 +126,50 @@ public class SimpleProcessor {
 
         private Buffer firstBuffer = null;
 
+        private Format firstInputFormat = null;
+
         private Format outputFormat = null;
+
+        private int index = -1;
 
         private CodecIterator(List<Codec> codecs,
                 List<Format> inputFormats, List<Format> outputFormats,
-                List<Buffer> buffers, Buffer firstBuffer) {
+                List<Buffer> buffers, Buffer firstBuffer,
+                Format firstInputFormat) {
             codecIterator = codecs.listIterator();
             inputFormatIterator = inputFormats.listIterator();
             outputFormatIterator = outputFormats.listIterator();
             outputBufferIterator = buffers.listIterator();
             outputBuffer = firstBuffer;
+            outputFormat = firstInputFormat;
+            inputFormat = firstInputFormat;
             this.firstBuffer = firstBuffer;
+            this.firstInputFormat = firstInputFormat;
+        }
+
+        private void reset(List<Codec> codecs,
+                List<Format> inputFormats, List<Format> outputFormats,
+                List<Buffer> buffers, int index) {
+            codecIterator = codecs.listIterator(index);
+            inputFormatIterator = inputFormats.listIterator(index);
+            outputFormatIterator = outputFormats.listIterator(index);
+            outputBufferIterator = buffers.listIterator(index);
+            if (index > 0) {
+                codec = codecs.get(index - 1);
+                outputBuffer = buffers.get(index - 1);
+                outputFormat = outputFormats.get(index - 1);
+                inputFormat = inputFormats.get(index - 1);
+            } else {
+                codec = null;
+                outputBuffer = firstBuffer;
+                outputFormat = firstInputFormat;
+                inputFormat = firstInputFormat;
+            }
+            this.index = index - 1;
+        }
+
+        private int getIndex() {
+            return index;
         }
 
         private boolean hasNext() {
@@ -139,6 +182,7 @@ public class SimpleProcessor {
             inputFormat = inputFormatIterator.next();
             outputFormat = outputFormatIterator.next();
             outputBuffer = outputBufferIterator.next();
+            index += 1;
         }
 
         private void previous() {
@@ -152,6 +196,7 @@ public class SimpleProcessor {
             } else {
                 lastBuffer = firstBuffer;
             }
+            index -=1;
         }
 
         private Buffer getInputBuffer() {
@@ -162,24 +207,16 @@ public class SimpleProcessor {
             return outputBuffer;
         }
 
+        private Format getOutputFormat() {
+            return outputFormat;
+        }
+
         private Codec getCodec() {
             return codec;
         }
 
         private Format getInputFormat() {
             return inputFormat;
-        }
-
-        private void setInputFormat(Format inputFormat) {
-            inputFormatIterator.set(inputFormat);
-        }
-
-        private Format getOutputFormat() {
-            return outputFormat;
-        }
-
-        private void setOutputFormat(Format outputFormat) {
-            outputFormatIterator.set(outputFormat);
         }
 
         private void insertBefore(Codec codec, Format inputFormat,
@@ -253,7 +290,7 @@ public class SimpleProcessor {
             if (formats[i].getClass().isInstance(inputFormat)) {
                 try {
                     init(inputFormat, formats[i]);
-                    multiplexer.setInputFormat(outputFormats.getLast(),
+                    multiplexer.setInputFormat(getOutputFormat(),
                             track);
                     multiplexer.open();
                     inited = true;
@@ -279,7 +316,7 @@ public class SimpleProcessor {
                 try {
                     init(inputFormat, formats[i]);
                     Format f = renderer.setInputFormat(
-                            outputFormats.getLast());
+                            getOutputFormat());
                     if (f != null) {
                         renderer.open();
                         inited = true;
@@ -293,7 +330,7 @@ public class SimpleProcessor {
                 && !inited; i++) {
             try {
                 init(inputFormat, formats[i]);
-                renderer.setInputFormat(outputFormats.getLast());
+                renderer.setInputFormat(getOutputFormat());
                 renderer.open();
                 inited = true;
             } catch (UnsupportedFormatException e) {
@@ -329,10 +366,22 @@ public class SimpleProcessor {
             throw new UnsupportedFormatException("Cannot translate from "
                     + inputFormat + " to " + outputFormat, inputFormat);
         }
+        this.requestedOutputFormat = outputFormat;
+        this.inputFormat = inputFormat;
         codecs = new LinkedList<Codec>();
         inputFormats = new LinkedList<Format>();
         outputFormats = new LinkedList<Format>();
         outputBuffers = new LinkedList<Buffer>();
+        setupCodecs(inputFormat, codecList, codecs, inputFormats, outputFormats,
+                outputBuffers);
+    }
+
+    private void setupCodecs(Format inputFormat, Codecs codecList,
+            LinkedList<Codec> codecs,
+            LinkedList<Format> inputFormats, LinkedList<Format> outputFormats,
+            LinkedList<Buffer> outputBuffers) {
+        outputFormat = inputFormat;
+        outputBuffer = new Buffer();
         Iterator<Codec> codec = codecList.codecList.iterator();
         Iterator<Format> iFormat = codecList.inputFormatList.iterator();
         Iterator<Format> oFormat = codecList.outputFormatList.iterator();
@@ -344,6 +393,8 @@ public class SimpleProcessor {
             inputFormats.addLast(inFormat);
             outputFormats.addLast(outFormat);
             outputBuffers.addLast(output);
+            outputFormat = outFormat;
+            outputBuffer = output;
         }
     }
 
@@ -360,8 +411,8 @@ public class SimpleProcessor {
     }
 
     public boolean insertEffect(Effect effect) {
-        CodecIterator iterator = new CodecIterator(codecs, inputFormats,
-                outputFormats, outputBuffers, null);
+        CodecIterator iterator = new CodecIterator(codecs,
+                inputFormats, outputFormats, outputBuffers, null, null);
         while (iterator.hasNext()) {
             iterator.next();
             Format input = iterator.getInputFormat();
@@ -371,6 +422,9 @@ public class SimpleProcessor {
                 Buffer output = createBuffer(outputFormat);
                 iterator.insertBefore(effect, inputFormat, outputFormat,
                         output);
+                if (!insertedEffects.contains(effect)) {
+                    insertedEffects.add(effect);
+                }
                 return true;
             }
         }
@@ -382,7 +436,7 @@ public class SimpleProcessor {
      * @return The output buffer
      */
     public Buffer getOutputBuffer() {
-        return outputBuffers.getLast();
+        return outputBuffer;
     }
 
     /**
@@ -390,7 +444,7 @@ public class SimpleProcessor {
      * @return The output format
      */
     public Format getOutputFormat() {
-        return outputFormats.getLast();
+        return outputFormat;
     }
 
     /**
@@ -414,8 +468,8 @@ public class SimpleProcessor {
         }
         try {
             CodecIterator iterator = new CodecIterator(codecs,
-                    inputFormats, outputFormats, outputBuffers, inputBuffer);
-            iterator.next();
+                    inputFormats, outputFormats, outputBuffers, inputBuffer,
+                    inputFormat);
             int status = process(iterator, render);
             return status;
         } catch (Throwable t) {
@@ -424,17 +478,10 @@ public class SimpleProcessor {
         }
     }
 
-    private int render(CodecIterator iterator) {
+    private int render() {
         int status = PlugIn.BUFFER_PROCESSED_OK;
         do {
-            Buffer outputBuffer = iterator.getOutputBuffer();
-            Format outputFormat = iterator.getOutputFormat();
-            if (!outputBuffer.getFormat().equals(outputFormat)) {
-                Format format = renderer.setInputFormat(
-                        outputBuffer.getFormat());
-                iterator.setOutputFormat(format);
-            }
-            status = renderer.process(outputBuffer);
+            status = renderer.process(getOutputBuffer());
             if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
                 return status;
             }
@@ -445,8 +492,7 @@ public class SimpleProcessor {
     private int multiplex() {
         int status = PlugIn.BUFFER_PROCESSED_OK;
         do {
-            status = multiplexer.process(outputBuffers.getLast(),
-                    track);
+            status = multiplexer.process(getOutputBuffer(), track);
             if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
                 return status;
             }
@@ -454,17 +500,114 @@ public class SimpleProcessor {
         return status;
     }
 
+    private void handleFormatChange(int index, Format newFormat)
+            throws UnsupportedFormatException {
+        HashMap<String, Boolean> searched = new HashMap<String, Boolean>();
+        for (int i = 0; i < index; i++) {
+            searched.put(codecs.get(i).getClass().getName(), true);
+        }
+
+        System.err.println("Changing format to " + newFormat + " converting to "
+                + requestedOutputFormat);
+        Codecs codecList = search(newFormat,
+                requestedOutputFormat, searched);
+        if (codecList == null) {
+            throw new UnsupportedFormatException("Cannot translate from "
+                    + newFormat + " to " + requestedOutputFormat,
+                    newFormat);
+        }
+
+        Vector<Codec> existingCodecs = new Vector<Codec>();
+        Vector<Format> existingInputFormats = new Vector<Format>();
+        Vector<Format> existingOutputFormats = new Vector<Format>();
+        Vector<Buffer> existingOutputBuffers = new Vector<Buffer>();
+        ListIterator<Codec> codecIterator = codecs.listIterator();
+        ListIterator<Format> inputFormatIterator = inputFormats.listIterator();
+        ListIterator<Format> outputFormatIterator =
+            outputFormats.listIterator();
+        ListIterator<Buffer> outputBufferIterator =
+            outputBuffers.listIterator();
+        for (int i = 0; i < index; i++) {
+            existingCodecs.add(codecIterator.next());
+            existingInputFormats.add(inputFormatIterator.next());
+            existingOutputBuffers.add(outputBufferIterator.next());
+            Format outputFormat = outputFormatIterator.next();
+            if (i < (index - 1)) {
+                existingOutputFormats.add(outputFormat);
+            } else {
+                existingOutputFormats.add(newFormat);
+            }
+        }
+        codecs.clear();
+        inputFormats.clear();
+        outputFormats.clear();
+        outputBuffers.clear();
+        codecs.addAll(existingCodecs);
+        inputFormats.addAll(existingInputFormats);
+        outputFormats.addAll(existingOutputFormats);
+        outputBuffers.addAll(existingOutputBuffers);
+
+        if (index == 0) {
+            this.inputFormat = newFormat;
+        }
+
+        setupCodecs(newFormat, codecList, codecs, inputFormats, outputFormats,
+                outputBuffers);
+        for (Effect effect : insertedEffects) {
+            insertEffect(effect);
+        }
+    }
+
     // Processes with a specific codec
     private synchronized int process(CodecIterator iterator, boolean render) {
         int status = PlugIn.BUFFER_PROCESSED_OK;
+
+        Format inputFormat = iterator.getOutputFormat();
+        Buffer buffer = iterator.getOutputBuffer();
+        if (!buffer.getFormat().equals(inputFormat)) {
+            try {
+                int index = iterator.getIndex() + 1;
+                System.err.println("Changing from " + inputFormat);
+                handleFormatChange(index, buffer.getFormat());
+                iterator.reset(codecs, inputFormats, outputFormats,
+                        outputBuffers, index);
+            } catch (UnsupportedFormatException e) {
+                e.printStackTrace();
+                iterator.previous();
+                return PlugIn.BUFFER_PROCESSED_FAILED;
+            }
+        }
+
+        if (!iterator.hasNext()) {
+            if (!firstFrameProcessed) {
+                synchronized (firstFrameSync) {
+                    firstFrameProcessed = true;
+                    firstFrameSync.notifyAll();
+                }
+            }
+            if (render && (renderer != null)) {
+                if (render() == PlugIn.BUFFER_PROCESSED_FAILED) {
+                    return PlugIn.BUFFER_PROCESSED_FAILED;
+                }
+            } else if (render && (multiplexer != null)) {
+                if (multiplex() == PlugIn.BUFFER_PROCESSED_FAILED) {
+                    return PlugIn.BUFFER_PROCESSED_FAILED;
+                }
+            } else if (render && (thread != null)) {
+                thread.finishedProcessing();
+            }
+            for (ProcessorListener listener : listeners) {
+                listener.finishedProcessing(iterator.getOutputBuffer());
+            }
+            outputFormat = iterator.getOutputFormat();
+            outputBuffer = iterator.getOutputBuffer();
+            return status;
+        }
+
+        iterator.next();
         Buffer localInputBuffer = iterator.getInputBuffer();
         Codec codec = iterator.getCodec();
         Buffer outputBuffer = iterator.getOutputBuffer();
-        if (!localInputBuffer.getFormat().equals(iterator.getInputFormat())) {
-            Format format = codec.setInputFormat(
-                    localInputBuffer.getFormat());
-            iterator.setInputFormat(format);
-        }
         long firstInputBufferTimestamp = -1;
         do {
 
@@ -484,6 +627,7 @@ public class SimpleProcessor {
             status = codec.process(localInputBuffer,
                     outputBuffer);
             if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
+                iterator.previous();
                 return status;
             }
 
@@ -500,50 +644,18 @@ public class SimpleProcessor {
                 }
                 firstInputBufferTimestamp = -1;
                 if (!outputBuffer.isDiscard()) {
-                    if (iterator.hasNext()) {
-                        iterator.next();
-                        status = process(iterator, render);
-                        if (status == PlugIn.BUFFER_PROCESSED_FAILED) {
-                            iterator.previous();
-                            return PlugIn.BUFFER_PROCESSED_FAILED;
-                        }
-                        iterator.previous();
-                    } else {
-                        if (!firstFrameProcessed) {
-                            synchronized (firstFrameSync) {
-                                firstFrameProcessed = true;
-                                firstFrameSync.notifyAll();
-                            }
-                        }
-                        if (render && (renderer != null)
-                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status ==
-                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                            if (render(iterator)
-                                    == PlugIn.BUFFER_PROCESSED_FAILED) {
-                                return PlugIn.BUFFER_PROCESSED_FAILED;
-                            }
-                        } else if (render && (multiplexer != null)
-                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status ==
-                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                            if (multiplex() == PlugIn.BUFFER_PROCESSED_FAILED) {
-                                return PlugIn.BUFFER_PROCESSED_FAILED;
-                            }
-                        } else if (render && (thread != null)
-                                && ((status == PlugIn.BUFFER_PROCESSED_OK)
-                                || (status ==
-                                    PlugIn.INPUT_BUFFER_NOT_CONSUMED))) {
-                            thread.finishedProcessing();
-                        }
-                        for (ProcessorListener listener : listeners) {
-                            listener.finishedProcessing(outputBuffer);
-                        }
+                    int processStatus = process(iterator, render);
+                    if (processStatus == PlugIn.BUFFER_PROCESSED_FAILED) {
+                        return PlugIn.BUFFER_PROCESSED_FAILED;
+                    } else if (processStatus == PlugIn.OUTPUT_BUFFER_NOT_FILLED
+                            && status == PlugIn.BUFFER_PROCESSED_OK) {
+                        status = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
                     }
                 }
             }
 
         } while (status == PlugIn.INPUT_BUFFER_NOT_CONSUMED);
+        iterator.previous();
         return status;
     }
 
@@ -560,18 +672,7 @@ public class SimpleProcessor {
         private LinkedList<Format> outputFormatList = new LinkedList<Format>();
     }
 
-    private Codecs search(Format input, Format output,
-            HashMap<String, Boolean> searched) {
-        if (((output == null)
-                    && (input.matches(new RGBFormat())
-                    || input.matches(new YUVFormat())))
-                || input.matches(output)) {
-            Codecs searchCodecs = new Codecs();
-            searchCodecs.codecList.addFirst(new CopyCodec());
-            searchCodecs.inputFormatList.addFirst(input);
-            searchCodecs.outputFormatList.addFirst(input);
-            return searchCodecs;
-        }
+    private Codecs findImmediateCodecs(Format input, Format output) {
         Vector< ? > codecsFromHere = null;
         if (output == null) {
             if (input instanceof AudioFormat) {
@@ -633,8 +734,26 @@ public class SimpleProcessor {
                 }
             }
         }
+        return null;
+    }
 
-        codecsFromHere = PlugInManager.getPlugInList(input, null,
+    private Codecs search(Format input, Format output,
+            HashMap<String, Boolean> searched) {
+        System.err.println("Finding codecs from " + input + " to " + output);
+        if (((output == null)
+                    && (input.matches(new RGBFormat())
+                    || input.matches(new YUVFormat())))
+                || input.matches(output)) {
+            Codecs searchCodecs = new Codecs();
+            return searchCodecs;
+        }
+
+        Codecs immediateCodecs = findImmediateCodecs(input, output);
+        if (immediateCodecs != null) {
+            return immediateCodecs;
+        }
+
+        Vector<?> codecsFromHere = PlugInManager.getPlugInList(input, null,
                 PlugInManager.CODEC);
         System.err.println("Trying codecs " + codecsFromHere);
         Vector<PathElement> paths = new Vector<PathElement>();
@@ -784,12 +903,12 @@ public class SimpleProcessor {
 
     public void printChain(PrintStream out) {
         CodecIterator iter = new CodecIterator(codecs, inputFormats,
-                outputFormats, outputBuffers, null);
+                outputFormats, outputBuffers, null, null);
         while (iter.hasNext()) {
             iter.next();
             out.println(iter.getInputFormat() + " -> " + iter.getCodec());
         }
-        out.println(outputFormats.getLast());
+        out.println(getOutputFormat());
     }
 
     public void addListener(ProcessorListener listener) {

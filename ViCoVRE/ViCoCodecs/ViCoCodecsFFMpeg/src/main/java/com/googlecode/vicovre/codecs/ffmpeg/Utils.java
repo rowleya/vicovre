@@ -1143,19 +1143,19 @@ public class Utils {
             "rgb24", 1, false, 24, 1, 2, 3, 3, Format.byteArray);
         PIXFMTINFO[PixelFormat.PIX_FMT_BGR24.getId()] = new RGBPixFmtInfo(
             "bgr24", 1, false, 24, 3, 2, 1, 3, Format.byteArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_RGB32.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_BGRA.getId()] = new RGBPixFmtInfo(
             "rgb32", 1, true, 32, 0xFF0000, 0x00FF00, 0x0000FF, 1,
             Format.intArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_RGB565.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_RGB565LE.getId()] = new RGBPixFmtInfo(
             "rgb565", 1, false, 16, 0xF800, 0x7E0, 0x1F, 1, Format.shortArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_RGB555.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_RGB555LE.getId()] = new RGBPixFmtInfo(
             "rgb555", 1, true, 16, 0x7C00, 0x3E0, 0x1F, 1, Format.shortArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_BGR32.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_RGBA.getId()] = new RGBPixFmtInfo(
             "bgr32", 1, true, 32, 0x0000FF, 0x00FF00, 0xFF0000, 1,
             Format.intArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_BGR565.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_BGR565LE.getId()] = new RGBPixFmtInfo(
             "bgr565", 1, false, 16, 0x1F, 0x7E0, 0xF800, 1, Format.shortArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_BGR555.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_BGR555LE.getId()] = new RGBPixFmtInfo(
             "bgr555", 1, false, 16, 0x1F, 0x3E0, 0x7C00, 1, Format.shortArray);
         PIXFMTINFO[PixelFormat.PIX_FMT_RGB8.getId()] = new RGBPixFmtInfo(
             "rgb8", 1, false, 8, 0xC0, 0x38, 0x7, 1, Format.byteArray);
@@ -1165,10 +1165,10 @@ public class Utils {
             "bgr8", 1, false, 8, 0x7, 0x38, 0xC0, 1, Format.byteArray);
         PIXFMTINFO[PixelFormat.PIX_FMT_BGR4_BYTE.getId()] = new RGBPixFmtInfo(
             "bgr4_byte", 1, false, 4, 0x1, 0x6, 0x8, 1, Format.byteArray);
-        PIXFMTINFO[PixelFormat.PIX_FMT_BGR32_1.getId()] = new RGBPixFmtInfo(
+        PIXFMTINFO[PixelFormat.PIX_FMT_ABGR.getId()] = new RGBPixFmtInfo(
             "bgr32_1", 1, true, 32, 0xFF000000, 0xFF0000, 0xFF00, 1,
             Format.intArray);
-       PIXFMTINFO[PixelFormat.PIX_FMT_RGB32_1.getId()] = new RGBPixFmtInfo(
+       PIXFMTINFO[PixelFormat.PIX_FMT_ARGB.getId()] = new RGBPixFmtInfo(
             "rgb32_1", 1, true, 32, 0xFF00, 0xFF0000, 0xFF000000, 1,
             Format.intArray);
 
@@ -1270,12 +1270,12 @@ public class Utils {
 
         case PIX_FMT_RGB24:
         case PIX_FMT_BGR24:
-        case PIX_FMT_BGR32_1:
-        case PIX_FMT_RGB32_1:
-        case PIX_FMT_RGB32:
-        case PIX_FMT_BGR32:
-        case PIX_FMT_BGR565:
-        case PIX_FMT_BGR555:
+        case PIX_FMT_ARGB:
+        case PIX_FMT_ABGR:
+        case PIX_FMT_BGRA:
+        case PIX_FMT_RGBA:
+        case PIX_FMT_BGR565LE:
+        case PIX_FMT_BGR555LE:
         case PIX_FMT_RGB8:
         case PIX_FMT_RGB4_BYTE:
         case PIX_FMT_BGR8:

@@ -114,8 +114,6 @@ public class CloneEffect extends PushBufferDataSource
                     }
                 };
                 transferThread.start();
-            } else {
-                System.err.println("Not transferring as in progress");
             }
         }
     }
@@ -157,6 +155,7 @@ public class CloneEffect extends PushBufferDataSource
      * @see javax.media.Codec#setInputFormat(javax.media.Format)
      */
     public Format setInputFormat(Format format) {
+        this.format = format;
         return format;
     }
 

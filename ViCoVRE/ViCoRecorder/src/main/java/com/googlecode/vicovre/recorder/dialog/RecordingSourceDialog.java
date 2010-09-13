@@ -40,6 +40,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 
@@ -315,7 +316,9 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
                         streamListener.removeAllStreams();
                     }
                     cancelled = false;
+
                     localDevicePanel.changeDevices();
+
                     setVisible(false);
                 }
             } else {

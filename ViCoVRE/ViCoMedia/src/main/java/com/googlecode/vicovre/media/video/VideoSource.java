@@ -71,7 +71,11 @@ public class VideoSource {
 
     private VideoFormat format = null;
 
-    private SimpleProcessor processor = null;
+    private VideoFormat convertFormat = null;
+
+    private SimpleProcessor inputProcessor = null;
+
+    private SimpleProcessor outputProcessor = null;
 
     private boolean isFinished = false;
 
@@ -89,11 +93,10 @@ public class VideoSource {
         this.offsetShift = startTime - minStartTime;
         this.x = x;
         this.y = y;
-        this.format = (VideoFormat) source.getFormat();
-        if (!format.matches(convertFormat)) {
-            processor = new SimpleProcessor(format, convertFormat);
-            format = (VideoFormat) processor.getOutputFormat();
-        }
+        this.convertFormat = convertFormat;
+        inputProcessor = new SimpleProcessor(source.getFormat(),
+                (VideoFormat) null);
+        format = (VideoFormat) inputProcessor.getOutputFormat();
         msPerRead = 1000.0 / convertFormat.getFrameRate();
     }
 
@@ -115,24 +118,33 @@ public class VideoSource {
         nextBuffer = null;
         isFinished = !source.readNextPacket();
         if (!isFinished) {
-            if (processor != null) {
-                int result = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
-                while (!isFinished
-                        && (result != PlugIn.BUFFER_PROCESSED_OK)
+            int result = PlugIn.OUTPUT_BUFFER_NOT_FILLED;
+            while (!isFinished
+                    && (result != PlugIn.BUFFER_PROCESSED_OK)
+                    && (result != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                nextBuffer = source.getBuffer();
+                result = inputProcessor.process(nextBuffer);
+                if ((result != PlugIn.BUFFER_PROCESSED_OK)
                         && (result != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
-                    nextBuffer = source.getBuffer();
-                    result = processor.process(nextBuffer);
-                    if ((result != PlugIn.BUFFER_PROCESSED_OK)
-                            && (result != PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
-                        isFinished = !source.readNextPacket();
+                    isFinished = !source.readNextPacket();
+                }
+
+            }
+            if ((result == PlugIn.BUFFER_PROCESSED_OK)
+                    || (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
+                Buffer inputBuffer = inputProcessor.getOutputBuffer();
+                if (outputProcessor == null) {
+                    try {
+                        outputProcessor = new SimpleProcessor(
+                                inputBuffer.getFormat(), convertFormat);
+                        format = (VideoFormat)
+                            outputProcessor.getOutputFormat();
+                    } catch (UnsupportedFormatException e) {
+                        e.printStackTrace();
                     }
                 }
-                if ((result == PlugIn.BUFFER_PROCESSED_OK)
-                        || (result == PlugIn.INPUT_BUFFER_NOT_CONSUMED)) {
-                    nextBuffer = processor.getOutputBuffer();
-                }
-            } else {
-                nextBuffer = (Buffer) source.getBuffer().clone();
+                outputProcessor.process(inputBuffer);
+                nextBuffer = outputProcessor.getOutputBuffer();
             }
         }
     }
@@ -267,8 +279,11 @@ public class VideoSource {
     }
 
     public void close() {
-        if (processor != null) {
-            processor.close();
+        if (inputProcessor != null) {
+            inputProcessor.close();
+        }
+        if (outputProcessor != null) {
+            outputProcessor.close();
         }
     }
 

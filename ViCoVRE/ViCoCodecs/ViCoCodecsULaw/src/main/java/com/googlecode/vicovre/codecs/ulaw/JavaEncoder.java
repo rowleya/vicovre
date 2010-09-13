@@ -140,7 +140,7 @@ public class JavaEncoder implements Codec {
         output.setData(outData);
         output.setLength(outLength);
         output.setOffset(0);
-        output.setFormat(format);
+        output.setFormat(outputFormat);
         output.setTimeStamp(input.getTimeStamp());
         output.setDuration(input.getDuration());
         output.setSequenceNumber(input.getSequenceNumber());
