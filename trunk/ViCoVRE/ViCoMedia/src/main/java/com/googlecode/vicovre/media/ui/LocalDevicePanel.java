@@ -124,7 +124,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     private VideoFormat[] preferredCaptureFormats = null;
 
-    private HashSet<VideoDevice> videoDevices = new HashSet<VideoDevice>();
+    private Vector<VideoDevice> videoDevices = new Vector<VideoDevice>();
 
     private HashMap<VideoDevice, JCheckBox> videoSelected =
         new HashMap<VideoDevice, JCheckBox>();
@@ -149,7 +149,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
 
     private JPanel audioDeviceBox = new JPanel();
 
-    private HashSet<AudioDevice> audioDevices = new HashSet<AudioDevice>();
+    private Vector<AudioDevice> audioDevices = new Vector<AudioDevice>();
 
     private HashMap<AudioDevice, JCheckBox> audioSelected =
         new HashMap<AudioDevice, JCheckBox>();
@@ -347,27 +347,23 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         progress.setMessage("Detecting Devices...");
         progress.setVisible(true);
 
-        detectVideoDevices();
-        detectAudioDevices();
+        Vector<VideoDevice> newVideoDevices = detectVideoDevices();
+        Vector<AudioDevice> newAudioDevices = detectAudioDevices();
 
-        videoDeviceBox.removeAll();
-        VideoDevice[] videoDevs = videoDevices.toArray(new VideoDevice[0]);
-        Arrays.sort(videoDevs);
-
-        for (int i = 0; i < videoDevs.length; i++) {
+        for (VideoDevice videoDev : newVideoDevices) {
             try {
-                JComboBox inputBox = videoInput.get(videoDevs[i]);
+                JComboBox inputBox = videoInput.get(videoDev);
                 inputBox.setRenderer(new InputBoxCellRenderer(
                         inputBox.getRenderer()));
-                String[] inputs = videoDevs[i].getDevice().getInputs();
+                String[] inputs = videoDev.getDevice().getInputs();
                 CaptureFormat[][] captureFormats = videoCaptureFormats.get(
-                        videoDevs[i]);
+                        videoDev);
 
                 if (inputs.length > 0) {
                     boolean successfulInput = false;
                     for (int j = 0; j < inputs.length; j++) {
                         try {
-                            Format[] formats = videoDevs[i].getFormats(j);
+                            Format[] formats = videoDev.getFormats(j);
                             inputBox.addItem(inputs[j]);
                             captureFormats[j] = getCaptureFormats(formats);
                             successfulInput = true;
@@ -386,30 +382,30 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                         throw new IOException("Could not find a working input");
                     }
                 } else {
-                    Format[] formats = videoDevs[i].getFormats(0);
+                    Format[] formats = videoDev.getFormats(0);
                     captureFormats[0] = getCaptureFormats(formats);
                     inputBox.addItem("");
                 }
                 inputBox.addItemListener(this);
                 inputBox.setSelectedIndex(0);
                 inputBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
-                changeCaptureFormats(videoDevs[i], inputBox);
+                changeCaptureFormats(videoDev, inputBox);
 
                 JComboBox captureFormatBox = videoCaptureFormat.get(
-                        videoDevs[i]);
+                        videoDev);
                 captureFormatBox.setMaximumSize(
                         new Dimension(100, Integer.MAX_VALUE));
 
-                JCheckBox checkBox = videoSelected.get(videoDevs[i]);
+                JCheckBox checkBox = videoSelected.get(videoDev);
                 checkBox.setAlignmentX(LEFT_ALIGNMENT);
                 JPanel devicePanel = new JPanel();
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
-                JComboBox formatBox = videoFormat.get(videoDevs[i]);
+                JComboBox formatBox = videoFormat.get(videoDev);
                 formatBox.setEditable(false);
                 formatBox.setSelectedIndex(0);
                 formatBox.setMaximumSize(new Dimension(100, Integer.MAX_VALUE));
-                JButton preview = videoPreview.get(videoDevs[i]);
+                JButton preview = videoPreview.get(videoDev);
                 preview.addActionListener(this);
                 devicePanel.add(checkBox);
                 devicePanel.add(Box.createHorizontalGlue());
@@ -430,7 +426,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 devicePanel.setLayout(new BoxLayout(devicePanel,
                         BoxLayout.X_AXIS));
                 JLabel errorLabel = new JLabel(" Error starting device "
-                        + videoDevs[i].getDevice().getName());
+                        + videoDev.getDevice().getName());
                 errorLabel.setToolTipText("Error: " + e.getMessage());
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -439,12 +435,12 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 videoDeviceBox.add(devicePanel);
             }
         }
-        if (videoDevs.length == 0) {
+        if (videoDevices.size() == 0) {
             videoDeviceBox.add(new JLabel(" No Video Devices Detected"));
         }
+        videoDeviceBox.repaint();
 
-        audioDeviceBox.removeAll();
-        for (AudioDevice device : audioDevices) {
+        for (AudioDevice device : newAudioDevices) {
             try {
                 device.test();
                 JComboBox inputBox = audioInputSelected.get(device);
@@ -493,6 +489,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 audioDeviceBox.add(devicePanel);
             }
         }
+        audioDeviceBox.repaint();
 
         progress.setVisible(false);
     }
@@ -661,12 +658,14 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
         device.stop(this);
     }
 
-    private void detectAudioDevices() {
+    private Vector<AudioDevice> detectAudioDevices() {
         Vector<String> devices = JavaSoundStream.getCompatibleMixers();
+        Vector<AudioDevice> newAudioDevices = new Vector<AudioDevice>();
         for (String device : devices) {
             AudioDevice dev = new AudioDevice(device, profile, tool);
             if (!audioDevices.contains(dev)) {
                 AudioDevice audioDev = new AudioDevice(device, profile, tool);
+                newAudioDevices.add(audioDev);
                 audioDevices.add(audioDev);
                 audioSelected.put(audioDev, new JCheckBox(device));
                 audioFormat.put(audioDev, new JComboBox(audioTypes));
@@ -675,9 +674,10 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 audioInputInitiallySelected.put(audioDev, 0);
             }
         }
+        return newAudioDevices;
     }
 
-    private void detectVideoDevices() {
+    private Vector<VideoDevice> detectVideoDevices() {
 
         Vector<VideoCaptureDevice> devices = new Vector<VideoCaptureDevice>();
 
@@ -746,6 +746,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
             idMap.put(parts[1], parts[0]);
         }
 
+        Vector<VideoDevice> newDevices = new Vector<VideoDevice>();
         for (VideoCaptureDevice device : devices) {
             VideoDevice dev = new VideoDevice(device, profile, tool);
             VideoDevice vidDev = null;
@@ -767,6 +768,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 }
                 vidDev = new VideoDevice(device, profile, tool);
                 videoDevices.add(vidDev);
+                newDevices.add(vidDev);
                 videoSelected.put(vidDev, new JCheckBox(
                         vidDev.getDevice().getName()));
                 videoFormat.put(vidDev, new JComboBox(videoTypes));
@@ -783,6 +785,7 @@ public class LocalDevicePanel extends JPanel implements ActionListener,
                 videoCaptureFormat.put(vidDev, new JComboBox());
             }
         }
+        return newDevices;
     }
 
     /**
