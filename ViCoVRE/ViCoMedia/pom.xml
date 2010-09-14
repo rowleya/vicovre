@@ -46,7 +46,7 @@
         <dependency>
             <groupId>com.lti</groupId>
             <artifactId>civil-no-swt</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>com.epiphan</groupId>

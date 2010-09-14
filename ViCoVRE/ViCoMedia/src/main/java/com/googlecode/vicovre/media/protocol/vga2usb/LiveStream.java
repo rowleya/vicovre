@@ -50,9 +50,10 @@ import com.epiphan.vga2usb.Grabber;
 import com.epiphan.vga2usb.PixelFormat;
 import com.epiphan.vga2usb.RawFrame;
 import com.epiphan.vga2usb.VideoMode;
+import com.googlecode.vicovre.media.controls.BufferReadAheadControl;
 
 public class LiveStream implements Runnable, PushBufferStream,
-        FormatControl {
+        FormatControl, BufferReadAheadControl {
 
     private static final int WAIT_GRABBER_TIME = 1000;
 
@@ -69,10 +70,6 @@ public class LiveStream implements Runnable, PushBufferStream,
                 translateFormat(-1, -1, PixelFormat.RGB24));
         SUPPORTED_FORMATS.put(PixelFormat.BGR24,
                 translateFormat(-1, -1, PixelFormat.BGR24));
-        /*SUPPORTED_FORMATS.put(PixelFormat.YUYV,
-                translateFormat(-1, -1, PixelFormat.YUYV));
-        SUPPORTED_FORMATS.put(PixelFormat.UYVY,
-                translateFormat(-1, -1, PixelFormat.UYVY)); */
     }
 
     private Grabber grabber = null;
@@ -95,6 +92,8 @@ public class LiveStream implements Runnable, PushBufferStream,
     private boolean stopped = true;
 
     private long sequence = 0;
+
+    private int readAhead = 10;
 
     public static Format translateFormat(int width, int height,
             PixelFormat pixelFormat) {
@@ -238,6 +237,8 @@ public class LiveStream implements Runnable, PushBufferStream,
     public Object getControl(String className) {
         if (className.equals(FormatControl.class.getName())) {
             return this;
+        } else if (className.equals(BufferReadAheadControl.class.getName())) {
+            return this;
         }
         return null;
     }
@@ -271,6 +272,14 @@ public class LiveStream implements Runnable, PushBufferStream,
 
     public Component getControlComponent() {
         return null;
+    }
+
+    public int getMaxBufferReadAhead() {
+        return readAhead;
+    }
+
+    public void setMaxBufferReadAhead(int readAhead) {
+        this.readAhead = readAhead;
     }
 
 }

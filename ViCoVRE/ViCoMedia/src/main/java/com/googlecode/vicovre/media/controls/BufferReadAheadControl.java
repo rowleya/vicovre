@@ -30,68 +30,14 @@
  *
  */
 
-package com.googlecode.vicovre.media.protocol.image;
+package com.googlecode.vicovre.media.controls;
 
-import java.io.IOException;
-import java.io.InputStream;
+import javax.media.Control;
 
-import javax.media.Time;
-import javax.media.format.UnsupportedFormatException;
-import javax.media.protocol.ContentDescriptor;
-import javax.media.protocol.PushBufferDataSource;
-import javax.media.protocol.PushBufferStream;
+public interface BufferReadAheadControl extends Control {
 
-public class DataSource extends PushBufferDataSource {
+    int getMaxBufferReadAhead();
 
-    private ImageStream stream = null;
-
-    public DataSource() {
-        this(false);
-    }
-
-    public DataSource(boolean live) {
-        stream = new ImageStream(live);
-    }
-
-    public void readImage(InputStream input, long timestamp, long sequence)
-            throws IOException, UnsupportedFormatException {
-        stream.readImage(input, timestamp, sequence);
-    }
-
-    public PushBufferStream[] getStreams() {
-        return new PushBufferStream[]{stream};
-    }
-
-    public void connect() throws IOException {
-        // Does Nothing
-    }
-
-    public void disconnect() {
-        // Does Nothing
-    }
-
-    public String getContentType() {
-        return ContentDescriptor.RAW;
-    }
-
-    public Object getControl(String className) {
-        return stream.getControl(className);
-    }
-
-    public Object[] getControls() {
-        return stream.getControls();
-    }
-
-    public Time getDuration() {
-        return DURATION_UNBOUNDED;
-    }
-
-    public void start() throws IOException {
-        // Does Nothing
-    }
-
-    public void stop() throws IOException {
-        // Does Nothing
-    }
+    void setMaxBufferReadAhead(int readAhead);
 
 }
