@@ -50,6 +50,7 @@ import javax.media.protocol.BufferTransferHandler;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.PushBufferStream;
 
+import com.googlecode.vicovre.media.controls.BufferReadAheadControl;
 import com.lti.civil.CaptureException;
 import com.lti.civil.CaptureObserver;
 import com.lti.civil.CaptureStream;
@@ -58,7 +59,7 @@ import com.lti.civil.DefaultCaptureSystemFactorySingleton;
 import com.lti.civil.Image;
 
 public class LiveStream implements PushBufferStream, CaptureObserver,
-        FormatControl {
+        FormatControl, BufferReadAheadControl {
 
     private CaptureSystem captureSystem = null;
 
@@ -85,6 +86,8 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
     private com.lti.civil.VideoFormat setFormat = null;
 
     private long sequence = 0;
+
+    private int readAhead = 10;
 
     public LiveStream() throws CaptureException {
         captureSystem =
@@ -125,7 +128,7 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
 
         captureStream = captureSystem.openCaptureDeviceStreamOutput(deviceId,
                 output, input);
-        captureStream.setObserver(this);
+        captureStream.setObserver(this, readAhead);
         if (setFormat != null) {
             captureStream.setVideoFormat(setFormat);
         }
@@ -156,7 +159,7 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
         } else {
             Object data = image.getObject();
             buffer.setData(data);
-            buffer.setOffset(0);
+            buffer.setOffset(image.getOffset());
             buffer.setLength(Array.getLength(data));
             buffer.setFlags(Buffer.FLAG_LIVE_DATA | Buffer.FLAG_SYSTEM_TIME);
             buffer.setFormat(format);
@@ -187,6 +190,8 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
 
     public Object getControl(String className) {
         if (className.equals(FormatControl.class.getName())) {
+            return this;
+        } else if (className.equals(BufferReadAheadControl.class.getName())) {
             return this;
         }
         return null;
@@ -219,71 +224,56 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
         }
         Dimension size = new Dimension(width, height);
 
-        if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.RGB24) {
+        if (type == com.lti.civil.VideoFormat.RGB24) {
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     24, 3, 2, 1);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.RGB32) {
+        } else if (type == com.lti.civil.VideoFormat.RGB32) {
             if (dataTypeClass == Format.byteArray) {
                 return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass,
                         fps, 32, 3, 2, 1);
             }
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     32, 0x00FF0000, 0x0000FF00, 0x000000FF);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.RGB555) {
+        } else if (type == com.lti.civil.VideoFormat.RGB555) {
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     16, 0x7C00, 0x3E0, 0x1F);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.RGB565) {
+        } else if (type == com.lti.civil.VideoFormat.RGB565) {
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     16, 0xF800, 0x7E0, 0x1F);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.ARGB1555) {
+        } else if (type == com.lti.civil.VideoFormat.ARGB1555) {
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     16, 0x7C00, 0x3E0, 0x1F);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.ARGB32) {
+        } else if (type == com.lti.civil.VideoFormat.ARGB32) {
             return new RGBFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     32, 0x00FF0000, 0x0000FF00, 0x000000FF);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.UYVY) {
+        } else if (type == com.lti.civil.VideoFormat.UYVY) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_YUYV, width * 2, width * 2, 1, 0, 2);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.YUYV) {
+        } else if (type == com.lti.civil.VideoFormat.YUYV) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_YUYV, width * 2, width * 2, 0, 1, 3);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.YVYU) {
+        } else if (type == com.lti.civil.VideoFormat.YVYU) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_YUYV, width * 2, width * 2, 0, 3, 1);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.YUY2) {
+        } else if (type == com.lti.civil.VideoFormat.YUY2) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_YUYV, width * 2, width * 2, 0, 1, 3);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.YV12) {
+        } else if (type == com.lti.civil.VideoFormat.YV12) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_420, width, width / 2, 0,
                     (width * height) + (width/2 * height/2), width * height);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.I420) {
+        } else if (type == com.lti.civil.VideoFormat.I420) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_420, width, width / 2, 0, width * height,
                     (width * height) + ((width/2) * (height/2)));
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.IYUV) {
+        } else if (type == com.lti.civil.VideoFormat.IYUV) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_420, width, width / 2, 0, width * height,
                     (width * height) + (width/2 * height/2));
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.YVU9) {
+        } else if (type == com.lti.civil.VideoFormat.YVU9) {
             return new YUVFormat(size, Format.NOT_SPECIFIED, dataTypeClass, fps,
                     YUVFormat.YUV_YVU9, -1, -1, -1, -1, -1);
-        } else if (civilVideoFormat.getFormatType()
-                == com.lti.civil.VideoFormat.MJPG) {
+        } else if (type == com.lti.civil.VideoFormat.MJPG) {
             return new VideoFormat(VideoFormat.MJPG, size, Format.NOT_SPECIFIED,
                     dataTypeClass, fps);
         }
@@ -359,6 +349,14 @@ public class LiveStream implements PushBufferStream, CaptureObserver,
 
     public Component getControlComponent() {
         return null;
+    }
+
+    public int getMaxBufferReadAhead() {
+        return readAhead;
+    }
+
+    public void setMaxBufferReadAhead(int readAhead) {
+        this.readAhead = readAhead;
     }
 
 }

@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.media.protocol.image;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -47,7 +48,9 @@ import javax.media.protocol.BufferTransferHandler;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.PushBufferStream;
 
-public class ImageStream implements PushBufferStream {
+import com.googlecode.vicovre.media.controls.BufferReadAheadControl;
+
+public class ImageStream implements PushBufferStream, BufferReadAheadControl {
 
     private static final int BITS = 32;
 
@@ -65,7 +68,7 @@ public class ImageStream implements PushBufferStream {
             BITS, RED, GREEN, BLUE, 1, -1, VideoFormat.FALSE,
             RGBFormat.LITTLE_ENDIAN);
 
-    private int[] data = new int[0];
+    private int[][] data = new int[0][0];
 
     private long sequence = 0;
 
@@ -74,6 +77,10 @@ public class ImageStream implements PushBufferStream {
     private BufferTransferHandler handler = null;
 
     private boolean live = false;
+
+    private int readAhead = 10;
+
+    private int currentBuffer = 0;
 
     public ImageStream(boolean live) {
         this.live = live;
@@ -109,7 +116,7 @@ public class ImageStream implements PushBufferStream {
                         Format.intArray, -1, BITS, RED, GREEN, BLUE, 1,
                         size.width, Format.FALSE, RGBFormat.LITTLE_ENDIAN);
                 if (data.length < format.getMaxDataLength()) {
-                    data = new int[format.getMaxDataLength()];
+                    data = new int[readAhead][format.getMaxDataLength()];
                 }
             }
             this.timestamp = timestamp;
@@ -135,7 +142,9 @@ public class ImageStream implements PushBufferStream {
             if (image.getHeight() < size.height) {
                 size.height = image.getHeight();
             }
-            image.getRGB(0, 0, size.width, size.height, data, 0, scansize);
+            image.getRGB(0, 0, size.width, size.height, data[currentBuffer],
+                    0, scansize);
+            currentBuffer = (currentBuffer + 1) % data.length;
             buffer.setData(data);
             buffer.setOffset(0);
             buffer.setLength(data.length);
@@ -170,11 +179,26 @@ public class ImageStream implements PushBufferStream {
     }
 
     public Object getControl(String className) {
+        if (className.equals(BufferReadAheadControl.class.getName())) {
+            return this;
+        }
         return null;
     }
 
     public Object[] getControls() {
-        return new Object[0];
+        return new Object[]{this};
+    }
+
+    public int getMaxBufferReadAhead() {
+        return readAhead;
+    }
+
+    public void setMaxBufferReadAhead(int readAhead) {
+        this.readAhead = readAhead;
+    }
+
+    public Component getControlComponent() {
+        return null;
     }
 
 }

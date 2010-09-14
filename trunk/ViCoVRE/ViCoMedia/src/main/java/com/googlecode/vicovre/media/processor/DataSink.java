@@ -35,6 +35,7 @@
 package com.googlecode.vicovre.media.processor;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import javax.media.Buffer;
 import javax.media.protocol.BufferTransferHandler;
@@ -50,6 +51,8 @@ import javax.media.protocol.PushSourceStream;
 import javax.media.protocol.Seekable;
 import javax.media.protocol.SourceStream;
 import javax.media.protocol.SourceTransferHandler;
+
+import com.googlecode.vicovre.media.controls.BufferReadAheadControl;
 
 /**
  * @author Andrew G D Rowley
@@ -74,7 +77,11 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
     private boolean done = false;
 
-    private Buffer inputBuffer = new Buffer();
+    private Buffer[] inputBuffer = null;
+
+    private int currentBuffer = 0;
+
+    private Integer currentBufferSync = new Integer(0);
 
     private byte[] data = new byte[DATA_LENGTH];
 
@@ -83,6 +90,12 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
     private boolean started = false;
 
     private Integer startSync = new Integer(0);
+
+    private LinkedList<Buffer> pushedBuffers = new LinkedList<Buffer>();
+
+    private int maxBufferedBuffers = 1;
+
+    private DataSinkHandleThread thread = new DataSinkHandleThread(this);
 
     /**
      * A DataSink for a track
@@ -93,6 +106,15 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
     public DataSink(DataSource dataSource, int track) {
         this.dataSource = dataSource;
         this.track = track;
+        BufferReadAheadControl readAhead = (BufferReadAheadControl)
+            dataSource.getControl(BufferReadAheadControl.class.getName());
+        if (readAhead != null) {
+            maxBufferedBuffers = readAhead.getMaxBufferReadAhead();
+        }
+        inputBuffer = new Buffer[maxBufferedBuffers];
+        for (int i = 0; i < inputBuffer.length; i++) {
+            inputBuffer[i] = new Buffer();
+        }
     }
 
     protected void waitForStart() {
@@ -109,6 +131,46 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         }
     }
 
+    protected void addBuffer(Buffer buffer) {
+        synchronized (pushedBuffers) {
+            while (!done && (pushedBuffers.size() >= maxBufferedBuffers)) {
+                try {
+                    pushedBuffers.wait();
+                } catch (InterruptedException e) {
+                    // Does Nothing
+                }
+            }
+            if (!done) {
+                pushedBuffers.addLast(buffer);
+                pushedBuffers.notifyAll();
+            }
+        }
+    }
+
+    public void transferNextBuffer() {
+        Buffer buffer = null;
+        synchronized (pushedBuffers) {
+            while (!done && pushedBuffers.isEmpty()) {
+                try {
+                    pushedBuffers.wait();
+                } catch (InterruptedException e) {
+                    // Does Nothing
+                }
+            }
+            if (!done) {
+                buffer = pushedBuffers.removeFirst();
+                pushedBuffers.notifyAll();
+            }
+        }
+        if (buffer != null) {
+            try {
+                handleBuffer(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      *
      * @see java.lang.Thread#run()
@@ -119,6 +181,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         } catch (IOException e1) {
             e1.printStackTrace();
         }
+        thread.start();
         if (dataSource instanceof PushBufferDataSource) {
             PushBufferStream[] streams = ((PushBufferDataSource)
                     dataSource).getStreams();
@@ -163,13 +226,14 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             length = streams[track].getContentLength();
             while (!done) {
                 try {
-                    inputBuffer.setData(null);
-                    inputBuffer.setLength(0);
-                    inputBuffer.setOffset(0);
-                    inputBuffer.setEOM(false);
-                    inputBuffer.setDiscard(false);
-                    stream.read(inputBuffer);
-                    handleBuffer(inputBuffer);
+                    currentBuffer = (currentBuffer + 1) % inputBuffer.length;
+                    inputBuffer[currentBuffer].setData(null);
+                    inputBuffer[currentBuffer].setLength(0);
+                    inputBuffer[currentBuffer].setOffset(0);
+                    inputBuffer[currentBuffer].setEOM(false);
+                    inputBuffer[currentBuffer].setDiscard(false);
+                    stream.read(inputBuffer[currentBuffer]);
+                    addBuffer(inputBuffer[currentBuffer]);
                 } catch (IOException e) {
                     e.printStackTrace();
                     synchronized (this) {
@@ -194,33 +258,25 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             length = streams[track].getContentLength();
             while (!done) {
                 try {
+                    currentBuffer = (currentBuffer + 1) % inputBuffer.length;
                     int bytesRead = stream.read(data, 0, data.length);
                     if (bytesRead != -1) {
-                        inputBuffer.setData(data);
-                        inputBuffer.setOffset(0);
-                        inputBuffer.setLength(bytesRead);
-                        inputBuffer.setEOM(false);
-                        inputBuffer.setDiscard(false);
-                        handleBuffer(inputBuffer);
+                        inputBuffer[currentBuffer].setData(data);
+                        inputBuffer[currentBuffer].setOffset(0);
+                        inputBuffer[currentBuffer].setLength(bytesRead);
+                        inputBuffer[currentBuffer].setEOM(false);
+                        inputBuffer[currentBuffer].setDiscard(false);
+                        addBuffer(inputBuffer[currentBuffer]);
                     } else {
-                        inputBuffer.setEOM(true);
-                        inputBuffer.setDiscard(true);
-                        handleBuffer(inputBuffer);
+                        inputBuffer[currentBuffer].setEOM(true);
+                        inputBuffer[currentBuffer].setDiscard(true);
+                        addBuffer(inputBuffer[currentBuffer]);
                     }
                 } catch (IOException e) {
                     close();
                 }
             }
         }
-        synchronized (this) {
-            done = true;
-            notifyAll();
-
-            synchronized (startSync) {
-                startSync.notifyAll();
-            }
-        }
-        System.err.println("End of thread");
     }
 
     /**
@@ -230,6 +286,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
     public void close() {
         synchronized (this) {
             done = true;
+            thread.close();
             notifyAll();
             synchronized (startSync) {
                 startSync.notifyAll();
@@ -254,7 +311,9 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
 
         data = null;
-        inputBuffer.setData(null);
+        for (int i = 0; i < inputBuffer.length; i++) {
+            inputBuffer[currentBuffer].setData(null);
+        }
         System.err.println("Closed");
     }
 
@@ -265,16 +324,21 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      */
     public void transferData(PushSourceStream stream) {
         try {
+            int buffer = 0;
+            synchronized (currentBufferSync) {
+                buffer = currentBuffer;
+                currentBuffer = (currentBuffer + 1) % inputBuffer.length;
+            }
             int bytesRead = stream.read(data, 0, data.length);
             if (bytesRead != -1) {
-                inputBuffer.setData(data);
-                inputBuffer.setOffset(0);
-                inputBuffer.setLength(bytesRead);
-                handleBuffer(inputBuffer);
+                inputBuffer[buffer].setData(data);
+                inputBuffer[buffer].setOffset(0);
+                inputBuffer[buffer].setLength(bytesRead);
+                addBuffer(inputBuffer[buffer]);
             } else {
-                inputBuffer.setEOM(true);
-                inputBuffer.setDiscard(true);
-                handleBuffer(inputBuffer);
+                inputBuffer[buffer].setEOM(true);
+                inputBuffer[buffer].setDiscard(true);
+                addBuffer(inputBuffer[buffer]);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -288,11 +352,16 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      */
     public void transferData(PushBufferStream stream) {
         try {
-            inputBuffer.setData(null);
-            inputBuffer.setLength(0);
-            inputBuffer.setOffset(0);
-            stream.read(inputBuffer);
-            handleBuffer(inputBuffer);
+            int buffer = 0;
+            synchronized (currentBufferSync) {
+                buffer = currentBuffer;
+                currentBuffer = (currentBuffer + 1) % inputBuffer.length;
+            }
+            inputBuffer[buffer].setData(null);
+            inputBuffer[buffer].setLength(0);
+            inputBuffer[buffer].setOffset(0);
+            stream.read(inputBuffer[buffer]);
+            addBuffer(inputBuffer[buffer]);
         } catch (IOException e) {
             e.printStackTrace();
         }

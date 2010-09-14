@@ -62,6 +62,8 @@ import javax.media.protocol.BufferTransferHandler;
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.PushBufferStream;
 
+import com.googlecode.vicovre.media.controls.BufferReadAheadControl;
+
 /**
  * A stream for sending the screen via RTP
  *
@@ -69,7 +71,7 @@ import javax.media.protocol.PushBufferStream;
  * @version 1-1-alpha3
  */
 public class LiveStream implements PushBufferStream, Runnable,
-        FrameRateControl {
+        FrameRateControl, BufferReadAheadControl {
 
     // The conversion factor between ms and a buffer timestamp
     private static final int MS_TO_TIMESTAMP = 1000000;
@@ -99,7 +101,7 @@ public class LiveStream implements PushBufferStream, Runnable,
     private static final float DEFAULT_FRAME_RATE = 10f;
 
     // The line change value
-    private static final int LINECHANGE = 5;
+    private static final int LINECHANGE = 1;
 
     // The width of the mouse pointer
     private static final int MOUSE_WIDTH = 17;
@@ -152,7 +154,7 @@ public class LiveStream implements PushBufferStream, Runnable,
     private int maxDataLength;
 
     // The data to be sent with the stream
-    private int[] data;
+    private int[][] data;
 
     // The size of the video
     private Dimension size;
@@ -207,9 +209,11 @@ public class LiveStream implements PushBufferStream, Runnable,
 
     private byte[][] nativeData = null;
 
-    private int currentNativeBuffer = 0;
+    private int currentBuffer = 0;
 
     private Integer nativeBufferSync = new Integer(0);
+
+    private int readAhead = 10;
 
     /**
      * Creates a new Stream for sending screens
@@ -234,7 +238,7 @@ public class LiveStream implements PushBufferStream, Runnable,
                     frameRate, 24, 3, 2, 1, 3, size.width * 3,
                     VideoFormat.FALSE,
                     Format.NOT_SPECIFIED);
-            nativeData = new byte[10][maxDataLength];
+            nativeData = new byte[readAhead][maxDataLength];
             System.err.println("Using native capture system");
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Native capture not found - using Java Capture");
@@ -250,7 +254,7 @@ public class LiveStream implements PushBufferStream, Runnable,
                     Format.NOT_SPECIFIED);
 
             // generate the data
-            data = new int[maxDataLength];
+            data = new int[readAhead][maxDataLength];
             image = new BufferedImage(size.width, size.height,
                     BufferedImage.TYPE_INT_RGB);
 
@@ -372,11 +376,11 @@ public class LiveStream implements PushBufferStream, Runnable,
         if (nativeCapture != null) {
             int current = 0;
             synchronized (nativeBufferSync) {
-                current = (currentNativeBuffer + 1) % nativeData.length;
+                current = (currentBuffer + 1) % nativeData.length;
             }
             nativeCapture.captureScreen(nativeData[current]);
             synchronized (nativeBufferSync) {
-                currentNativeBuffer = current;
+                currentBuffer = current;
             }
         } else {
 
@@ -398,11 +402,12 @@ public class LiveStream implements PushBufferStream, Runnable,
                             new Rectangle(x, y + i, width, lines));
 
                     // Get the RGB data from the capture
-                    bi.getRGB(0, 0, size.width, lines, data, i * width,
+                    bi.getRGB(0, 0, size.width, lines, data[currentBuffer],
+                            i * width,
                             size.width);
 
                     // Store the line in the whole image
-                    image.setRGB(0, i, size.width, lines, data,
+                    image.setRGB(0, i, size.width, lines, data[currentBuffer],
                             i * width, size.width);
                 }
             }
@@ -432,7 +437,7 @@ public class LiveStream implements PushBufferStream, Runnable,
                                 int pos = (ypos * width) + xpos;
                                 int mousepos = ((j * MOUSE_WIDTH) + i);
                                 if (MOUSE[mousepos] != Color.GREEN.getRGB()) {
-                                    data[pos] = MOUSE[mousepos];
+                                    data[currentBuffer][pos] = MOUSE[mousepos];
                                 }
                             }
                         }
@@ -441,6 +446,8 @@ public class LiveStream implements PushBufferStream, Runnable,
             } catch (NullPointerException e) {
                 //no mouse pointer available -- ignore
             }
+
+            currentBuffer = (currentBuffer + 1) % data.length;
         }
 
         synchronized (bufferFillSync) {
@@ -467,7 +474,7 @@ public class LiveStream implements PushBufferStream, Runnable,
                 buffer.setData(data);
             } else {
                 synchronized (nativeBufferSync) {
-                    buffer.setData(nativeData[currentNativeBuffer]);
+                    buffer.setData(nativeData[currentBuffer]);
                 }
             }
             buffer.setFormat(format);
@@ -596,5 +603,13 @@ public class LiveStream implements PushBufferStream, Runnable,
      */
     public Component getControlComponent() {
         return null;
+    }
+
+    public int getMaxBufferReadAhead() {
+        return readAhead;
+    }
+
+    public void setMaxBufferReadAhead(int readAhead) {
+        this.readAhead = readAhead;
     }
 }

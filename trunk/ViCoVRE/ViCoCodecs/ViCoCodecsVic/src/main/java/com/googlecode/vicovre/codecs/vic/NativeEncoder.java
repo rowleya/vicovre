@@ -77,6 +77,8 @@ public class NativeEncoder implements Codec,
 
     private int framesSinceLastKey = 0;
 
+    private int frameNo = 0;
+
     public Format[] getSupportedInputFormats() {
         if (codec != -1) {
             return new Format[]{CODECS[codec].getOutputFormat()};
@@ -107,7 +109,7 @@ public class NativeEncoder implements Codec,
     }
 
     public int process(Buffer input, Buffer output) {
-        if (input.getOffset() == 0) {
+        if (frameNo == 0) {
             if (buffer == null) {
                 YUVFormat inputFormat = (YUVFormat) input.getFormat();
                 Dimension size = inputFormat.getSize();
@@ -127,7 +129,6 @@ public class NativeEncoder implements Codec,
             }
             encode(ref, input, output, frameOffsets, frameLengths);
         }
-        int frameNo = input.getOffset();
         output.setData(buffer);
         output.setFormat(CODECS[codec].getInputFormat());
         output.setOffset(frameOffsets[frameNo]);
@@ -137,11 +138,10 @@ public class NativeEncoder implements Codec,
         output.setFlags(0);
         frameNo += 1;
         if ((frameNo == frameOffsets.length) || (frameOffsets[frameNo] == -1)) {
+            frameNo = 0;
             output.setFlags(Buffer.FLAG_RTP_MARKER);
-            input.setOffset(0);
             return BUFFER_PROCESSED_OK;
         }
-        input.setOffset(frameNo);
         return INPUT_BUFFER_NOT_CONSUMED;
     }
 
