@@ -32,13 +32,9 @@
 
 package com.googlecode.vicovre.recordings;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -46,20 +42,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import org.apache.commons.mail.EmailException;
-
-import ag3.interfaces.Venue;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.ClientProfile;
 import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.StreamDescription;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
-import com.googlecode.vicovre.recordings.db.Folder;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 
 /**
  * Represents a recording to be made
@@ -73,31 +58,19 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     public static final SimpleDateFormat ID_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
 
-    private static final String STOPPED = "Stopped";
+    public static final String STOPPED = "Stopped";
 
-    private static final String RECORDING = "Recording";
+    public static final String RECORDING = "Recording";
 
-    private static final String PAUSED = "Paused";
+    public static final String PAUSED = "Paused";
 
-    private static final String COMPLETED = "Completed";
+    public static final String COMPLETED = "Completed";
 
-    private static final String ERROR = "Error: ";
+    public static final String ERROR = "Error: ";
 
-    private static final BridgeDescription CONNECTION = new BridgeDescription();
+    private String folder = null;
 
-    static {
-        CONNECTION.setServerType("Multicast");
-    }
-
-    private RtpTypeRepository typeRepository = null;
-
-    private Folder folder = null;
-
-    private File file = null;
-
-    private RecordArchiveManager manager = null;
-
-    private BridgedRTPConnector connector = null;
+    private String id = null;
 
     private RecordingMetadata metadata = null;
 
@@ -111,67 +84,17 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private Date stopDate = null;
 
-    private Timer startTimer = null;
-
-    private Timer stopTimer = null;
-
     private String status = STOPPED;
-
-    private Venue venue = null;
-
-    private String connectionId = null;
-
-    private Integer venueSync = new Integer(0);
-
-    private ClientProfile clientProfile = new ClientProfile();
 
     private boolean recordingStarted = false;
 
     private boolean recordingFinished = false;
-
-    private RecordingDatabase database = null;
 
     private String finishedRecordingId = null;
 
     private String oldFinishedRecordingId = null;
 
     private String emailAddress = null;
-
-    private Emailer emailer = null;
-
-    private class VenueUpdater extends Thread {
-        public void run() {
-            synchronized (venueSync) {
-                while (connectionId != null) {
-                    float lifetime = 10.0f;
-                    try {
-                        lifetime = venue.updateLifetime(connectionId,
-                                lifetime);
-                    } catch (Exception e) {
-                        // Do Nothing
-                    }
-                    try {
-                        venueSync.wait((long) (lifetime * 1000));
-                    } catch (InterruptedException e) {
-                        // Do Nothing
-                    }
-                }
-            }
-        }
-    }
-
-    private class StartRecording extends TimerTask {
-
-        public void run() {
-            startRecording();
-        }
-    }
-
-    private class StopRecording extends TimerTask {
-        public void run() {
-            stopRecording();
-        }
-    }
 
     public UnfinishedRecording() {
         // Does Nothing
@@ -181,23 +104,10 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Creates a new TimerRecording
      * @param manager The manager used to start and stop the recording
      */
-    public UnfinishedRecording(RtpTypeRepository typeRepository,
-            Folder folder, File file, RecordingDatabase database,
-            Emailer emailer) {
-        this.database = database;
-        this.typeRepository = typeRepository;
+    public UnfinishedRecording(String folder, String id) {
         this.folder = folder;
-        this.file = file;
+        this.id = id;
         this.finishedRecordingId = getId();
-        this.emailer = emailer;
-    }
-
-    public void setDatabase(RecordingDatabase database) {
-        this.database = database;
-    }
-
-    public File getFile() {
-        return file;
     }
 
     /**
@@ -206,8 +116,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      */
     @XmlElement
     public String getId() {
-        return file.getName().substring(9, file.getName().indexOf(
-                RecordingConstants.UNFINISHED_RECORDING_INDEX));
+        return id;
     }
 
     /**
@@ -231,8 +140,17 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Gets the folder
      * @return The folder
      */
-    public Folder getFolder() {
+    @XmlElement
+    public String getFolder() {
         return folder;
+    }
+
+    public boolean isStarted() {
+        return recordingStarted;
+    }
+
+    public boolean isFinished() {
+        return recordingFinished;
     }
 
     /**
@@ -366,158 +284,26 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     }
 
     /**
-     * Starts and/or stops the timers
-     */
-    public synchronized void updateTimers() {
-        stopTimers();
-        Date now = new Date();
-        if ((startDate != null) && !recordingStarted &&
-                ((stopDate == null) || stopDate.after(now))) {
-            startTimer = new Timer();
-            startTimer.schedule(new StartRecording(), startDate);
-            System.err.println("Recording of " + getMetadata().getPrimaryValue() + " scheduled to start at " + startDate);
-        } else if (startDate != null) {
-            System.err.println("Not scheduling start of recording of " + getMetadata().getPrimaryValue() + " as already recording or finished");
-        }
-        if ((stopDate != null) && !recordingFinished && stopDate.after(now)) {
-            stopTimer = new Timer();
-            stopTimer.schedule(new StopRecording(), stopDate);
-            System.err.println("Recording of " + getMetadata().getPrimaryValue() + " scheduled to stop at " + stopDate);
-        } else if (stopDate != null) {
-            System.err.println("Not scheduling stop of recording of " + getMetadata().getPrimaryValue() + " as already finished");
-        }
-    }
-
-    public synchronized void stopTimers() {
-        if (startTimer != null) {
-            startTimer.cancel();
-            startTimer = null;
-        }
-        if (stopTimer != null) {
-            stopTimer.cancel();
-            stopTimer = null;
-        }
-    }
-
-    /**
      * Starts the recording
      */
     public synchronized void startRecording() {
-        if (recordingStarted) {
-            return;
-        }
-        manager = new RecordArchiveManager(typeRepository, folder,
-                finishedRecordingId, database, emailer);
-        try {
-            NetworkLocation[] addrs = addresses;
-            if (ag3VenueUrl != null) {
-                venue = new Venue(ag3VenueUrl);
-                connectionId = venue.enter(clientProfile);
-                VenueUpdater updater = new VenueUpdater();
-                updater.start();
-                StreamDescription[] streams = venue.getStreams();
-                addrs = new NetworkLocation[streams.length];
-                for (int i = 0; i < streams.length; i++) {
-                    addrs[i] = streams[i].getLocation();
-                }
-            }
-            connector = new BridgedRTPConnector(CONNECTION, addrs);
-            connector.setRtcpSink(manager);
-            connector.setRtpSink(manager);
-            manager.enableRecording();
-            status = RECORDING;
-            recordingStarted = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            status = ERROR + "Could not start: " + e.getMessage();
-        }
+        recordingStarted = true;
     }
 
     /**
      * Stops the recording
      */
     public synchronized void stopRecording() {
-        if (recordingFinished || !recordingStarted) {
-            return;
-        }
-        manager.disableRecording(false);
-        connector.close();
-        try {
-            manager.terminate();
-        } catch (IOException e) {
-            e.printStackTrace();
-            status = ERROR + "Could not stop: " + e.getMessage();
-        }
-        if (venue != null) {
-            synchronized (venueSync) {
-                try {
-                    venue.exit(connectionId);
-                } catch (Exception e) {
-                    // Do Nothing
-                }
-                connectionId = null;
-                venueSync.notifyAll();
-            }
-        }
-
-        Recording finishedRecording = getFinishedRecording();
-        finishedRecording.setMetadata(getMetadata());
-        if (!finishedRecording.getStreams().isEmpty()) {
-            try {
-                if (emailAddress != null) {
-                    finishedRecording.setEmailAddress(emailAddress);
-                }
-                database.addRecording(finishedRecording, this);
-                recordingFinished = true;
-                database.deleteUnfinishedRecording(this);
-                status = COMPLETED;
-
-                if ((emailAddress != null) && (emailer != null)) {
-                    String message = MessageReader.readMessage(
-                            "recordingComplete.txt", file.getParentFile(),
-                            database.getTopLevelFolder().getFile());
-                    if (message != null) {
-                        String path = file.getParent().substring(
-                                database.getTopLevelFolder().getFile()
-                                    .getPath().length());
-                        message.replaceAll("${recording}",
-                                path + finishedRecordingId);
-                        emailer.send(emailAddress, "Recording completed",
-                            message);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                status = "Error: " + e.getMessage();
-            } catch (EmailException e) {
-                e.printStackTrace();
-            }
-        } else {
-            recordingStarted = false;
-            status = STOPPED + ": no streams recorded";
-        }
+        recordingFinished = true;
     }
 
-    /**
-     * Pauses the recording
-     */
-    public void pauseRecording() {
-        if (!recordingStarted || recordingFinished) {
-            return;
-        }
-        manager.disableRecording(true);
-        status = PAUSED;
+    public void resetRecording() {
+        recordingStarted = false;
+        recordingFinished = false;
     }
 
-    /**
-     * Resumes the recording
-     */
-    public void resumeRecording() {
-        if (!recordingStarted || recordingFinished) {
-            return;
-        }
-        manager.enableRecording();
-        status = RECORDING;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     /**
@@ -532,13 +318,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         } else {
             return -1;
         }
-    }
-
-    public Recording getFinishedRecording() {
-        if (manager != null) {
-            return manager.getRecording();
-        }
-        return null;
     }
 
     public String getFinishedRecordingId() {

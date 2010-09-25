@@ -35,13 +35,16 @@ package com.googlecode.vicovre.recordings;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.insecure.RecordingListener;
 import com.googlecode.vicovre.utils.Emailer;
 
-public class LifetimeHandler {
+public class RecordingLifetimeHandler implements RecordingListener {
 
     private static final long DAY = 24 * 60 * 1000;
 
@@ -51,17 +54,19 @@ public class LifetimeHandler {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
             "EEE, MMM d, yyyy 'at' HH:mm");
 
-    private Recording recording;
-
     private RecordingDatabase database = null;
 
-    private Timer timer = null;
-
-    private String emailAddress = null;
+    private HashMap<Recording, Timer> timers = new HashMap<Recording, Timer>();
 
     private Emailer emailer = null;
 
     private class DeleteTask extends TimerTask {
+
+        private Recording recording = null;
+
+        private DeleteTask(Recording recording) {
+            this.recording = recording;
+        }
 
         public void run() {
             try {
@@ -78,9 +83,13 @@ public class LifetimeHandler {
 
         private long timeout = 0;
 
-        private SendReminderTask(long timeRemaining, long timeout) {
+        private Recording recording;
+
+        private SendReminderTask(long timeRemaining, long timeout,
+                Recording recording) {
             this.timeRemaining = timeRemaining;
             this.timeout = timeout;
+            this.recording = recording;
         }
 
         public void run() {
@@ -92,18 +101,21 @@ public class LifetimeHandler {
                 String message = MessageReader.readMessage(
                         "recordingLifetimeReminder.txt",
                         recording.getDirectory(),
-                        database.getTopLevelFolder().getFile());
+                        database.getFile(""));
                 if (message != null) {
                     long daysRemaining = timeRemaining / DAY;
                     String day = "days";
                     if (daysRemaining == 1) {
                         day = "day";
                     }
+                    message.replaceAll("${recording}",
+                            recording.getFolder() + "/"
+                            + recording.getId());
                     message.replaceAll("${timeRemaining}",
                             daysRemaining + " " + day);
                     message.replaceAll("${deleteDate}",
                             DATE_FORMAT.format(new Date(timeout)));
-                    emailer.send(emailAddress, subject, message);
+                    emailer.send(recording.getEmailAddress(), subject, message);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -112,34 +124,63 @@ public class LifetimeHandler {
 
     }
 
-    public LifetimeHandler(Recording recording, RecordingDatabase database,
+    public RecordingLifetimeHandler(RecordingDatabase database,
             Emailer emailer) {
-        this.recording = recording;
         this.database = database;
         this.emailer = emailer;
-        updateLifetime();
+        database.addRecordingListener(this);
     }
 
-    public void updateLifetime() {
-        if (timer != null) {
-            timer.cancel();
-        }
+    public void schedule(Recording recording) {
+        stopTimer(recording);
         if (recording.getLifetime() > 0) {
-            timer = new Timer();
+            Timer timer = new Timer();
             long timeout = recording.getStartTime().getTime()
                 + recording.getDuration()
                 + recording.getLifetime();
-            timer.schedule(new DeleteTask(), new Date(timeout));
+            timer.schedule(new DeleteTask(recording), new Date(timeout));
             for (long time : REMINDER_BEFORE_TIMEOUT) {
                 if ((timeout - time) > 0) {
-                    timer.schedule(new SendReminderTask(time, timeout),
+                    timer.schedule(
+                        new SendReminderTask(time, timeout, recording),
                         new Date(timeout - time));
                 }
             }
+            timers.put(recording, timer);
         }
     }
 
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
+    public void stopTimer(Recording recording) {
+        Timer timer = timers.remove(recording);
+        if (timer != null) {
+            timer.cancel();
+        }
+    }
+
+    public void recordingAdded(Recording recording) {
+        schedule(recording);
+    }
+
+    public void recordingDeleted(Recording recording) {
+        stopTimer(recording);
+    }
+
+    public void recordingLayoutsUpdated(Recording recording) {
+        // Do Nothing
+    }
+
+    public void recordingLifetimeUpdated(Recording recording) {
+        schedule(recording);
+    }
+
+    public void recordingMetadataUpdated(Recording recording) {
+        // Do Nothing
+    }
+
+    public void shutdown() {
+        Vector<Recording> recordings = new Vector<Recording>(timers.keySet());
+        for (Recording recording : recordings) {
+            stopTimer(recording);
+        }
     }
 }

@@ -51,8 +51,6 @@ import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
@@ -71,12 +69,9 @@ public class UnfinishedRecordingReader {
      * @throws SAXException
      */
     public static UnfinishedRecording readRecording(InputStream input,
-            File file, InsecureFolder folder,
-            RtpTypeRepository typeRepository, RecordingDatabase database,
-            Emailer emailer)
+            String folder, String id, File directory)
             throws SAXException, IOException {
-        UnfinishedRecording recording = new UnfinishedRecording(typeRepository,
-                folder, file, database, emailer);
+        UnfinishedRecording recording = new UnfinishedRecording(folder, id);
         Node doc = XmlIo.read(input);
         XmlIo.setDate(doc, recording, "startDate");
         XmlIo.setDate(doc, recording, "stopDate");
@@ -103,13 +98,10 @@ public class UnfinishedRecordingReader {
             recording.setAddresses(locations);
         }
 
-        String prefix = file.getName();
-        prefix = prefix.substring(0, prefix.indexOf(
-                        RecordingConstants.UNFINISHED_RECORDING_INDEX));
-        File metadataFile = new File(folder.getFile(),
-                prefix + RecordingConstants.METADATA);
-        File oldMetadataFile = new File(folder.getFile(),
-                prefix + RecordingConstants.OLD_METADATA);
+        File metadataFile = new File(directory,
+                id + RecordingConstants.METADATA);
+        File oldMetadataFile = new File(directory,
+                id + RecordingConstants.OLD_METADATA);
         if (metadataFile.exists()) {
             FileInputStream inputStream = new FileInputStream(metadataFile);
             RecordingMetadata metadata = RecordingMetadataReader.readMetadata(
@@ -130,7 +122,8 @@ public class UnfinishedRecordingReader {
         return recording;
     }
 
-    public static void writeRecording(UnfinishedRecording recording,
+    public static void writeRecording(RecordingDatabase database,
+            UnfinishedRecording recording,
             OutputStream output) throws IOException {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -155,11 +148,8 @@ public class UnfinishedRecordingReader {
 
         RecordingMetadata metadata = recording.getMetadata();
         if (metadata != null) {
-             String prefix = recording.getFile().getName();
-             prefix = prefix.substring(0, prefix.indexOf(
-                             RecordingConstants.UNFINISHED_RECORDING_INDEX));
-            File metadataFile = new File(recording.getFolder().getFile(),
-                    prefix + RecordingConstants.METADATA);
+            File metadataFile = new File(database.getFile(recording.getFolder()),
+                    recording.getId() + RecordingConstants.METADATA);
             FileOutputStream outputStream = new FileOutputStream(metadataFile);
             RecordingMetadataReader.writeMetadata(metadata, outputStream);
             outputStream.close();

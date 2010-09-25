@@ -32,26 +32,24 @@
 
 package com.googlecode.vicovre.recordings;
 
-import java.io.File;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.List;
+import java.util.Vector;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import ag3.interfaces.types.NetworkLocation;
 
-import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.db.Folder;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 
 
 /**
@@ -59,6 +57,8 @@ import com.googlecode.vicovre.utils.Emailer;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlRootElement(name="harvestSource")
+@XmlAccessorType(XmlAccessType.NONE)
 public class HarvestSource {
 
     /**
@@ -87,9 +87,9 @@ public class HarvestSource {
 
     private static final String YEAR_VARIABLE = "$year";
 
-    private File file = null;
+    private String folder = null;
 
-    private Folder folder = null;
+    private String id = null;
 
     private String name = null;
 
@@ -117,55 +117,30 @@ public class HarvestSource {
 
     private String status = "OK";
 
-    private RecordingDatabase database = null;
-
-    private RtpTypeRepository typeRepostory = null;
-
-    private Timer timer = null;
-
-    private Timer retryTimer = null;
-
-    private String subFolderMetadataItem = null;
-
-    private Emailer emailer = null;
-
-    private class HarvestTask extends TimerTask {
-
-        /**
-         *
-         * @see java.util.TimerTask#run()
-         */
-        public void run() {
-            harvest(false);
-        }
-
+    public HarvestSource() {
+        // Does Nothing
     }
 
-    public HarvestSource(Folder folder, File file,
-            RtpTypeRepository typeRepository, Emailer emailer) {
-        this.file = file;
+    public HarvestSource(String folder, String id) {
         this.folder = folder;
-        this.typeRepostory = typeRepository;
-        this.emailer = emailer;
+        this.id = id;
     }
 
+    @XmlElement
     public String getId() {
-        return file.getName().substring(0, file.getName().indexOf(
-                RecordingConstants.HARVEST_SOURCE));
+        return id;
     }
 
-    public Folder getFolder() {
+    @XmlElement
+    public String getFolder() {
         return folder;
-    }
-
-    public File getFile() {
-        return file;
     }
 
     /**
      * Returns the name
      * @return the name
      */
+    @XmlElement
     public String getName() {
         return name;
     }
@@ -182,6 +157,7 @@ public class HarvestSource {
      * Returns the url
      * @return the url
      */
+    @XmlElement
     public String getUrl() {
         return url;
     }
@@ -202,6 +178,11 @@ public class HarvestSource {
         return format;
     }
 
+    @XmlElement(name="format")
+    public String getFormatName() {
+        return format.getName();
+    }
+
     /**
      * Sets the format
      * @param format the format to set
@@ -214,6 +195,7 @@ public class HarvestSource {
      * Returns the updateFrequency
      * @return the updateFrequency
      */
+    @XmlElement
     public String getUpdateFrequency() {
         return updateFrequency;
     }
@@ -230,6 +212,7 @@ public class HarvestSource {
      * Returns the month
      * @return the month
      */
+    @XmlElement
     public int getMonth() {
         return month;
     }
@@ -246,6 +229,7 @@ public class HarvestSource {
      * Returns the dayOfMonth
      * @return the dayOfMonth
      */
+    @XmlElement
     public int getDayOfMonth() {
         return dayOfMonth;
     }
@@ -262,6 +246,7 @@ public class HarvestSource {
      * Returns the dayOfWeek
      * @return the dayOfWeek
      */
+    @XmlElement
     public int getDayOfWeek() {
         return dayOfWeek;
     }
@@ -274,6 +259,7 @@ public class HarvestSource {
         this.dayOfWeek = dayOfWeek;
     }
 
+    @XmlElement
     public int getHour() {
         return hour;
     }
@@ -282,6 +268,7 @@ public class HarvestSource {
         this.hour = hour;
     }
 
+    @XmlElement
     public int getMinute() {
         return minute;
     }
@@ -294,6 +281,7 @@ public class HarvestSource {
      * Gets the status
      * @return The status
      */
+    @XmlElement
     public String getStatus() {
         return status;
     }
@@ -302,6 +290,7 @@ public class HarvestSource {
      * Returns the ag3VenueServer
      * @return the ag3VenueServer
      */
+    @XmlElement
     public String getAg3VenueServer() {
         return ag3VenueServer;
     }
@@ -318,6 +307,7 @@ public class HarvestSource {
      * Returns the ag3VenueUrl
      * @return the ag3VenueUrl
      */
+    @XmlElement
     public String getAg3VenueUrl() {
         return ag3VenueUrl;
     }
@@ -334,6 +324,8 @@ public class HarvestSource {
      * Returns the addresses
      * @return the addresses
      */
+    @XmlElement(name="address")
+    @XmlJavaTypeAdapter(NetworkLocationAdapter.class)
     public NetworkLocation[] getAddresses() {
         return addresses;
     }
@@ -347,120 +339,10 @@ public class HarvestSource {
     }
 
     /**
-     * Returns the subFolderMetadataItem
-     * @return the subFolderMetadataItem
-     */
-    public String getSubFolderMetadataItem() {
-        return subFolderMetadataItem;
-    }
-
-    /**
-     * Sets the subFolderMetadataItem
-     * @param subFolderMetadataItem the subFolderMetadataItem to set
-     */
-    public void setSubFolderMetadataItem(String subFolderMetadataItem) {
-        this.subFolderMetadataItem = subFolderMetadataItem;
-    }
-
-    /**
-     * Schedules the updating of the source
-     * @param database The database to put new recordings into
-     */
-    public synchronized void scheduleTimer(RecordingDatabase database,
-            RtpTypeRepository typeRepository) {
-        stopTimer();
-        this.database = database;
-        if (!updateFrequency.equals(UPDATE_MANUALLY)) {
-            if (updateFrequency.equals(UPDATE_ANUALLY)) {
-                Calendar now = Calendar.getInstance();
-                Calendar first = Calendar.getInstance();
-                first.set(Calendar.HOUR_OF_DAY, hour);
-                first.set(Calendar.MINUTE, minute);
-                first.set(Calendar.SECOND, 0);
-                first.set(Calendar.MILLISECOND, 0);
-                first.set(Calendar.MONTH, month);
-                first.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                if (first.before(now) || first.equals(now)) {
-                    first.add(Calendar.YEAR, 1);
-                }
-                timer = new Timer();
-                timer.schedule(new HarvestTask(), first.getTime());
-                System.err.println("Harvest of " + url + " scheduled for "
-                        + first.getTime());
-            } else if (updateFrequency.equals(UPDATE_MONTHLY)) {
-                Calendar now = Calendar.getInstance();
-                Calendar first = Calendar.getInstance();
-                first.set(Calendar.HOUR_OF_DAY, hour);
-                first.set(Calendar.MINUTE, minute);
-                first.set(Calendar.SECOND, 0);
-                first.set(Calendar.MILLISECOND, 0);
-                first.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                if (first.before(now) || first.equals(now)) {
-                    first.add(Calendar.MONTH, 1);
-                }
-                timer = new Timer();
-                timer.schedule(new HarvestTask(), first.getTime());
-                System.err.println("Harvest of " + url + " scheduled for "
-                        + first.getTime());
-            } else if (updateFrequency.equals(UPDATE_WEEKLY)) {
-                Calendar now = Calendar.getInstance();
-                Calendar first = Calendar.getInstance();
-                first.set(Calendar.HOUR_OF_DAY, hour);
-                first.set(Calendar.MINUTE, minute);
-                first.set(Calendar.SECOND, 0);
-                first.set(Calendar.MILLISECOND, 0);
-                first.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-                if (first.before(now) || first.equals(now)) {
-                    first.add(Calendar.DAY_OF_MONTH, 7);
-                }
-                timer = new Timer();
-                timer.schedule(new HarvestTask(), first.getTime());
-                System.err.println("Harvest of " + url + " scheduled for "
-                        + first.getTime());
-            }
-        }
-    }
-
-    public void setDatabase(RecordingDatabase database) {
-        this.database = database;
-    }
-
-    /**
-     * Stops the updating of the source
-     */
-    public synchronized void stopTimer() {
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-        if (retryTimer != null) {
-            retryTimer.cancel();
-            retryTimer = null;
-        }
-    }
-
-    private String getMetadataItem(HarvestedEvent event) {
-        RecordingMetadata metadata = event.getMetadata();
-        if (metadata != null) {
-            String methodName = "get"
-                + subFolderMetadataItem.substring(0, 1).toUpperCase()
-                + subFolderMetadataItem.substring(1);
-            try {
-                Method getMethod = metadata.getClass().getMethod(methodName);
-                Object result = getMethod.invoke(metadata);
-                return result.toString();
-            } catch (Exception e) {
-                // Do Nothing
-            }
-        }
-        return null;
-    }
-
-    /**
      * Harvests the source
      */
-    public void harvest(boolean manual) {
-        scheduleTimer(database, typeRepostory);
+    public List<HarvestedEvent> harvest() throws HarvestException {
+        List<HarvestedEvent> events = new Vector<HarvestedEvent>();
         String url = this.url;
         Date now = new Date();
         SimpleDateFormat day = new SimpleDateFormat("dd");
@@ -481,34 +363,7 @@ public class HarvestSource {
                     reader.readItems(connection.getInputStream());
                 for (HarvestedItem item : items) {
                     if (item instanceof HarvestedEvent) {
-                        HarvestedEvent event = (HarvestedEvent) item;
-                        Folder eventFolder = folder;
-                        if (subFolderMetadataItem != null) {
-                            String subFolder = getMetadataItem(event);
-                            if (subFolder != null) {
-                                File folderFile = new File(folder.getFile(),
-                                        subFolder);
-                                folderFile.mkdirs();
-                                Folder tmpFolder = database.getFolder(
-                                        folderFile);
-                                if (tmpFolder != null) {
-                                    eventFolder = tmpFolder;
-                                }
-                            }
-                        }
-                        File file = File.createTempFile("recording",
-                                RecordingConstants.UNFINISHED_RECORDING_INDEX,
-                                eventFolder.getFile());
-                        UnfinishedRecording recording = new UnfinishedRecording(
-                                typeRepostory, eventFolder, file, database,
-                                emailer);
-                        recording.setMetadata(event.getMetadata());
-                        recording.setStartDate(event.getStartDate());
-                        recording.setStopDate(event.getEndDate());
-                        recording.setAddresses(addresses);
-                        recording.setAg3VenueServer(ag3VenueServer);
-                        recording.setAg3VenueUrl(ag3VenueUrl);
-                        database.addUnfinishedRecording(recording, this);
+                        events.add((HarvestedEvent) item);
                     }
                 }
             } else {
@@ -516,18 +371,11 @@ public class HarvestSource {
                         + " is not a HarvestFormatReader");
             }
             status = "OK";
+            return events;
 
         } catch (Exception e) {
-            e.printStackTrace();
             status = "Failed: " + e.getMessage();
-            if (!manual) {
-                Calendar first = Calendar.getInstance();
-                first.add(Calendar.MINUTE, 5);
-                retryTimer = new Timer();
-                retryTimer.schedule(new HarvestTask(), first.getTimeInMillis());
-                System.err.println(
-                        "Harvest failed, will retry in five minutes");
-            }
+            throw new HarvestException(e);
         }
     }
 }

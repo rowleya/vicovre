@@ -36,20 +36,12 @@ package com.googlecode.vicovre.recordings;
 
 import java.io.File;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.db.Folder;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
-import com.googlecode.vicovre.utils.Emailer;
 
 
 /**
@@ -58,290 +50,105 @@ import com.googlecode.vicovre.utils.Emailer;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+
 @XmlRootElement(name="recording")
 @XmlAccessorType(XmlAccessType.NONE)
-public class Recording implements Comparable<Recording> {
+public abstract class Recording implements Comparable<Recording> {
 
-    // The recording metadata
-    private RecordingMetadata metadata = null;
-
-    // The id of the recording
-    private String id = null;
-
-    // The start time of the recording
-    private Date startTime = new Date(0);
-
-    // The end time of the recording
-    private long duration = 0;
-
-    // The streams in the recording
-    private HashMap<String, Stream> streams = new HashMap<String, Stream>();
-
-    private HashMap<Long, ReplayLayout> replayLayouts =
-        new HashMap<Long, ReplayLayout>();
-
-    private Vector<Long> pauseTimes = new Vector<Long>();
-
-    // The directory holding the streams
-    private File directory = null;
-
-    // The folder holding the recording
-    private Folder folder = null;
-
-    // The lifetime of the recording
-    private long lifetime = 0;
-
-    // The handler of the lifetime
-    private LifetimeHandler lifetimeHandler = null;
-
-    // The recording database holding the recording
-    private RecordingDatabase database = null;
-
-    public Recording() {
-        // Does Nothing
-    }
-
-    public Recording(Folder folder, String id, RecordingDatabase database,
-            Emailer emailer) {
-        this.folder = folder;
-        this.id = id;
-        this.directory = new File(folder.getFile(), id);
-        this.database = database;
-
-        if (id == null) {
-            throw new RuntimeException("Null id recording in folder " + folder);
-        }
-        lifetimeHandler = new LifetimeHandler(this, database, emailer);
-    }
+    @XmlElement
+    public abstract String getFolder();
 
     /**
      * Returns the directory
      * @return the directory
      */
-    public File getDirectory() {
-        return directory;
-    }
+    public abstract File getDirectory();
 
     /**
      * Returns the id
      * @return the id
      */
     @XmlElement
-    public String getId() {
-        return id;
-    }
+    public abstract String getId();
 
     /**
      * Returns the startTime
      * @return the startTime
      */
-    public Date getStartTime() {
-        return startTime;
-    }
+    public abstract Date getStartTime();
 
     @XmlElement(name="startTime")
-    public String getStartTimeString() {
-        if (startTime != null) {
-            return RecordingConstants.DATE_FORMAT.format(startTime);
-        }
-        return null;
-    }
+    public abstract String getStartTimeString();
 
     /**
      * Returns the duration in ms
      * @return the duration
      */
     @XmlElement
-    public long getDuration() {
-        return duration;
-    }
+    public abstract long getDuration();
 
     /**
      * Returns the streams
      * @return the streams
      */
-    public List<Stream> getStreams() {
-        return new Vector<Stream>(streams.values());
-    }
+    public abstract List<Stream> getStreams();
 
     /**
      * Gets a stream
      * @param ssrc The ssrc of the stream to get
      * @return The stream, or null if doesn't exist
      */
-    public Stream getStream(String ssrc) {
-        return streams.get(ssrc);
-    }
-
-    /**
-     * Sets the streams
-     * @param streams the streams to set
-     */
-    public void setStreams(List<Stream> streams) {
-        if (streams != null) {
-            for (Stream stream : streams) {
-                stream.setRecording(this);
-                this.streams.put(stream.getSsrc(), stream);
-            }
-        } else {
-            this.streams.clear();
-        }
-    }
-
-    public void updateTimes() {
-        startTime = null;
-        Date endTime = null;
-        for (Stream stream : streams.values()) {
-            if ((startTime == null)
-                    || ((stream.getStartTime() != null)
-                            && stream.getStartTime().before(startTime))) {
-                startTime = stream.getStartTime();
-            }
-            if ((endTime == null) || ((stream.getEndTime() != null)
-                    && stream.getEndTime().after(endTime))) {
-                endTime = stream.getEndTime();
-            }
-        }
-        if (endTime != null && startTime != null) {
-            duration = endTime.getTime() - startTime.getTime();
-        } else {
-            duration = 0;
-        }
-    }
-
-    /**
-     * Sets the replay layouts
-     * @param replayLayouts The replay layouts
-     */
-    public void setReplayLayouts(List<ReplayLayout> replayLayouts) {
-        if (replayLayouts != null) {
-            for (ReplayLayout layout : replayLayouts) {
-                layout.setRecording(this);
-                this.replayLayouts.put(layout.getTime(), layout);
-            }
-        } else {
-            this.replayLayouts.clear();
-        }
-    }
+    public abstract Stream getStream(String ssrc);
 
     /**
      * Sets the replay layout
      * @param replayLayout The layout to set
      */
-    public void setReplayLayout(ReplayLayout replayLayout) {
-        replayLayouts.put(replayLayout.getTime(), replayLayout);
-    }
+    public abstract void setReplayLayout(ReplayLayout replayLayout);
 
     /**
      * Gets the replay layouts
      * @return The replay layouts
      */
-    public List<ReplayLayout> getReplayLayouts() {
-        if (!replayLayouts.isEmpty()) {
-            return new Vector<ReplayLayout>(replayLayouts.values());
-        }
-        Vector<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
-        try {
-            for (DefaultLayout layout : folder.getDefaultLayouts()) {
-
-                // Try to match the positions to the streams
-                ReplayLayout replayLayout = layout.matchLayout(this);
-                if (replayLayout != null) {
-                    replayLayouts.add(replayLayout);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Warning: error reading layouts");
-            e.printStackTrace();
-        }
-        return replayLayouts;
-    }
+    public abstract List<ReplayLayout> getReplayLayouts();
 
     /**
      * Gets a replay layout
      * @param time The time at which the layout applies
      * @return The layout or null if doesn't exist
      */
-    public ReplayLayout getLayout(Long time) {
-        return replayLayouts.get(time);
-    }
+    public abstract ReplayLayout getLayout(Long time);
 
-    public void removeLayout(Long time) {
-        replayLayouts.remove(time);
-    }
+    public abstract void removeLayout(Long time);
 
     /**
      * Gets the metadata
      * @return The metadata
      */
     @XmlElement
-    public RecordingMetadata getMetadata() {
-        return metadata;
-    }
+    public abstract RecordingMetadata getMetadata();
 
     /**
      * Sets the metadata
      * @param metadata The metadata to set
      */
-    public void setMetadata(RecordingMetadata metadata) {
-        this.metadata = metadata;
-    }
+    public abstract void setMetadata(RecordingMetadata metadata);
 
-    public List<Long> getPauseTimes() {
-        return pauseTimes;
-    }
+    public abstract List<Long> getPauseTimes();
 
-    public void setPauseTimes(List<Long> pauseTimes) {
-        this.pauseTimes.clear();
-        this.pauseTimes.addAll(pauseTimes);
-    }
-
-    public void addPauseTime(Long time) {
-        pauseTimes.add(time);
-    }
-
-    public void setLifetime(long lifetime) {
-        this.lifetime = lifetime;
-        lifetimeHandler.updateLifetime();
-    }
+    public abstract void setLifetime(long lifetime);
 
     @XmlElement
-    public long getLifetime() {
-        return lifetime;
-    }
+    public abstract long getLifetime();
 
-    public void setEmailAddress(String emailAddress) {
-        lifetimeHandler.setEmailAddress(emailAddress);
-    }
+    public abstract void setEmailAddress(String emailAddress);
 
     @XmlElement
-    public boolean isEditable() {
-        if (database instanceof SecureRecordingDatabase) {
-            return ((SecureRecordingDatabase) database).canEditRecording(this);
-        }
-        return true;
-    }
+    public abstract String getEmailAddress();
 
-    public boolean equals(Recording recording) {
-        return recording.id.equals(id);
-    }
+    @XmlElement
+    public abstract boolean isPlayable();
 
-    public int hashCode() {
-        return id.hashCode();
-    }
-
-    public int compareTo(Recording r) {
-        int value = startTime.compareTo(r.startTime);
-        if (value == 0) {
-            return metadata.compareTo(r.metadata);
-        }
-        return value;
-    }
-
-    public void setId(String id) {
-        File oldDir = directory;
-        directory = new File(directory.getParent(), id);
-        oldDir.renameTo(directory);
-        this.id = id;
-    }
+    @XmlElement
+    public abstract boolean isEditable();
 }

@@ -77,8 +77,10 @@ public class MAGICFormatReader implements HarvestFormatReader {
                         + type.substring(1);
 
                     if (type.equalsIgnoreCase("regular lecture")) {
+                        String courseCode = XmlIo.readContent(node,
+                                "course_code");
                         metadata.setValue("courseCode",
-                                XmlIo.readContent(node, "course_code"),
+                                courseCode,
                                 false, true, false);
                         metadata.setValue("courseTitle",
                                 XmlIo.readContent(node, "course_title"),
@@ -93,6 +95,7 @@ public class MAGICFormatReader implements HarvestFormatReader {
                                 + " at ${location}";
                         metadata.setValue("description", description,
                                 true, false, true);
+                        event.setSubFolder(courseCode);
                     } else if (type.equals("extra event")) {
                         metadata.setValue("organiserName",
                                 XmlIo.readContent(node, "orgainser_name"),

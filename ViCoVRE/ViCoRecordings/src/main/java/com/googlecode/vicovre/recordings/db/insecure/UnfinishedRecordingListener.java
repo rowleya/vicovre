@@ -30,67 +30,15 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db;
+package com.googlecode.vicovre.recordings.db.insecure;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import org.xml.sax.SAXException;
-
-import com.googlecode.vicovre.recordings.DefaultLayout;
-import com.googlecode.vicovre.recordings.HarvestSource;
-import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 
-public interface Folder extends Comparable<Folder> {
+public interface UnfinishedRecordingListener {
 
-    /**
-     * Gets the file
-     * @return The file
-     */
-    public File getFile();
+    void recordingAdded(UnfinishedRecording recording);
 
-    /**
-     * Returns the name
-     * @return the name
-     */
-    public String getName();
+    void recordingUpdated(UnfinishedRecording recording);
 
-    /**
-     * Returns the description
-     * @return the description
-     */
-    public String getDescription();
-
-    /**
-     * Returns the folders
-     * @return the folders
-     */
-    public List<Folder> getFolders();
-
-    /**
-     * Gets a recording
-     * @param id The id of the recording
-     * @return The recording or null if doesn't exist
-     */
-    public Recording getRecording(String id);
-
-    /**
-     * Returns the recordings
-     * @return the recordings
-     */
-    public List<Recording> getRecordings();
-
-    public UnfinishedRecording getUnfinishedRecording(String id);
-
-    public List<UnfinishedRecording> getUnfinishedRecordings();
-
-    public HarvestSource getHarvestSource(String id);
-
-    public List<HarvestSource> getHarvestSources();
-
-    public List<DefaultLayout> getDefaultLayouts() throws IOException,
-            SAXException;
-
-    public void setDatabase(RecordingDatabase database);
+    void recordingDeleted(UnfinishedRecording recording);
 }

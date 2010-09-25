@@ -34,10 +34,14 @@ package com.googlecode.vicovre.recordings.db;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.db.insecure.HarvestSourceListener;
+import com.googlecode.vicovre.recordings.db.insecure.RecordingListener;
+import com.googlecode.vicovre.recordings.db.insecure.UnfinishedRecordingListener;
 
 public interface RecordingDatabase {
 
@@ -45,7 +49,9 @@ public interface RecordingDatabase {
 
     public void addVenueServer(String url);
 
-    public Folder getTopLevelFolder();
+    public File getFile(String folder);
+
+    public List<String> getSubFolders(String folder);
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException;
@@ -55,6 +61,12 @@ public interface RecordingDatabase {
 
     public void updateHarvestSource(HarvestSource harvestSource)
             throws IOException;
+
+    public HarvestSource getHarvestSource(String folder, String id);
+
+    public List<HarvestSource> getHarvestSources(String folder);
+
+    public void addHarvestSourceListener(HarvestSourceListener listener);
 
     public void addUnfinishedRecording(UnfinishedRecording recording,
             HarvestSource creator)
@@ -66,10 +78,21 @@ public interface RecordingDatabase {
     public void updateUnfinishedRecording(UnfinishedRecording recording)
             throws IOException;
 
+    public UnfinishedRecording getUnfinishedRecording(String folder, String id);
+
+    public List<UnfinishedRecording> getUnfinishedRecordings(String folder);
+
+    public void addUnfinishedRecordingListener(
+            UnfinishedRecordingListener listener);
+
     public void addRecording(Recording recording, UnfinishedRecording creator)
             throws IOException;
 
     public void deleteRecording(Recording recording) throws IOException;
+
+    public Recording getRecording(String folder, String id);
+
+    public List<Recording> getRecordings(String folder);
 
     public void updateRecordingMetadata(Recording recording)
             throws IOException;
@@ -79,7 +102,7 @@ public interface RecordingDatabase {
     public void updateRecordingLifetime(Recording recording)
             throws IOException;
 
-    public Folder getFolder(File path);
+    public void addRecordingListener(RecordingListener recordingListener);
 
     public void shutdown();
 }

@@ -32,7 +32,6 @@
 
 package com.googlecode.vicovre.recordings.db.insecure;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,8 +47,6 @@ import ag3.interfaces.types.UnicastNetworkLocation;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
@@ -69,16 +66,13 @@ public class HarvestSourceReader {
      */
     public static HarvestSource readHarvestSource(InputStream input,
             HarvestFormatRepository harvestFormatRepository,
-            RtpTypeRepository typeRepository, InsecureFolder folder, File file,
-            Emailer emailer)
+            String folder, String id)
             throws SAXException, IOException {
-        HarvestSource harvestSource = new HarvestSource(folder, file,
-                typeRepository, emailer);
+        HarvestSource harvestSource = new HarvestSource(folder, id);
         Node doc = XmlIo.read(input);
         XmlIo.setString(doc, harvestSource, "name");
         XmlIo.setString(doc, harvestSource, "url");
         XmlIo.setString(doc, harvestSource, "updateFrequency");
-        XmlIo.setString(doc, harvestSource, "subFolderMetadataItem");
 
         String fmt = XmlIo.readValue(doc, "format");
         HarvestFormat format = harvestFormatRepository.findFormat(fmt);
@@ -143,7 +137,6 @@ public class HarvestSourceReader {
         XmlIo.writeValue(harvestSource, "name", writer);
         XmlIo.writeValue(harvestSource, "url", writer);
         XmlIo.writeValue(harvestSource, "updateFrequency", writer);
-        XmlIo.writeValue(harvestSource, "subFolderMetadataItem", writer);
         XmlIo.writeValue("format", harvestSource.getFormat().getName(), writer);
         XmlIo.writeValue(harvestSource, "hour", writer);
         XmlIo.writeValue(harvestSource, "minute", writer);

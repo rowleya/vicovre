@@ -78,6 +78,10 @@ public class ReplayLayout implements Comparable<ReplayLayout> {
 
     private LayoutRepository layoutRepository;
 
+    public ReplayLayout() {
+        // Does Nothing
+    }
+
     /**
      * Creates a new ReplayLayout
      * @param layoutRepository The layout repository

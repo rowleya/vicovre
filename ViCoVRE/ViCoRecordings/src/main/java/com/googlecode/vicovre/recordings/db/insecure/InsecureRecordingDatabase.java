@@ -48,12 +48,10 @@ import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 
 /**
  * A database for recordings
@@ -69,7 +67,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     private InsecureFolder topLevelFolder = null;
 
-    private HashMap<File, Folder> folderCache = new HashMap<File, Folder>();
+    private HashMap<File, InsecureFolder> folderCache =
+        new HashMap<File, InsecureFolder>();
 
     private RtpTypeRepository typeRepository = null;
 
@@ -81,7 +80,14 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     private long defaultRecordingLifetime = 0;
 
-    private Emailer emailer = null;
+    private Vector<HarvestSourceListener> harvestSourceListeners =
+        new Vector<HarvestSourceListener>();
+
+    private Vector<UnfinishedRecordingListener> unfinishedRecordingListeners =
+        new Vector<UnfinishedRecordingListener>();
+
+    private Vector<RecordingListener> recordingListeners =
+        new Vector<RecordingListener>();
 
     /**
      * Creates a Database
@@ -95,21 +101,20 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
             RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
             HarvestFormatRepository harvestFormatRepository, boolean readOnly,
-            long defaultRecordingLifetime,
-            Emailer emailer)
+            long defaultRecordingLifetime)
             throws SAXException, IOException {
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
         this.readOnly = readOnly;
         this.defaultRecordingLifetime = defaultRecordingLifetime;
-        this.emailer = emailer;
 
         File topLevel = new File(directory);
         topLevel.mkdirs();
-        topLevelFolder = new InsecureFolder(topLevel, typeRepository,
-                layoutRepository, harvestFormatRepository, this, readOnly,
-                defaultRecordingLifetime, emailer);
+        topLevelFolder = new InsecureFolder(topLevel, "", typeRepository,
+                layoutRepository, harvestFormatRepository, readOnly,
+                defaultRecordingLifetime);
+        folderCache.put(topLevelFolder.getFile(), topLevelFolder);
         traverseFolders(topLevelFolder);
 
         File venueServerFile = new File(topLevel, VENUE_SERVER_FILE);
@@ -123,18 +128,60 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
-    private void traverseFolders(Folder folder) {
-        folderCache.put(folder.getFile(), folder);
+    private InsecureFolder getFolder(File path) {
+        if (path == null || path.equals(topLevelFolder.getFile())) {
+            return topLevelFolder;
+        }
+        InsecureFolder folder = folderCache.get(path);
+        if (folder == null) {
+            if (path.exists() && path.isDirectory()) {
+                File recordingIndex = new File(path,
+                        RecordingConstants.RECORDING_INDEX);
+                File unfinishedRecordingIndex = new File(path.getParentFile(),
+                        path.getName()
+                        + RecordingConstants.UNFINISHED_RECORDING_INDEX);
+
+                if (!recordingIndex.exists()
+                        && !unfinishedRecordingIndex.exists()) {
+                    String folderName = path.getAbsolutePath().substring(
+                        topLevelFolder.getFile().getAbsolutePath().length());
+                    folderName = folderName.replace('\\', '/');
+                    folder = new InsecureFolder(path, folderName,
+                        typeRepository, layoutRepository,
+                        harvestFormatRepository, readOnly,
+                        defaultRecordingLifetime);
+                    folderCache.put(path, folder);
+                }
+            }
+        }
+        return folder;
+    }
+
+    private void traverseFolders(InsecureFolder folder) {
         List<HarvestSource> harvestSources = folder.getHarvestSources();
         for (HarvestSource harvestSource : harvestSources) {
-            harvestSource.scheduleTimer(this, typeRepository);
+            for (HarvestSourceListener listener : harvestSourceListeners) {
+                listener.sourceAdded(harvestSource);
+            }
         }
         List<UnfinishedRecording> unfinishedRecordings =
             folder.getUnfinishedRecordings();
         for (UnfinishedRecording recording : unfinishedRecordings) {
-            recording.updateTimers();
+            for (UnfinishedRecordingListener listener
+                    : unfinishedRecordingListeners) {
+                listener.recordingAdded(recording);
+            }
         }
-        for (Folder subFolder : folder.getFolders()) {
+        List<Recording> recordings =
+            folder.getRecordings();
+        for (Recording recording : recordings) {
+            for (RecordingListener listener : recordingListeners) {
+                listener.recordingAdded(recording);
+            }
+        }
+        for (String subFolderName : folder.getFolders()) {
+            File subFile = new File(folder.getFile(), subFolderName);
+            InsecureFolder subFolder = getFolder(subFile);
             traverseFolders(subFolder);
         }
     }
@@ -165,27 +212,39 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
-    /**
-     * Gets the top level folder
-     * @return The folders
-     */
-    public InsecureFolder getTopLevelFolder() {
-        return topLevelFolder;
+    public File getFile(String folder) {
+        if ((folder == null) || folder.equals("") || folder.equals("/")) {
+            return topLevelFolder.getFile();
+        }
+        File file = new File(topLevelFolder.getFile(), folder);
+        return file;
     }
 
-    public void addHarvestSource(HarvestSource harvestSource)
+    public List<String> getSubFolders(String folder) {
+        InsecureFolder f = getFolder(getFile(folder));
+        return f.getFolders();
+    }
+
+    private void editHarvestSource(HarvestSource harvestSource)
             throws IOException {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        InsecureFolder folder = (InsecureFolder) getFolder(
-                harvestSource.getFolder().getFile());
+        InsecureFolder folder = getFolder(getFile(harvestSource.getFolder()));
         folder.addHarvestSource(harvestSource);
-        File file = harvestSource.getFile();
+        File file = new File(folder.getFile(), harvestSource.getId()
+                + RecordingConstants.HARVEST_SOURCE);
         FileOutputStream output = new FileOutputStream(file);
         HarvestSourceReader.writeHarvestSource(harvestSource, output);
         output.close();
-        harvestSource.scheduleTimer(this, typeRepository);
+    }
+
+    public void addHarvestSource(HarvestSource harvestSource)
+            throws IOException {
+        editHarvestSource(harvestSource);
+        for (HarvestSourceListener listener : harvestSourceListeners) {
+            listener.sourceAdded(harvestSource);
+        }
     }
 
     public void deleteHarvestSource(HarvestSource harvestSource)
@@ -193,11 +252,14 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        InsecureFolder folder = (InsecureFolder) getFolder(
-                harvestSource.getFolder().getFile());
+        InsecureFolder folder = getFolder(getFile(harvestSource.getFolder()));
         folder.deleteHarvestSource(harvestSource.getId());
-        File file = harvestSource.getFile();
+        File file = new File(folder.getFile(), harvestSource.getId()
+                + RecordingConstants.HARVEST_SOURCE);
         file.delete();
+        for (HarvestSourceListener listener : harvestSourceListeners) {
+            listener.sourceDeleted(harvestSource);
+        }
     }
 
     public void updateHarvestSource(HarvestSource harvestSource)
@@ -205,23 +267,49 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        addHarvestSource(harvestSource);
+        editHarvestSource(harvestSource);
+        for (HarvestSourceListener listener : harvestSourceListeners) {
+            listener.sourceUpdated(harvestSource);
+        }
     }
 
-    public void addUnfinishedRecording(UnfinishedRecording recording,
-            HarvestSource creator)
-            throws IOException {
+    public HarvestSource getHarvestSource(String folder, String id) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getHarvestSource(id);
+    }
+
+    public List<HarvestSource> getHarvestSources(String folder) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getHarvestSources();
+    }
+
+    private void editUnfinishedRecording(UnfinishedRecording recording,
+            HarvestSource creator) throws IOException {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        InsecureFolder folder = (InsecureFolder) getFolder(
-                recording.getFolder().getFile());
+        InsecureFolder folder = getFolder(getFile(recording.getFolder()));
         folder.addUnfinishedRecording(recording);
-        File file = recording.getFile();
+        File file = new File(folder.getFile(),
+            recording.getId() + RecordingConstants.UNFINISHED_RECORDING_INDEX);
         FileOutputStream output = new FileOutputStream(file);
-        UnfinishedRecordingReader.writeRecording(recording, output);
+        UnfinishedRecordingReader.writeRecording(this, recording, output);
         output.close();
-        recording.updateTimers();
+    }
+
+    public void addUnfinishedRecording(UnfinishedRecording recording,
+            HarvestSource creator) throws IOException {
+        editUnfinishedRecording(recording, creator);
+        for (UnfinishedRecordingListener listener
+                : unfinishedRecordingListeners) {
+            listener.recordingAdded(recording);
+        }
     }
 
     public void deleteUnfinishedRecording(UnfinishedRecording recording)
@@ -230,16 +318,17 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
             throw new IOException("Cannot edit in read only mode");
         }
         recording.stopRecording();
-        InsecureFolder folder = (InsecureFolder) getFolder(
-                recording.getFolder().getFile());
-        File file = recording.getFile();
-        String prefix = file.getName();
-        prefix = prefix.substring(0, prefix.indexOf(
-                        RecordingConstants.UNFINISHED_RECORDING_INDEX));
+        InsecureFolder folder = getFolder(getFile(recording.getFolder()));
+        File file = new File(folder.getFile(), recording.getId()
+                + RecordingConstants.UNFINISHED_RECORDING_INDEX);
         File metadata = new File(folder.getFile(),
-                prefix + RecordingConstants.METADATA);
+                recording.getId() + RecordingConstants.METADATA);
         file.delete();
         metadata.delete();
+        for (UnfinishedRecordingListener listener
+                : unfinishedRecordingListeners) {
+            listener.recordingDeleted(recording);
+        }
     }
 
     public void updateUnfinishedRecording(UnfinishedRecording recording)
@@ -247,23 +336,50 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        addUnfinishedRecording(recording, null);
+        editUnfinishedRecording(recording, null);
+        for (UnfinishedRecordingListener listener
+                : unfinishedRecordingListeners) {
+            listener.recordingUpdated(recording);
+        }
     }
 
-    public void addRecording(Recording recording, UnfinishedRecording creator)
+    public UnfinishedRecording getUnfinishedRecording(String folder,
+            String id) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getUnfinishedRecording(id);
+    }
+
+    public List<UnfinishedRecording> getUnfinishedRecordings(String folder) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getUnfinishedRecordings();
+    }
+
+    private void editRecording(Recording recording, UnfinishedRecording creator)
             throws IOException {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        InsecureFolder folder = (InsecureFolder)
-            getFolder(recording.getDirectory().getParentFile());
+        InsecureFolder folder = getFolder(getFile(recording.getFolder()));
         folder.addRecording(recording);
-        recording.getDirectory().mkdirs();
         FileOutputStream output = new FileOutputStream(
                 new File(recording.getDirectory(),
                         RecordingConstants.RECORDING_INDEX));
         RecordingReader.writeRecording(recording, output);
         output.close();
+    }
+
+    public void addRecording(Recording recording, UnfinishedRecording creator)
+            throws IOException {
+        editRecording(recording, creator);
+        for (RecordingListener listener : recordingListeners) {
+            listener.recordingAdded(recording);
+        }
     }
 
     private void deleteDirectory(File directory) {
@@ -282,10 +398,28 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
         }
-        InsecureFolder folder = (InsecureFolder)
-            getFolder(recording.getDirectory().getParentFile());
+        InsecureFolder folder = getFolder(getFile(recording.getFolder()));
         folder.deleteRecording(recording.getId());
         deleteDirectory(recording.getDirectory());
+        for (RecordingListener listener : recordingListeners) {
+            listener.recordingDeleted(recording);
+        }
+    }
+
+    public Recording getRecording(String folder, String id) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getRecording(id);
+    }
+
+    public List<Recording> getRecordings(String folder) {
+        InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
+        return f.getRecordings();
     }
 
     public void updateRecordingMetadata(Recording recording)
@@ -299,6 +433,9 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         RecordingMetadataReader.writeMetadata(recording.getMetadata(),
                 outputStream);
         outputStream.close();
+        for (RecordingListener listener : recordingListeners) {
+            listener.recordingMetadataUpdated(recording);
+        }
     }
 
     public void updateRecordingLayouts(Recording recording) throws IOException {
@@ -312,65 +449,76 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
             LayoutReader.writeLayout(layout, outputLayout);
             outputLayout.close();
         }
+        for (RecordingListener listener : recordingListeners) {
+            listener.recordingLayoutsUpdated(recording);
+        }
     }
 
     public void updateRecordingLifetime(Recording recording)
             throws IOException {
         LifetimeReader.writeLifetime(recording.getDirectory(),
                 recording.getLifetime());
-    }
-
-    public Folder getFolder(File path) {
-        if (path == null || path.equals(topLevelFolder.getFile())) {
-            return topLevelFolder;
-        }
-        Folder folder = folderCache.get(path);
-        if (folder == null) {
-            if (path.exists() && path.isDirectory()) {
-                File recordingIndex = new File(path,
-                        RecordingConstants.RECORDING_INDEX);
-                File unfinishedRecordingIndex = new File(path.getParentFile(),
-                        path.getName()
-                        + RecordingConstants.UNFINISHED_RECORDING_INDEX);
-
-                if (!recordingIndex.exists()
-                        && !unfinishedRecordingIndex.exists()) {
-                    folder = new InsecureFolder(path, typeRepository,
-                        layoutRepository,
-                        harvestFormatRepository, this, readOnly,
-                        defaultRecordingLifetime, emailer);
-                    folderCache.put(path, folder);
-                }
-            }
-        }
-        return folder;
-    }
-
-    private void shutdown(Folder folder) {
-        System.err.println("Shutting Down " + folder.getFile());
-        for (Folder f : folder.getFolders()) {
-            shutdown(f);
-        }
-        for (HarvestSource source : folder.getHarvestSources()) {
-            System.err.println("Shutting Down Harvest Source "
-                    + source.getFile());
-            source.stopTimer();
-        }
-        for (UnfinishedRecording recording : folder.getUnfinishedRecordings()) {
-            System.err.println("Shutting Down Unfinished Recording "
-                    + recording.getFile());
-            recording.stopTimers();
-            recording.stopRecording();
+        for (RecordingListener listener : recordingListeners) {
+            listener.recordingLifetimeUpdated(recording);
         }
     }
 
     public void shutdown() {
-        System.err.println("Shutting Down Database...");
-        shutdown(topLevelFolder);
-
         System.err.println("Shutting down PlaybackManager...");
         PlaybackManager.shutdown();
         System.err.println("Database Shutdown Complete");
+    }
+
+    private void traverseHarvestSources(InsecureFolder folder,
+            HarvestSourceListener listener) {
+        for (HarvestSource harvestSource : folder.getHarvestSources()) {
+            listener.sourceAdded(harvestSource);
+        }
+        for (String subFolderName : folder.getFolders()) {
+            File subFile = new File(folder.getFile(), subFolderName);
+            InsecureFolder subFolder = getFolder(subFile);
+            traverseHarvestSources(subFolder, listener);
+        }
+    }
+
+    public void addHarvestSourceListener(HarvestSourceListener listener) {
+        harvestSourceListeners.add(listener);
+        traverseHarvestSources(topLevelFolder, listener);
+    }
+
+    private void traverseUnfinishedRecordings(InsecureFolder folder,
+            UnfinishedRecordingListener listener) {
+        for (UnfinishedRecording recording : folder.getUnfinishedRecordings()) {
+            listener.recordingAdded(recording);
+        }
+        for (String subFolderName : folder.getFolders()) {
+            File subFile = new File(folder.getFile(), subFolderName);
+            InsecureFolder subFolder = getFolder(subFile);
+            traverseUnfinishedRecordings(subFolder, listener);
+        }
+    }
+
+    public void addUnfinishedRecordingListener(
+            UnfinishedRecordingListener listener) {
+        unfinishedRecordingListeners.add(listener);
+        traverseUnfinishedRecordings(topLevelFolder, listener);
+    }
+
+    private void traverseRecordings(InsecureFolder folder,
+            RecordingListener listener) {
+        for (Recording recording : folder.getRecordings()) {
+            listener.recordingAdded(recording);
+        }
+        for (String subFolderName : folder.getFolders()) {
+            File subFile = new File(folder.getFile(), subFolderName);
+            InsecureFolder subFolder = getFolder(subFile);
+            traverseRecordings(subFolder, listener);
+        }
+    }
+
+    public void addRecordingListener(RecordingListener listener) {
+        recordingListeners.add(listener);
+        traverseRecordings(topLevelFolder, listener);
     }
 
 

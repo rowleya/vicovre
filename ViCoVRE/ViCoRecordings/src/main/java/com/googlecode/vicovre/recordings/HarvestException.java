@@ -32,79 +32,14 @@
 
 package com.googlecode.vicovre.recordings;
 
-import java.util.Date;
+public class HarvestException extends Exception {
 
-import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
-
-/**
- * Represents an event that has been harvested
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class HarvestedEvent extends HarvestedItem {
-
-    private RecordingMetadata metadata = null;
-
-    private Date startDate = null;
-
-    private Date endDate = null;
-
-    private String subFolder = null;
-
-    /**
-     * Gets the start date of the event
-     * @return The start date
-     */
-    public Date getStartDate() {
-        return startDate;
+    public HarvestException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    /**
-     * Gets the end date of the event
-     * @return The end date
-     */
-    public Date getEndDate() {
-        return endDate;
+    public HarvestException(Throwable cause) {
+        super(cause);
     }
 
-    /**
-     * Gets the metadata of the event
-     * @return The metadata
-     */
-    public RecordingMetadata getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the start date of the event
-     * @param date The start date
-     */
-    public void setStartDate(Date date) {
-        this.startDate = date;
-    }
-
-    /**
-     * Sets the end date of the event
-     * @param date The end date
-     */
-    public void setEndDate(Date date) {
-        this.endDate = date;
-    }
-
-    /**
-     * Sets the metadata of the event
-     * @param metadata The metadata
-     */
-    public void setMetadata(RecordingMetadata metadata) {
-        this.metadata = metadata;
-    }
-
-    public void setSubFolder(String subFolder) {
-        this.subFolder = subFolder;
-    }
-
-    public String getSubFolder() {
-        return subFolder;
-    }
 }

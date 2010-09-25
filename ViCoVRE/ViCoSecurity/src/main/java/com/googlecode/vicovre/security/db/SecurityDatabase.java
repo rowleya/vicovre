@@ -618,7 +618,7 @@ public class SecurityDatabase {
     }
 
     private ACL obtainAcl(File folderFile, String id, boolean createIfAdmin,
-            boolean check) {
+            boolean allowByDefault, boolean check) {
         ACL acl = null;
         try {
             HashMap<String, ACL> aclList = acls.get(folderFile);
@@ -655,7 +655,7 @@ public class SecurityDatabase {
 
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, true);
+            ACL acl = obtainAcl(folderFile, id, true, allow, true);
 
             Vector<Entity> entities = getEntities(exceptions);
             acl.setAllow(allow);
@@ -673,7 +673,7 @@ public class SecurityDatabase {
             throws IOException {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, true);
+            ACL acl = obtainAcl(folderFile, id, true, false, true);
 
             User user = users.get(owner);
             if (user == null) {
@@ -690,7 +690,7 @@ public class SecurityDatabase {
     public void deleteAcl(String folder, String id) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, false);
+            ACL acl = obtainAcl(folderFile, id, true, false, false);
 
             User currentUser = getCurrentUser(folder, id);
 
@@ -714,28 +714,30 @@ public class SecurityDatabase {
         }
     }
 
-    public ReadOnlyACL getAcl(String folder, String id, boolean createIfAdmin) {
+    public ReadOnlyACL getAcl(String folder, String id, boolean createIfAdmin,
+            boolean allowByDefault) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, createIfAdmin, true);
+            ACL acl = obtainAcl(folderFile, id, createIfAdmin, allowByDefault,
+                    true);
             synchronized (acl) {
                 return new ReadOnlyACL(acl);
             }
         }
     }
 
-    public boolean isAllowed(String folder, String id) {
+    public boolean isAllowed(String folder, String id, boolean def) {
         File folderFile = new File(topLevelFolder, folder);
         synchronized (acls) {
             try {
-                ACL acl = obtainAcl(folderFile, id, true, false);
+                ACL acl = obtainAcl(folderFile, id, true, def, false);
                 synchronized (acl) {
                     return acl.isAllowed();
                 }
             } catch (UnknownException e) {
 
                 // If there is no ACL, return false
-                return false;
+                return def;
             }
         }
     }

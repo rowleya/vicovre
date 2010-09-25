@@ -45,14 +45,13 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 import com.googlecode.vicovre.utils.XmlIo;
 
@@ -72,20 +71,19 @@ public class RecordingReader {
      * @throws SAXException
      */
     public static Recording readRecording(InputStream input,
-            InsecureFolder folder, RecordingDatabase database,
+            String folder, File directory,
             RtpTypeRepository typeRepository, LayoutRepository layoutRepository,
-            long defaultLifetime, Emailer emailer)
+            long defaultLifetime)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
         String id = XmlIo.readValue(doc, "id");
-        Recording recording = new Recording(folder, id, database, emailer);
+        InsecureRecording recording =
+            new InsecureRecording(folder, id, directory);
 
         String[] pauseTimes = XmlIo.readValues(doc, "pauseTime");
         for (String time : pauseTimes) {
             recording.addPauseTime(Long.valueOf(time));
         }
-
-        File directory = recording.getDirectory();
 
         Vector<Stream> streams = new Vector<Stream>();
         File[] streamFiles = directory.listFiles(
@@ -118,6 +116,23 @@ public class RecordingReader {
             } catch (Exception e) {
                 System.err.println("Warning: error reading layout " + file);
                 e.printStackTrace();
+            }
+        }
+
+        if (layouts.isEmpty()) {
+            File[] defaultLayoutFiles = directory.getParentFile().listFiles(
+                    new ExtensionFilter(RecordingConstants.LAYOUT));
+            for (File layoutFile : defaultLayoutFiles) {
+                FileInputStream layoutInput = new FileInputStream(layoutFile);
+                DefaultLayout layout = DefaultLayoutReader.readLayout(
+                        layoutInput, layoutRepository);
+
+                // Try to match the positions to the streams
+                ReplayLayout replayLayout = layout.matchLayout(recording);
+                if (replayLayout != null) {
+                    layouts.add(replayLayout);
+                }
+                input.close();
             }
         }
         recording.setReplayLayouts(layouts);
