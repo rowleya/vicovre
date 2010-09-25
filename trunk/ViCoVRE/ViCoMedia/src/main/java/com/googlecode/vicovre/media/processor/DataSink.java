@@ -34,6 +34,7 @@
 
 package com.googlecode.vicovre.media.processor;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -165,8 +166,12 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         if (buffer != null) {
             try {
                 handleBuffer(buffer);
+            } catch (EOFException e) {
+                System.err.println("Connection closed");
+                close();
             } catch (IOException e) {
                 e.printStackTrace();
+                close();
             }
         }
     }
