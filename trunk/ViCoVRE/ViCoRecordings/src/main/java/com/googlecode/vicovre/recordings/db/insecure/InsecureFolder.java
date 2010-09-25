@@ -43,19 +43,14 @@ import java.util.List;
 import java.util.Vector;
 
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
-import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
-import com.googlecode.vicovre.recordings.db.Folder;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 import com.googlecode.vicovre.utils.XmlIo;
 
@@ -65,7 +60,7 @@ import com.googlecode.vicovre.utils.XmlIo;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class InsecureFolder implements Folder {
+public class InsecureFolder {
 
     private File file = null;
 
@@ -89,32 +84,29 @@ public class InsecureFolder implements Folder {
 
     private HarvestFormatRepository harvestFormatRepository = null;
 
-    private RecordingDatabase database = null;
-
     private long defaultRecordingLifetime = 0;
 
     private boolean readOnly = false;
 
-    private Emailer emailer = null;
+    private String folder = null;
 
     /**
      * Creates a folder
      * @param file The real folder
      */
-    public InsecureFolder(File file, RtpTypeRepository typeRepository,
+    public InsecureFolder(File file, String folder,
+            RtpTypeRepository typeRepository,
             LayoutRepository layoutRepository,
-            HarvestFormatRepository harvestFormatRepository,
-            RecordingDatabase database, boolean readOnly,
-            long defaultRecordingLifetime, Emailer emailer) {
+            HarvestFormatRepository harvestFormatRepository, boolean readOnly,
+            long defaultRecordingLifetime) {
         this.file = file;
+        this.folder = folder;
         this.typeRepository = typeRepository;
         this.layoutRepository = layoutRepository;
         this.harvestFormatRepository = harvestFormatRepository;
-        this.database = database;
         this.readOnly = readOnly;
         this.defaultRecordingLifetime = LifetimeReader.readLifetime(file,
                 defaultRecordingLifetime);
-        this.emailer = emailer;
 
         readRecordings();
         if (!readOnly) {
@@ -212,14 +204,11 @@ public class InsecureFolder implements Folder {
      * Returns the folders
      * @return the folders
      */
-    public List<Folder> getFolders() {
-        Vector<Folder> folders = new Vector<Folder>();
+    public List<String> getFolders() {
+        Vector<String> folders = new Vector<String>();
         File[] files = file.listFiles(new FolderFilter(false));
         for (File folderFile : files) {
-            InsecureFolder folder = new InsecureFolder(folderFile,
-                    typeRepository, layoutRepository, harvestFormatRepository,
-                    database, readOnly, defaultRecordingLifetime, emailer);
-            folders.add(folder);
+            folders.add(folderFile.getName());
         }
         Collections.sort(folders);
         return folders;
@@ -257,8 +246,8 @@ public class InsecureFolder implements Folder {
                             < index.lastModified()) {
                     FileInputStream input = new FileInputStream(index);
                     Recording recording = RecordingReader.readRecording(input,
-                            this, database, typeRepository, layoutRepository,
-                            defaultRecordingLifetime, emailer);
+                            folder, recordingFile, typeRepository,
+                            layoutRepository, defaultRecordingLifetime);
                     if (recording == null) {
                         throw new Exception("Recording "
                                 + recordingFile.getName()
@@ -307,11 +296,13 @@ public class InsecureFolder implements Folder {
                 RecordingConstants.UNFINISHED_RECORDING_INDEX));
         for (File recordingFile : recordingFiles) {
             try {
+                String id = recordingFile.getName();
+                id = id.substring(0, id.length()
+                    - RecordingConstants.UNFINISHED_RECORDING_INDEX.length());
                 FileInputStream input = new FileInputStream(recordingFile);
                 UnfinishedRecording recording =
                     UnfinishedRecordingReader.readRecording(input,
-                            recordingFile, this, typeRepository, database,
-                            emailer);
+                            folder, id, file);
                 input.close();
                 if (recording == null) {
                     throw new Exception("Could not read unfinished recording");
@@ -341,11 +332,13 @@ public class InsecureFolder implements Folder {
                 RecordingConstants.HARVEST_SOURCE));
         for (File sourceFile : sourceFiles) {
             try {
+                String id = sourceFile.getName();
+                id = id.substring(0, id.length()
+                    - RecordingConstants.HARVEST_SOURCE.length());
                 FileInputStream input = new FileInputStream(sourceFile);
                 HarvestSource harvestSource =
                     HarvestSourceReader.readHarvestSource(input,
-                            harvestFormatRepository, typeRepository, this,
-                            sourceFile, emailer);
+                            harvestFormatRepository, folder, id);
                 input.close();
                 if (harvestSource == null) {
                     throw new Exception("Could not read harvest source");
@@ -357,22 +350,6 @@ public class InsecureFolder implements Folder {
                 e.printStackTrace();
             }
         }
-    }
-
-    public List<DefaultLayout> getDefaultLayouts() throws IOException,
-            SAXException {
-        Vector<DefaultLayout> defaultLayouts = new Vector<DefaultLayout>();
-        File[] layoutFiles = file.listFiles(new ExtensionFilter(
-                RecordingConstants.LAYOUT));
-        for (File layoutFile : layoutFiles) {
-            FileInputStream input = new FileInputStream(layoutFile);
-            DefaultLayout layout = DefaultLayoutReader.readLayout(input,
-                    layoutRepository);
-            defaultLayouts.add(layout);
-            input.close();
-        }
-
-        return defaultLayouts;
     }
 
     protected void addRecording(Recording recording) {
@@ -411,10 +388,6 @@ public class InsecureFolder implements Folder {
         }
     }
 
-    public void setDatabase(RecordingDatabase database) {
-        this.database = database;
-    }
-
     public boolean equals(InsecureFolder folder) {
         return file.equals(folder.file);
     }
@@ -423,7 +396,7 @@ public class InsecureFolder implements Folder {
         return file.hashCode();
     }
 
-    public int compareTo(Folder f) {
+    public int compareTo(InsecureFolder f) {
         return getName().compareTo(f.getName());
     }
 }

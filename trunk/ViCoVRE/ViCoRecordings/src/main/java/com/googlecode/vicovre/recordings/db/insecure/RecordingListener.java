@@ -30,81 +30,19 @@
  *
  */
 
-package com.googlecode.vicovre.recordings;
+package com.googlecode.vicovre.recordings.db.insecure;
 
-import java.util.Date;
+import com.googlecode.vicovre.recordings.Recording;
 
-import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
+public interface RecordingListener {
 
-/**
- * Represents an event that has been harvested
- *
- * @author Andrew G D Rowley
- * @version 1.0
- */
-public class HarvestedEvent extends HarvestedItem {
+    void recordingAdded(Recording recording);
 
-    private RecordingMetadata metadata = null;
+    void recordingMetadataUpdated(Recording recording);
 
-    private Date startDate = null;
+    void recordingLifetimeUpdated(Recording recording);
 
-    private Date endDate = null;
+    void recordingLayoutsUpdated(Recording recording);
 
-    private String subFolder = null;
-
-    /**
-     * Gets the start date of the event
-     * @return The start date
-     */
-    public Date getStartDate() {
-        return startDate;
-    }
-
-    /**
-     * Gets the end date of the event
-     * @return The end date
-     */
-    public Date getEndDate() {
-        return endDate;
-    }
-
-    /**
-     * Gets the metadata of the event
-     * @return The metadata
-     */
-    public RecordingMetadata getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the start date of the event
-     * @param date The start date
-     */
-    public void setStartDate(Date date) {
-        this.startDate = date;
-    }
-
-    /**
-     * Sets the end date of the event
-     * @param date The end date
-     */
-    public void setEndDate(Date date) {
-        this.endDate = date;
-    }
-
-    /**
-     * Sets the metadata of the event
-     * @param metadata The metadata
-     */
-    public void setMetadata(RecordingMetadata metadata) {
-        this.metadata = metadata;
-    }
-
-    public void setSubFolder(String subFolder) {
-        this.subFolder = subFolder;
-    }
-
-    public String getSubFolder() {
-        return subFolder;
-    }
+    void recordingDeleted(Recording recording);
 }

@@ -64,13 +64,12 @@ public class PlaybackManager implements StreamStoppingListener,
         StreamStartingListener {
 
     private static final BridgeDescription CONNECTION = new BridgeDescription();
-
-    private static final HashMap<Integer, PlaybackManager> MANAGERS =
-        new HashMap<Integer, PlaybackManager>();
-
     static {
         CONNECTION.setServerType("Multicast");
     }
+
+    private static final HashMap<Integer, PlaybackManager> MANAGERS =
+        new HashMap<Integer, PlaybackManager>();
 
     private static int lastId = 0;
 
