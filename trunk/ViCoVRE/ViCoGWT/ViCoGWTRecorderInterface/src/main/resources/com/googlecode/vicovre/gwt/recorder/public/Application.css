@@ -7,3 +7,8 @@ button {
 .widePanel {
   width: 100%
 }
+
+.gwt-SuggestBoxPopup {
+margin-left: 3px;
+z-index: 1000000;
+}

@@ -39,16 +39,18 @@ import java.util.Vector;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
+import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemDeleter;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemEditor;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemUpdater;
+import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemDeleter;
+import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemEditor;
+import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemUpdater;
 
 public class HarvestItem extends HorizontalPanel implements ClickHandler,
         MessageResponseHandler, Comparable<HarvestItem> {
@@ -95,9 +97,30 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private FolderPanel folderPanel = null;
 
-    public HarvestItem(FolderPanel folderPanel, String id, String itemName) {
+    private RecordPanel recordPanel = null;
+
+    private PlayPanel playPanel = null;
+
+    private String baseUrl = null;
+
+    private HarvestItemPopup popup = null;
+
+    private Layout[] layouts = null;
+
+    private Layout[] customLayouts = null;
+
+    public HarvestItem(String baseUrl, FolderPanel folderPanel,
+            RecordPanel recordPanel, PlayPanel playPanel, String id,
+            String itemName, HarvestItemPopup popup, Layout[] layouts,
+            Layout[] customLayouts) {
+        this.baseUrl = baseUrl;
         this.folderPanel = folderPanel;
+        this.recordPanel = recordPanel;
+        this.playPanel = playPanel;
         this.id = id;
+        this.popup = popup;
+        this.layouts = layouts;
+        this.customLayouts = customLayouts;
         name.setText(itemName);
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderColor", "black");
@@ -228,12 +251,15 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(editButton)) {
-            HarvestItemPopup popup = new HarvestItemPopup(this);
+            if (popup == null) {
+                popup = new HarvestItemPopup(baseUrl, this);
+            }
             popup.center();
         } else if (event.getSource().equals(harvestButton)) {
-            HarvestItemUpdater.harvest(this);
+            HarvestItemUpdater.harvest(this, folderPanel, recordPanel,
+                    playPanel,  baseUrl, layouts, customLayouts);
         } else if (event.getSource().equals(deleteButton)) {
-            HarvestItemDeleter.deleteItem(this);
+            HarvestItemDeleter.deleteItem(this, baseUrl);
         }
     }
 
@@ -242,6 +268,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
             HarvestItemPopup popup = (HarvestItemPopup) response.getSource();
             name.setText(popup.getName());
             url = popup.getUrl();
+            format = popup.getFormat();
             updateFrequency = popup.getUpdateFrequency();
             month = popup.getMonth();
             dayOfMonth = popup.getDayOfMonth();
@@ -251,7 +278,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
             venueServerUrl = popup.getVenueServer();
             venueUrl = popup.getVenue();
             addresses = popup.getAddresses();
-            HarvestItemEditor.updateItem(this);
+            HarvestItemEditor.updateItem(this, baseUrl);
         }
     }
 
@@ -275,6 +302,40 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     public void setStatus(String status) {
         this.status.setText(status);
+    }
+
+    public String getDetailsAsUrl() {
+        String itemUrl = "name=" + URL.encodeComponent(name.getText());
+        itemUrl += "&url=" + URL.encodeComponent(url);
+        itemUrl += "&format=" + URL.encodeComponent(format);
+        itemUrl += "&updateFrequency=" + URL.encodeComponent(updateFrequency);
+        itemUrl += "&hour=" + hour;
+        itemUrl += "&minute=" + minute;
+        if (updateFrequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
+            itemUrl += "&month=" + month;
+            itemUrl += "&dayOfMonth=" + dayOfMonth;
+        } else if (updateFrequency.equals(HarvestItemPopup.UPDATE_MONTHLY)) {
+            itemUrl += "&dayOfMonth=" + dayOfMonth;
+        } else if (updateFrequency.equals(HarvestItemPopup.UPDATE_WEEKLY)) {
+            itemUrl += "&dayOfWeek=" + dayOfWeek;
+        }
+
+        String ag3VenueServer = getVenueServerUrl();
+        if (ag3VenueServer != null) {
+            itemUrl += "&ag3VenueServer="
+                + URL.encodeComponent(ag3VenueServer);
+            itemUrl += "&ag3VenueUrl="
+                + URL.encodeComponent(getVenueUrl());
+        } else {
+            String[] addresses = getAddresses();
+            for (int i = 0; i < addresses.length; i++) {
+                String[] parts = addresses[i].split("/");
+                itemUrl += "&host=" + parts[0];
+                itemUrl += "&port=" + parts[1];
+                itemUrl += "&ttl=" + parts[2];
+            }
+        }
+        return itemUrl;
     }
 
     public Map<String, Object> getDetails() {

@@ -40,8 +40,8 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemCreator;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemCreator;
 
 public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
@@ -51,8 +51,25 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
     private FolderPanel folderPanel = null;
 
-    public HarvestPanel(FolderPanel folderPanel) {
+    private RecordPanel recordPanel = null;
+
+    private PlayPanel playPanel = null;
+
+    private String url = null;
+
+    private Layout[] layouts = null;
+
+    private Layout[] customLayouts = null;
+
+    public HarvestPanel(FolderPanel folderPanel, RecordPanel recordPanel,
+            PlayPanel playPanel, String url, Layout[] layouts,
+            Layout[] customLayouts) {
         this.folderPanel = folderPanel;
+        this.recordPanel = recordPanel;
+        this.playPanel = playPanel;
+        this.url = url;
+        this.layouts = layouts;
+        this.customLayouts = customLayouts;
         setWidth("100%");
         setHeight("100%");
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -75,7 +92,8 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            HarvestItemCreator.createHarvestItem(folderPanel, this);
+            HarvestItemCreator.createHarvestItem(folderPanel, recordPanel,
+                    playPanel, this, url, layouts, customLayouts);
         }
     }
 

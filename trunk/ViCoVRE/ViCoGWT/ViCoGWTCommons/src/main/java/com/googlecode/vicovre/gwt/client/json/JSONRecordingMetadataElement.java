@@ -30,23 +30,33 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.gwt.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class Recordings extends JavaScriptObject {
+public class JSONRecordingMetadataElement extends JavaScriptObject {
 
-    protected Recordings() {
+    protected JSONRecordingMetadataElement() {
         // Does Nothing
     }
 
-    public static final native Recordings parse(String json) /*-{
-        return eval('(' + json + ')');
+    public final native String getName() /*-{
+        return this.name;
     }-*/;
 
-    public final native JsArray<Recording> getRecordings() /*-{
-        return this.recording;
+    public final native String getValue() /*-{
+        return this.value;
     }-*/;
 
+    public final native boolean isEditable() /*-{
+        return this.editable;
+    }-*/;
+
+    public final native boolean isVisible() /*-{
+        return this.visible;
+    }-*/;
+
+    public final native boolean isMultiline() /*-{
+        return this.multiline;
+    }-*/;
 }

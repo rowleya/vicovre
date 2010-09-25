@@ -33,8 +33,12 @@
 package com.googlecode.vicovre.gwt.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
 public class JSONRecording extends JavaScriptObject {
+
+    public static final StringDateTimeFormat DATE_FORMAT =
+        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     protected JSONRecording() {
         // Does Nothing
@@ -46,6 +50,10 @@ public class JSONRecording extends JavaScriptObject {
 
     public final native String getId() /*-{
         return this.id;
+    }-*/;
+
+    public final native String getFolder() /*-{
+        return this.folder;
     }-*/;
 
     public final native String getName() /*-{
@@ -68,8 +76,12 @@ public class JSONRecording extends JavaScriptObject {
         return this.lifetime;
     }-*/;
 
+    public final native boolean isPlayable() /*-{
+        return this.playable;
+    }-*/;
+
     public final native boolean isEditable() /*-{
-        return this.isEditable;
+        return this.editable;
     }-*/;
 
 }

@@ -32,59 +32,64 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.LayoutPopup;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class PlayItemLayoutChanger extends AbstractRestCall {
 
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+    private LayoutPopup popup = null;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private String itemUrl = null;
+
+    private boolean deleted = false;
+
+    public static void setLayout(LayoutPopup popup, String url) {
+        PlayItemLayoutChanger changer = new PlayItemLayoutChanger(popup, url);
+        changer.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    private PlayItemLayoutChanger(LayoutPopup popup, String url) {
+        this.popup = popup;
+        this.url = url + "recording" + popup.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += popup.getId();
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        itemUrl = url + "/" + popup.getLayoutTime() + "?"
+            + popup.getLayoutDetailsAsUrl();
+        long originalLayoutTime = popup.getOriginalLayoutTime();
+        if (originalLayoutTime != -1) {
+            go(url + "/" + originalLayoutTime, Method.DELETE);
+        } else {
+            deleted = true;
+            go(itemUrl, Method.PUT);
+        }
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        MessagePopup errorPopup = new MessagePopup(
+                "Error setting layout: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
+        if (!deleted && (popup.getLayoutTime() != -1)) {
+            deleted = true;
+            go(itemUrl, Method.PUT);
+        } else {
+            popup.hide();
         }
-        loader.itemLoaded();
     }
 
 }

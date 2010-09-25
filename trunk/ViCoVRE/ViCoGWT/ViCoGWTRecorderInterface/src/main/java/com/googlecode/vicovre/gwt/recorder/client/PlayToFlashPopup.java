@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
+import java.util.HashMap;
 import java.util.List;
 
 import pl.rmalinowski.gwt2swf.client.ui.SWFWidget;
@@ -46,7 +47,6 @@ import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.LayoutLoader;
 
 public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
@@ -57,10 +57,19 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
 
     private PlayItem item = null;
 
-    public PlayToFlashPopup(PlayItem item) {
+    private HashMap<String, Layout> layouts = new HashMap<String, Layout>();
+
+    public PlayToFlashPopup(PlayItem item, Layout[] layouts,
+            Layout[] customLayouts) {
         super(new VerticalPanel());
         this.item = item;
         closeButton.addClickHandler(this);
+        for (Layout layout : layouts) {
+            this.layouts.put(layout.getName(), layout);
+        }
+        for (Layout customLayout : customLayouts) {
+            this.layouts.put(customLayout.getName(), customLayout);
+        }
     }
 
     public void center() {
@@ -85,8 +94,7 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
             int minY = Integer.MAX_VALUE;
             int maxY = 0;
             for (ReplayLayout replayLayout : replayLayouts) {
-                Layout layout = LayoutLoader.getLayouts().get(
-                        replayLayout.getName());
+                Layout layout = layouts.get(replayLayout.getName());
                 for (LayoutPosition position : layout.getPositions()) {
                     if ((position.getX() + position.getWidth()) > maxX) {
                         maxX = position.getX() + position.getWidth();

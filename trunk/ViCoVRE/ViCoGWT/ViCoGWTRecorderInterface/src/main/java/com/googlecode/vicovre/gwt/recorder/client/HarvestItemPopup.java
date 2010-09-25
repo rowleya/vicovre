@@ -49,11 +49,12 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
+import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
 
 public class HarvestItemPopup extends ModalPopup<Grid>
-        implements ClickHandler, ChangeHandler {
+        implements ClickHandler, ChangeHandler, VenueLoader {
 
     /**
      * Updates the source manually.
@@ -93,7 +94,7 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private TimeBox time = new TimeBox(5, 5);
 
-    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
+    private VenuePanel venue = new VenuePanel(this);
 
     private Button ok = new Button("OK");
 
@@ -103,16 +104,20 @@ public class HarvestItemPopup extends ModalPopup<Grid>
 
     private MessageResponseHandler handler = null;
 
-    public HarvestItemPopup(HarvestItem item) {
+    private String baseUrl = null;
+
+    public HarvestItemPopup(String baseUrl, HarvestItem item) {
         super(new Grid(6, 2));
         this.item = item;
         this.handler = item;
+        this.baseUrl = baseUrl;
         init();
     }
 
-    public HarvestItemPopup(MessageResponseHandler handler) {
+    public HarvestItemPopup(String baseUrl, MessageResponseHandler handler) {
         super(new Grid(6, 2));
         this.handler = handler;
+        this.baseUrl = baseUrl;
         init();
     }
 
@@ -326,6 +331,10 @@ public class HarvestItemPopup extends ModalPopup<Grid>
                 break;
             }
         }
+    }
+
+    public void loadVenues(VenuePanel venuePanel) {
+        RestVenueLoader.loadVenues(venuePanel, baseUrl);
     }
 
 }

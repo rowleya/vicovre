@@ -30,26 +30,44 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.restlet.gwt.data.Response;
 
-public class RecordingMetadata extends JavaScriptObject {
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-    protected RecordingMetadata() {
-        // Does Nothing
+public class PlayItemSeek extends AbstractRestCall {
+
+    private PlayToVenuePopup popup = null;
+
+    private String url = null;
+
+    public static void seek(PlayToVenuePopup popup, int seek, String url) {
+        PlayItemSeek seeker = new PlayItemSeek(popup, seek, url);
+        seeker.go();
     }
 
-    public final native String getName() /*-{
-        return this.name;
-    }-*/;
+    public PlayItemSeek(PlayToVenuePopup popup, int seek, String url) {
+        this.popup = popup;
+        this.url = url + "play/" + popup.getId() + "/seek?seek=" + seek;
+    }
 
-    public final native String getDescription() /*-{
-        return this.description;
-    }-*/;
+    public void go() {
+        go(url);
+    }
 
-    public final native boolean isDescriptionEditable() /*-{
-        return this.descriptionEditable;
-    }-*/;
+    protected void onError(String message) {
+        popup.setStopped();
+        MessagePopup errorPopup = new MessagePopup(
+                "Error: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
+    }
 
+    protected void onSuccess(Response response) {
+        // Do Nothing
+    }
 }

@@ -3,7 +3,7 @@
     <head>
         <title>
             <c:if test="${not empty recording}">
-                ${recording.metadata.name}
+                ${recording.metadata.primaryValue}
             </c:if>
             <c:if test="${empty recording}">
                 Recording Not Found

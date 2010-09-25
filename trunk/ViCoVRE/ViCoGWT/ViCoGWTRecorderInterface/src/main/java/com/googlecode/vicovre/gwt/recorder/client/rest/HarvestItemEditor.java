@@ -30,23 +30,50 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
 
-public class JSONRecordings extends JavaScriptObject {
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
 
-    protected JSONRecordings() {
-        // Does Nothing
+public class HarvestItemEditor extends AbstractRestCall {
+
+    private HarvestItem item = null;
+
+    private String url = null;
+
+    public static void updateItem(HarvestItem item, String url) {
+        HarvestItemEditor editor = new HarvestItemEditor(item, url);
+        editor.go();
     }
 
-    public static final native JSONRecordings parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
+    public HarvestItemEditor(HarvestItem item, String url) {
+        this.item = item;
+        this.url = url + "harvest" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId();
+    }
 
-    public final native JsArray<JSONRecording> getRecordings() /*-{
-        return this.recording;
-    }-*/;
+    public void go() {
+        item.setCreated(false);
+        item.setStatus("Updating...");
+        String itemUrl = url + "?" + item.getDetailsAsUrl();
+        go(itemUrl, Method.PUT);
+    }
+
+    protected void onError(String message) {
+        item.setStatus("Error updating item: " + message);
+        item.setCreated(true);
+    }
+
+    protected void onSuccess(Response response) {
+        item.setStatus("Updated - OK");
+        item.setCreated(true);
+    }
+
 
 }

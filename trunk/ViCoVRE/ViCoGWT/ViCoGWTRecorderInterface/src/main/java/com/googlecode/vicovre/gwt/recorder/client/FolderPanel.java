@@ -49,10 +49,11 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
+import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemLoader;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.HarvestItemLoader;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemLoader;
 
 public class FolderPanel extends HorizontalPanel
         implements SelectionHandler<TreeItem>, ClickHandler {
@@ -65,7 +66,7 @@ public class FolderPanel extends HorizontalPanel
 
     private RecordPanel recordPanel = null;
 
-    private HarvestPanel harvestPanel = new HarvestPanel(this);
+    private HarvestPanel harvestPanel = null;
 
     private HashMap<String, TreeItem> folderTreeItems =
         new HashMap<String, TreeItem>();
@@ -76,10 +77,19 @@ public class FolderPanel extends HorizontalPanel
 
     private String currentPath = null;
 
-    public FolderPanel(String url) {
-        this.url = url;
+    private Layout[] layouts = null;
 
-        recordPanel = new RecordPanel(this, url);
+    private Layout[] customLayouts = null;
+
+    public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts) {
+        this.url = url;
+        this.layouts = layouts;
+        this.customLayouts = customLayouts;
+
+        recordPanel = new RecordPanel(this, playPanel, url, layouts,
+                customLayouts);
+        harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
+                layouts, customLayouts);
 
         setWidth("95%");
         setHeight("100%");
@@ -88,8 +98,6 @@ public class FolderPanel extends HorizontalPanel
         panel.setHeight("95%");
         panel.getDeckPanel().setHeight("100%");
         panel.add(playPanel, "Play");
-        panel.add(recordPanel, "Record");
-        panel.add(harvestPanel, "Harvest");
         panel.selectTab(0);
         panel.setAnimationEnabled(true);
 
@@ -166,10 +174,12 @@ public class FolderPanel extends HorizontalPanel
         recordPanel.clear();
         harvestPanel.clear();
 
-        PlayItemLoader.loadPlayItems(path, this, playPanel, loader);
-        RecordingItemLoader.loadRecordingItems(path, this, recordPanel, loader,
-                url);
-        HarvestItemLoader.loadHarvestItems(path, this, harvestPanel, loader);
+        PlayItemLoader.loadPlayItems(path, this, playPanel, loader, url,
+                layouts, customLayouts);
+        RecordingItemLoader.loadRecordingItems(path, this, playPanel,
+                recordPanel, loader, url, layouts, customLayouts);
+        HarvestItemLoader.loadHarvestItems(path, this, recordPanel, playPanel,
+                harvestPanel, loader, url, layouts, customLayouts);
     }
 
     public void reload() {
@@ -192,6 +202,16 @@ public class FolderPanel extends HorizontalPanel
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
             FolderCreator.createFolder(this, url);
+        }
+    }
+
+    public void setUserIsWriter(boolean isWriter) {
+        if (isWriter) {
+            panel.add(recordPanel, "Record");
+            panel.add(harvestPanel, "Harvest");
+        } else {
+            panel.remove(recordPanel);
+            panel.remove(harvestPanel);
         }
     }
 

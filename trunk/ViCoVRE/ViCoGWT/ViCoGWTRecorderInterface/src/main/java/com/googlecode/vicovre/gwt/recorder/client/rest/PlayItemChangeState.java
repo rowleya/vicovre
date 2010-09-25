@@ -32,59 +32,71 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class PlayItemChangeState extends AbstractRestCall {
 
-    private StatusPanel panel = null;
+    private static final String STOP = "stop";
 
-    private ActionLoader loader = null;
+    private static final String PAUSE = "pause";
+
+    private static final String RESUME = "resume";
+
+    private String operation = null;
+
+    private PlayToVenuePopup popup = null;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    public static void stop(PlayToVenuePopup popup, String url) {
+        PlayItemChangeState changer = new PlayItemChangeState(popup, STOP, url);
+        changer.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
+    public static void pause(PlayToVenuePopup popup, String url) {
+        PlayItemChangeState changer = new PlayItemChangeState(popup, PAUSE,
+                url);
+        changer.go();
+    }
+
+    public static void resume(PlayToVenuePopup popup, String url) {
+        PlayItemChangeState changer = new PlayItemChangeState(popup, RESUME,
+                url);
+        changer.go();
+    }
+
+    public PlayItemChangeState(PlayToVenuePopup popup, String operation,
             String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+        this.popup = popup;
+        this.operation = operation;
+        this.url = url + "play/" + popup.getId() + "/" + operation;
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        go(url);
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        popup.setStopped();
+        MessagePopup errorPopup = new MessagePopup(
+                "Error: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
+        if (operation.equals(RESUME)) {
+            popup.setPlaying();
+        } else if (operation.equals(STOP)) {
+            popup.setStopped();
+            popup.hide();
+        } else if (operation.equals(PAUSE)) {
+            popup.setPaused();
         }
-        loader.itemLoaded();
     }
-
 }

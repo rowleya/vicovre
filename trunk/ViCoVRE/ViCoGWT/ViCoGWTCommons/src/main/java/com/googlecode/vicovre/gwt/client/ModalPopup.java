@@ -87,6 +87,7 @@ public class ModalPopup<T extends Widget> extends PopupPanel
     public void hide() {
         if (resizeHandler != null) {
             resizeHandler.removeHandler();
+            resizeHandler = null;
         }
         popup.hide();
         super.hide();
