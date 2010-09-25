@@ -167,11 +167,5 @@
             <artifactId>tcpbridge</artifactId>
             <version>1.0.1</version>
        </dependency>
-
-       <dependency>
-           <groupId>wiiusej</groupId>
-           <artifactId>wiiusej</artifactId>
-           <version>0.12b</version>
-       </dependency>
      </dependencies>
 </project>
