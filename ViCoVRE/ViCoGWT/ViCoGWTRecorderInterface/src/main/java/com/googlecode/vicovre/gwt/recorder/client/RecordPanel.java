@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemCreator;
 
 public class RecordPanel extends VerticalPanel implements ClickHandler {
@@ -50,11 +51,21 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     private FolderPanel folderPanel = null;
 
+    private PlayPanel playPanel = null;
+
     private String url = null;
 
-    public RecordPanel(FolderPanel folderPanel, String url) {
+    private Layout[] layouts = null;
+
+    private Layout[] customLayouts = null;
+
+    public RecordPanel(FolderPanel folderPanel, PlayPanel playPanel,
+            String url, Layout[] layouts, Layout[] customLayouts) {
         this.url = url;
         this.folderPanel = folderPanel;
+        this.playPanel = playPanel;
+        this.layouts = layouts;
+        this.customLayouts = customLayouts;
         setWidth("100%");
         setHeight("100%");
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -81,7 +92,8 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
-            RecordingItemCreator.createRecordingItem(folderPanel, this, url);
+            RecordingItemCreator.createRecordingItem(folderPanel, playPanel,
+                    this, url, layouts, customLayouts);
         }
     }
 

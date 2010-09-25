@@ -32,23 +32,22 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
-import com.fredhat.gwt.xmlrpc.client.XmlRpcClient;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.json.JSONLayout;
+import com.googlecode.vicovre.gwt.client.json.JSONLayouts;
 import com.googlecode.vicovre.gwt.recorder.client.rest.CurrentUserLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.VenueServerLoader;
 
 public class Application implements EntryPoint {
-
-    public static final String XMLRPC_SERVER = "xmlrpcUrl";
-
-    private static XmlRpcClient xmlrpcClient = null;
 
     private static Dictionary parameters = null;
 
@@ -64,23 +63,26 @@ public class Application implements EntryPoint {
         return url + paramUrl;
     }
 
+    protected Layout[] getLayouts(String parameter) {
+        String layoutsJSON = parameters.get(parameter);
+        if (layoutsJSON != null) {
+            JSONLayouts jsonLayouts = JSONLayouts.parse(layoutsJSON);
+            JsArray<JSONLayout> layoutArray = jsonLayouts.getLayouts();
+            Layout[] layouts = new Layout[layoutArray.length()];
+            for (int i = 0; i < layoutArray.length(); i++) {
+                layouts[i] = new Layout(layoutArray.get(i));
+            }
+            return layouts;
+        }
+        return new Layout[0];
+    }
+
     public static String getParam(String name) {
         return parameters.get(name);
     }
 
-    public static XmlRpcClient getXmlRpcClient() {
-        return xmlrpcClient;
-    }
-
     public void onModuleLoad() {
         parameters = Dictionary.getDictionary("Parameters");
-        String xmlrpcServer = getParam(XMLRPC_SERVER);
-        if (xmlrpcServer.startsWith("/")) {
-            xmlrpcServer = xmlrpcServer.substring(1);
-        }
-        String url = GWT.getHostPageBaseURL() + xmlrpcServer;
-        xmlrpcClient = new XmlRpcClient(url);
-        xmlrpcClient.setTimeoutMillis(120000);
 
         DockPanel topPanel = new DockPanel();
         topPanel.setWidth("100%");
@@ -89,16 +91,15 @@ public class Application implements EntryPoint {
         topPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 
         String restUrl = getUrl();
+        Layout[] layouts = getLayouts("layouts");
+        Layout[] customLayouts = getLayouts("customLayouts");
 
-        FolderPanel panel = new FolderPanel(restUrl);
-
+        FolderPanel panel = new FolderPanel(restUrl, layouts, customLayouts);
         StatusPanel status = new StatusPanel(restUrl, panel);
         status.setWidth("95%");
 
-
         topPanel.add(status, DockPanel.NORTH);
         topPanel.add(panel, DockPanel.CENTER);
-
         topPanel.setCellHeight(status, "50px");
         RootPanel.get().add(topPanel);
 

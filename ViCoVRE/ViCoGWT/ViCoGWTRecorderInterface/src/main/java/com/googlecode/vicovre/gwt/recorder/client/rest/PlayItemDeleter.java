@@ -32,59 +32,69 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class PlayItemDeleter extends AbstractRestCall
+        implements MessageResponseHandler {
 
-    private StatusPanel panel = null;
+    private PlayItem item = null;
 
-    private ActionLoader loader = null;
+    private VerticalPanel parent = null;
+
+    private int position = 0;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    public static void deleteRecording(PlayItem item, String url) {
+        PlayItemDeleter deleter = new PlayItemDeleter(item, url);
+        deleter.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public PlayItemDeleter(PlayItem item, String url) {
+        this.item = item;
+        this.url = url + "recording" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId();
+        parent = (VerticalPanel) item.getParent();
+        position = parent.getWidgetIndex(item);
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        MessagePopup message = new MessagePopup(
+            "Are you sure that you would like to delete this recording?",
+            this, MessagePopup.QUESTION,
+            MessageResponse.YES, MessageResponse.NO);
+        message.center();
+    }
+
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.YES) {
+            item.removeFromParent();
+            go(url, Method.DELETE);
+        }
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        parent.insert(item, position);
+        MessagePopup popup = new MessagePopup(
+                "Error deleting item: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
-        }
-        loader.itemLoaded();
+        // Do Nothing
     }
+
 
 }

@@ -30,23 +30,35 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
-public class JSONRecordings extends JavaScriptObject {
+public class JSONReplayLayout extends JavaScriptObject {
 
-    protected JSONRecordings() {
+    protected JSONReplayLayout() {
         // Does Nothing
     }
 
-    public static final native JSONRecordings parse(String json) /*-{
-        return eval('(' + json + ')');
+    public final native String getName() /*-{
+        return this.name;
     }-*/;
 
-    public final native JsArray<JSONRecording> getRecordings() /*-{
-        return this.recording;
+    public final native int getTime() /*-{
+        return this.time;
     }-*/;
 
+    public final native int getEndTime() /*-{
+        return this.endTime;
+    }-*/;
+
+    public final native JsArray<JSONReplayLayoutPosition> getPositions() /*-{
+        return this.positions;
+    }-*/;
+
+    public final native JsArrayString getAudioStreams() /*-{
+        return this.audioStream;
+    }-*/;
 }

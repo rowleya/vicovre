@@ -35,56 +35,91 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Timer;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class PlayItemTimeUpdate extends AbstractRestCall {
 
-    private StatusPanel panel = null;
+    private PlayToVenuePopup popup = null;
 
-    private ActionLoader loader = null;
+    private long time = 0;
+
+    private long lastTime = 0;
+
+    private int schedule = 1000;
+
+    private boolean hasFirstTime = false;
+
+    private boolean cancelled = false;
+
+    private ItemTimer timer = new ItemTimer(this);
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private class ItemTimer extends Timer {
+
+        private PlayItemTimeUpdate responseHandler = null;
+
+        public ItemTimer(PlayItemTimeUpdate responseHandler) {
+            this.responseHandler = responseHandler;
+        }
+
+        public void run() {
+            if (!cancelled) {
+                responseHandler.go();
+            }
+        }
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
+    public static PlayItemTimeUpdate getUpdater(PlayToVenuePopup popup,
             String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+        return new PlayItemTimeUpdate(popup, url);
+    }
+
+    public PlayItemTimeUpdate(PlayToVenuePopup popup, String url) {
+        this.popup = popup;
+        this.url = url + "play/" + popup.getId() + "/time";
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        go(url, Method.GET, MediaType.TEXT_PLAIN);
+    }
+
+    public void start() {
+        cancelled = false;
+        hasFirstTime = false;
+        time = popup.getTime();
+        timer.run();
+    }
+
+    public void stop() {
+        cancelled = true;
+        timer.cancel();
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        if (!cancelled) {
+            timer.schedule(schedule);
+        }
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
+        if (!cancelled) {
+            String timeString = response.getEntity().getText();
+            long time = Long.parseLong(timeString);
+            if (!hasFirstTime) {
+                hasFirstTime = true;
+            } else if (time > this.time) {
+                long diff = (long) (((double) (time - (this.time)) /
+                    (System.currentTimeMillis() - lastTime)) * 1000);
+                schedule = (int) diff;
             }
+            lastTime = System.currentTimeMillis();
+            this.time = time;
+            popup.setTime(this.time);
+            timer.schedule(schedule);
         }
-        loader.itemLoaded();
     }
-
 }

@@ -32,59 +32,59 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class HarvestItemDeleter extends AbstractRestCall implements
+        MessageResponseHandler {
 
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+    private HarvestItem item = null;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    public static void deleteItem(HarvestItem item, String url) {
+        HarvestItemDeleter deleter = new HarvestItemDeleter(item, url);
+        deleter.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public HarvestItemDeleter(HarvestItem item, String url) {
+        this.item = item;
+        this.url = url + "harvest" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId();
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        MessagePopup deleteConfirm = new MessagePopup(
+                "Are you sure that you want to delete this item?",
+                this, MessagePopup.QUESTION,
+                MessageResponse.YES, MessageResponse.NO);
+        deleteConfirm.center();
+    }
+
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.YES) {
+            item.setCreated(false);
+            item.setStatus("Deleting...");
+            go(url, Method.DELETE);
+        }
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        item.setStatus("Deletion failed: " + message);
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
-        }
-        loader.itemLoaded();
+        item.removeFromParent();
     }
+
 
 }

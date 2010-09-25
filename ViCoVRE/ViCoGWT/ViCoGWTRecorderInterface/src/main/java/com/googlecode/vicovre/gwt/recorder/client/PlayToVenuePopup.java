@@ -43,15 +43,16 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemChangeState;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemSeek;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemTimeUpdate;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.PlayItemToVenue;
-import com.googlecode.vicovre.gwt.recorder.client.xmlrpc.VenueLoaderImpl;
+import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemChangeState;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemSeek;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemTimeUpdate;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemToVenue;
 
 public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
-        implements SlideChangeHandler, ClickHandler {
+        implements SlideChangeHandler, ClickHandler, VenueLoader {
 
     private static final int WIDTH = 800;
 
@@ -65,7 +66,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
 
     private PlayItem item = null;
 
-    private VenuePanel venue = new VenuePanel(new VenueLoaderImpl());
+    private VenuePanel venue = new VenuePanel(this);
 
     private ToggleButton playButton = new ToggleButton(PLAY, PAUSE);
 
@@ -77,14 +78,17 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
 
     private boolean playing = false;
 
-    private int id = 0;
+    private String id = "0";
 
-    private PlayItemTimeUpdate timeUpdater =
-        PlayItemTimeUpdate.getUpdater(this);
+    private String url = null;
 
-    public PlayToVenuePopup(PlayItem item) {
+    private PlayItemTimeUpdate timeUpdater = null;
+
+    public PlayToVenuePopup(String url, PlayItem item) {
         super(new VerticalPanel());
+        this.url = url;
         this.item = item;
+        this.timeUpdater = PlayItemTimeUpdate.getUpdater(this, url);
 
         VerticalPanel panel = getWidget();
         panel.setWidth(WIDTH + "px");
@@ -121,11 +125,11 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         stopButton.addClickHandler(this);
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
@@ -152,15 +156,15 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         if (!playing) {
             startPlay(value);
         } else {
-            PlayItemSeek.seek(this, value);
-            PlayItemChangeState.resume(this);
+            PlayItemSeek.seek(this, value, url);
+            PlayItemChangeState.resume(this, url);
             timeUpdater.start();
         }
     }
 
     public void slideValueChanging(float position) {
         timeUpdater.stop();
-        PlayItemChangeState.pause(this);
+        PlayItemChangeState.pause(this, url);
         setTimePosition(position);
     }
 
@@ -202,7 +206,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
             error.center();
             playButton.setDown(false);
         } else {
-            PlayItemToVenue.play(this, seek);
+            PlayItemToVenue.play(this, seek, url);
         }
     }
 
@@ -212,13 +216,17 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
                 if (!playing) {
                     startPlay(0);
                 } else {
-                    PlayItemChangeState.resume(this);
+                    PlayItemChangeState.resume(this, url);
                 }
             } else {
-                PlayItemChangeState.pause(this);
+                PlayItemChangeState.pause(this, url);
             }
         } else if (event.getSource().equals(stopButton)) {
-            PlayItemChangeState.stop(this);
+            PlayItemChangeState.stop(this, url);
         }
+    }
+
+    public void loadVenues(VenuePanel venuePanel) {
+        RestVenueLoader.loadVenues(venuePanel, url);
     }
 }

@@ -30,22 +30,22 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class JSONRecordings extends JavaScriptObject {
+public class JSONUnfinishedRecordings extends JavaScriptObject {
 
-    protected JSONRecordings() {
+    protected JSONUnfinishedRecordings() {
         // Does Nothing
     }
 
-    public static final native JSONRecordings parse(String json) /*-{
+    public static final native JSONUnfinishedRecordings parse(String json) /*-{
         return eval('(' + json + ')');
     }-*/;
 
-    public final native JsArray<JSONRecording> getRecordings() /*-{
+    public final native JsArray<JSONUnfinishedRecording> getRecordings() /*-{
         return this.recording;
     }-*/;
 

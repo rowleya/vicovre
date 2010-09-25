@@ -34,35 +34,79 @@ package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
-public class Recording extends JavaScriptObject {
+public class JSONHarvestSource extends JavaScriptObject {
 
-    public static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+    /**
+     * Updates the source manually
+     */
+    public static final String UPDATE_MANUALLY = "Manual";
 
-    protected Recording() {
+    /**
+     * Updates the source annually
+     */
+    public static final String UPDATE_ANUALLY = "Annual";
+
+    /**
+     * Updates the source monthly
+     */
+    public static final String UPDATE_MONTHLY = "Monthly";
+
+    /**
+     * Updates the source weekly
+     */
+    public static final String UPDATE_WEEKLY = "Weekly";
+
+    protected JSONHarvestSource() {
         // Does Nothing
     }
-
-    public static final native Recording parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
 
     public final native String getId() /*-{
         return this.id;
     }-*/;
 
-    public final native RecordingMetadata getMetadata() /*-{
-        return this.metadata;
+    public final native String getFolder() /*-{
+        return this.folder;
     }-*/;
 
-    public final native String getStartDate() /*-{
-        return this.startDate;
+    public final native String getName() /*-{
+        return this.name;
     }-*/;
 
-    public final native String getStopDate() /*-{
-        return this.stopDate;
+    public final native String getUrl() /*-{
+        return this.url;
+    }-*/;
+
+    public final native String getFormat() /*-{
+        return this.format;
+    }-*/;
+
+    public final native String getUpdateFrequency() /*-{
+        return this.updateFrequency;
+    }-*/;
+
+    public final native int getMonth() /*-{
+        return this.month;
+    }-*/;
+
+    public final native int getDayOfMonth() /*-{
+        return this.dayOfMonth;
+    }-*/;
+
+    public final native int getDayOfWeek() /*-{
+        return this.dayOfWeek;
+    }-*/;
+
+    public final native int getHour() /*-{
+        return this.hour;
+    }-*/;
+
+    public final native int getMinute() /*-{
+        return this.minute;
+    }-*/;
+
+    public final native String getStatus() /*-{
+        return this.status;
     }-*/;
 
     public final native String getAg3VenueServer() /*-{
@@ -73,11 +117,8 @@ public class Recording extends JavaScriptObject {
         return this.ag3VenueUrl;
     }-*/;
 
-    public final native JsArray<NetworkLocation> getAddresses() /*-{
+    public final native JsArray<JSONNetworkLocation> getAddresses() /*-{
         return this.address;
     }-*/;
 
-    public final native String getStatus() /*-{
-        return this.status;
-    }-*/;
 }

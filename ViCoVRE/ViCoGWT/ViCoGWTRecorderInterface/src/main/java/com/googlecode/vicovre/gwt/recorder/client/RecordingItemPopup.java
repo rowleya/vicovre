@@ -43,7 +43,6 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
@@ -63,8 +62,6 @@ public class RecordingItemPopup extends ModalPopup<Grid>
     private final int id = lastId++;
 
     private TextBox name = new TextBox();
-
-    private TextArea description = new TextArea();
 
     private VenuePanel venue = new VenuePanel(this);
 
@@ -98,19 +95,30 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private String url = null;
 
-    public RecordingItemPopup(RecordingItem item, String url) {
-        super(new Grid(6, 2));
+    private MetadataPopup metadataPopup = null;
+
+    public RecordingItemPopup(RecordingItem item, String url,
+            MetadataPopup metadataPopup) {
+        super(new Grid(5, 2));
         this.item = item;
         this.handler = item;
         this.url = url;
+        this.metadataPopup = metadataPopup;
         init();
     }
 
-    public RecordingItemPopup(MessageResponseHandler handler, String url) {
-        super(new Grid(6, 2));
+    public RecordingItemPopup(MessageResponseHandler handler, String url,
+            MetadataPopup metadataPopup) {
+        super(new Grid(5, 2));
         this.handler = handler;
         this.url = url;
+        this.metadataPopup = metadataPopup;
         init();
+    }
+
+    public void setRecordingItem(RecordingItem item) {
+        this.item = item;
+        this.handler = item;
     }
 
     private void init() {
@@ -144,10 +152,9 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         manualStart.setValue(true, true);
         manualStop.setValue(true, true);
 
-        grid.setWidget(0, 0, new Label("Name:"));
+        grid.setWidget(0, 0, new Label(MetadataPopup.getDisplayName(
+                metadataPopup.getPrimaryKey())));
         grid.setWidget(0, 1, name);
-        grid.setWidget(1, 0, new Label("Description:"));
-        grid.setWidget(1, 1, description);
 
         HorizontalPanel startPanel = new HorizontalPanel();
         startPanel.add(manualStart);
@@ -157,8 +164,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         startDatePanel.add(startDate);
         startDatePanel.add(new Label(" at "));
         startDatePanel.add(startTime);
-        grid.setWidget(2, 0, new Label("Start:"));
-        grid.setWidget(2, 1, startPanel);
+        grid.setWidget(1, 0, new Label("Start:"));
+        grid.setWidget(1, 1, startPanel);
 
         HorizontalPanel stopPanel = new HorizontalPanel();
         stopPanel.add(manualStop);
@@ -168,15 +175,15 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         stopDatePanel.add(stopDate);
         stopDatePanel.add(new Label(" at "));
         stopDatePanel.add(stopTime);
-        grid.setWidget(3, 0, new Label("Stop:"));
-        grid.setWidget(3, 1, stopPanel);
+        grid.setWidget(2, 0, new Label("Stop:"));
+        grid.setWidget(2, 1, stopPanel);
 
-        grid.setWidget(4, 0, new Label("Virtual Venue:"));
-        grid.setWidget(4, 1, venue);
-        grid.setWidget(5, 0, cancel);
-        grid.setWidget(5, 1, ok);
+        grid.setWidget(3, 0, new Label("Virtual Venue:"));
+        grid.setWidget(3, 1, venue);
+        grid.setWidget(4, 0, cancel);
+        grid.setWidget(4, 1, ok);
 
-        grid.getCellFormatter().setHorizontalAlignment(5, 1,
+        grid.getCellFormatter().setHorizontalAlignment(4, 1,
                 HorizontalPanel.ALIGN_RIGHT);
         grid.getColumnFormatter().setWidth(0, "150px");
         grid.getColumnFormatter().setWidth(1, "600px");
@@ -185,7 +192,6 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         grid.getCellFormatter().setVerticalAlignment(4, 0,
                 VerticalPanel.ALIGN_TOP);
         name.setWidth("100%");
-        description.setWidth("100%");
         venue.setWidth("100%");
 
         ok.addClickHandler(this);
@@ -194,9 +200,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public void center() {
         if (item != null) {
-            this.name.setText(item.getName());
-            this.description.setText(item.getDescription());
-            this.description.setEnabled(item.getDescriptionIsEditable());
+            this.name.setText(metadataPopup.getPrimaryValue());
             Date startDate = item.getStartDate();
             if (startDate != null) {
                 this.startDate.setValue(startDate);
@@ -223,14 +227,6 @@ public class RecordingItemPopup extends ModalPopup<Grid>
             }
         }
         super.center();
-    }
-
-    public String getName() {
-        return name.getText();
-    }
-
-    public String getDescription() {
-        return description.getText();
     }
 
     public Date getStartDate() {
@@ -304,6 +300,8 @@ public class RecordingItemPopup extends ModalPopup<Grid>
                 }
             }
             if (error == null) {
+                metadataPopup.setValue(metadataPopup.getPrimaryKey(),
+                        name.getText(), false);
                 hide();
                 handler.handleResponse(new MessageResponse(MessageResponse.OK,
                         this));

@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.gwt.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class JSONRecordingMetadata extends JavaScriptObject {
 
@@ -40,19 +41,11 @@ public class JSONRecordingMetadata extends JavaScriptObject {
         // Does Nothing
     }
 
-    public final native String getName() /*-{
-        return this.name;
+    public final native String getPrimaryKey() /*-{
+        return this.primaryKey;
     }-*/;
 
-    public final native String getDescription() /*-{
-        return this.description;
-    }-*/;
-
-    public final native boolean isDescriptionEditable() /*-{
-        return this.descriptionEditable;
-    }-*/;
-
-    public final native String getField(String field) /*-{
-        return eval('this.' + field);
+    public final native JsArray<JSONRecordingMetadataElement> getKeys() /*-{
+        return this.key;
     }-*/;
 }

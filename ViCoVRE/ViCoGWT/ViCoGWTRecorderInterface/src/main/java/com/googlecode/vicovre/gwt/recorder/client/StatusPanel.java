@@ -34,6 +34,8 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -43,8 +45,10 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
 
-public class StatusPanel extends HorizontalPanel implements ClickHandler {
+public class StatusPanel extends HorizontalPanel implements ClickHandler,
+        KeyPressHandler {
 
     private static final String LOGGED_OUT = "You are not logged in";
 
@@ -96,6 +100,8 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
         loginPanel.add(password);
         loginPanel.setCellVerticalAlignment(usernameLabel, ALIGN_MIDDLE);
         loginPanel.setCellVerticalAlignment(passwordLabel, ALIGN_MIDDLE);
+        username.addKeyPressHandler(this);
+        password.addKeyPressHandler(this);
 
         add(loginPanel);
         setCellHorizontalAlignment(loginPanel, ALIGN_RIGHT);
@@ -130,6 +136,12 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
         loginButton.setText(LOG_OUT);
         status.setText(username + LOGGED_IN);
         this.role = role;
+        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)
+                || role.equals(JSONUser.ROLE_WRITER)) {
+            folderPanel.setUserIsWriter(true);
+        } else {
+            folderPanel.setUserIsWriter(false);
+        }
         DOM.setStyleAttribute(status.getElement(), "color",
                 "black");
     }
@@ -137,6 +149,12 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
     public void loginSuccessful(String username, String role) {
         loginPopup.hide();
         setLogin(username, role);
+        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)
+                || role.equals(JSONUser.ROLE_WRITER)) {
+            folderPanel.setUserIsWriter(true);
+        } else {
+            folderPanel.setUserIsWriter(false);
+        }
         folderPanel.reload();
     }
 
@@ -160,10 +178,22 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler {
         status.setText(LOGGED_OUT);
         this.role = null;
         DOM.setStyleAttribute(status.getElement(), "color", "black");
+        folderPanel.setUserIsWriter(false);
         folderPanel.reload();
     }
 
     public String getRole() {
         return role;
+    }
+
+    public void onKeyPress(KeyPressEvent event) {
+        if (event.getCharCode() == 13) {
+            if (event.getSource() == username) {
+                password.setFocus(true);
+            } else if (event.getSource() == password) {
+                loginPopup.show();
+                Login.login(this, url, username.getText(), password.getText());
+            }
+        }
     }
 }

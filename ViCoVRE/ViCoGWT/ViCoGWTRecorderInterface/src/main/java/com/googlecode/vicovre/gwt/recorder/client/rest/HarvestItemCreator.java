@@ -43,61 +43,61 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
-import com.googlecode.vicovre.gwt.recorder.client.MetadataPopup;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItemPopup;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordPanel;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItemPopup;
 
-public class RecordingItemCreator extends AbstractRestCall
+public class HarvestItemCreator extends AbstractRestCall
         implements MessageResponseHandler {
 
     private FolderPanel folderPanel = null;
 
+    private RecordPanel recordPanel = null;
+
     private PlayPanel playPanel = null;
 
-    private RecordPanel panel = null;
+    private HarvestPanel panel = null;
 
-    private RecordingItem item = null;
+    private HarvestItem item = null;
 
     private String url = null;
 
     private String baseUrl = null;
 
-    private RecordingItemPopup popup = null;
-
-    private MetadataPopup metadataPopup = null;
+    private HarvestItemPopup popup = null;
 
     private Layout[] layouts = null;
 
     private Layout[] customLayouts = null;
 
-    public static void createRecordingItem(FolderPanel folderPanel,
-            PlayPanel playPanel, RecordPanel panel, String url,
-            Layout[] layouts, Layout[] customLayouts) {
-        RecordingItemCreator creator =
-            new RecordingItemCreator(folderPanel, playPanel, panel, url,
-                    layouts, customLayouts);
+    public static void createHarvestItem(FolderPanel folderPanel,
+            RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
+            String url, Layout[] layouts, Layout[] customLayouts) {
+        HarvestItemCreator creator = new HarvestItemCreator(folderPanel,
+                recordPanel, playPanel, panel, url, layouts, customLayouts);
         creator.go();
     }
 
-    private RecordingItemCreator(FolderPanel folderPanel, PlayPanel playPanel,
-            RecordPanel panel, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+    public HarvestItemCreator(FolderPanel folderPanel, RecordPanel recordPanel,
+            PlayPanel playPanel, HarvestPanel panel, String url,
+            Layout[] layouts, Layout[] customLayouts) {
         this.folderPanel = folderPanel;
+        this.recordPanel = recordPanel;
         this.playPanel = playPanel;
         this.panel = panel;
-        this.url = url + "record" + folderPanel.getCurrentFolder();
+        this.url = url + "harvest" + folderPanel.getCurrentFolder();
         this.baseUrl = url;
-        this.metadataPopup = new MetadataPopup(baseUrl, "Name");
         this.layouts = layouts;
         this.customLayouts = customLayouts;
     }
 
     public void go() {
-        popup = new RecordingItemPopup(this, baseUrl, metadataPopup);
+        popup = new HarvestItemPopup(baseUrl, this);
         popup.center();
     }
+
 
     protected void onError(String message) {
         item.setFailedToCreate();
@@ -110,15 +110,14 @@ public class RecordingItemCreator extends AbstractRestCall
                 response.getEntity().getText()).getLastSegment();
         item.setId(id);
         item.setCreated(true);
-        item.setStatus("Stopped");
+        item.setStatus("OK");
     }
 
     public void handleResponse(MessageResponse response) {
         if (response.getResponseCode() == MessageResponse.OK) {
-            item = new RecordingItem(folderPanel, playPanel, null,
-                    baseUrl, metadataPopup, popup, layouts,
-                    customLayouts);
-            popup.setRecordingItem(item);
+            item = new HarvestItem(baseUrl, folderPanel, recordPanel,
+                    playPanel, null, popup.getName(), popup,
+                    layouts, customLayouts);
             item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");

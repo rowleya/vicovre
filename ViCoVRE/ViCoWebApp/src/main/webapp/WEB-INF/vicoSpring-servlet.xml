@@ -10,59 +10,6 @@
         <property name="suffix" value=".jsp"/>
     </bean>
 
-    <!-- XML-RPC Configuration -->
-    <bean id="venueHandler" class="com.googlecode.vicovre.web.xmlrpc.VenueHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-    </bean>
-
-    <bean id="harvestHandler" class="com.googlecode.vicovre.web.xmlrpc.HarvestHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-        <constructor-arg><ref bean="harvestFormatRepository"/></constructor-arg>
-        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
-        <constructor-arg><ref bean="emailer"/></constructor-arg>
-    </bean>
-
-    <bean id="unfinishedRecordingHandler" class="com.googlecode.vicovre.web.xmlrpc.UnfinishedRecordingHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
-        <constructor-arg><ref bean="emailer"/></constructor-arg>
-    </bean>
-
-    <bean id="recordingHandler" class="com.googlecode.vicovre.web.xmlrpc.RecordingHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-    </bean>
-
-    <bean id="playbackHandler" class="com.googlecode.vicovre.web.xmlrpc.PlayToVenueHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-    </bean>
-
-    <bean id="folderHandler" class="com.googlecode.vicovre.web.xmlrpc.FolderHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-    </bean>
-
-    <bean id="layoutHandler" class="com.googlecode.vicovre.web.xmlrpc.LayoutHandler">
-        <constructor-arg><ref bean="database"/></constructor-arg>
-        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
-        <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
-    </bean>
-
-    <bean id="xmlRpcHandlerMapping" class="com.googlecode.vicovre.web.xmlrpc.SimpleHandlerMapping">
-        <constructor-arg>
-            <map>
-                <entry key="venue" value-ref="venueHandler"/>
-                <entry key="harvest" value-ref="harvestHandler"/>
-                <entry key="unfinishedRecording" value-ref="unfinishedRecordingHandler"/>
-                <entry key="recording" value-ref="recordingHandler"/>
-                <entry key="playback" value-ref="playbackHandler"/>
-                <entry key="folder" value-ref="folderHandler"/>
-                <entry key="layout" value-ref="layoutHandler"/>
-            </map>
-        </constructor-arg>
-    </bean>
-
-    <bean name="/xmlrpc.do" class="com.googlecode.vicovre.web.xmlrpc.XmlRpcController">
-        <constructor-arg><ref bean="xmlRpcHandlerMapping"/></constructor-arg>
-    </bean>
     <bean name="/play.do" class="com.googlecode.vicovre.web.play.PlayRecordingController">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
@@ -97,5 +44,11 @@
     <bean name="/**/preview.do" class="com.googlecode.vicovre.web.play.PreviewController">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+    </bean>
+
+    <bean name="/gwt.do" class="com.googlecode.vicovre.web.rest.GWTController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+        <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
     </bean>
 </beans>

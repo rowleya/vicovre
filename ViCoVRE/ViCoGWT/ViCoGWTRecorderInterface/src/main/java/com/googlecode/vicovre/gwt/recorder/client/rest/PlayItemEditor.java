@@ -30,34 +30,52 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
 
-public class User extends JavaScriptObject {
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 
-    public static final String ROLE_GUEST = "User";
+public class PlayItemEditor extends AbstractRestCall {
 
-    public static final String ROLE_USER = "AuthUser";
+    private String url = null;
 
-    public static final String ROLE_WRITER = "Writer";
+    private PlayItem item = null;
 
-    public static final String ROLE_ADMINISTRATOR = "Administrator";
-
-    protected User() {
-        // Does Nothing
+    public static void editPlayItem(PlayItem item, String url) {
+        PlayItemEditor editor = new PlayItemEditor(item, url);
+        editor.go();
     }
 
-    public static final native User parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
+    public PlayItemEditor(PlayItem item, String url) {
+        this.item = item;
+        this.url = url + "recording" + item.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += item.getId();
+    }
 
-    public final native String getUsername() /*-{
-        return this.username;
-    }-*/;
+    public void go() {
+        String itemUrl = url + "?" + item.getDetailsAsUrl();
+        go(itemUrl, Method.PUT);
+    }
 
-    public final native String getRole() /*-{
-        return this.role;
-    }-*/;
+    protected void onError(String message) {
+        MessagePopup popup = new MessagePopup(
+                "Error editing item: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
+    }
+
+    protected void onSuccess(Response response) {
+        // Do Nothing
+    }
+
+
 
 }

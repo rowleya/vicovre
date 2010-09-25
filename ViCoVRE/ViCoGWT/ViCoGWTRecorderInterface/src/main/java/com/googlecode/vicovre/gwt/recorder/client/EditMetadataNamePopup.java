@@ -35,78 +35,75 @@ package com.googlecode.vicovre.gwt.recorder.client;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 
-public class PlayItemEditPopup extends ModalPopup<Grid>
+public class EditMetadataNamePopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
+
+    private boolean multiline = false;
 
     private TextBox name = new TextBox();
 
-    private TextArea description = new TextArea();
+    private Button okButton = new Button("OK");
 
-    private Button ok = new Button("OK");
-
-    private Button cancel = new Button("Cancel");
+    private Button cancelButton = new Button("Cancel");
 
     private MessageResponseHandler handler = null;
 
-    public PlayItemEditPopup(MessageResponseHandler handler) {
-        super(new Grid(3, 2));
+    public EditMetadataNamePopup(boolean multiline,
+            MessageResponseHandler handler) {
+        super(new VerticalPanel());
+        this.multiline = multiline;
         this.handler = handler;
-        Grid grid = getWidget();
-        grid.setWidget(0, 0, new Label("Name"));
-        grid.setWidget(0, 1, name);
-        grid.setWidget(1, 0, new Label("Description"));
-        grid.setWidget(1, 1, description);
-        grid.setWidget(2, 0, ok);
-        grid.setWidget(2, 1, cancel);
 
-        grid.getCellFormatter().setHorizontalAlignment(2, 1,
-                HorizontalPanel.ALIGN_RIGHT);
-        grid.getColumnFormatter().setWidth(0, "150px");
-        grid.getColumnFormatter().setWidth(1, "600px");
+        VerticalPanel panel = getWidget();
+        panel.setWidth("300px");
+        panel.setHeight("55px");
 
+        HorizontalPanel entryPanel = new HorizontalPanel();
+        entryPanel.setWidth("100%");
+        Label entryLabel = new Label("Item Name:");
+        entryPanel.add(entryLabel);
+        entryPanel.add(name);
+        entryPanel.setCellWidth(entryLabel, "100px");
         name.setWidth("100%");
-        description.setWidth("100%");
 
-        ok.addClickHandler(this);
-        cancel.addClickHandler(this);
-    }
+        HorizontalPanel buttonPanel = new HorizontalPanel();
+        buttonPanel.setWidth("100%");
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(okButton);
+        okButton.addClickHandler(this);
+        cancelButton.addClickHandler(this);
+        buttonPanel.setCellHorizontalAlignment(cancelButton,
+                HorizontalPanel.ALIGN_LEFT);
+        buttonPanel.setCellHorizontalAlignment(okButton,
+                HorizontalPanel.ALIGN_RIGHT);
 
-    public void setName(String name) {
-        this.name.setText(name);
-    }
-
-    public void setDescription(String description) {
-        this.description.setText(description);
-    }
-
-    public void setDescriptionIsEditable(boolean editable) {
-        description.setEnabled(editable);
+        panel.add(entryPanel);
+        panel.add(buttonPanel);
     }
 
     public String getName() {
         return name.getText();
     }
 
-    public String getDescription() {
-        return description.getText();
+    public boolean isMultiline() {
+        return multiline;
     }
 
     public void onClick(ClickEvent event) {
-        if (event.getSource().equals(ok)) {
-            hide();
+        hide();
+        Object source = event.getSource();
+        if (source == okButton) {
             handler.handleResponse(new MessageResponse(MessageResponse.OK,
                     this));
-        } else if (event.getSource().equals(cancel)) {
-            hide();
+        } else if (source == cancelButton) {
             handler.handleResponse(new MessageResponse(MessageResponse.CANCEL,
                     this));
         }

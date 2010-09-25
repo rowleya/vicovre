@@ -32,89 +32,77 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
+import java.util.List;
+import java.util.Vector;
+
 import org.restlet.gwt.data.Response;
 import org.restlet.gwt.resource.JsonRepresentation;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.json.JSONRecording;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
+import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
-import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import com.googlecode.vicovre.gwt.recorder.client.ReplayLayout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayouts;
 
-public class RecordingItemStopper extends AbstractRestCall {
+public class PlayItemLayoutLoader extends AbstractRestCall {
 
-    private FolderPanel folderPanel = null;
+    private PlayItem playItem = null;
 
-    private PlayPanel playPanel = null;
-
-    private RecordingItem item = null;
+    private ActionLoader loader = null;
 
     private String url = null;
 
-    private String baseUrl = null;
-
-    private String oldStatus = null;
-
-    private Layout[] layouts = null;
-
-    private Layout[] customLayouts = null;
-
-    public static void stop(FolderPanel folderPanel, PlayPanel playPanel,
-            RecordingItem item, String url, Layout[] layouts,
-            Layout[] customLayouts) {
-        RecordingItemStopper stopper = new RecordingItemStopper(folderPanel,
-                playPanel, item, url, layouts, customLayouts);
-        stopper.go();
+    public static void loadLayouts(PlayItem playItem,
+            ActionLoader loader, String url) {
+        if (playItem.getReplayLayouts() != null) {
+            loader.itemLoaded();
+            return;
+        }
+        PlayItemLayoutLoader layoutLoader = new PlayItemLayoutLoader(playItem,
+                loader, url);
+        layoutLoader.go();
     }
 
-    public RecordingItemStopper(FolderPanel folderPanel, PlayPanel playPanel,
-            RecordingItem item, String url, Layout[] layouts,
-            Layout[] customLayouts) {
-        this.folderPanel = folderPanel;
-        this.playPanel = playPanel;
-        this.item = item;
-        this.url = url + "record" + item.getFolder();
+    public PlayItemLayoutLoader(PlayItem playItem, ActionLoader loader,
+            String url) {
+        this.playItem = playItem;
+        this.loader = loader;
+        this.url = url + "recording" + playItem.getFolder();
         if (!this.url.endsWith("/")) {
             this.url += "/";
         }
-        this.url += item.getId() + "/stop";
-        this.oldStatus = item.getStatus();
-        this.baseUrl = url;
-        this.layouts = layouts;
-        this.customLayouts = customLayouts;
+        this.url += playItem.getId() + "/layouts";
     }
 
     public void go() {
-        item.setStatus("Stopping...");
-        item.setCreated(false);
         go(url);
     }
 
     protected void onError(String message) {
-        item.setCreated(true);
-        item.setStatus(oldStatus);
-        item.setStatus("Error: " + message);
+        loader.itemFailed("Error loading layout: " + message);
     }
 
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
+        List<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
         if (object != null) {
-            JSONRecording recording = JSONRecording.parse(object.toString());
-            if (recording != null) {
-
-                PlayItem playItem = PlayItemLoader.buildPlayItem(recording,
-                        folderPanel, baseUrl, layouts, customLayouts);
-                if (item != null) {
-                    playPanel.addItem(playItem);
-                }
+            JSONReplayLayouts replayLayoutList = JSONReplayLayouts.parse(
+                    object.toString());
+            JsArray<JSONReplayLayout> layouts =
+                replayLayoutList.getReplayLayouts();
+            for (int i = 0; i < layouts.length(); i++) {
+                replayLayouts.add(new ReplayLayout(layouts.get(i)));
             }
         }
-        item.setCreated(true);
-        item.setStatus("Completed");
-    }
 
+        playItem.setReplayLayouts(replayLayouts);
+        if (loader != null) {
+            loader.itemLoaded();
+        }
+    }
 }

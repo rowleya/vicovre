@@ -42,25 +42,27 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.json.client.JSONValue;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.json.JSONRecordingMetadata;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
-import com.googlecode.vicovre.gwt.recorder.client.MetadataPopup;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestItemPopup;
+import com.googlecode.vicovre.gwt.recorder.client.HarvestPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordPanel;
-import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONHarvestSource;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONHarvestSources;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONNetworkLocation;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecording;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecordings;
 
-public class RecordingItemLoader extends AbstractRestCall {
+public class HarvestItemLoader extends AbstractRestCall {
 
     private FolderPanel folderPanel = null;
 
+    private RecordPanel recordPanel = null;
+
     private PlayPanel playPanel = null;
 
-    private RecordPanel panel = null;
+    private HarvestPanel panel = null;
 
     private ActionLoader loader = null;
 
@@ -72,25 +74,26 @@ public class RecordingItemLoader extends AbstractRestCall {
 
     private Layout[] customLayouts = null;
 
-    public static void loadRecordingItems(String folder,
-            FolderPanel folderPanel, PlayPanel playPanel,
-            RecordPanel panel, ActionLoader loader, String url,
-            Layout[] layouts, Layout[] customLayouts) {
-        RecordingItemLoader riLoader = new RecordingItemLoader(folder,
-               folderPanel, playPanel, panel, loader, url, layouts,
-               customLayouts);
-        riLoader.go();
+    public static void loadHarvestItems(String folder, FolderPanel folderPanel,
+            RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
+            ActionLoader loader, String url, Layout[] layouts,
+            Layout[] customLayouts) {
+        HarvestItemLoader itemLoader = new HarvestItemLoader(folder,
+                folderPanel, recordPanel, playPanel, panel, loader, url,
+                layouts, customLayouts);
+        itemLoader.go();
     }
 
-    public RecordingItemLoader(String folder,
-            FolderPanel folderPanel, PlayPanel playPanel,
-            RecordPanel panel, ActionLoader loader, String url,
-            Layout[] layouts, Layout[] customLayouts) {
+    public HarvestItemLoader(String folder, FolderPanel folderPanel,
+            RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
+            ActionLoader loader, String url, Layout[] layouts,
+            Layout[] customLayouts) {
         this.folderPanel = folderPanel;
+        this.recordPanel = recordPanel;
         this.playPanel = playPanel;
         this.panel = panel;
         this.loader = loader;
-        this.url = url + "record" + folder;
+        this.url = url + "harvest" + folder;
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
@@ -102,49 +105,39 @@ public class RecordingItemLoader extends AbstractRestCall {
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading recording items: " + message);
-        loader.itemFailed("Error loading recording items: " + message);
+        GWT.log("Error loading harvest items: " + message);
+        loader.itemFailed("Error loading harvest items: " + message);
     }
 
-    public static RecordingItem buildRecordingItem(
-            JSONUnfinishedRecording recording, FolderPanel folderPanel,
-            PlayPanel playPanel, String baseUrl, Layout[] layouts,
-            Layout[] customLayouts) {
-
-        String id = recording.getId();
-        if (id == null) {
-            GWT.log("Warning: Recording id is missing");
-            return null;
+    private HarvestItem buildHarvestItem(JSONHarvestSource harvestSource) {
+        String id = harvestSource.getId();
+        String name = harvestSource.getName();
+        HarvestItem harvestItem = new HarvestItem(baseUrl, folderPanel,
+                recordPanel, playPanel, id, name, null, layouts, customLayouts);
+        harvestItem.setUrl(harvestSource.getUrl());
+        harvestItem.setFormat(harvestSource.getFormat());
+        String frequency = harvestSource.getUpdateFrequency();
+        harvestItem.setUpdateFrequency(frequency);
+        if (frequency.equals(HarvestItemPopup.UPDATE_ANUALLY)) {
+            harvestItem.setMonth(harvestSource.getMonth());
+            harvestItem.setDayOfMonth(harvestSource.getDayOfMonth());
+        } else if (frequency.equals(HarvestItemPopup.UPDATE_MONTHLY)) {
+            harvestItem.setDayOfMonth(harvestSource.getDayOfMonth());
+        } else if (frequency.equals(HarvestItemPopup.UPDATE_WEEKLY)) {
+            harvestItem.setDayOfWeek(harvestSource.getDayOfWeek());
         }
+        Integer hour = harvestSource.getHour();
+        Integer minute = harvestSource.getMinute();
+        harvestItem.setHour(hour);
+        harvestItem.setMinute(minute);
 
-        JSONRecordingMetadata metadata = recording.getMetadata();
-        if (metadata == null) {
-            GWT.log("Warning: Recording metadata is missing");
-            return null;
-        }
-        MetadataPopup metadataPopup = new MetadataPopup(baseUrl,
-                metadata.getPrimaryKey());
-        metadataPopup.setMetadata(metadata);
-        RecordingItem recordingItem = new RecordingItem(folderPanel, playPanel,
-                id, baseUrl, metadataPopup, null, layouts, customLayouts);
-
-        if (recording.getStartDate() != null) {
-            recordingItem.setStartDate(
-                    JSONUnfinishedRecording.DATE_FORMAT.parse(
-                recording.getStartDate()));
-        }
-        if (recording.getStopDate() != null) {
-            recordingItem.setStopDate(
-                    JSONUnfinishedRecording.DATE_FORMAT.parse(
-                recording.getStopDate()));
-        }
-
-        String venueServerUrl = recording.getAg3VenueServer();
+        String venueServerUrl = harvestSource.getAg3VenueServer();
         if (venueServerUrl != null) {
-            recordingItem.setVenueServerUrl(venueServerUrl);
-            recordingItem.setVenueUrl(recording.getAg3VenueUrl());
+            harvestItem.setVenueServerUrl(venueServerUrl);
+            harvestItem.setVenueUrl(harvestSource.getAg3VenueUrl());
         } else {
-            JsArray<JSONNetworkLocation> addresses = recording.getAddresses();
+            JsArray<JSONNetworkLocation> addresses =
+                harvestSource.getAddresses();
             String[] addrs = new String[addresses.length()];
             for (int i = 0; i < addresses.length(); i++) {
                 String host = addresses.get(i).getHost();
@@ -152,40 +145,34 @@ public class RecordingItemLoader extends AbstractRestCall {
                 int ttl = addresses.get(i).getTtl();
                 addrs[i] = host + "/" + port + "/" + ttl;
             }
-            recordingItem.setAddresses(addrs);
+            harvestItem.setAddresses(addrs);
         }
-
-        recordingItem.setStatus(recording.getStatus());
-        return recordingItem;
+        return harvestItem;
     }
 
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
         if (object != null) {
-            JSONUnfinishedRecordings recordingsList =
-                JSONUnfinishedRecordings.parse(object.toString());
-            JsArray<JSONUnfinishedRecording> recordings =
-                recordingsList.getRecordings();
-            if (recordings != null) {
-                Vector<RecordingItem> recordingItems =
-                    new Vector<RecordingItem>();
-                for (int i = 0; i < recordings.length(); i++) {
-                    RecordingItem item = buildRecordingItem(recordings.get(i),
-                            folderPanel, playPanel, baseUrl, layouts,
-                            customLayouts);
+            JSONHarvestSources harvestSourceList =
+                JSONHarvestSources.parse(object.toString());
+            JsArray<JSONHarvestSource> harvestSources =
+                harvestSourceList.getHarvestSources();
+            if (harvestSources != null) {
+                Vector<HarvestItem> harvestItems = new Vector<HarvestItem>();
+                for (int i = 0; i < harvestSources.length(); i++) {
+                    HarvestItem item = buildHarvestItem(harvestSources.get(i));
                     if (item != null) {
-                        recordingItems.add(item);
+                        harvestItems.add(item);
                     }
                 }
-                Collections.sort(recordingItems);
-                for (RecordingItem item : recordingItems) {
+                Collections.sort(harvestItems);
+                for (HarvestItem item : harvestItems) {
                     panel.addItem(item);
                 }
             }
         }
         loader.itemLoaded();
-
     }
 
 }

@@ -35,6 +35,12 @@ package com.googlecode.vicovre.gwt.recorder.client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayoutPosition;
 
 public class ReplayLayout {
 
@@ -55,6 +61,24 @@ public class ReplayLayout {
         this.endTime = endTime;
         this.positions = positions;
         this.audioStreams = audioStreams;
+    }
+
+    public ReplayLayout(JSONReplayLayout layout) {
+        this.name = layout.getName();
+        this.time = layout.getTime();
+        this.endTime = layout.getEndTime();
+        positions = new HashMap<String, String>();
+        JsArray<JSONReplayLayoutPosition> layoutPositions =
+            layout.getPositions();
+        for (int i = 0; i < layoutPositions.length(); i++) {
+            JSONReplayLayoutPosition position = layoutPositions.get(i);
+            positions.put(position.getName(), position.getStream());
+        }
+        audioStreams = new Vector<String>();
+        JsArrayString layoutAudioStreams = layout.getAudioStreams();
+        for (int i = 0; i < layoutAudioStreams.length(); i++) {
+            audioStreams.add(layoutAudioStreams.get(i));
+        }
     }
 
     public String getName() {
