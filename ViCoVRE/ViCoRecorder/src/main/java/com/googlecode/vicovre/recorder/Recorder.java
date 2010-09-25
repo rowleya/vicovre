@@ -61,9 +61,7 @@ import java.util.Vector;
 import javax.media.CannotRealizeException;
 import javax.media.Effect;
 import javax.media.GainControl;
-import javax.media.Manager;
 import javax.media.NoPlayerException;
-import javax.media.Player;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
 import javax.media.protocol.PushBufferStream;
@@ -93,7 +91,6 @@ import org.xml.sax.SAXParseException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.WiimotePointerControl;
-import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.media.renderer.AudioRenderer;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
 import com.googlecode.vicovre.media.ui.FullScreenFrame;
@@ -111,10 +108,10 @@ import com.googlecode.vicovre.recorder.firstrunwizard.IntroPage;
 import com.googlecode.vicovre.recorder.utils.PointerSource;
 import com.googlecode.vicovre.recorder.utils.VideoDragListener;
 import com.googlecode.vicovre.recordings.RecordArchiveManager;
-import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.recordings.db.insecure.InsecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
@@ -530,7 +527,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void loadDatabase() {
         try {
             recordingDatabase = new InsecureRecordingDatabase(dataDirectory,
-                    typeRepository, layoutRepository, null, false, 0, null);
+                    typeRepository, layoutRepository, null, false, 0);
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null,
@@ -843,10 +840,10 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     }
 
     private void startRecording() {
+        String id = RecordArchiveManager.generateId(new Date());
+        File directory = new File(recordingDatabase.getFile(""), id);
         archiveManager = new RecordArchiveManager(typeRepository,
-                recordingDatabase.getTopLevelFolder(),
-                RecordArchiveManager.generateId(new Date()),
-                recordingDatabase, null);
+                "", id, directory);
         archiveManager.enableRecording();
         recordingSource.setArchiveManager(archiveManager);
         recordButton.setText("Stop Recording");
@@ -865,7 +862,7 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
             recordStatus.setText("Not Recording");
             recordStatus.setForeground(Color.BLACK);
 
-            Recording recording = archiveManager.getRecording();
+            InsecureRecording recording = archiveManager.getRecording();
 
             if (currentLayout != null) {
                 ReplayLayout layout = new ReplayLayout(layoutRepository);
