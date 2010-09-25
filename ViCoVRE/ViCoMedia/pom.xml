@@ -58,5 +58,10 @@
             <artifactId>TableLayout</artifactId>
             <version>20050920</version>
         </dependency>
+        <dependency>
+           <groupId>wiiusej</groupId>
+           <artifactId>wiiusej</artifactId>
+           <version>0.12b</version>
+       </dependency>
     </dependencies>
 </project>
