@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Vector;
 
 import javax.media.protocol.ContentDescriptor;
 import javax.media.protocol.PushSourceStream;
@@ -80,11 +81,16 @@ public class BridgedRTPConnector implements RTPConnector {
 
     private Output rtcpOutput = new Output(false);
 
+    private SingleStreamReader singleStreamReader = null;
+
+    private MultiStreamReader[] multiStreamReaders = null;
+
     private RTPCrypt encryption = null;
 
-    private RTPPacketSink rtpPacketSink = null;
+    private Vector<RTPPacketSink> rtpPacketSinks = new Vector<RTPPacketSink>();
 
-    private RTCPPacketSink rtcpPacketSink = null;
+    private Vector<RTCPPacketSink> rtcpPacketSinks =
+        new Vector<RTCPPacketSink>();
 
     private NetworkLocation[] locations = null;
 
@@ -107,6 +113,11 @@ public class BridgedRTPConnector implements RTPConnector {
         client.setDoLoopback(true);
         rtpInput.start();
         rtcpInput.start();
+        setupReaders();
+    }
+
+    private void setupReaders() {
+        stopReaders();
         if (client.isSinglePacketStream()) {
             HashMap<NetworkLocation, Input> inputMap =
                 new HashMap<NetworkLocation, Input>();
@@ -114,18 +125,39 @@ public class BridgedRTPConnector implements RTPConnector {
                 inputMap.put(locations[i], rtpInput);
                 inputMap.put(getRtcpLocation(locations[i]), rtcpInput);
             }
-            SingleStreamReader reader = new SingleStreamReader(inputMap);
-            reader.start();
+            singleStreamReader = new SingleStreamReader(inputMap);
+            singleStreamReader.start();
         } else {
+            multiStreamReaders = new MultiStreamReader[locations.length * 2];
             for (int i = 0; i < locations.length; i++) {
-                MultiStreamReader reader = new MultiStreamReader(locations[i],
+                multiStreamReaders[2 * i] = new MultiStreamReader(locations[i],
                         rtpInput, true);
-                MultiStreamReader rtcpReader = new MultiStreamReader(
+                multiStreamReaders[(2 * i) + 1] = new MultiStreamReader(
                         getRtcpLocation(locations[i]), rtcpInput, false);
-                reader.start();
-                rtcpReader.start();
+                multiStreamReaders[2 * i].start();
+                multiStreamReaders[(2 * i) + 1].start();
             }
         }
+    }
+
+    private void stopReaders() {
+        if (singleStreamReader != null) {
+            singleStreamReader.close();
+            singleStreamReader = null;
+        }
+        if (multiStreamReaders != null) {
+            for (int i = 0; i < multiStreamReaders.length; i++) {
+                multiStreamReaders[i].close();
+            }
+            multiStreamReaders = null;
+        }
+    }
+
+    public void setLocations(NetworkLocation[] locations) throws IOException {
+        client.leaveBridge();
+        this.locations = locations;
+        client.joinBridge(locations);
+        setupReaders();
     }
 
     public void setBridge(BridgeDescription bridge)
@@ -135,41 +167,31 @@ public class BridgedRTPConnector implements RTPConnector {
         newClient.joinBridge(locations);
         client.leaveBridge();
         client = newClient;
-        if (client.isSinglePacketStream()) {
-            HashMap<NetworkLocation, Input> inputMap =
-                new HashMap<NetworkLocation, Input>();
-            for (int i = 0; i < locations.length; i++) {
-                inputMap.put(locations[i], rtpInput);
-                inputMap.put(getRtcpLocation(locations[i]), rtcpInput);
-            }
-            SingleStreamReader reader = new SingleStreamReader(inputMap);
-            reader.start();
-        } else {
-            for (int i = 0; i < locations.length; i++) {
-                MultiStreamReader reader = new MultiStreamReader(locations[i],
-                        rtpInput, true);
-                MultiStreamReader rtcpReader = new MultiStreamReader(
-                        getRtcpLocation(locations[i]), rtcpInput, false);
-                reader.start();
-                rtcpReader.start();
-            }
-        }
+        setupReaders();
     }
 
     /**
-     * Sets the rtp packet sink
-     * @param sink The sink to set
+     * Adds an rtp packet sink
+     * @param sink The sink to add
      */
-    public void setRtpSink(RTPPacketSink sink) {
-        this.rtpPacketSink = sink;
+    public void addRtpSink(RTPPacketSink sink) {
+        rtpPacketSinks.add(sink);
     }
 
     /**
-     * Sets the rtcp packet sink
-     * @param sink The sink to set
+     * Adds an rtcp packet sink
+     * @param sink The sink to add
      */
-    public void setRtcpSink(RTCPPacketSink sink) {
-        this.rtcpPacketSink = sink;
+    public void addRtcpSink(RTCPPacketSink sink) {
+        rtcpPacketSinks.add(sink);
+    }
+
+    public void removeRtpSink(RTPPacketSink sink) {
+        rtpPacketSinks.remove(sink);
+    }
+
+    public void removeRtcpSink(RTCPPacketSink sink) {
+        rtcpPacketSinks.remove(sink);
     }
 
     private RTPCrypt getEncryption(String enc)
@@ -458,6 +480,8 @@ public class BridgedRTPConnector implements RTPConnector {
 
         private boolean isRtp = false;
 
+        private boolean done = false;
+
         private MultiStreamReader(NetworkLocation location, Input input,
                 boolean isRtp) {
             this.location = location;
@@ -470,17 +494,17 @@ public class BridgedRTPConnector implements RTPConnector {
          * @see java.lang.Thread#run()
          */
         public void run() {
-            while (!closed) {
+            while (!done) {
                 try {
                     DatagramPacket packet = client.receivePacket(location);
                     decrypt(packet, isRtp);
                     input.addPacket(packet);
                     if (isRtp) {
-                        if (rtpPacketSink != null) {
+                        for (RTPPacketSink rtpPacketSink : rtpPacketSinks) {
                             rtpPacketSink.handleRTPPacket(packet);
                         }
                     } else {
-                        if (rtcpPacketSink != null) {
+                        for (RTCPPacketSink rtcpPacketSink : rtcpPacketSinks) {
                             rtcpPacketSink.handleRTCPPacket(packet);
                         }
                     }
@@ -489,12 +513,18 @@ public class BridgedRTPConnector implements RTPConnector {
                 }
             }
         }
+
+        private void close() {
+            done = true;
+        }
     }
 
     private class SingleStreamReader extends Thread {
 
         private HashMap<NetworkLocation, Input> inputMap =
             new HashMap<NetworkLocation, Input>();
+
+        private boolean done = false;
 
         private SingleStreamReader(HashMap<NetworkLocation, Input> inputMap) {
             this.inputMap = inputMap;
@@ -505,7 +535,7 @@ public class BridgedRTPConnector implements RTPConnector {
          * @see java.lang.Thread#run()
          */
         public void run() {
-            while (!closed) {
+            while (!done) {
                 try {
                     DatagramPacket packet = client.receivePacket();
                     NetworkLocation location = new NetworkLocation();
@@ -516,11 +546,11 @@ public class BridgedRTPConnector implements RTPConnector {
                     decrypt(packet, isRtp);
                     input.addPacket(packet);
                     if (isRtp) {
-                        if (rtpPacketSink != null) {
+                        for (RTPPacketSink rtpPacketSink : rtpPacketSinks) {
                             rtpPacketSink.handleRTPPacket(packet);
                         }
                     } else {
-                        if (rtcpPacketSink != null) {
+                        for (RTCPPacketSink rtcpPacketSink : rtcpPacketSinks) {
                             rtcpPacketSink.handleRTCPPacket(packet);
                         }
                     }
@@ -528,6 +558,10 @@ public class BridgedRTPConnector implements RTPConnector {
                     // Do Nothing
                 }
             }
+        }
+
+        private void close() {
+            done = true;
         }
     }
 
