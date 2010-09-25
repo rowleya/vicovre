@@ -37,23 +37,23 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.HarvestSource;
 
-@XmlRootElement(name="recordings")
-public class UnfinishedRecordingsResponse {
+@XmlRootElement(name="harvestSources")
+public class HarvestSourcesResponse {
 
-    private List<UnfinishedRecording> recordings = null;
+    private List<HarvestSource> harvestSources = null;
 
-    public UnfinishedRecordingsResponse() {
+    public HarvestSourcesResponse() {
         // Does Nothing
     }
 
-    public UnfinishedRecordingsResponse(List<UnfinishedRecording> recordings) {
-        this.recordings = recordings;
+    public HarvestSourcesResponse(List<HarvestSource> harvestSources) {
+        this.harvestSources = harvestSources;
     }
 
-    @XmlElement(name="recording")
-    public List<UnfinishedRecording> getRecordings() {
-        return recordings;
+    @XmlElement(name="harvestSource")
+    public List<HarvestSource> getHarvestSources() {
+        return harvestSources;
     }
 }

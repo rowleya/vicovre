@@ -50,7 +50,6 @@ import org.xml.sax.SAXException;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.Stream;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -176,26 +175,19 @@ public class DownloadRecordingController implements Controller {
 
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI().substring(
-                        request.getContextPath().length()));
-        path = path.getParentFile();
+        String folder = request.getRequestURI().substring(
+                request.getContextPath().length());
+        File path = new File(folder);
+        String id = path.getParentFile().getName();
+        folder = path.getParentFile().getParent();
 
-        Folder folder = database.getFolder(path.getParentFile());
-        Recording recording = null;
-        if (folder != null) {
-            recording = folder.getRecording(path.getName());
-        }
+        Recording recording = database.getRecording(folder, id);
 
         String format = request.getParameter("format");
         if (format != null) {
             doDownload(format, recording, request, response);
             return null;
         }
-
-        String folderPath = folder.getFile().getAbsolutePath().substring(
-            database.getTopLevelFolder().getFile().getAbsolutePath().length()).
-                replace(File.separator, "/");
 
         JSONJAXBContext context = new JSONJAXBContext(
                 JSONConfiguration.natural().build(), LayoutsResponse.class,
@@ -222,7 +214,7 @@ public class DownloadRecordingController implements Controller {
         ModelAndView modelAndView = new ModelAndView("downloadRecording");
         modelAndView.addObject("recording", recording);
         modelAndView.addObject("streamsJSON", streamsWriter.toString());
-        modelAndView.addObject("folder", folderPath);
+        modelAndView.addObject("folder", folder);
         modelAndView.addObject("layoutsJSON", layoutWriter.toString());
         modelAndView.addObject("customLayoutsJSON",
                 customLayoutWriter.toString());

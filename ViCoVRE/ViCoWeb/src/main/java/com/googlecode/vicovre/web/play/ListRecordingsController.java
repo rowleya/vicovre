@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public class ListRecordingsController implements Controller {
@@ -54,17 +53,16 @@ public class ListRecordingsController implements Controller {
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
 
-        File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI().substring(
-                        request.getContextPath().length()));
-        path = path.getParentFile();
-
-        Folder folder = database.getFolder(path);
+        String folder = request.getRequestURI().substring(
+                request.getContextPath().length());
+        File path = new File(folder);
+        folder = path.getParent();
 
         ModelAndView modelAndView = new ModelAndView("listRecordings");
         modelAndView.addObject("folder", folder);
-        modelAndView.addObject("isTopLevel",
-                folder.equals(database.getTopLevelFolder()));
+        modelAndView.addObject("subfolders", database.getSubFolders(folder));
+        modelAndView.addObject("recordings", database.getRecordings(folder));
+        modelAndView.addObject("isTopLevel", folder.equals(""));
         return modelAndView;
     }
 

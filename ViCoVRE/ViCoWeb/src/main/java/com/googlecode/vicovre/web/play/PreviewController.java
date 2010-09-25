@@ -54,7 +54,6 @@ import org.springframework.web.servlet.mvc.Controller;
 import com.googlecode.vicovre.media.preview.PreviewGenerator;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.Stream;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
@@ -72,16 +71,13 @@ public class PreviewController implements Controller {
 
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI().substring(
-                        request.getContextPath().length()));
-        path = path.getParentFile();
+        String folder = request.getRequestURI().substring(
+                request.getContextPath().length());
+        File path = new File(folder);
+        String id = path.getParentFile().getName();
+        folder = path.getParentFile().getParent();
 
-        Folder folder = database.getFolder(path.getParentFile());
-        Recording recording = null;
-        if (folder != null) {
-            recording = folder.getRecording(path.getName());
-        }
+        Recording recording = database.getRecording(folder, id);
         String streamId = request.getParameter("ssrc");
         Stream stream = recording.getStream(streamId);
         long duration = (stream.getEndTime().getTime()

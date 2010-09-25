@@ -30,30 +30,26 @@
  *
  */
 
-package com.googlecode.vicovre.web.rest.response;
+package com.googlecode.vicovre.web.rest;
 
-import java.util.List;
+import java.util.Map;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.ws.rs.core.MediaType;
 
-import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.sun.jersey.api.core.ResourceConfig;
+import com.sun.jersey.spi.container.WebApplication;
+import com.sun.jersey.spi.container.servlet.WebConfig;
+import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
 
-@XmlRootElement(name="recordings")
-public class UnfinishedRecordingsResponse {
+public class SpringRestServlet extends SpringServlet {
 
-    private List<UnfinishedRecording> recordings = null;
+    @Override
+    protected void configure(WebConfig wc, ResourceConfig rc,
+            WebApplication wa) {
+        Map<String, MediaType> mappings = rc.getMediaTypeMappings();
+        mappings.put("json", MediaType.valueOf("application/json"));
+        mappings.put("xml", MediaType.valueOf("text/xml"));
+        super.configure(wc, rc, wa);
 
-    public UnfinishedRecordingsResponse() {
-        // Does Nothing
-    }
-
-    public UnfinishedRecordingsResponse(List<UnfinishedRecording> recordings) {
-        this.recordings = recordings;
-    }
-
-    @XmlElement(name="recording")
-    public List<UnfinishedRecording> getRecordings() {
-        return recordings;
     }
 }

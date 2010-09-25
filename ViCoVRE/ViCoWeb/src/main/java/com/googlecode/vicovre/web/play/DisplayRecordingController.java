@@ -46,7 +46,6 @@ import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
@@ -78,17 +77,16 @@ public class DisplayRecordingController implements Controller {
 
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        File path = new File(database.getTopLevelFolder().getFile(),
-                request.getRequestURI().substring(
-                        request.getContextPath().length()));
-        path = path.getParentFile();
+        String folder = request.getRequestURI().substring(
+                request.getContextPath().length());
+        File path = new File(folder);
+        String id = path.getParentFile().getName();
+        folder = path.getParentFile().getParent();
 
-        Folder folder = database.getFolder(path.getParentFile());
-        Recording recording = null;
         int width = 0;
         int height = 0;
-        if (folder != null) {
-            recording = folder.getRecording(path.getName());
+        Recording recording = database.getRecording(folder, id);
+        if (recording != null) {
 
             int noAnn = 0;
             if (annotationDao != null) {
@@ -137,16 +135,11 @@ public class DisplayRecordingController implements Controller {
             }
         }
 
-        String folderPath = folder.getFile().getAbsolutePath().substring(
-            database.getTopLevelFolder().getFile().getAbsolutePath().length()).
-                replace(File.separator, "/");
-
         ModelAndView modelAndView = new ModelAndView("displayRecording");
         modelAndView.addObject("recording", recording);
         modelAndView.addObject("width", width);
         modelAndView.addObject("height", height);
-        modelAndView.addObject("folder", folderPath);
+        modelAndView.addObject("folder", folder);
         return modelAndView;
     }
-
 }

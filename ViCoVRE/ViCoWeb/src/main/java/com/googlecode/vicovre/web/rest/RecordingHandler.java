@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -66,13 +67,13 @@ import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.RecordingsResponse;
+import com.googlecode.vicovre.web.rest.response.ReplayLayoutsResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsResponse;
 import com.sun.jersey.spi.inject.Inject;
 
@@ -81,14 +82,10 @@ public class RecordingHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
-    private Emailer emailer = null;
-
     public RecordingHandler(@Inject("database") RecordingDatabase database,
-            @Inject("layoutRepository") LayoutRepository layoutRepository,
-            @Inject Emailer emailer) {
+            @Inject("layoutRepository") LayoutRepository layoutRepository) {
         super(database);
         this.layoutRepository = layoutRepository;
-        this.emailer = emailer;
         if (!Misc.isCodecsConfigured()) {
             try {
                 Misc.configureCodecs("/knownCodecs.xml");
@@ -102,11 +99,10 @@ public class RecordingHandler extends AbstractHandler {
     @GET
     @Produces({"text/xml", "application/json"})
     public Response getStreams(@Context UriInfo uriInfo) throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -118,26 +114,25 @@ public class RecordingHandler extends AbstractHandler {
     @Produces({"text/xml", "application/json"})
     public Response getLayouts(@Context UriInfo uriInfo)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
-        return Response.ok(recording.getReplayLayouts()).build();
+        return Response.ok(new ReplayLayoutsResponse(
+                recording.getReplayLayouts())).build();
     }
 
     @Path("{folder:.*}/layout/{time}")
     @DELETE
     public Response deleteLayout(@Context UriInfo uriInfo,
             @PathParam("time") long time) throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -151,24 +146,18 @@ public class RecordingHandler extends AbstractHandler {
     @Consumes("application/zip")
     @Produces("text/plain")
     public Response addRecording(@Context UriInfo uriInfo,
-            @PathParam("folder") String folderPath,
+            @PathParam("folder") String folder,
             @Context HttpServletRequest request,
             @QueryParam("startDate") String startDate)
             throws IOException, ParseException {
-        Folder folder = getFolder(folderPath);
 
         Date start = RecordingConstants.DATE_FORMAT.parse(startDate);
-        File unfinishedFile = File.createTempFile("upload",
-                RecordingConstants.UNFINISHED_RECORDING_INDEX,
-                folder.getFile());
-        String name = unfinishedFile.getName();
         String recordingId = UnfinishedRecording.ID_DATE_FORMAT.format(start)
-            + name.substring(6, name.length()
-                - RecordingConstants.UNFINISHED_RECORDING_INDEX.length() - 1);
-        unfinishedFile.delete();
+            + UUID.randomUUID().toString();
+        File directory = new File(getDatabase().getFile(folder), recordingId);
 
-        Recording recording = new Recording(folder, recordingId, getDatabase(),
-                emailer);
+        InsecureRecording recording =
+            new InsecureRecording(folder, recordingId, directory);
         getDatabase().addRecording(recording, null);
 
         ZipInputStream input = new ZipInputStream(request.getInputStream());
@@ -210,11 +199,10 @@ public class RecordingHandler extends AbstractHandler {
             @QueryParam("audioStream") List<String> audioStreams,
             @QueryParam("endTime") @DefaultValue("0") long endTime)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -247,6 +235,7 @@ public class RecordingHandler extends AbstractHandler {
 
         layout.setRecording(recording);
         layout.setEndTime(endTime);
+        recording.setReplayLayout(layout);
 
         return Response.ok().build();
     }
@@ -254,16 +243,14 @@ public class RecordingHandler extends AbstractHandler {
     @Path("{folder: .*}")
     @GET
     @Produces({"text/xml", "application/json"})
-    public Response getRecordings(@PathParam("folder") String folderPath)
-            throws IOException {
-        Folder folder = getFolder(folderPath);
+    public Response getRecordings(@PathParam("folder") String folder) {
         return Response.ok(new RecordingsResponse(
-                folder.getRecordings())).build();
+                getDatabase().getRecordings(folder))).build();
     }
 
     @GET
     @Produces({"text/xml", "application/json"})
-    public Response getRecordings() throws IOException {
+    public Response getRecordings() {
         return getRecordings("");
     }
 
@@ -273,11 +260,10 @@ public class RecordingHandler extends AbstractHandler {
     public Response updateMetadata(@Context UriInfo uriInfo,
             MultivaluedMap<String, String> formParams)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 1);
+        String folder = getFolderPath(uriInfo, 1, 1);
         String id = getId(uriInfo, 0);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -297,11 +283,10 @@ public class RecordingHandler extends AbstractHandler {
     @DELETE
     public Response deleteRecording(@Context UriInfo uriInfo)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 1);
+        String folder = getFolderPath(uriInfo, 1, 1);
         String id = getId(uriInfo, 0);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -309,18 +294,18 @@ public class RecordingHandler extends AbstractHandler {
         return Response.ok().build();
     }
 
-    @Path("{folder:.*}/acl")
+    @Path("{folder:.*}/acl/{type}")
     @PUT
     public Response setAcl(@Context UriInfo uriInfo,
             @QueryParam("public") boolean isPublic,
             @QueryParam("exceptionType") List<String> exceptionTypes,
             @QueryParam("exceptionName") List<String> exceptionNames)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -341,20 +326,24 @@ public class RecordingHandler extends AbstractHandler {
                 String name = exceptionNames.get(i);
                 exceptions[i] = new WriteOnlyEntity(name, type);
             }
-            secureDb.setRecordingAcl(recording, isPublic, exceptions);
+            if (acltype.equals("play")) {
+                secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
+            } else if (acltype.equals("read")) {
+                secureDb.setRecordingReadAcl(recording, isPublic, exceptions);
+            }
         }
         return Response.ok().build();
     }
 
-    @Path("{folder:.*}/acl")
+    @Path("{folder:.*}/acl/{type}")
     @GET
     @Produces({"application/json", "text/xml"})
     public Response getAcl(@Context UriInfo uriInfo) throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        Recording recording = folder.getRecording(id);
+        Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -363,7 +352,13 @@ public class RecordingHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            return Response.ok(secureDb.getRecordingAcl(recording)).build();
+            if (acltype.equals("play")) {
+                return Response.ok(
+                        secureDb.getRecordingPlayAcl(recording)).build();
+            } else if (acltype.equals("read")) {
+                return Response.ok(
+                        secureDb.getRecordingReadAcl(recording)).build();
+            }
         }
         return Response.ok().build();
     }

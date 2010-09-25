@@ -59,8 +59,8 @@ public class Location implements RTPPacketSink, RTCPPacketSink {
             IllegalAccessException, IOException {
         connector = new BridgedRTPConnector(bridge,
                 new NetworkLocation[]{location});
-        connector.setRtcpSink(this);
-        connector.setRtpSink(this);
+        connector.addRtcpSink(this);
+        connector.addRtpSink(this);
     }
 
     public void handleRTPPacket(DatagramPacket packet) throws IOException {

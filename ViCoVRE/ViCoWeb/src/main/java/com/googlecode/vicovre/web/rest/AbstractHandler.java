@@ -32,7 +32,6 @@
 
 package com.googlecode.vicovre.web.rest;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -41,7 +40,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import com.googlecode.vicovre.recordings.RecordingMetadata;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public abstract class AbstractHandler {
@@ -62,7 +60,7 @@ public abstract class AbstractHandler {
         String folderPath = "";
         for (int i = removeStart;
                 i < pathSegments.size() - removeEnd; i++) {
-            folderPath += pathSegments.get(i).getPath();
+            folderPath += pathSegments.get(i).getPath() + "/";
         }
         return folderPath;
     }
@@ -72,18 +70,6 @@ public abstract class AbstractHandler {
         String id = pathSegments.get(pathSegments.size() - 1
                 - removeEnd).getPath();
         return id;
-    }
-
-    protected Folder getFolder(String folderPath) throws IOException {
-        Folder folder = database.getTopLevelFolder();
-        if ((folderPath != null) && !folderPath.equals("")) {
-            folder = database.getFolder(
-                new File(database.getTopLevelFolder().getFile(), folderPath));
-            if (folder == null) {
-                throw new IOException("Unknown folder " + folderPath);
-            }
-        }
-        return folder;
     }
 
     protected RecordingMetadata getMetadata(

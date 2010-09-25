@@ -42,7 +42,7 @@ import com.googlecode.vicovre.recordings.ReplayLayout;
 @XmlRootElement(name="replayLayouts")
 public class ReplayLayoutsResponse {
 
-    public List<ReplayLayout> layouts = null;
+    private List<ReplayLayout> layouts = null;
 
     public ReplayLayoutsResponse() {
         // Does Nothing
