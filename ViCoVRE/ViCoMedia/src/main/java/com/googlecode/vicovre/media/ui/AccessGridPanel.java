@@ -940,15 +940,15 @@ public class AccessGridPanel extends JPanel implements ActionListener,
         return (BridgeDescription) accessGridBridge.getSelectedItem();
     }
 
-    public void setRtpSink(RTPPacketSink rtpSink) {
+    public void addRtpSink(RTPPacketSink rtpSink) {
         if (agController != null) {
-            agController.setRTPSink(rtpSink);
+            agController.addRTPSink(rtpSink);
         }
     }
 
-    public void setRtcpSink(RTCPPacketSink rtcpSink) {
+    public void addRtcpSink(RTCPPacketSink rtcpSink) {
         if (agController != null) {
-            agController.setRTCPSink(rtcpSink);
+            agController.addRTCPSink(rtcpSink);
         }
     }
 }

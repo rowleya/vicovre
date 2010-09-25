@@ -325,15 +325,15 @@ public class AGController {
         updateHandlers.clear();
     }
 
-    public void setRTPSink(RTPPacketSink rtpSink) {
+    public void addRTPSink(RTPPacketSink rtpSink) {
         for (BridgedRTPConnector connector : agConnectors.values()) {
-            connector.setRtpSink(rtpSink);
+            connector.addRtpSink(rtpSink);
         }
     }
 
-    public void setRTCPSink(RTCPPacketSink rtcpSink) {
+    public void addRTCPSink(RTCPPacketSink rtcpSink) {
         for (BridgedRTPConnector connector : agConnectors.values()) {
-            connector.setRtcpSink(rtcpSink);
+            connector.addRtcpSink(rtcpSink);
         }
     }
 
