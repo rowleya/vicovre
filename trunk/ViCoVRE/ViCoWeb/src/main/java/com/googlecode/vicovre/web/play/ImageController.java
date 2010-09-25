@@ -52,7 +52,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 /**
@@ -73,13 +72,9 @@ public class ImageController implements Controller {
             HttpServletResponse response) throws IOException {
         String sessionId = request.getParameter("id");
         String streamId = request.getParameter("ssrc");
-        String folderPath = request.getParameter("folder");
-        Folder folder = database.getTopLevelFolder();
-        if (folderPath != null && !folderPath.equals("")) {
-            folder = database.getFolder(new File(
-                    database.getTopLevelFolder().getFile(), folderPath));
-        }
-        Recording recording = folder.getRecording(sessionId);
+        String folder = request.getParameter("folder");
+
+        Recording recording = database.getRecording(folder, sessionId);
 
         String comp = request.getParameter("compression");
         if (comp == null) {

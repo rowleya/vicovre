@@ -63,7 +63,6 @@ import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.ReplayLayout;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
@@ -132,12 +131,12 @@ public class PlayRecordingController implements Controller {
         Vector<Thumbnail> thumb = new Vector<Thumbnail>();
 
         File dir = recording.getDirectory();
-        String folder = dir.getParentFile().getAbsolutePath().substring(
-            database.getTopLevelFolder().getFile().getAbsolutePath().length());
+        String folder = recording.getFolder();
 
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return (name.startsWith(ssrc) && name.endsWith(".jpg"));
+                return (name.startsWith(ssrc) && name.endsWith(".jpg")
+                        && !name.contains("preview"));
             }
         };
 
@@ -226,7 +225,7 @@ public class PlayRecordingController implements Controller {
                 }
                 out.writeShort(0);
                 out.write(9);
-            } else if (value instanceof Collection) {
+            } else if (value instanceof Collection<?>) {
                 Collection< ? > c = (Collection < ? >) value;
                 out.write(8);
                 out.writeInt(c.size());
@@ -239,7 +238,7 @@ public class PlayRecordingController implements Controller {
                 }
                 out.writeShort(0);
                 out.write(9);
-            } else if (value instanceof Map) {
+            } else if (value instanceof Map<?, ?>) {
                 Map< ? , ? > m = (Map< ? , ? >) value;
                 out.write(8);
                 out.writeInt(m.size());
@@ -302,15 +301,8 @@ public class PlayRecordingController implements Controller {
                 + ":" + request.getServerPort() + request.getContextPath();
         long duration = 0;
         long startTime = 0;
-        String folderName = request.getParameter("folder");
-        System.err.println("Folder = " + folderName);
-        Folder folder = null;
-        if (folderName == null || folderName.equals("")) {
-            folder = database.getTopLevelFolder();
-        } else {
-            folder = database.getFolder(new File(
-                    database.getTopLevelFolder().getFile(), folderName));
-        }
+        String folder = request.getParameter("folder");
+        System.err.println("Folder = " + folder);
         String recordingId = request.getParameter("recordingId");
         String stTime = request.getParameter("startTime");
         if (stTime != null) {
@@ -323,7 +315,7 @@ public class PlayRecordingController implements Controller {
 
         long minStart = Long.MAX_VALUE;
         if (recordingId != null) {
-            Recording recording = folder.getRecording(recordingId);
+            Recording recording = database.getRecording(folder, recordingId);
 
             // Get the real start and end time based on the layout
             long maxEnd = 0;
@@ -487,7 +479,7 @@ public class PlayRecordingController implements Controller {
         values.put("annotations", metadataAnnotations);
         values.put("thumbnails", thumbs);
         values.put("url", server + "/flv.do?id=" + recordingId
-                + "&offsetShift=" + minStart + "&folder=" + folderName);
+                + "&offsetShift=" + minStart + "&folder=" + folder);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream data = new DataOutputStream(bytes);
 

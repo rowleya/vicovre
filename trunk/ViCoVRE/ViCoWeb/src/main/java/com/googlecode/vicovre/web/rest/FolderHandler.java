@@ -43,7 +43,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.web.rest.response.FoldersResponse;
 import com.sun.jersey.spi.inject.Inject;
@@ -60,26 +59,22 @@ public class FolderHandler extends AbstractHandler {
     @Produces("application/json")
     public Response getFolders() {
         Vector<String> folders = new Vector<String>();
-        Folder topLevel = getDatabase().getTopLevelFolder();
-        getFolders(topLevel.getFile().getAbsolutePath(), topLevel, folders);
+        getFolders("", folders);
         return Response.ok(new FoldersResponse(folders)).build();
     }
 
-    private void getFolders(String topLevelPath, Folder folder,
-            Vector<String> folders) {
-        folders.add(folder.getFile().getAbsolutePath().substring(
-                    topLevelPath.length()).replace(File.separator, "/"));
-        List<Folder> folderList = folder.getFolders();
-        for (Folder subFolder : folderList) {
-            getFolders(topLevelPath, subFolder, folders);
+    private void getFolders(String folder, Vector<String> folders) {
+        folders.add(folder);
+        List<String> folderList = getDatabase().getSubFolders(folder);
+        for (String subFolder : folderList) {
+            getFolders(folder + "/" + subFolder, folders);
         }
     }
 
     @Path("/{folder: .*}")
     @PUT
     public Response createFolder(@PathParam("folder") String folder) {
-        Folder topLevel = getDatabase().getTopLevelFolder();
-        File file = new File(topLevel.getFile(), folder);
+        File file = getDatabase().getFile(folder);
         if (file.mkdirs()) {
             return Response.ok().build();
         }

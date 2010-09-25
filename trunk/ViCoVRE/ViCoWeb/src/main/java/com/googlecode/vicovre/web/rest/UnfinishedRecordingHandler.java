@@ -32,11 +32,11 @@
 
 package com.googlecode.vicovre.web.rest;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -56,31 +56,25 @@ import ag3.interfaces.types.MulticastNetworkLocation;
 import ag3.interfaces.types.NetworkLocation;
 import ag3.interfaces.types.UnicastNetworkLocation;
 
-import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
-import com.googlecode.vicovre.recordings.db.Folder;
+import com.googlecode.vicovre.recordings.UnfinishedRecordingController;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
-import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
-import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.UnfinishedRecordingsResponse;
 import com.sun.jersey.spi.inject.Inject;
 
 @Path("/record")
 public class UnfinishedRecordingHandler extends AbstractHandler {
 
-    private RtpTypeRepository typeRepository = null;
-
-    private Emailer emailer = null;
+    private UnfinishedRecordingController recordingController = null;
 
     public UnfinishedRecordingHandler(
             @Inject("database") RecordingDatabase database,
-            @Inject RtpTypeRepository typeRepository,
-            @Inject Emailer emailer) {
+            @Inject UnfinishedRecordingController recordingController) {
         super(database);
-        this.typeRepository = typeRepository;
-        this.emailer = emailer;
+        this.recordingController = recordingController;
     }
 
     private void fillIn(UnfinishedRecording recording,
@@ -155,16 +149,12 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     @POST
     @Produces("text/plain")
     public Response addUnfinishedRecording(
-            @PathParam("folder") String folderPath,
+            @PathParam("folder") String folder,
             @Context UriInfo uriInfo)
             throws IOException {
-        Folder folder = getFolder(folderPath);
 
-        File file = File.createTempFile("recording",
-                RecordingConstants.UNFINISHED_RECORDING_INDEX,
-                folder.getFile());
-        UnfinishedRecording recording = new UnfinishedRecording(
-                typeRepository, folder, file, getDatabase(), emailer);
+        String id = UUID.randomUUID().toString();
+        UnfinishedRecording recording = new UnfinishedRecording(folder, id);
         fillIn(recording, uriInfo.getQueryParameters());
         recording.setMetadata(getMetadata(uriInfo.getQueryParameters()));
         getDatabase().addUnfinishedRecording(recording, null);
@@ -185,11 +175,11 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     @PUT
     public Response updateUnfinishedRecording(
             @Context UriInfo uriInfo) throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 1);
+        String folder = getFolderPath(uriInfo, 1, 1);
         String id = getId(uriInfo, 0);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Unknown id " + id);
         }
@@ -205,11 +195,11 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             @Context UriInfo uriInfo)
             throws IOException {
 
-        String folderPath = getFolderPath(uriInfo, 1, 1);
+        String folder = getFolderPath(uriInfo, 1, 1);
         String id = getId(uriInfo, 0);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Unknown id " + id);
         }
@@ -221,17 +211,16 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     @GET
     @Produces({"text/xml", "application/json"})
     public Response getUnfinishedRecordings(
-            @PathParam("folder") String folderPath)
-            throws IOException {
-        Folder folder = getFolder(folderPath);
-        List<UnfinishedRecording> recordings = folder.getUnfinishedRecordings();
+            @PathParam("folder") String folder) {
+        List<UnfinishedRecording> recordings =
+            getDatabase().getUnfinishedRecordings(folder);
         return Response.ok(new UnfinishedRecordingsResponse(
                 recordings)).build();
     }
 
     @GET
     @Produces({"text/xml", "application/json"})
-    public Response getUnfinishedRecordings() throws IOException {
+    public Response getUnfinishedRecordings() {
         return getUnfinishedRecordings("");
     }
 
@@ -241,34 +230,38 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     public Response startRecording(@Context UriInfo uriInfo)
             throws IOException {
 
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Unknown recording id " + id);
         }
-        recording.startRecording();
+        recordingController.startRecording(recording);
         return Response.ok(recording.getStatus()).build();
     }
 
     @Path("{folder: .*}/stop")
-    @PUT
-    @Produces("text/plain")
+    @GET
+    @Produces({"text/xml", "application/json"})
     public Response stopRecording(@Context UriInfo uriInfo)
             throws IOException {
 
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Unknown recording id " + id);
         }
-        recording.stopRecording();
-        return Response.ok(recording.getStatus()).build();
+        Recording finishedRecording =
+            recordingController.stopRecording(recording);
+        if (finishedRecording != null) {
+            return Response.ok(finishedRecording).build();
+        }
+        return Response.serverError().entity(recording.getStatus()).build();
     }
 
     @Path("{folder: .*}/pause")
@@ -277,15 +270,15 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     public Response pauseRecording(@Context UriInfo uriInfo)
             throws IOException {
 
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new IOException("Unknown recording id " + id);
         }
-        recording.pauseRecording();
+        recordingController.pauseRecording(recording);
         return Response.ok(recording.getStatus()).build();
     }
 
@@ -295,30 +288,31 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     public Response resumeRecording(@Context UriInfo uriInfo)
             throws IOException {
 
-        String folderPath = getFolderPath(uriInfo, 1, 2);
+        String folder = getFolderPath(uriInfo, 1, 2);
         String id = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Unknown recording id " + id);
         }
-        recording.resumeRecording();
+        recordingController.resumeRecording(recording);
         return Response.ok(recording.getStatus()).build();
     }
 
-    @Path("{folder:.*}/acl")
+    @Path("{folder:.*}/acl/{type}")
     @PUT
     public Response setAcl(@Context UriInfo uriInfo,
             @QueryParam("public") boolean isPublic,
             @QueryParam("exceptionType") List<String> exceptionTypes,
             @QueryParam("exceptionName") List<String> exceptionNames)
             throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -339,20 +333,25 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
                 String name = exceptionNames.get(i);
                 exceptions[i] = new WriteOnlyEntity(name, type);
             }
-            secureDb.setRecordingAcl(recording, isPublic, exceptions);
+            if (acltype.equals("play")) {
+                secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
+            } else if (acltype.equals("read")) {
+                secureDb.setRecordingReadAcl(recording, isPublic, exceptions);
+            }
         }
         return Response.ok().build();
     }
 
-    @Path("{folder:.*}/acl")
+    @Path("{folder:.*}/acl/{type}")
     @GET
     @Produces({"application/json", "text/xml"})
     public Response getAcl(@Context UriInfo uriInfo) throws IOException {
-        String folderPath = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 1);
 
-        Folder folder = getFolder(folderPath);
-        UnfinishedRecording recording = folder.getUnfinishedRecording(id);
+        UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
+                folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
@@ -361,7 +360,13 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            return Response.ok(secureDb.getRecordingAcl(recording)).build();
+            if (acltype.equals("play")) {
+                return Response.ok(
+                        secureDb.getRecordingPlayAcl(recording)).build();
+            } else if (acltype.equals("read")) {
+                return Response.ok(
+                        secureDb.getRecordingReadAcl(recording)).build();
+            }
         }
         return Response.ok().build();
     }

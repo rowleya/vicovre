@@ -48,7 +48,6 @@ import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.db.Folder;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
@@ -84,7 +83,7 @@ public class FlvController implements Controller {
     public ModelAndView handleRequest(HttpServletRequest request,
             HttpServletResponse response) throws IOException {
         String sessionId = request.getParameter("id");
-        String folderPath = request.getParameter("folder");
+        String folder = request.getParameter("folder");
         File videoFile = null;
 
         String off = request.getParameter("start");
@@ -108,12 +107,8 @@ public class FlvController implements Controller {
             offShift = "0";
         }
         long offsetShift = Long.parseLong(offShift);
-        Folder folder = database.getTopLevelFolder();
-        if (folderPath != null && !folderPath.equals("")) {
-            folder = database.getFolder(new File(
-                    database.getTopLevelFolder().getFile(), folderPath));
-        }
-        Recording recording = folder.getRecording(sessionId);
+
+        Recording recording = database.getRecording(folder, sessionId);
         File path = recording.getDirectory();
 
         videoFile = new File(path, videoStream);
@@ -130,6 +125,12 @@ public class FlvController implements Controller {
         if ((width != null) && (height != null)) {
             size = new Dimension(Integer.parseInt(width),
                     Integer.parseInt(height));
+            if ((size.width % 16) != 0) {
+                size.width = size.width + (16 - (size.width % 16));
+            }
+            if ((size.height % 16) != 0) {
+                size.height = size.height + (16 - (size.height % 16));
+            }
         }
 
         double generationSpeed = DEFAULT_GENERATION_SPEED;
