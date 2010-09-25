@@ -36,7 +36,8 @@ import com.googlecode.vicovre.security.db.User;
 
 public class CurrentUser {
 
-    private static final ThreadLocal<User> user = new ThreadLocal<User>();
+    private static final InheritableThreadLocal<User> user =
+        new InheritableThreadLocal<User>();
 
     public static User get() {
         return user.get();
