@@ -47,8 +47,8 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 
 /**
  * A model for displaying recordings in a table
@@ -93,7 +93,8 @@ public class RecordingTableModel extends AbstractTableModel {
     private static final String[] COLUMNS = new String[]{
         START_COLUMN, DURATION_COLUMN, NAME_COLUMN, UPLOADED_COLUMN};
 
-    private Vector<Recording> recordings = new Vector<Recording>();
+    private Vector<InsecureRecording> recordings =
+        new Vector<InsecureRecording>();
 
     private Date recordingStart = null;
 
@@ -183,7 +184,7 @@ public class RecordingTableModel extends AbstractTableModel {
             return null;
         }
 
-        Recording recording = recordings.get(rowIndex);
+        InsecureRecording recording = recordings.get(rowIndex);
         if (column.equals(START_COLUMN)) {
             return DATE_FORMAT.format(recording.getStartTime());
         } else if (column.equals(DURATION_COLUMN)) {
@@ -207,7 +208,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * @param recording The recording to add
      * @param event The event recorded, or null if unknown
      */
-    public void addRecording(Recording recording) {
+    public void addRecording(InsecureRecording recording) {
         int index = Collections.binarySearch(recordings, recording);
         if (index < 0) {
             index = -index - 1;
@@ -221,8 +222,8 @@ public class RecordingTableModel extends AbstractTableModel {
      * Deletes one or more recordings including the files on disk
      * @param rec The recordings to delete
      */
-    public void deleteRecordings(Recording... rec) {
-        for (Recording recording : rec) {
+    public void deleteRecordings(InsecureRecording... rec) {
+        for (InsecureRecording recording : rec) {
             int index = recordings.indexOf(recording);
             if (index != -1) {
                 recordings.remove(index);
@@ -240,7 +241,7 @@ public class RecordingTableModel extends AbstractTableModel {
         fireTableRowsUpdated(recordings.size(), recordings.size());
     }
 
-    public void indicateMetadataUpdate(Recording recording) {
+    public void indicateMetadataUpdate(InsecureRecording recording) {
         int index = recordings.indexOf(recording);
         if (index != -1) {
             fireTableRowsUpdated(index, index);
@@ -253,7 +254,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * @param url The URL uploaded to
      * @throws IOException
      */
-    public void setRecordingUploaded(Recording recording, String url)
+    public void setRecordingUploaded(InsecureRecording recording, String url)
             throws IOException {
         int index = recordings.indexOf(recording);
         if (index != -1) {
@@ -271,7 +272,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * @param index The index of the recording
      * @return The recording
      */
-    public Recording getRecording(int index) {
+    public InsecureRecording getRecording(int index) {
         if (index < recordings.size()) {
             return recordings.get(index);
         }
@@ -283,8 +284,8 @@ public class RecordingTableModel extends AbstractTableModel {
      * @param rows The rows to get the recordings of
      * @return The recordings
      */
-    public Recording[] getRecordings(int[] rows) {
-        Vector<Recording> recs = new Vector<Recording>();
+    public InsecureRecording[] getRecordings(int[] rows) {
+        Vector<InsecureRecording> recs = new Vector<InsecureRecording>();
         for (int row : rows) {
             if (row < recordings.size()) {
                 recs.add(recordings.get(row));
@@ -292,7 +293,7 @@ public class RecordingTableModel extends AbstractTableModel {
                 recs.add(null);
             }
         }
-        return recs.toArray(new Recording[0]);
+        return recs.toArray(new InsecureRecording[0]);
     }
 
     /**
@@ -307,7 +308,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * Indicates that the current recording has stopped
      * @param recording The recording that has stopped and will be added
      */
-    public void finishRecording(Recording recording) {
+    public void finishRecording(InsecureRecording recording) {
         recording.setMetadata(currentRecordingMetadata);
         addRecording(recording);
         recordingStart = null;

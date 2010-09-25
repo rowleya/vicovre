@@ -40,7 +40,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 
@@ -374,8 +373,8 @@ public class RecordingSourceDialog extends JDialog implements ActionListener {
     public void setArchiveManager(RecordArchiveManager manager) {
         localConnector.setRTCPSink(manager);
         localConnector.setRTPSink(manager);
-        accessGridPanel.setRtcpSink(manager);
-        accessGridPanel.setRtpSink(manager);
+        accessGridPanel.addRtcpSink(manager);
+        accessGridPanel.addRtpSink(manager);
     }
 
     /**

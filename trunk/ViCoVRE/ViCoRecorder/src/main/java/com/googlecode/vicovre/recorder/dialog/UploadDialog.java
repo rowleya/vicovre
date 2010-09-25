@@ -60,7 +60,6 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.swing.BorderFactory;
@@ -87,6 +86,7 @@ import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.utils.Config;
 
 /**
@@ -190,10 +190,9 @@ public class UploadDialog extends JDialog implements ActionListener,
             servers.add(server);
         }
 
-        List<Recording> recordings =
-            database.getTopLevelFolder().getRecordings();
+        List<Recording> recordings = database.getRecordings("");
         for (Recording recording : recordings) {
-            addRecording(recording);
+            addRecording((InsecureRecording) recording);
         }
 
         setSize(DIALOG_WIDTH, DIALOG_HEIGHT);
@@ -283,7 +282,7 @@ public class UploadDialog extends JDialog implements ActionListener,
      * Adds a recording to the dialog
      * @param recording The recording to add
      */
-    public void addRecording(Recording recording) {
+    public void addRecording(InsecureRecording recording) {
         recordingModel.addRecording(recording);
     }
 
@@ -298,13 +297,13 @@ public class UploadDialog extends JDialog implements ActionListener,
      * Indicates that recording has stopped
      * @param recording The recording that has stopped and is to be added
      */
-    public void finishRecording(Recording recording) {
+    public void finishRecording(InsecureRecording recording) {
         recordingModel.finishRecording(recording);
     }
 
     private void enterMetadataForRecording(int index) {
         RecordingMetadata metadata = null;
-        Recording recording = null;
+        InsecureRecording recording = null;
         if (index == (recordingModel.getRowCount() - 1)) {
             metadata = recordingModel.getCurrentRecordingMetadata();
         } else {
@@ -362,8 +361,9 @@ public class UploadDialog extends JDialog implements ActionListener,
                         "Please select one or more recordings to delete",
                         "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                Recording[] recordings = recordingModel.getRecordings(indices);
-                for (Recording recording : recordings) {
+                InsecureRecording[] recordings =
+                    recordingModel.getRecordings(indices);
+                for (InsecureRecording recording : recordings) {
                     if (recording == null) {
                         if (recordings.length == 1) {
                             JOptionPane.showMessageDialog(this,
@@ -381,7 +381,7 @@ public class UploadDialog extends JDialog implements ActionListener,
                     "Error", JOptionPane.YES_NO_OPTION)
                             == JOptionPane.YES_OPTION) {
                     recordingModel.deleteRecordings(recordings);
-                    for (Recording recording : recordings) {
+                    for (InsecureRecording recording : recordings) {
                         if (recording != null) {
                             try {
                                 database.deleteRecording(recording);
@@ -399,9 +399,10 @@ public class UploadDialog extends JDialog implements ActionListener,
                         "Please select one or more recordings to upload",
                         "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                Recording[] recordings = recordingModel.getRecordings(indices);
+                InsecureRecording[] recordings =
+                    recordingModel.getRecordings(indices);
                 boolean missingMetadata = false;
-                for (Recording recording : recordings) {
+                for (InsecureRecording recording : recordings) {
                     if (recording == null) {
                         if (recordings.length == 1) {
                             JOptionPane.showMessageDialog(this,
@@ -432,7 +433,7 @@ public class UploadDialog extends JDialog implements ActionListener,
                         urlString += "/";
                     }
                     final String url = urlString;
-                    for (final Recording recording : recordings) {
+                    for (final InsecureRecording recording : recordings) {
                         if (recording != null) {
                             progress = new ProgressDialog(this,
                                     "Uploading Event", true, false, false);
@@ -516,7 +517,7 @@ public class UploadDialog extends JDialog implements ActionListener,
         return sessionId;
     }
 
-    private String uploadRecording(Recording recording, String folder,
+    private String uploadRecording(InsecureRecording recording, String folder,
             String urlString, String sessionId) throws IOException {
         progress.setMessage("Uploading recording");
         long totalBytes = ZIP_HEADER_LENGTH;
@@ -608,7 +609,7 @@ public class UploadDialog extends JDialog implements ActionListener,
         return id.substring(recordingUrl.length());
     }
 
-    private void uploadMetadata(Recording recording, String folder,
+    private void uploadMetadata(InsecureRecording recording, String folder,
             String urlString, String sessionId) throws IOException {
         String url = METADATA_UPLOAD_URL;
         url = url.replace("<folder>", folder);
@@ -653,7 +654,7 @@ public class UploadDialog extends JDialog implements ActionListener,
         progress.setProgress(AFTER_METADATA_PROGRESS);
     }
 
-    private void uploadLayouts(Recording recording, String folder,
+    private void uploadLayouts(InsecureRecording recording, String folder,
             String urlString, String sessionId) throws IOException {
 
         for (ReplayLayout layout : recording.getReplayLayouts()) {
@@ -690,14 +691,9 @@ public class UploadDialog extends JDialog implements ActionListener,
         progress.setProgress(AFTER_LOGOUT_PROGRESS);
     }
 
-    private void uploadRecording(Recording recording, String urlString)
+    private void uploadRecording(InsecureRecording recording, String urlString)
             throws IOException {
-        String folder =
-            recording.getDirectory().getParentFile().getAbsolutePath();
-        String baseFolder =
-            database.getTopLevelFolder().getFile().getAbsolutePath();
-        folder = folder.substring(baseFolder.length());
-
+        String folder = recording.getFolder();
         String sessionId = login(urlString);
         String recordingId = uploadRecording(recording, folder, urlString,
                 sessionId);
