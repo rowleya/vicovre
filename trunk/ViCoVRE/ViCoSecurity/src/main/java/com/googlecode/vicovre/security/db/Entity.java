@@ -33,7 +33,9 @@
 package com.googlecode.vicovre.security.db;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 public abstract class Entity {
 
@@ -47,14 +49,11 @@ public abstract class Entity {
 
     protected void removeACL(ACL acl) {
         if (aclsContaining.remove(acl)) {
-            acl.addException(this);
+            acl.removeException(this);
         }
     }
 
-    protected boolean delete() {
-        for (ACL acl : aclsContaining) {
-            acl.removeException(this);
-        }
-        return true;
+    protected List<ACL> getAcls() {
+        return new Vector<ACL>(aclsContaining);
     }
 }

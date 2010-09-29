@@ -40,6 +40,10 @@ public class ReadOnlyEntity {
 
     private String type = null;
 
+    public ReadOnlyEntity() {
+        // Does Nothing
+    }
+
     protected ReadOnlyEntity(String name, String type) {
         this.name = name;
         this.type = type;

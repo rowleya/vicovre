@@ -46,7 +46,9 @@ import com.googlecode.vicovre.utils.XmlIo;
 public class GroupReader {
 
     public static Group readGroup(InputStream input,
-            HashMap<String, User> users) throws SAXException, IOException {
+            HashMap<String, User> users,
+            HashMap<String, User> unverifiedUsers)
+            throws SAXException, IOException {
         Node doc = XmlIo.read(input);
         String name = XmlIo.readContent(doc, "name");
         String ownerName = XmlIo.readContent(doc, "owner");
@@ -60,8 +62,11 @@ public class GroupReader {
         for (String username : userNames) {
             User user = users.get(username);
             if (user == null) {
-                throw new SAXException("Unknown user " + user + " in group "
+                user = unverifiedUsers.get(username);
+                if (user == null) {
+                    throw new SAXException("Unknown user " + user + " in group "
                         + name);
+                }
             }
             group.addUser(user);
         }

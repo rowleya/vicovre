@@ -30,61 +30,64 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest;
+package com.googlecode.vicovre.gwt.display.client;
 
-import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.ui.Widget;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class PasswordSetter extends AbstractRestCall {
 
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+    private String baseUrl = null;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private ModalPopup<? extends Widget> popup = null;
+
+    private WaitPopup waitPopup = new WaitPopup("Setting Password", true);
+
+    public static void setPassword(String baseUrl, String url,
+            ModalPopup<? extends Widget> popup, String oldPassword,
+            String newPassword) {
+        PasswordSetter setter = new PasswordSetter(baseUrl, url, popup,
+                oldPassword, newPassword);
+        setter.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public PasswordSetter(String baseUrl, String url,
+            ModalPopup<? extends Widget> popup, String oldPassword,
+            String newPassword) {
+        waitPopup.setBaseUrl(baseUrl);
+        this.baseUrl = baseUrl;
+        this.popup = popup;
+        this.url = url + "user/password?oldPassword="
+            + URL.encodeComponent(oldPassword)
+            + "&password=" + URL.encodeComponent(newPassword);
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        waitPopup.center();
+        go(url, Method.PUT);
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        waitPopup.hide();
+        MessagePopup popup = new MessagePopup(
+                "Error setting password: " + message, null,
+                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
-        }
-        loader.itemLoaded();
+        waitPopup.hide();
+        popup.hide();
     }
 
 }

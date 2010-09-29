@@ -30,10 +30,7 @@
     </bean>
     <bean name="/**/displayRecording.do" class="com.googlecode.vicovre.web.play.DisplayRecordingController">
         <constructor-arg><ref bean="database"/></constructor-arg>
-        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
-        <!-- Comment out the following lines to ignore annotations -->
-        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
-        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
+        <constructor-arg><ref bean="securityDatabase"/></constructor-arg>
     </bean>
     <bean name="/**/downloadRecording.do" class="com.googlecode.vicovre.web.play.DownloadRecordingController">
         <constructor-arg><ref bean="database"/></constructor-arg>
@@ -47,7 +44,7 @@
     </bean>
 
     <bean name="/gwt.do" class="com.googlecode.vicovre.web.rest.GWTController">
-        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="securityDatabase"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
     </bean>

@@ -30,61 +30,59 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest;
+package com.googlecode.vicovre.gwt.display.client;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.google.gwt.http.client.URL;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class CurrentUserLoader extends AbstractRestCall {
-
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+public class AccessRequester extends AbstractRestCall {
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private String baseUrl = null;
+
+    private WaitPopup waitPopup = new WaitPopup("Requesting", true);
+
+    public static void requestAccess(String baseUrl, String url,
+            String folder, String recordingId, String emailAddress) {
+        AccessRequester requester = new AccessRequester(baseUrl, url, folder,
+                recordingId, emailAddress);
+        requester.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public AccessRequester(String baseUrl, String url,
+            String folder, String recordingId, String emailAddress) {
+        waitPopup.setBaseUrl(baseUrl);
+        this.baseUrl = baseUrl;
+        this.url = url + "recording" + folder + "/" + recordingId
+            + "/requestAccess?emailAddress="
+            + URL.encodeComponent(emailAddress);
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        waitPopup.center();
+        go(url);
     }
 
-    protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+    protected void onError(String error) {
+        waitPopup.hide();
+        MessagePopup popup = new MessagePopup("Error sending request: " + error,
+                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
-        }
-        loader.itemLoaded();
+        waitPopup.hide();
+        MessagePopup popup = new MessagePopup("Your request has been sent.\n"
+                + " There is no guarentee that you will receive a reply to"
+                + " this request.",
+                null, baseUrl + MessagePopup.INFO);
+        popup.center();
     }
 
 }

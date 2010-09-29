@@ -43,9 +43,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
+import com.googlecode.vicovre.gwt.client.json.JSONUser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
-import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUser;
 
 public class StatusPanel extends HorizontalPanel implements ClickHandler,
         KeyPressHandler {
@@ -91,7 +91,7 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
         setCellVerticalAlignment(status, ALIGN_MIDDLE);
         DOM.setStyleAttribute(status.getElement(), "color", "black");
 
-        Label usernameLabel = new Label("Username:  ");
+        Label usernameLabel = new Label("Email Address:  ");
         loginPanel.add(usernameLabel);
         loginPanel.add(username);
         loginPanel.add(new Label("   "));

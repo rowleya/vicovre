@@ -32,8 +32,8 @@
 
 import flash.external.ExternalInterface;
 
-import com.blitzagency.xray.util.XrayLoader;
-import com.blitzagency.xray.logger.LogManager;
+/*import com.blitzagency.xray.util.XrayLoader;
+import com.blitzagency.xray.logger.LogManager; */
 
 import com.googlecode.vicovre.player.Controls;
 import com.googlecode.vicovre.player.TimeSlider;
@@ -119,21 +119,18 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
     private var volume:Number = 50;
 
     public function Player() {
-
-        XrayLoader.addEventListener(XrayLoader.LOADCOMPLETE, this, "xrayLoadComplete");
-        XrayLoader.addEventListener(XrayLoader.LOADERROR, this, "xrayLoadError");
-        XrayLoader.loadConnector("xrayConnector_1.6.3.swf");
-
-        this.layouts = new Array();
-
-        LogManager.initialize();
-        logger = LogManager.getLogger("com.blitzagency.xray.logger.XrayLogger",
-            _root, false);
+        trace("Starting");
+        go();
     }
 
     private function go() {
+        logger = new TraceLogger();
+
+        this.layouts = new Array();
+
         Stage.align = "TL";
         Stage.scaleMode = "noScale";
+
         logger.debug("Stage:" + Stage.width + ", " + Stage.height);
         Stage.addListener(this);
 
@@ -145,8 +142,7 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
         initNetStream.onMetaData = this.onInitMetaDataCallback;
         initNetStream.onStatus =
             function(status:Object):Void {
-                var logger = LogManager.getLogger(
-                    "com.blitzagency.xray.logger.XrayLogger");
+                var logger = new TraceLogger();
                 logger.debug(status["code"]);
                 if (status["code"] == "NetStream.Play.StreamNotFound") {
 

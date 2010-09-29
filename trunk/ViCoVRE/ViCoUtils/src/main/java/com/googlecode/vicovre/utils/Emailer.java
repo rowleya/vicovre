@@ -43,10 +43,14 @@ public class Emailer {
 
     private String fromAddress = null;
 
-    public Emailer(String server, int port, String fromAddress) {
+    private String adminEmailAddress = null;
+
+    public Emailer(String server, int port, String fromAddress,
+            String adminEmailAddress) {
         this.server = server;
         this.port = port;
         this.fromAddress = fromAddress;
+        this.adminEmailAddress = adminEmailAddress;
     }
 
     public void send(String to, String subject, String message)
@@ -59,6 +63,10 @@ public class Emailer {
         email.setSubject(subject);
         email.setMsg(message);
         email.send();
+    }
+
+    public String getAdminEmailAddress() {
+        return adminEmailAddress;
     }
 
 }

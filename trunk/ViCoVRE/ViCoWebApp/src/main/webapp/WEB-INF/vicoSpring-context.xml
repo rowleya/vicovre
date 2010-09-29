@@ -2,6 +2,7 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans>
+
     <bean id="rtpTypeRepository" class="com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl">
         <constructor-arg><value>/rtptypes.xml</value></constructor-arg>
     </bean>
@@ -27,6 +28,7 @@
         <constructor-arg><value>${email.server.host}</value></constructor-arg>
         <constructor-arg><value>${email.server.port}</value></constructor-arg>
         <constructor-arg><value>${email.from}</value></constructor-arg>
+        <constructor-arg><value>${admin}</value></constructor-arg>
     </bean>
 
     <bean id="insecureDatabase" class="com.googlecode.vicovre.recordings.db.insecure.InsecureRecordingDatabase">
@@ -44,6 +46,7 @@
 
     <bean id="securityDatabase" class="com.googlecode.vicovre.security.db.SecurityDatabase">
         <constructor-arg><value>${security.location}</value></constructor-arg>
+        <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
     <bean id="database" class="com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase" destroy-method="shutdown">

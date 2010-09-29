@@ -44,9 +44,11 @@ import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.security.db.SecurityDatabase;
+import com.googlecode.vicovre.security.rest.responses.GroupsResponse;
+import com.googlecode.vicovre.security.rest.responses.UsersResponse;
 import com.googlecode.vicovre.web.rest.response.LayoutsResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsResponse;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -55,20 +57,20 @@ import com.sun.jersey.api.json.JSONMarshaller;
 
 public class GWTController implements Controller {
 
-    private RecordingDatabase database = null;
+    private SecurityDatabase securityDatabase = null;
 
     private LayoutRepository layoutRepository = null;
 
     private EditableLayoutRepository editableLayoutRepository = null;
 
-    public GWTController(RecordingDatabase database,
+    public GWTController(SecurityDatabase securityDatabase,
             LayoutRepository layoutRepository,
             EditableLayoutRepository editableLayoutRepository)
             throws IOException, SAXException {
         if (!Misc.isCodecsConfigured()) {
             Misc.configureCodecs("/knownCodecs.xml");
         }
-        this.database = database;
+        this.securityDatabase = securityDatabase;
         this.layoutRepository = layoutRepository;
         this.editableLayoutRepository = editableLayoutRepository;
     }
@@ -78,7 +80,8 @@ public class GWTController implements Controller {
 
         JSONJAXBContext context = new JSONJAXBContext(
                 JSONConfiguration.natural().build(), LayoutsResponse.class,
-                Recording.class, StreamsResponse.class);
+                Recording.class, StreamsResponse.class,
+                UsersResponse.class, GroupsResponse.class);
         JSONMarshaller marshaller = context.createJSONMarshaller();
 
         StringWriter layoutWriter = new StringWriter();
@@ -91,10 +94,20 @@ public class GWTController implements Controller {
                 new LayoutsResponse(editableLayoutRepository.findLayouts()),
                 customLayoutWriter);
 
+        StringWriter usersWriter = new StringWriter();
+        marshaller.marshallToJSON(
+                new UsersResponse(securityDatabase.getUsers()), usersWriter);
+
+        StringWriter groupsWriter = new StringWriter();
+        marshaller.marshallToJSON(
+                new GroupsResponse(securityDatabase.getGroups()), groupsWriter);
+
         ModelAndView modelAndView = new ModelAndView("gwt");
         modelAndView.addObject("layoutsJSON", layoutWriter.toString());
         modelAndView.addObject("customLayoutsJSON",
                 customLayoutWriter.toString());
+        modelAndView.addObject("usersJSON", usersWriter.toString());
+        modelAndView.addObject("groupsJSON", groupsWriter.toString());
         return modelAndView;
     }
 

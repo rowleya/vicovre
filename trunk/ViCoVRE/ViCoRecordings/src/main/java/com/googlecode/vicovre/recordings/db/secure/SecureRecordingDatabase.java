@@ -162,7 +162,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     private void updateAclId(String creatorFolder, String creatorId,
             String folder, String oldId, String newId) throws IOException {
-        ReadOnlyACL acl = securityDatabase.getAcl(folder, oldId, false, false);
+        ReadOnlyACL acl = securityDatabase.getAcl(folder, oldId, false);
         securityDatabase.deleteAcl(folder, oldId);
         List<ReadOnlyEntity> aclExceptions = acl.getExceptions();
         WriteOnlyEntity[] exceptions =
@@ -292,7 +292,10 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         for (Recording recording : recordings) {
             if (securityDatabase.isAllowed(folder,
                     READ_RECORDING_ID_PREFIX + recording.getId(), true)) {
+                System.err.println("Can read " + recording.getId() + " in folder " + folder);
                 secureRecordings.add(new SecureRecording(this, recording));
+            } else {
+                System.err.println("Cannot read " + recording.getId() + " in folder " + folder);
             }
         }
         return secureRecordings;
@@ -361,12 +364,12 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public ReadOnlyACL getRecordingReadAcl(Recording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
-                READ_RECORDING_ID_PREFIX + recording.getId(), true, true);
+                READ_RECORDING_ID_PREFIX + recording.getId(), true);
     }
 
     public ReadOnlyACL getRecordingPlayAcl(Recording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
-                PLAY_RECORDING_ID_PREFIX + recording.getId(), true, false);
+                PLAY_RECORDING_ID_PREFIX + recording.getId(), false);
     }
 
     public void setRecordingReadAcl(UnfinishedRecording recording,
@@ -390,13 +393,13 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     public ReadOnlyACL getRecordingReadAcl(UnfinishedRecording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                true, true);
+                true);
     }
 
     public ReadOnlyACL getRecordingPlayAcl(UnfinishedRecording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
                 PLAY_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                true, false);
+                false);
     }
 
     public void addHarvestSourceListener(HarvestSourceListener listener) {

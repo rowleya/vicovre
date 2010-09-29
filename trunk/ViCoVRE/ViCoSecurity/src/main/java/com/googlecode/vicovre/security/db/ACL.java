@@ -49,9 +49,13 @@ public class ACL {
 
     private boolean allow = false;
 
+    private String folder = null;
+
     private Set<Entity> exceptions = new HashSet<Entity>();
 
-    protected ACL(String id, User owner, boolean allow, boolean canProxy) {
+    protected ACL(String folder, String id, User owner, boolean allow,
+            boolean canProxy) {
+        this.folder = folder;
         this.id = id;
         this.owner = owner;
         this.allow = allow;
@@ -122,6 +126,10 @@ public class ACL {
         return allow;
     }
 
+    protected String getFolder() {
+        return folder;
+    }
+
     protected String getId() {
         return id;
     }
@@ -132,12 +140,5 @@ public class ACL {
 
     protected List<Entity> getExceptions() {
         return new Vector<Entity>(exceptions);
-    }
-
-    protected void delete() {
-        for (Entity entity : exceptions) {
-            entity.removeACL(this);
-        }
-        owner.removeOwned(this);
     }
 }

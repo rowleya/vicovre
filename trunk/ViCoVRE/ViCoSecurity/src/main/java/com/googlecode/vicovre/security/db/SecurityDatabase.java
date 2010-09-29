@@ -37,12 +37,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.mail.EmailException;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.security.AlreadyExistsException;
@@ -51,6 +56,7 @@ import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.UnknownException;
 import com.googlecode.vicovre.security.servlet.CurrentUser;
 import com.googlecode.vicovre.security.servlet.SecurityFilter;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 
 public class SecurityDatabase {
@@ -61,7 +67,14 @@ public class SecurityDatabase {
 
     public static final String TYPE_ROLE = "role";
 
-    private static final String VALID_USERNAME = "[A-Za-z0-9_-]{4, 50}";
+    private static final String VALID_USERNAME =
+        "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
+
+    private static final long VERIFICATION_TIMEOUT = 24 * 60 * 60 * 1000;
+
+    private HashMap<String, User> unverifiedUsers = new HashMap<String, User>();
+
+    private HashSet<String> unverifiedUsernames = new HashSet<String>();
 
     private HashMap<String, User> users = new HashMap<String, User>();
 
@@ -72,12 +85,42 @@ public class SecurityDatabase {
 
     private File topLevelFolder = null;
 
-    public SecurityDatabase(String directory) throws SAXException, IOException {
-        this(directory, new String[0]);
+    private Emailer emailer = null;
+
+    private User adminUser = null;
+
+    private class VerificationTimeOut extends TimerTask {
+
+        private String hash = null;
+
+        private VerificationTimeOut(String hash) {
+            this.hash = hash;
+        }
+
+        public void run() {
+            User user = unverifiedUsers.remove(hash);
+            if (user != null) {
+                unverifiedUsernames.remove(user.getUsername());
+                File unverifiedFile = new File(topLevelFolder,
+                        hash + ".unverifiedUser");
+                unverifiedFile.delete();
+                try {
+                    deleteUser(user);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
-    public SecurityDatabase(String directory, String... usersToCreate)
+    public SecurityDatabase(String directory, Emailer emailer)
             throws SAXException, IOException {
+        this(directory, emailer, new String[0]);
+    }
+
+    public SecurityDatabase(String directory, Emailer emailer,
+            String... usersToCreate) throws SAXException, IOException {
+        this.emailer = emailer;
         topLevelFolder = new File(directory);
         if (!topLevelFolder.exists()) {
             topLevelFolder.mkdirs();
@@ -85,27 +128,39 @@ public class SecurityDatabase {
 
         File[] userFiles =
             topLevelFolder.listFiles(new ExtensionFilter(".user"));
-        boolean isAdmin = false;
         for (File userFile : userFiles) {
             FileInputStream input = new FileInputStream(userFile);
             User user = UserReader.readUser(input, Role.ROLES);
             if (user.getRole().equals(Role.ADMINISTRATOR)) {
-                isAdmin = true;
+                adminUser = user;
             }
             users.put(user.getUsername(), user);
             input.close();
         }
-        if (!isAdmin) {
-            User admin = new User("admin", Role.ADMINISTRATOR);
-            admin.setPasswordHash("7b902e6ff1db9f560443f2048974fd7d386975b0");
-            users.put(admin.getUsername(), admin);
+        if (adminUser == null) {
+            adminUser = new User("admin", Role.ADMINISTRATOR);
+            adminUser.setPasswordHash(
+                    "7b902e6ff1db9f560443f2048974fd7d386975b0");
+            users.put(adminUser.getUsername(), adminUser);
+        }
+
+        File[] unverifiedUserFiles =
+            topLevelFolder.listFiles(new ExtensionFilter(".unverifiedUser"));
+        for (File unverifiedUserFile : unverifiedUserFiles) {
+            FileInputStream input = new FileInputStream(unverifiedUserFile);
+            User user = UserReader.readUser(input, Role.ROLES);
+            input.close();
+            String hash = unverifiedUserFile.getName();
+            hash = hash.substring(0, hash.length() - 15);
+            unverifiedUsers.put(hash, user);
+            unverifiedUsernames.add(user.getUsername());
         }
 
         File[] groupFiles =
             topLevelFolder.listFiles(new ExtensionFilter(".group"));
         for (File groupFile : groupFiles) {
             FileInputStream input = new FileInputStream(groupFile);
-            Group group = GroupReader.readGroup(input, users);
+            Group group = GroupReader.readGroup(input, users, unverifiedUsers);
             groups.put(group.getName(), group);
         }
 
@@ -121,22 +176,89 @@ public class SecurityDatabase {
             }
         }
 
-        readACLs(topLevelFolder);
+        readACLs(topLevelFolder, "");
+
+        for (String hash : unverifiedUsers.keySet()) {
+            File unverifiedUserFile = new File(topLevelFolder,
+                    hash + ".unverifiedUser");
+            Timer timer = new Timer();
+            long timeout = (unverifiedUserFile.lastModified()
+                    + VERIFICATION_TIMEOUT) - System.currentTimeMillis();
+            if (timeout > 0) {
+                timer.schedule(new VerificationTimeOut(hash), timeout);
+            } else {
+                User user = unverifiedUsers.remove(hash);
+                unverifiedUsernames.remove(user.getUsername());
+                unverifiedUserFile.delete();
+                deleteUser(user);
+            }
+        }
     }
 
-    private void readACLs(File folder) throws SAXException, IOException {
+    private File getFile(String folder) {
+        if ((folder == null) || folder.equals("/") || folder.equals("")
+                || folder.equals("\\")) {
+            return topLevelFolder;
+        }
+        if (folder.endsWith("/")) {
+            folder = folder.substring(0, folder.length() - 1);
+        }
+        return new File(topLevelFolder, folder);
+    }
+
+    private void readACLs(File folder, String folderName)
+            throws SAXException, IOException {
         File[] aclFiles = folder.listFiles();
         HashMap<String, ACL> aclMap = new HashMap<String, ACL>();
         for (File aclFile : aclFiles) {
             if (aclFile.getName().endsWith(".acl")) {
                 FileInputStream input = new FileInputStream(aclFile);
-                ACL acl = ACLReader.readACL(input, users, groups, Role.ROLES);
+                ACL acl = ACLReader.readACL(folderName, input, users,
+                        unverifiedUsers, groups, Role.ROLES);
                 aclMap.put(acl.getId(), acl);
             } else if (aclFile.isDirectory()) {
-                readACLs(aclFile);
+                readACLs(aclFile, folderName + "/" + aclFile.getName());
             }
         }
         acls.put(folder, aclMap);
+    }
+
+    private void deleteEntity(Entity entity) throws IOException {
+        List<ACL> acls = entity.getAcls();
+        for (ACL acl : acls) {
+            File folder = getFile(acl.getFolder());
+            acl.removeException(entity);
+            writeAcl(folder, acl);
+        }
+    }
+
+    private void deleteUser(User user) throws IOException {
+        if (user.isOwner()) {
+            throw new InvalidOperationException(
+                    "The user still owns some items");
+        }
+        deleteEntity(user);
+        List<Group> groups = user.getGroups();
+        for (Group group : groups) {
+            group.deleteUser(user);
+            writeGroup(group);
+        }
+    }
+
+    private void deleteGroup(Group group) throws IOException {
+        deleteEntity(group);
+        List<User> users = group.getUsers();
+        for (User user : users) {
+            user.deleteGroup(group);
+        }
+    }
+
+    private void deleteAcl(ACL acl) {
+        List<Entity> exceptions = acl.getExceptions();
+        for (Entity entity : exceptions) {
+            entity.removeACL(acl);
+        }
+        acl.getOwner().removeOwned(acl);
     }
 
     private void writeUser(User user) throws IOException {
@@ -156,9 +278,7 @@ public class SecurityDatabase {
     private void checkUsername(String username) {
         if (!username.matches(VALID_USERNAME)) {
             throw new InvalidOperationException(
-                    "A username must be between 4 and 50 characters and"
-                    + " only contain the characters"
-                    + " a to z, A to Z, 0 to 9, _ or -");
+                    "A username must be a valid e-mail address");
         }
     }
 
@@ -166,7 +286,8 @@ public class SecurityDatabase {
             throws IOException {
         checkUsername(username);
         checkPassword(password);
-        if (!users.containsKey(username)) {
+        if (!users.containsKey(username)
+                && !unverifiedUsernames.contains(username)) {
             User user = new User(username, role);
             synchronized (user) {
                 Password.setPassword(password, user);
@@ -179,9 +300,75 @@ public class SecurityDatabase {
         }
     }
 
-    public void addUser(String username, String password) throws IOException {
+    public String addUnverifiedUser(String username, String password,
+            String verifyUrl) throws IOException, EmailException {
         synchronized (users) {
-            addUser(username, password, Role.AUTHUSER);
+            boolean newPassword = false;
+            if (password == null) {
+                newPassword = true;
+                password = UUID.randomUUID().toString();
+            }
+            checkUsername(username);
+            checkPassword(password);
+            if (!users.containsKey(username)
+                    && !unverifiedUsernames.contains(username)) {
+                User user = new User(username, Role.AUTHUSER);
+                Password.setPassword(password, user);
+                String hash = UUID.randomUUID().toString();
+
+                String message = "";
+                if (newPassword) {
+                    message += "Someone has granted you access to a recording,"
+                        + " but you are not yet registered.\n";
+                    message += "If you would like to access the recording, "
+                        + " please to go the following address to complete "
+                        + " your registration:";
+                    message += "    " + verifyUrl.replace("$hash", hash)
+                        + "\n\n";
+                    message += "and then sign in using this e-mail address and "
+                        + " the following password to access the recording:\n";
+                    message += "    " + password + "\n\n";
+                    message += "If you do not wish to register,"
+                        + " please ignore this message.\n";
+                } else {
+                    message += "Someone has signed up with this email "
+                        + " address.\n";
+                    message += "If this was you, please go to the following"
+                        + " address to complete your registration:\n";
+                    message += "    " + verifyUrl.replace("$hash", hash)
+                        + "\n\n";
+                    message += "If this was not you, please ignore this "
+                        + " message.\n";
+                }
+                emailer.send(username, "New User Verification", message);
+                unverifiedUsers.put(hash, user);
+                unverifiedUsernames.add(username);
+                Timer timer = new Timer();
+                timer.schedule(new VerificationTimeOut(hash),
+                        VERIFICATION_TIMEOUT);
+                FileOutputStream output = new FileOutputStream(
+                        new File(topLevelFolder, hash + ".unverifiedUser"));
+                UserReader.writeUser(output, user);
+                output.close();
+                return hash;
+            }
+            throw new AlreadyExistsException(
+                "User " + username + " already exists");
+        }
+    }
+
+    public void verifyUser(String hash) {
+        synchronized (users) {
+            User user = unverifiedUsers.remove(hash);
+            if (user == null) {
+                throw new UnknownException("The hash specified is invalid");
+            }
+            unverifiedUsernames.remove(user.getUsername());
+            File unverifiedFile = new File(topLevelFolder,
+                    hash + ".unverifiedUser");
+            unverifiedFile.renameTo(new File(topLevelFolder,
+                    user.getUsername() + ".user"));
+            users.put(user.getUsername(), user);
         }
     }
 
@@ -269,7 +456,7 @@ public class SecurityDatabase {
         }
     }
 
-    public void deleteUser(String username) {
+    public void deleteUser(String username) throws IOException {
         synchronized (users) {
             User user = users.get(username);
             if (user == null) {
@@ -284,10 +471,7 @@ public class SecurityDatabase {
             }
 
             synchronized (user) {
-                if (!user.delete()) {
-                    throw new InvalidOperationException(
-                            "The user is still the owner of some items");
-                }
+                deleteUser(user);
                 users.remove(username);
                 File userFile = new File(topLevelFolder,
                         user.getUsername() + ".user");
@@ -399,7 +583,7 @@ public class SecurityDatabase {
         }
     }
 
-    public void deleteGroup(String name) {
+    public void deleteGroup(String name) throws IOException {
         Group group = groups.get(name);
         if (group == null) {
             throw new UnknownException("Unknown group " + group);
@@ -411,7 +595,7 @@ public class SecurityDatabase {
                     "You must be an administrator or the current owner "
                     + "of the group to delete it");
             }
-            group.delete();
+            deleteGroup(group);
             groups.remove(name);
             File groupFile = new File(topLevelFolder,
                     group.getName() + ".group");
@@ -564,7 +748,7 @@ public class SecurityDatabase {
         }
 
         if (requesterId != null) {
-            File folderFile = new File(topLevelFolder, requesterFolder);
+            File folderFile = getFile(requesterFolder);
             HashMap<String, ACL> aclList = acls.get(folderFile);
             if (aclList != null) {
                 ACL acl = aclList.get(requesterId);
@@ -589,7 +773,7 @@ public class SecurityDatabase {
                     "You must have write permission to perform this operation");
         }
         synchronized (acls) {
-            File folderFile = new File(topLevelFolder, folder);
+            File folderFile = getFile(folder);
             HashMap<String, ACL> aclList = acls.get(folderFile);
             if (aclList == null) {
                 aclList = new HashMap<String, ACL>();
@@ -604,7 +788,7 @@ public class SecurityDatabase {
             if (!folderFile.exists()) {
                 folderFile.mkdirs();
             }
-            ACL acl = new ACL(id, currentUser, allow, canProxy);
+            ACL acl = new ACL(folder, id, currentUser, allow, canProxy);
             synchronized (acl) {
                 for (Entity entity : entities) {
                     acl.addException(entity);
@@ -617,11 +801,11 @@ public class SecurityDatabase {
         }
     }
 
-    private ACL obtainAcl(File folderFile, String id, boolean createIfAdmin,
+    private ACL obtainAcl(File folderFile, String folder, String id,
             boolean allowByDefault, boolean check) {
         ACL acl = null;
+        HashMap<String, ACL> aclList = acls.get(folderFile);
         try {
-            HashMap<String, ACL> aclList = acls.get(folderFile);
             if (aclList == null) {
                 throw new UnknownException("Unknown ACL " + id);
             }
@@ -631,12 +815,12 @@ public class SecurityDatabase {
             }
         } catch (UnknownException e) {
 
-            if (createIfAdmin
-                    && CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
-                acl = new ACL(id, CurrentUser.get(), false, false);
-            } else {
-                throw e;
+            if (aclList == null) {
+                aclList = new HashMap<String, ACL>();
+                acls.put(folderFile, aclList);
             }
+            acl = new ACL(folder, id, adminUser, allowByDefault, false);
+            aclList.put(id, acl);
         }
 
         if (check) {
@@ -653,9 +837,9 @@ public class SecurityDatabase {
     public void setAcl(String folder, String id, boolean allow,
             WriteOnlyEntity... exceptions) throws IOException {
 
-        File folderFile = new File(topLevelFolder, folder);
+        File folderFile = getFile(folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, allow, true);
+            ACL acl = obtainAcl(folderFile, folder, id, allow, true);
 
             Vector<Entity> entities = getEntities(exceptions);
             acl.setAllow(allow);
@@ -671,9 +855,9 @@ public class SecurityDatabase {
 
     public void setAclOwner(String folder, String id, String owner)
             throws IOException {
-        File folderFile = new File(topLevelFolder, folder);
+        File folderFile = getFile(folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, false, true);
+            ACL acl = obtainAcl(folderFile, folder, id, false, true);
 
             User user = users.get(owner);
             if (user == null) {
@@ -688,9 +872,9 @@ public class SecurityDatabase {
     }
 
     public void deleteAcl(String folder, String id) {
-        File folderFile = new File(topLevelFolder, folder);
+        File folderFile = getFile(folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, true, false, false);
+            ACL acl = obtainAcl(folderFile, folder, id, false, false);
 
             User currentUser = getCurrentUser(folder, id);
 
@@ -702,7 +886,7 @@ public class SecurityDatabase {
             }
 
             synchronized (acl) {
-                acl.delete();
+                deleteAcl(acl);
                 HashMap<String, ACL> aclList = acls.get(folderFile);
                 aclList.remove(id);
                 if (aclList.isEmpty()) {
@@ -714,12 +898,11 @@ public class SecurityDatabase {
         }
     }
 
-    public ReadOnlyACL getAcl(String folder, String id, boolean createIfAdmin,
+    public ReadOnlyACL getAcl(String folder, String id,
             boolean allowByDefault) {
-        File folderFile = new File(topLevelFolder, folder);
+        File folderFile = getFile(folder);
         synchronized (acls) {
-            ACL acl = obtainAcl(folderFile, id, createIfAdmin, allowByDefault,
-                    true);
+            ACL acl = obtainAcl(folderFile, folder, id, allowByDefault, true);
             synchronized (acl) {
                 return new ReadOnlyACL(acl);
             }
@@ -727,10 +910,10 @@ public class SecurityDatabase {
     }
 
     public boolean isAllowed(String folder, String id, boolean def) {
-        File folderFile = new File(topLevelFolder, folder);
+        File folderFile = getFile(folder);
         synchronized (acls) {
             try {
-                ACL acl = obtainAcl(folderFile, id, true, def, false);
+                ACL acl = obtainAcl(folderFile, folder, id, def, false);
                 synchronized (acl) {
                     return acl.isAllowed();
                 }

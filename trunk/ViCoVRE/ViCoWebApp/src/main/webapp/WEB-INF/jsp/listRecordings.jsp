@@ -31,12 +31,7 @@
                 <c:forEach items="${recordings}" var="recording">
                     <tr>
                         <td><img src="${pageContext.request.contextPath}/images/recording.gif"/></td>
-                        <c:if test="${recording.playable}">
-                            <td><a href="${recording.id}/displayRecording.do">${recording.metadata.primaryValue}</a></td>
-                        </c:if>
-                        <c:if test="${not recording.playable}">
-                            <td>${recording.metadata.primaryValue} is not accessible to you.</td>
-                        </c:if>
+                        <td><a href="${recording.id}/displayRecording.do">${recording.metadata.primaryValue}</a></td>
                         <td><fmt:formatDate value="${recording.startTime}" pattern="yyyy-MM-dd HH:mm"/><br/></td>
                     </tr>
                 </c:forEach>

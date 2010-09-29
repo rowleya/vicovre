@@ -9,9 +9,28 @@
                 Recording Not Found
             </c:if>
         </title>
-        <script type="text/javascript" src="${pageContext.request.contextPath}/js/swfobject.js"></script>
+        <!-- Define some properties -->
+        <script type="text/javascript" language="javascript">
+        var Parameters = {
+            url: "/rest/",
+            playUrl: "/play.do",
+            recording: "${recording.id}",
+            folder: "${recording.folder}",
+            users: '${usersJSON}',
+            groups: '${groupsJSON}',
+            role: "${role}",
+            canEdit: "${recording.editable}",
+            canPlay: "${recording.playable}",
+            acl: '${aclJSON}',
+            readAcl: '${readAclJSON}'
+        };
+        </script>
+        <script type="text/javascript" language="javascript" src="${pageContext.request.contextPath}/com.googlecode.vicovre.gwt.display.Application.nocache.js"></script>
     </head>
-    <body style="width: 100%; height: 100%; padding: 0; margin: 0;">
+    <body>
+        <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
+    </body>
+    <%-- <body style="width: 100%; height: 100%; padding: 0; margin: 0;">
         <c:if test="${empty recording}">
             <h1>Recording Not Found</h1>
         </c:if>
@@ -35,5 +54,5 @@
                 mplayer.write("player");
             </script>
         </c:if>
-    </body>
+    </body> --%>
 </html>

@@ -25,9 +25,6 @@
       <inherits name="com.googlecode.vicovre.gwt.Module"/>
 
       <!-- Specify the app entry point class.                         -->
-      <entry-point class='com.googlecode.vicovre.gwt.recorder.client.Application'/>
-
-      <!-- Specify the application specific style sheet.              -->
-      <stylesheet src='Application.css' />
+      <entry-point class='com.googlecode.vicovre.gwt.display.client.Application'/>
 
 </module>

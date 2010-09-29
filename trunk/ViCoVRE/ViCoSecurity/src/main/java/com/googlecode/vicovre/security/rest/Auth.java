@@ -75,16 +75,16 @@ public class Auth {
             @Context HttpServletRequest request) throws URISyntaxException {
         String role = securityDatabase.login(username, password, request);
         if (role != null) {
-            ResponseBuilder response = Response.ok(role);
             if (successUrl == null) {
-                return response.build();
+                return Response.ok(role).build();
             }
+            ResponseBuilder response = Response.status(302);
             return response.location(new URI(successUrl)).build();
         }
         if (failUrl == null) {
             return Response.status(Status.FORBIDDEN).build();
         }
-        return Response.ok().location(new URI(failUrl)).build();
+        return Response.status(302).location(new URI(failUrl)).build();
     }
 
     @Path("basic")
@@ -107,10 +107,11 @@ public class Auth {
                 HttpHeaders.WWW_AUTHENTICATE, "Basic realm=" + realm).build();
         }
 
-        ResponseBuilder response = Response.ok(role);
         if (successUrl == null) {
-            return response.build();
+            return Response.ok(role).build();
         }
+
+        ResponseBuilder response = Response.status(302);
         return response.location(new URI(successUrl)).build();
     }
 
@@ -137,16 +138,17 @@ public class Auth {
          }
 
          if (role != null) {
-             ResponseBuilder response = Response.ok(role);
              if (successUrl == null) {
-                 return response.build();
+                 return Response.ok(role).build();
              }
+
+             ResponseBuilder response = Response.status(302);
              return response.location(new URI(successUrl)).build();
          }
          if (failUrl == null) {
              return Response.status(Status.FORBIDDEN).build();
          }
-         return Response.ok().location(new URI(failUrl)).build();
+         return Response.status(302).location(new URI(failUrl)).build();
     }
 
     @Path("user")

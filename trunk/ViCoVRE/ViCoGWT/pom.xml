@@ -19,6 +19,7 @@
         <module>ViCoGWTCommons</module>
         <module>ViCoGWTAnnotationsInterface</module>
         <module>ViCoGWTDownloadInterface</module>
+        <module>ViCoGWTDisplayInterface</module>
         <module>ViCoGWTImportExportInterface</module>
         <module>ViCoGWTRecorderInterface</module>
     </modules>
