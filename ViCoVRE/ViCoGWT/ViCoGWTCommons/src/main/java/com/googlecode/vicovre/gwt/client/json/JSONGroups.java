@@ -30,68 +30,23 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.gwt.client.json;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-public class Group extends Entity {
+public class JSONGroups extends JavaScriptObject {
 
-    private User owner = null;
-
-    private String name = null;
-
-    private Set<User> users = new HashSet<User>();
-
-    protected Group(String name, User owner) {
-        this.name = name;
-        this.owner = owner;
+    protected JSONGroups() {
+        // Does Nothing
     }
 
-    protected void setOwner(User owner) {
-        this.owner = owner;
-    }
+    public static final native JSONGroups parse(String json) /*-{
+        return eval('(' + json + ')');
+    }-*/;
 
-    protected void clearUsers() {
-        for (User user : users) {
-            user.deleteGroup(this);
-        }
-    }
+    public final native JsArrayString getGroups() /*-{
+        return this.group;
+    }-*/;
 
-    protected void addUser(User user) {
-        if (this.users.add(user)) {
-            user.addGroup(this);
-        }
-    }
-
-    protected void deleteUser(User user) {
-        if (this.users.remove(user)) {
-            user.deleteGroup(this);
-        }
-    }
-
-    protected User getOwner() {
-        return owner;
-    }
-
-    protected String getName() {
-        return name;
-    }
-
-    protected List<User> getUsers() {
-        return new Vector<User>(users);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof Group) {
-            return ((Group) obj).name.equals(name);
-        }
-        return false;
-    }
-
-    public int hashCode() {
-        return name.hashCode();
-    }
 }

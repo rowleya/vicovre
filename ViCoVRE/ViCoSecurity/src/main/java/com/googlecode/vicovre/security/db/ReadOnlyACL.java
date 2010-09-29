@@ -45,6 +45,10 @@ public class ReadOnlyACL {
 
     private List<ReadOnlyEntity> exceptions = new Vector<ReadOnlyEntity>();
 
+    public ReadOnlyACL() {
+        // Does Nothing
+    }
+
     protected ReadOnlyACL(ACL acl) {
         allow = acl.isAllow();
         for (Entity entity : acl.getExceptions()) {

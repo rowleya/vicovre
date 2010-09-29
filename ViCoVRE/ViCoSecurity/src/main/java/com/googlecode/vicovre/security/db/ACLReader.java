@@ -45,7 +45,8 @@ import com.googlecode.vicovre.utils.XmlIo;
 
 public class ACLReader {
 
-    public static ACL readACL(InputStream input, HashMap<String, User> users,
+    public static ACL readACL(String folder, InputStream input,
+            HashMap<String, User> users, HashMap<String, User> unverifiedUsers,
             HashMap<String, Group> groups, HashMap<String, Role> roles)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
@@ -60,7 +61,7 @@ public class ACLReader {
         String proxyString = XmlIo.readContent(doc, "canProxy");
         boolean canProxy = Boolean.parseBoolean(proxyString);
 
-        ACL acl = new ACL(id, owner, allow, canProxy);
+        ACL acl = new ACL(folder, id, owner, allow, canProxy);
 
         Node[] exceptions = XmlIo.readNodes(doc, "exception");
         for (Node exception : exceptions) {
@@ -73,7 +74,10 @@ public class ACLReader {
             } else if (type.equals("user")) {
                 User user = users.get(name);
                 if (user == null) {
-                    throw new SAXException("User " + name + " unknown");
+                    user = unverifiedUsers.get(name);
+                    if (user == null) {
+                        throw new SAXException("User " + name + " unknown");
+                    }
                 }
                 acl.addException(user);
             } else if (type.equals("group")) {

@@ -103,7 +103,8 @@ public class Group {
 
     @Path("{group}")
     @DELETE
-    public Response deleteGroup(@PathParam("group") String groupName) {
+    public Response deleteGroup(@PathParam("group") String groupName)
+            throws IOException {
         database.deleteGroup(groupName);
         return Response.ok().build();
     }

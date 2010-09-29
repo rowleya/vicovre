@@ -91,8 +91,4 @@ public class Role extends Entity {
     public int hashCode() {
         return name.hashCode();
     }
-
-    protected boolean delete() {
-        return false;
-    }
 }

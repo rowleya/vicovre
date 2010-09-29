@@ -30,61 +30,61 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest;
+package com.googlecode.vicovre.gwt.display.client;
 
 import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window.Location;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class Login extends AbstractRestCall {
 
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+    private String baseUrl = null;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private WaitPopup waitPopup = new WaitPopup("Logging In", true);
+
+    public static void login(String baseUrl, String url, String username,
+            String password) {
+        Login login = new Login(baseUrl, url, username, password);
+        login.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public Login(String baseUrl, String url, String username,
+            String password) {
+        waitPopup.setBaseUrl(baseUrl);
+        this.baseUrl = baseUrl;
+        this.url = url + "auth/form?username=" + URL.encodeComponent(username)
+            + "&password=" + URL.encodeComponent(password);
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        waitPopup.center();
+        go(url, Method.POST, MediaType.TEXT_PLAIN);
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        waitPopup.hide();
+        String error = null;
+        if (message.startsWith("403")) {
+            error = "Invalid email address or password";
+        } else {
+            error = "Error logging in: " + message;
+        }
+
+        MessagePopup popup = new MessagePopup(error, null,
+                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
-        }
-        loader.itemLoaded();
+        Location.reload();
     }
-
 }

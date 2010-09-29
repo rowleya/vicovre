@@ -33,46 +33,37 @@
 package com.googlecode.vicovre.web.play;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
+import java.io.StringWriter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.caboto.dao.AnnotationDao;
-import org.caboto.domain.Annotation;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
-import com.googlecode.vicovre.repositories.layout.Layout;
-import com.googlecode.vicovre.repositories.layout.LayoutPosition;
-import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
+import com.googlecode.vicovre.security.UnauthorizedException;
+import com.googlecode.vicovre.security.db.ReadOnlyACL;
+import com.googlecode.vicovre.security.db.ReadOnlyEntity;
+import com.googlecode.vicovre.security.db.SecurityDatabase;
+import com.googlecode.vicovre.security.rest.responses.GroupsResponse;
+import com.googlecode.vicovre.security.rest.responses.UsersResponse;
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.jersey.api.json.JSONMarshaller;
 
 public class DisplayRecordingController implements Controller {
 
     private RecordingDatabase database = null;
 
-    private LayoutRepository layoutRepository = null;
-
-    private AnnotationDao annotationDao = null;
-
-    private String recordingUriPrefix = null;
+    private SecurityDatabase securityDatabase = null;
 
     public DisplayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository) {
-        this(database, layoutRepository, null, null);
-    }
-
-    public DisplayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository, AnnotationDao annotationDao,
-            String recordingUriPrefix) {
+            SecurityDatabase securityDatabase) {
         this.database = database;
-        this.layoutRepository = layoutRepository;
-        this.annotationDao = annotationDao;
-        this.recordingUriPrefix = recordingUriPrefix;
+        this.securityDatabase = securityDatabase;
     }
 
     public ModelAndView handleRequest(HttpServletRequest request,
@@ -83,63 +74,55 @@ public class DisplayRecordingController implements Controller {
         String id = path.getParentFile().getName();
         folder = path.getParentFile().getParent();
 
-        int width = 0;
-        int height = 0;
         Recording recording = database.getRecording(folder, id);
-        if (recording != null) {
 
-            int noAnn = 0;
-            if (annotationDao != null) {
-                List<Annotation> annotations = annotationDao.getAnnotations(
-                        recordingUriPrefix + recording.getId());
-                HashMap<String, String> atypes = new HashMap<String, String>();
-                for (Annotation annotation : annotations) {
-                    if (annotation.getType().equals("LiveAnnotation")) {
-                        String type = annotation.getBody().get(
-                                "liveAnnotationType");
-                        if (!type.equals("Slide")) {
-                            atypes.put(type, type);
-                        }
-                    }
-                }
-                noAnn = atypes.size();
-            }
+        JSONJAXBContext context = new JSONJAXBContext(
+                JSONConfiguration.natural().build(),
+                UsersResponse.class, GroupsResponse.class,
+                ReadOnlyACL.class, ReadOnlyEntity.class);
+        JSONMarshaller marshaller = context.createJSONMarshaller();
 
-            List<ReplayLayout> replayLayouts = recording.getReplayLayouts();
-            if ((replayLayouts != null) && (replayLayouts.size() > 0)) {
-                int minX = Integer.MAX_VALUE;
-                int maxX = 0;
-                int minY = Integer.MAX_VALUE;
-                int maxY = 0;
-                for (ReplayLayout replayLayout : replayLayouts) {
-                    Layout layout = layoutRepository.findLayout(
-                            replayLayout.getName());
-                    for (LayoutPosition position :
-                            layout.getStreamPositions()) {
-                        if ((position.getX() + position.getWidth()) > maxX) {
-                            maxX = position.getX() + position.getWidth();
-                        }
-                        if ((position.getY() + position.getHeight()) > maxY) {
-                            maxY = position.getY() + position.getHeight();
-                        }
-                        if (position.getX() < minX) {
-                            minX = position.getX();
-                        }
-                        if (position.getY() < minY) {
-                            minY = position.getY();
-                        }
-                    }
-                }
-                width = maxX;
-                height = maxY + (noAnn * 25);
+        StringWriter usersWriter = new StringWriter();
+        try {
+            marshaller.marshallToJSON(
+                new UsersResponse(securityDatabase.getUsers()), usersWriter);
+        } catch (UnauthorizedException e) {
+            // Do Nothing
+        }
+
+        StringWriter groupsWriter = new StringWriter();
+        try {
+            marshaller.marshallToJSON(
+                new GroupsResponse(securityDatabase.getGroups()), groupsWriter);
+        } catch (UnauthorizedException e) {
+            // Do Nothing
+        }
+
+        StringWriter aclWriter = new StringWriter();
+        StringWriter readAclWriter = new StringWriter();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDatabase =
+                (SecureRecordingDatabase) database;
+            try {
+                marshaller.marshallToJSON(
+                        secureDatabase.getRecordingPlayAcl(recording),
+                        aclWriter);
+                marshaller.marshallToJSON(
+                        secureDatabase.getRecordingReadAcl(recording),
+                        readAclWriter);
+            } catch (UnauthorizedException e) {
+                // Do Nothing
             }
         }
 
+
         ModelAndView modelAndView = new ModelAndView("displayRecording");
         modelAndView.addObject("recording", recording);
-        modelAndView.addObject("width", width);
-        modelAndView.addObject("height", height);
-        modelAndView.addObject("folder", folder);
+        modelAndView.addObject("usersJSON", usersWriter.toString());
+        modelAndView.addObject("groupsJSON", groupsWriter.toString());
+        modelAndView.addObject("role", securityDatabase.getRole());
+        modelAndView.addObject("aclJSON", aclWriter.toString());
+        modelAndView.addObject("readAclJSON", readAclWriter.toString());
         return modelAndView;
     }
 }

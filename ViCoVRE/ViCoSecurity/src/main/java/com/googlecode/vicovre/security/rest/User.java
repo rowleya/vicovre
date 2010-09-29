@@ -33,6 +33,8 @@
 package com.googlecode.vicovre.security.rest;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.ws.rs.DELETE;
@@ -42,7 +44,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.mail.EmailException;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.rest.responses.UsersResponse;
@@ -70,15 +76,30 @@ public class User {
 
     @Path("{username}")
     @PUT
-    public Response addUser(@PathParam("username") String username,
+    public Response addUser(@Context UriInfo uriInfo,
+            @PathParam("username") String username,
             @QueryParam("password") String password,
-            @QueryParam("role") String role) throws IOException {
+            @QueryParam("role") String role,
+            @QueryParam("successUrl") String successUrl)
+            throws IOException, EmailException {
         if (role == null) {
-            database.addUser(username, password);
+            String verifyUri = uriInfo.getBaseUriBuilder().path("user").path(
+                "verify").path("$hash").queryParam(
+                "successUrl", successUrl).build().toString();
+            database.addUnverifiedUser(username, password, verifyUri);
         } else {
             database.addUser(username, password, role);
         }
         return Response.ok().build();
+    }
+
+    @Path("verify/{hash}")
+    @GET
+    public Response verifyUser(@PathParam("hash") String hash,
+            @QueryParam("successUrl") String successUrl)
+            throws URISyntaxException {
+        database.verifyUser(hash);
+        return Response.status(302).location(new URI(successUrl)).build();
     }
 
     @Path("{username}/password")
@@ -94,6 +115,16 @@ public class User {
         return Response.ok().build();
     }
 
+
+    @Path("password")
+    @PUT
+    public Response setPassword(
+            @QueryParam("oldPassword") String oldPassword,
+            @QueryParam("password") String password) throws IOException {
+        database.setPassword(oldPassword, password);
+        return Response.ok().build();
+    }
+
     @Path("{username}/role")
     @PUT
     public Response setUserRole(@PathParam("username") String username,
@@ -104,7 +135,8 @@ public class User {
 
     @Path("{username}")
     @DELETE
-    public Response deleteUser(@PathParam("username") String username) {
+    public Response deleteUser(@PathParam("username") String username)
+            throws IOException {
         database.deleteUser(username);
         return Response.ok().build();
     }

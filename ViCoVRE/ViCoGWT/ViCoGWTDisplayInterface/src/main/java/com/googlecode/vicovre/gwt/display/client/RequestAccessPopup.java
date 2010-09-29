@@ -30,68 +30,56 @@
  *
  */
 
-package com.googlecode.vicovre.security.db;
+package com.googlecode.vicovre.gwt.display.client;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.ModalPopup;
 
-public class Group extends Entity {
+public class RequestAccessPopup extends ModalPopup<VerticalPanel>
+        implements ClickHandler {
 
-    private User owner = null;
+    private TextBox emailBox = new TextBox();
 
-    private String name = null;
+    private Button emailButton = new Button("Request Access");
 
-    private Set<User> users = new HashSet<User>();
+    private String url = null;
 
-    protected Group(String name, User owner) {
-        this.name = name;
-        this.owner = owner;
+    private String baseUrl = null;
+
+    private String folder = null;
+
+    private String recordingId = null;
+
+    public RequestAccessPopup(String baseUrl, String url, String folder,
+            String recordingId) {
+        super(new VerticalPanel());
+        this.baseUrl = baseUrl;
+        this.url = url;
+        this.folder = folder;
+        this.recordingId = recordingId;
+
+        VerticalPanel panel = getWidget();
+        panel.setWidth("400px");
+        panel.setHeight("100px");
+
+        panel.add(new Label("You do not have access to this recording."));
+        panel.add(new Label(
+                "To request access, please enter your e-mail address below:"));
+        panel.add(emailBox);
+        panel.add(emailButton);
+
+        emailBox.setWidth("100%");
+        emailButton.addClickHandler(this);
     }
 
-    protected void setOwner(User owner) {
-        this.owner = owner;
+    public void onClick(ClickEvent event) {
+        AccessRequester.requestAccess(baseUrl, url, folder, recordingId,
+                emailBox.getText());
     }
 
-    protected void clearUsers() {
-        for (User user : users) {
-            user.deleteGroup(this);
-        }
-    }
-
-    protected void addUser(User user) {
-        if (this.users.add(user)) {
-            user.addGroup(this);
-        }
-    }
-
-    protected void deleteUser(User user) {
-        if (this.users.remove(user)) {
-            user.deleteGroup(this);
-        }
-    }
-
-    protected User getOwner() {
-        return owner;
-    }
-
-    protected String getName() {
-        return name;
-    }
-
-    protected List<User> getUsers() {
-        return new Vector<User>(users);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj instanceof Group) {
-            return ((Group) obj).name.equals(name);
-        }
-        return false;
-    }
-
-    public int hashCode() {
-        return name.hashCode();
-    }
 }

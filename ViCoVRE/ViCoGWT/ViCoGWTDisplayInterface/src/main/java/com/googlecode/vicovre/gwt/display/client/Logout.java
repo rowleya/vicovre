@@ -30,34 +30,48 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest.json;
+package com.googlecode.vicovre.gwt.display.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.restlet.gwt.data.Response;
 
-public class JSONUser extends JavaScriptObject {
+import com.google.gwt.user.client.Window.Location;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.WaitPopup;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 
-    public static final String ROLE_GUEST = "User";
+public class Logout extends AbstractRestCall {
 
-    public static final String ROLE_USER = "AuthUser";
+    private String baseUrl = null;
 
-    public static final String ROLE_WRITER = "Writer";
+    private String url = null;
 
-    public static final String ROLE_ADMINISTRATOR = "Administrator";
+    private WaitPopup waitPopup = new WaitPopup("Logging Out", true);
 
-    protected JSONUser() {
-        // Does Nothing
+    public static void logout(String baseUrl, String url) {
+        Logout logout = new Logout(baseUrl, url);
+        logout.go();
     }
 
-    public static final native JSONUser parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
+    public Logout(String baseUrl, String url) {
+        waitPopup.setBaseUrl(baseUrl);
+        this.baseUrl = baseUrl;
+        this.url = url + "auth/logout";
+    }
 
-    public final native String getUsername() /*-{
-        return this.username;
-    }-*/;
+    public void go() {
+        waitPopup.center();
+        go(url);
+    }
 
-    public final native String getRole() /*-{
-        return this.role;
-    }-*/;
+    protected void onError(String message) {
+        waitPopup.hide();
+        MessagePopup popup = new MessagePopup("Error logging out: " + message,
+                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
+    }
 
+    protected void onSuccess(Response response) {
+        Location.reload();
+    }
 }

@@ -60,6 +60,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.mail.EmailException;
+
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Recording;
@@ -72,6 +74,7 @@ import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
+import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.RecordingsResponse;
 import com.googlecode.vicovre.web.rest.response.ReplayLayoutsResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsResponse;
@@ -82,10 +85,17 @@ public class RecordingHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
+    private String adminEmail = null;
+
+    private Emailer emailer = null;
+
     public RecordingHandler(@Inject("database") RecordingDatabase database,
-            @Inject("layoutRepository") LayoutRepository layoutRepository) {
+            @Inject("layoutRepository") LayoutRepository layoutRepository,
+            @Inject Emailer emailer) {
         super(database);
         this.layoutRepository = layoutRepository;
+        this.adminEmail = emailer.getAdminEmailAddress();
+        this.emailer = emailer;
         if (!Misc.isCodecsConfigured()) {
             try {
                 Misc.configureCodecs("/knownCodecs.xml");
@@ -303,7 +313,7 @@ public class RecordingHandler extends AbstractHandler {
             throws IOException {
         String folder = getFolderPath(uriInfo, 1, 3);
         String id = getId(uriInfo, 2);
-        String acltype = getId(uriInfo, 1);
+        String acltype = getId(uriInfo, 0);
 
         Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
@@ -314,17 +324,19 @@ public class RecordingHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            if (exceptionTypes.size() != exceptionNames.size()) {
-                return Response.status(Status.BAD_REQUEST).entity(
+            WriteOnlyEntity[] exceptions = new WriteOnlyEntity[0];
+            if ((exceptionTypes != null) && (exceptionNames != null)) {
+                if (exceptionTypes.size() != exceptionNames.size()) {
+                    return Response.status(Status.BAD_REQUEST).entity(
                         "The number of exceptionType parameters must match"
                         + " the number of exceptionName parameters").build();
-            }
-            WriteOnlyEntity[] exceptions =
-                new WriteOnlyEntity[exceptionTypes.size()];
-            for (int i = 0; i < exceptionTypes.size(); i++) {
-                String type = exceptionTypes.get(i);
-                String name = exceptionNames.get(i);
-                exceptions[i] = new WriteOnlyEntity(name, type);
+                }
+                exceptions = new WriteOnlyEntity[exceptionTypes.size()];
+                for (int i = 0; i < exceptionTypes.size(); i++) {
+                    String type = exceptionTypes.get(i);
+                    String name = exceptionNames.get(i);
+                    exceptions[i] = new WriteOnlyEntity(name, type);
+                }
             }
             if (acltype.equals("play")) {
                 secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
@@ -360,6 +372,43 @@ public class RecordingHandler extends AbstractHandler {
                         secureDb.getRecordingReadAcl(recording)).build();
             }
         }
+        return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/requestAccess")
+    @GET
+    public Response requestAccess(@Context UriInfo uriInfo,
+            @QueryParam("emailAddress") String emailAddress)
+            throws IOException, EmailException {
+        String folder = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+        String email = recording.getEmailAddress();
+        if (email == null) {
+            email = adminEmail;
+        }
+
+        String subject = "Access Request for " + folder + "/" + id
+            + " (" + recording.getMetadata().getPrimaryValue() + ")";
+        String message = "A user with e-mail address " + emailAddress
+            + " is requesting access to one of your recordings:\n";
+        message += "    " + recording.getMetadata().getPrimaryValue() + "\n\n";
+        message += "If you would like to grant access to this recording,"
+            + " please go to:\n";
+        message += uriInfo.getBaseUriBuilder().path("..").path(
+                recording.getFolder()).path(recording.getId()).path(
+                "displayRecording.do").build().normalize().toString() + "\n";
+        message += "log in, and then click on the \"Set Permissions\" button."
+            + " You can then add the user from the list on the right and then"
+            + " click on the OK button to set the changed permissions.";
+        message += "If you do not want to grant access,"
+            + " please ignore this message.\n";
+
+        emailer.send(email, subject, message);
         return Response.ok().build();
     }
 

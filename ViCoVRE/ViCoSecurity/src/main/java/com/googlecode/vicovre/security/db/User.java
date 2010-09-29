@@ -114,15 +114,4 @@ public class User extends Entity {
     protected boolean isOwner() {
         return !owned.isEmpty();
     }
-
-    protected boolean delete() {
-        if (isOwner()) {
-            return false;
-        }
-        super.delete();
-        for (Group group : groups) {
-            group.deleteUser(this);
-        }
-        return true;
-    }
 }

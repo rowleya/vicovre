@@ -65,7 +65,7 @@ public class UserReader {
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         writer.println("<user>");
         writer.println("<username>" + user.getUsername() + "</username>");
-        writer.println("<role>" + user.getRole() + "</role>");
+        writer.println("<role>" + user.getRole().getName() + "</role>");
         writer.println("<password>" + user.getPasswordHash() + "</password>");
         writer.println("</user>");
         writer.flush();

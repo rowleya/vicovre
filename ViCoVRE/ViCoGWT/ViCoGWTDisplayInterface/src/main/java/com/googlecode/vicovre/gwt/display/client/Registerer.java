@@ -30,61 +30,64 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.recorder.client.rest;
+package com.googlecode.vicovre.gwt.display.client;
 
-import org.restlet.gwt.data.MediaType;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.google.gwt.http.client.URL;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class Registerer extends AbstractRestCall {
 
-    private StatusPanel panel = null;
-
-    private ActionLoader loader = null;
+    private String baseUrl;
 
     private String url = null;
 
-    public static void load(StatusPanel panel, ActionLoader loader,
-            String url) {
-        CurrentUserLoader userLoader =
-            new CurrentUserLoader(panel, loader, url);
-        userLoader.go();
+    private WaitPopup waitPopup = new WaitPopup("Registering", true);
+
+    public static void register(String baseUrl, String url, String username,
+            String password, String successUrl) {
+        Registerer registerer = new Registerer(baseUrl, url, username, password,
+                successUrl);
+        registerer.go();
     }
 
-    public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
-            String url) {
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "auth/user";
+    public Registerer(String baseUrl, String url, String username,
+            String password, String successUrl) {
+        waitPopup.setBaseUrl(baseUrl);
+        this.baseUrl = baseUrl;
+        this.url = url + "user/" + URL.encodeComponent(username)
+            + "?password=" + URL.encodeComponent(password)
+            + "&successUrl=" + URL.encodeComponent(successUrl);
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        waitPopup.center();
+        go(url, Method.PUT);
     }
 
     protected void onError(String message) {
-        GWT.log("Error loading current user: " + message);
-        loader.itemFailed("Error loading current user: " + message);
+        if (!waitPopup.wasCancelled()) {
+            waitPopup.hide();
+            MessagePopup popup = new MessagePopup(
+                    "Error registering: " + message,
+                    null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+            popup.center();
+        }
     }
 
     protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if (object != null) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
+        if (!waitPopup.wasCancelled()) {
+            waitPopup.hide();
+            MessagePopup popup = new MessagePopup(
+                    "Please check your e-mail to complete the registration",
+                    null, baseUrl + MessagePopup.INFO, MessageResponse.OK);
+            popup.center();
         }
-        loader.itemLoaded();
     }
 
 }
