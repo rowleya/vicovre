@@ -153,7 +153,7 @@ public class HarvestItemLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONHarvestSources harvestSourceList =
                 JSONHarvestSources.parse(object.toString());
             JsArray<JSONHarvestSource> harvestSources =

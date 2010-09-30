@@ -124,7 +124,7 @@ public class PlayItemLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONRecordings recordingsList =
                 JSONRecordings.parse(object.toString());
             JsArray<JSONRecording> recordings = recordingsList.getRecordings();

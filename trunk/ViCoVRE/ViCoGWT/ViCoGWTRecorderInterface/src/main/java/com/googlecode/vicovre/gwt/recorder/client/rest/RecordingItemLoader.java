@@ -162,7 +162,7 @@ public class RecordingItemLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONUnfinishedRecordings recordingsList =
                 JSONUnfinishedRecordings.parse(object.toString());
             JsArray<JSONUnfinishedRecording> recordings =
