@@ -572,10 +572,19 @@
         <ffmpeg.make/>
     </target>
 
-    <target name="ffmpeg.make.unix" if="os.isUnix">
+    <target name="ffmpeg.make.unix32" if="os.isUnix32">
         <ffmpeg.make>
             <configureopts>
                 <arg value="--enable-pthreads"/>
+            </configureopts>
+        </ffmpeg.make>
+    </target>
+
+    <target name="ffmpeg.make.unix64" if="os.isUnix64">
+        <ffmpeg.make>
+            <configureopts>
+                <arg value="--enable-pthreads"/>
+                <arg value="--arch=x86_64"/>
             </configureopts>
         </ffmpeg.make>
     </target>
@@ -589,7 +598,8 @@
         <antcall target="ffmpeg.make.windows"/>
         <antcall target="ffmpeg.make.mac64"/>
         <antcall target="ffmpeg.make.mac32"/>
-        <antcall target="ffmpeg.make.unix"/>
+        <antcall target="ffmpeg.make.unix32"/>
+        <antcall target="ffmpeg.make.unix64"/>
         <copy tofile="${prefix.path.real}/include/libavformat/avi.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/avi.h"/>
         <copy tofile="${prefix.path.real}/include/libavformat/riff.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/riff.h"/>
         <copy tofile="${prefix.path.real}/include/libavformat/rtpdec.h" file="${extract.path}/ffmpeg${ffmpeg.version}/libavformat/rtpdec.h"/>
