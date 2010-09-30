@@ -179,10 +179,10 @@ public class FlvController implements Controller {
                         + times[pos] + EXT);
             }
             // Generate the stream
+            response.flushBuffer();
             extractor.transferToStream(response.getOutputStream(),
                     offsetShift, offset,
                     duration - offset, frameFile);
-            response.flushBuffer();
         } catch (EOFException e) {
             System.err.println("User disconnected");
         } catch (SocketException e) {
@@ -214,7 +214,8 @@ public class FlvController implements Controller {
          */
         public boolean accept(File pathname) {
             if (pathname.getName().startsWith(streamName)
-                    && pathname.getName().endsWith(EXT)) {
+                    && pathname.getName().endsWith(EXT)
+                    && !pathname.getName().contains("preview_")) {
                 return true;
             }
             return false;
