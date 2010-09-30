@@ -65,7 +65,7 @@ public class Application implements EntryPoint {
 
     protected Layout[] getLayouts(String parameter) {
         String layoutsJSON = parameters.get(parameter);
-        if (layoutsJSON != null) {
+        if (layoutsJSON != null && !layoutsJSON.equals("null")) {
             JSONLayouts jsonLayouts = JSONLayouts.parse(layoutsJSON);
             JsArray<JSONLayout> layoutArray = jsonLayouts.getLayouts();
             Layout[] layouts = new Layout[layoutArray.length()];
