@@ -246,7 +246,7 @@
             <confopts>
                 <arg value="--disable-shared" />
                 <arg value="--enable-static" />
-				<arg value="--with-mp4v2=no"/>
+                <arg value="--with-mp4v2=no"/>
             </confopts>
         </configureandmake>
     </target>
@@ -433,7 +433,7 @@
         <condition property="gsm.dontrun">
             <and>
                 <available file="${prefix.path.real}/lib/libgsm.a"/>
-                <available file="${prefix.path.real}/include/gsm.h"/>
+                <available file="${prefix.path.real}/include/gsm/gsm.h"/>
             </and>
         </condition>
     </target>
@@ -447,9 +447,10 @@
             <arg value="${extract.path}/gsm-1.0-pl13/lib/libgsm.a"/>
             <arg value="${prefix.path}/lib/libgsm.a"/>
         </exec>
+        <mkdir dir="${prefix.path}/include/gsm"/>
         <exec executable="cp">
             <arg value="${extract.path}/gsm-1.0-pl13/inc/gsm.h"/>
-            <arg value="${prefix.path}/include/gsm.h"/>
+            <arg value="${prefix.path}/include/gsm/gsm.h"/>
         </exec>
     </target>
 
@@ -527,8 +528,8 @@
             <configureandmake library="ffmpeg${ffmpeg.version}" ldflags="-L${prefix.path}/lib" cflags="-I${prefix.path}/include">
                 <confopts>
                     <arg value="--enable-gpl"/>
-					<arg value="--enable-nonfree"/>
-					<arg value="--enable-version3"/>
+                    <arg value="--enable-nonfree"/>
+                    <arg value="--enable-version3"/>
                     <arg value="--disable-ffplay"/>
                     <arg value="--disable-ffserver"/>
                     <arg value="--enable-postproc"/>
