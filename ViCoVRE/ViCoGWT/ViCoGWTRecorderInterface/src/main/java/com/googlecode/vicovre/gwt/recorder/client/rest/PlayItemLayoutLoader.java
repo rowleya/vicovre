@@ -90,7 +90,7 @@ public class PlayItemLayoutLoader extends AbstractRestCall {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
         List<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONReplayLayouts replayLayoutList = JSONReplayLayouts.parse(
                     object.toString());
             JsArray<JSONReplayLayout> layouts =

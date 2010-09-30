@@ -102,7 +102,7 @@ public class RecordingItemStopper extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONRecording recording = JSONRecording.parse(object.toString());
             if (recording != null) {
 

@@ -78,7 +78,7 @@ public class CurrentUserLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONUser user = JSONUser.parse(object.toString());
             if (user.getUsername() != null) {
                 panel.setLogin(user.getUsername(), user.getRole());

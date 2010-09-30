@@ -74,7 +74,7 @@ public class FolderLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONObject object = representation.getValue().isObject();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONValue folderValue = object.get("folder");
             if (folderValue != null) {
                 JSONArray folders = folderValue.isArray();

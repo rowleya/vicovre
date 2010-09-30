@@ -88,7 +88,7 @@ public class PlayItemStreamLoader extends AbstractRestCall {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONValue object = representation.getValue();
         List<JSONStream> streams = new Vector<JSONStream>();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONStreams streamList = JSONStreams.parse(object.toString());
             JsArray<JSONStream> streamArray = streamList.getStreams();
             for (int i = 0; i < streamArray.length(); i++) {
