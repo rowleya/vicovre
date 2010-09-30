@@ -584,7 +584,7 @@
         <ffmpeg.make>
             <configureopts>
                 <arg value="--enable-pthreads"/>
-                <arg value="--arch=x86_64"/>
+                <arg value="--extra-cflags=-fPIC"/>
             </configureopts>
         </ffmpeg.make>
     </target>
