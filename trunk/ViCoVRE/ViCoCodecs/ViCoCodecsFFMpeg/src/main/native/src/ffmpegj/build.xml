@@ -141,10 +141,12 @@
 
     <macrodef name="build.unix">
         <attribute name="arch"/>
+        <element name="unixccopts" optional="true"/>
         <sequential>
             <build cc="gcc" output="@{arch}/linux/lib${ant.project.name}.so">
                 <ccopts>
                     <arg line="-shared" />
+                    <unixccopts/>
                 </ccopts>
                 <includes>
                     <arg line="-I"/>
@@ -170,7 +172,11 @@
     </target>
 
     <target name="build.unix64" if="os.isUnix64">
-        <build.unix arch="amd64"/>
+        <build.unix arch="amd64">
+            <unixccopts>
+                <arg line="-fPIC"/>
+            </unixccopts>
+        </build.unix>
     </target>
 
     <target name="main">
