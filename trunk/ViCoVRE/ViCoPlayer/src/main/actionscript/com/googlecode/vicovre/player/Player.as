@@ -473,7 +473,7 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
                 var isBufferFull:Boolean = true;
                 for (var i=0; i<videoStreams.length; i++){
                     if (!videoStreams[i].isBufferFull()) {
-                        logger.debug("stream["+i+"] Buffer not full");
+                        //logger.debug("stream["+i+"] Buffer not full");
                         isBufferFull = false;
                         break;
                     }
@@ -508,7 +508,7 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
                 var isBufferEmpty:Boolean = false;
                 for (var i=0; i<videoStreams.length; i++){
                     if (videoStreams[i].isBufferEmpty()) {
-                        logger.debug("stream["+i+"] Buffer empty: " + videoStreams[i].getTime() + " of " + videoStreams[i].getDuration());
+                        //logger.debug("stream["+i+"] Buffer empty: " + videoStreams[i].getTime() + " of " + videoStreams[i].getDuration());
                         isBufferEmpty = true;
                         break;
                     }

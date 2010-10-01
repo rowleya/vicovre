@@ -105,8 +105,6 @@ class com.googlecode.vicovre.player.VideoStream {
 
     public function setUrl(url:String, syncStreams:Array){
         this.videoUrl = url;
-        this.parent.logger.debug("URL = " + url);
-        this.parent.logger.debug("indexof ? = " + url.indexOf("?"));
         if (url.indexOf("?") != -1) {
             this.videoUrl += "&";
         } else {
@@ -132,6 +130,8 @@ class com.googlecode.vicovre.player.VideoStream {
             var as=audioStreams[i];
             this.videoUrl += "&audio=" + as["ssrc"];
         }
+
+        this.parent.logger.debug("URL = " + videoUrl);
     }
 
     public function setVolume(volume:Number) {
@@ -146,6 +146,9 @@ class com.googlecode.vicovre.player.VideoStream {
     }
 
     public function updateStatus(status:Object) {
+        if (status["level"] == "error") {
+            parent.logger.debug("Error loading video: " + status["code"]);
+        }
         if (status["code"] == "NetStream.Play.StreamNotFound") {
             videoDisplay.beginFill(0x000000);
             videoDisplay.moveTo(0, 0);
@@ -162,7 +165,6 @@ class com.googlecode.vicovre.player.VideoStream {
             error.setTextFormat(format);
             error.text = "Error loading stream";
             this.videoDuration = 0;
-            parent.logger.debug("Error loading video");
             this.bufferFlushing = true;
         } else if (status["code"] == "NetStream.Buffer.Flush") {
             this.bufferFlushing = true;
