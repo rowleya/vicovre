@@ -67,7 +67,7 @@ public class VenueServerLoader extends AbstractRestCall {
     protected void onSuccess(Response response) {
         JsonRepresentation representation = response.getEntityAsJson();
         JSONObject object = representation.getValue().isObject();
-        if (object != null) {
+        if ((object != null) && (object.isNull() == null)) {
             JSONValue serverValue = object.get("server");
             if (serverValue != null) {
                 JSONArray servers = serverValue.isArray();
