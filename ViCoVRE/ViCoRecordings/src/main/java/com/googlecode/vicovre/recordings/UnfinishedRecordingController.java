@@ -214,8 +214,9 @@ public class UnfinishedRecordingController
                 if (emailAddress != null) {
                     finishedRecording.setEmailAddress(emailAddress);
                 }
-                database.addRecording(finishedRecording, recording);
+
                 recording.stopRecording();
+                database.addRecording(finishedRecording, recording);
                 database.deleteUnfinishedRecording(recording);
                 recording.setStatus(UnfinishedRecording.COMPLETED);
 
