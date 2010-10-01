@@ -247,6 +247,13 @@ public class BridgedRTPConnector implements RTPConnector {
         try {
             synchronized (closeSync) {
                 closed = true;
+                if (singleStreamReader != null) {
+                    singleStreamReader.close();
+                } else if (multiStreamReaders != null) {
+                    for (MultiStreamReader reader : multiStreamReaders) {
+                        reader.close();
+                    }
+                }
                 rtpInput.close();
                 rtcpInput.close();
                 client.leaveBridge();
