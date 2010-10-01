@@ -283,7 +283,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             throw new UnauthorizedException(
                     "Only the owner of the recording can see it");
         }
-        return new SecureRecording(this, database.getRecording(folder, id));
+        Recording recording = database.getRecording(folder, id);
+        if (recording != null) {
+            return new SecureRecording(this, recording);
+        }
+        return null;
     }
 
     public List<Recording> getRecordings(String folder) {
