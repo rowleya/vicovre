@@ -40,6 +40,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
@@ -53,6 +57,8 @@ import com.googlecode.vicovre.recordings.Stream;
  * @author Andrew G D Rowley
  * @version 1.0
  */
+@XmlRootElement(name="recording")
+@XmlAccessorType(XmlAccessType.NONE)
 public class InsecureRecording extends Recording {
 
     // The recording metadata

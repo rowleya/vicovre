@@ -4,6 +4,10 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
@@ -42,6 +46,8 @@ import com.googlecode.vicovre.security.UnauthorizedException;
  *
  */
 
+@XmlRootElement(name="recording")
+@XmlAccessorType(XmlAccessType.NONE)
 public class SecureRecording extends Recording {
 
     private Recording recording = null;
