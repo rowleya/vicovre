@@ -40,6 +40,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
@@ -319,6 +323,7 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
         recording.stopRecording();
         InsecureFolder folder = getFolder(getFile(recording.getFolder()));
+        folder.deleteUnfinishedRecording(recording.getId());
         File file = new File(folder.getFile(), recording.getId()
                 + RecordingConstants.UNFINISHED_RECORDING_INDEX);
         File metadata = new File(folder.getFile(),
