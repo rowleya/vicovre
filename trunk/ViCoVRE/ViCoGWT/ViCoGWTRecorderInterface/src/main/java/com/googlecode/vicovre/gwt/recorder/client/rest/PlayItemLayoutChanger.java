@@ -61,7 +61,7 @@ public class PlayItemLayoutChanger extends AbstractRestCall {
         if (!this.url.endsWith("/")) {
             this.url += "/";
         }
-        this.url += popup.getId();
+        this.url += popup.getId() + "/layout";
     }
 
     public void go() {
