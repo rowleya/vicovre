@@ -151,7 +151,7 @@ public class FFMPEGTrack implements Track, FormatControl {
     public Format[] getSupportedFormats() {
         if (format instanceof VideoFormat) {
             return Utils.getVideoFormats(null,
-                    ((VideoFormat) format).getFrameRate());
+                    ((VideoFormat) format).getFrameRate(), null);
         } else if (format instanceof AudioFormat) {
             return new Format[]{format};
         }

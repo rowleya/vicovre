@@ -38,9 +38,7 @@ import javax.media.Buffer;
 import javax.media.Codec;
 import javax.media.Format;
 import javax.media.ResourceUnavailableException;
-import javax.media.format.RGBFormat;
 import javax.media.format.VideoFormat;
-import javax.media.format.YUVFormat;
 
 import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
 
@@ -71,15 +69,15 @@ public class SWScaleCodec implements Codec {
     private Integer openSync = new Integer(0);
 
     public Format[] getSupportedInputFormats() {
-        return Utils.getVideoFormats(null, -1);
+        return Utils.getVideoFormats(null, -1, null);
     }
 
     public Format[] getSupportedOutputFormats(Format input) {
         if (input == null) {
-            return Utils.getVideoFormats(null, -1);
+            return Utils.getVideoFormats(null, -1, null);
         }
         VideoFormat vf = (VideoFormat) input;
-        return Utils.getVideoFormats(null, vf.getFrameRate());
+        return Utils.getVideoFormats(null, vf.getFrameRate(), null);
 
     }
 

@@ -34,7 +34,7 @@ package com.googlecode.vicovre.codecs.ffmpeg.video;
 
 import javax.media.format.VideoFormat;
 
-import com.googlecode.vicovre.codecs.ffmpeg.Log;
+import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 /**
@@ -51,7 +51,7 @@ public class FLV1Encoder extends FFMPEGVideoCodec {
     public FLV1Encoder() {
         super(Utils.CODEC_ID_FLV1,
                 new VideoFormat[]{new VideoFormat("flv1")},
-                true);
+                true, PixelFormat.PIX_FMT_YUV420P);
     }
 
     public VideoCodecContext getContext() {

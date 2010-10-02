@@ -80,13 +80,16 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
     private boolean nextKey = true;
 
     protected FFMPEGVideoCodec(int codecId,
-            VideoFormat[] encodedFormats, boolean encode) {
+            VideoFormat[] encodedFormats, boolean encode,
+            PixelFormat defaultPixelFormat) {
         this.codecId = codecId;
         if (encode) {
-            this.inputFormats = Utils.getVideoFormats(null, -1);
+            this.inputFormats = Utils.getVideoFormats(null, -1,
+                    defaultPixelFormat);
             this.outputFormats = encodedFormats;
         } else {
-            this.outputFormats = Utils.getVideoFormats(null, -1);
+            this.outputFormats = Utils.getVideoFormats(null, -1,
+                    defaultPixelFormat);
             this.inputFormats = encodedFormats;
         }
         this.encode = encode;
