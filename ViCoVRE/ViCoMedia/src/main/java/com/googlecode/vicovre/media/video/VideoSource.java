@@ -107,7 +107,7 @@ public class VideoSource {
     }
 
     public long getOffset() {
-        return source.getOffset() + offsetShift;
+        return (long) (currentOffset + msPerRead);
     }
 
     public void setTimestampOffset(long timestampOffset) {
