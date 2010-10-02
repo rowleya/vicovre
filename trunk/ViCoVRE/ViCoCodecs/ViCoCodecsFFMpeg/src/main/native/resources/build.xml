@@ -478,7 +478,7 @@
         <get dest="${download.path}/ffmpeg-patch${ffmpeg.version}" src="${ffmpeg.patch.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/ffmpeg-patch${ffmpeg.version}" compression="${ffmpeg.patch.compression}" dest="${extract.path}"/>
         <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/dsputil_mmx.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/x86/dsputil_mmx.c"/>
-        <!--<patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/h264.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/h264.c"/> -->
+        <patch patchfile="${extract.path}/ffmpeg-patch${ffmpeg.version}/h264_refs.c.patch" originalfile="${extract.path}/ffmpeg${ffmpeg.version}/libavcodec/h264_refs.c"/>
     </target>
 
     <target name="ffmpeg.check">
