@@ -84,6 +84,8 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
     private Integer currentBufferSync = new Integer(0);
 
+    private boolean[] bufferTransferred = null;
+
     private byte[] data = new byte[DATA_LENGTH];
 
     private long length = SourceStream.LENGTH_UNKNOWN;
@@ -92,7 +94,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
     private Integer startSync = new Integer(0);
 
-    private LinkedList<Buffer> pushedBuffers = new LinkedList<Buffer>();
+    private LinkedList<Integer> pushedBuffers = new LinkedList<Integer>();
 
     private int maxBufferedBuffers = 1;
 
@@ -113,8 +115,34 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             maxBufferedBuffers = readAhead.getMaxBufferReadAhead();
         }
         inputBuffer = new Buffer[maxBufferedBuffers];
+        bufferTransferred = new boolean[maxBufferedBuffers];
         for (int i = 0; i < inputBuffer.length; i++) {
             inputBuffer[i] = new Buffer();
+            bufferTransferred[i] = true;
+        }
+    }
+
+    private int getNextBuffer() {
+        int buffer = 0;
+        synchronized (currentBufferSync) {
+            buffer = currentBuffer;
+            currentBuffer = (currentBuffer + 1) % inputBuffer.length;
+            while (!bufferTransferred[buffer] && !done) {
+                try {
+                    currentBufferSync.wait();
+                } catch (InterruptedException e) {
+                    // Do Nothing
+                }
+            }
+            bufferTransferred[buffer] = false;
+        }
+        return buffer;
+    }
+
+    private void releaseBuffer(int buffer) {
+        synchronized (currentBufferSync) {
+            bufferTransferred[buffer] = true;
+            currentBufferSync.notifyAll();
         }
     }
 
@@ -132,7 +160,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
         }
     }
 
-    protected void addBuffer(Buffer buffer) {
+    protected void addBuffer(int index) {
         synchronized (pushedBuffers) {
             while (!done && (pushedBuffers.size() >= maxBufferedBuffers)) {
                 try {
@@ -142,14 +170,14 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                 }
             }
             if (!done) {
-                pushedBuffers.addLast(buffer);
+                pushedBuffers.addLast(index);
                 pushedBuffers.notifyAll();
             }
         }
     }
 
     public void transferNextBuffer() {
-        Buffer buffer = null;
+        int index = -1;
         synchronized (pushedBuffers) {
             while (!done && pushedBuffers.isEmpty()) {
                 try {
@@ -159,13 +187,14 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                 }
             }
             if (!done) {
-                buffer = pushedBuffers.removeFirst();
+                index = pushedBuffers.removeFirst();
                 pushedBuffers.notifyAll();
             }
         }
-        if (buffer != null) {
+        if (index != -1) {
             try {
-                handleBuffer(buffer);
+                handleBuffer(inputBuffer[index]);
+                releaseBuffer(index);
             } catch (EOFException e) {
                 System.err.println("Connection closed");
                 close();
@@ -231,14 +260,14 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             length = streams[track].getContentLength();
             while (!done) {
                 try {
-                    currentBuffer = (currentBuffer + 1) % inputBuffer.length;
-                    inputBuffer[currentBuffer].setData(null);
-                    inputBuffer[currentBuffer].setLength(0);
-                    inputBuffer[currentBuffer].setOffset(0);
-                    inputBuffer[currentBuffer].setEOM(false);
-                    inputBuffer[currentBuffer].setDiscard(false);
-                    stream.read(inputBuffer[currentBuffer]);
-                    addBuffer(inputBuffer[currentBuffer]);
+                    int buffer = getNextBuffer();
+                    inputBuffer[buffer].setData(null);
+                    inputBuffer[buffer].setLength(0);
+                    inputBuffer[buffer].setOffset(0);
+                    inputBuffer[buffer].setEOM(false);
+                    inputBuffer[buffer].setDiscard(false);
+                    stream.read(inputBuffer[buffer]);
+                    addBuffer(buffer);
                 } catch (IOException e) {
                     e.printStackTrace();
                     synchronized (this) {
@@ -263,19 +292,19 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             length = streams[track].getContentLength();
             while (!done) {
                 try {
-                    currentBuffer = (currentBuffer + 1) % inputBuffer.length;
+                    int buffer = getNextBuffer();
                     int bytesRead = stream.read(data, 0, data.length);
                     if (bytesRead != -1) {
-                        inputBuffer[currentBuffer].setData(data);
-                        inputBuffer[currentBuffer].setOffset(0);
-                        inputBuffer[currentBuffer].setLength(bytesRead);
-                        inputBuffer[currentBuffer].setEOM(false);
-                        inputBuffer[currentBuffer].setDiscard(false);
-                        addBuffer(inputBuffer[currentBuffer]);
+                        inputBuffer[buffer].setData(data);
+                        inputBuffer[buffer].setOffset(0);
+                        inputBuffer[buffer].setLength(bytesRead);
+                        inputBuffer[buffer].setEOM(false);
+                        inputBuffer[buffer].setDiscard(false);
+                        addBuffer(buffer);
                     } else {
-                        inputBuffer[currentBuffer].setEOM(true);
-                        inputBuffer[currentBuffer].setDiscard(true);
-                        addBuffer(inputBuffer[currentBuffer]);
+                        inputBuffer[buffer].setEOM(true);
+                        inputBuffer[buffer].setDiscard(true);
+                        addBuffer(buffer);
                     }
                 } catch (IOException e) {
                     close();
@@ -317,7 +346,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
 
         data = null;
         for (int i = 0; i < inputBuffer.length; i++) {
-            inputBuffer[currentBuffer].setData(null);
+            inputBuffer[i].setData(null);
         }
         System.err.println("Closed");
     }
@@ -329,21 +358,17 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      */
     public void transferData(PushSourceStream stream) {
         try {
-            int buffer = 0;
-            synchronized (currentBufferSync) {
-                buffer = currentBuffer;
-                currentBuffer = (currentBuffer + 1) % inputBuffer.length;
-            }
+            int buffer = getNextBuffer();
             int bytesRead = stream.read(data, 0, data.length);
             if (bytesRead != -1) {
                 inputBuffer[buffer].setData(data);
                 inputBuffer[buffer].setOffset(0);
                 inputBuffer[buffer].setLength(bytesRead);
-                addBuffer(inputBuffer[buffer]);
+                addBuffer(buffer);
             } else {
                 inputBuffer[buffer].setEOM(true);
                 inputBuffer[buffer].setDiscard(true);
-                addBuffer(inputBuffer[buffer]);
+                addBuffer(buffer);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -357,16 +382,12 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      */
     public void transferData(PushBufferStream stream) {
         try {
-            int buffer = 0;
-            synchronized (currentBufferSync) {
-                buffer = currentBuffer;
-                currentBuffer = (currentBuffer + 1) % inputBuffer.length;
-            }
+            int buffer = getNextBuffer();
             inputBuffer[buffer].setData(null);
             inputBuffer[buffer].setLength(0);
             inputBuffer[buffer].setOffset(0);
             stream.read(inputBuffer[buffer]);
-            addBuffer(inputBuffer[buffer]);
+            addBuffer(buffer);
         } catch (IOException e) {
             e.printStackTrace();
         }
