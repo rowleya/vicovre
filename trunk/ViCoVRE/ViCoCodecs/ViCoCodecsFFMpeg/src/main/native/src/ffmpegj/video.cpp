@@ -98,6 +98,7 @@ public:
         int outputWidth;
         int outputHeight;
         PixelFormat pixelFormat;
+        int logLevel;
 };
 
 JNIEXPORT jlong JNICALL
@@ -256,10 +257,10 @@ Video::~Video() {
 }
 
 int Video::open(bool encode, int codecId, int logLevel) {
-    av_log_set_level(logLevel);
     avcodec_init();
     avcodec_register_all();
     av_register_all();
+    this->logLevel = logLevel;
 
     codecContext = avcodec_alloc_context();
     codecContext->codec_id = CodecID(codecId);
@@ -428,8 +429,12 @@ int Video::decodeVideo(JNIEnv *env, jobject input) {
 
     int bytesProcessed = 0;
     int frameFinished = 0;
+    int prevLogLevel = av_log_get_level();
+    av_log_set_level(logLevel);
     bytesProcessed = avcodec_decode_video(codecContext, scaleFrame,
         &frameFinished, in + inoffset, inlength);
+    av_log_set_level(prevLogLevel);
+    fflush(stderr);
     env->ReleasePrimitiveArrayCritical((jarray) indata, in, 0);
 
     if (bytesProcessed > 0) {
