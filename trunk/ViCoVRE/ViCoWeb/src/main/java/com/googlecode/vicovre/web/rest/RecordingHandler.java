@@ -139,8 +139,8 @@ public class RecordingHandler extends AbstractHandler {
     @DELETE
     public Response deleteLayout(@Context UriInfo uriInfo,
             @PathParam("time") long time) throws IOException {
-        String folder = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
 
         Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
@@ -209,8 +209,8 @@ public class RecordingHandler extends AbstractHandler {
             @QueryParam("audioStream") List<String> audioStreams,
             @QueryParam("endTime") @DefaultValue("0") long endTime)
             throws IOException {
-        String folder = getFolderPath(uriInfo, 1, 2);
-        String id = getId(uriInfo, 1);
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
 
         Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
