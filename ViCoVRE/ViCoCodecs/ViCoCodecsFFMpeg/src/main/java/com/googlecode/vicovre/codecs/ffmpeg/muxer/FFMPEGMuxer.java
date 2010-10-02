@@ -46,7 +46,7 @@ import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
 public class FFMPEGMuxer extends BasicMultiplexer {
 
     private static final Format[] getFormats() {
-        Format[] videoFormats = Utils.getVideoFormats(null, -1);
+        Format[] videoFormats = Utils.getVideoFormats(null, -1, null);
         AudioFormat audioFormat = new AudioFormat(AudioFormat.LINEAR,
                 -1, 16, -1,
                 ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN

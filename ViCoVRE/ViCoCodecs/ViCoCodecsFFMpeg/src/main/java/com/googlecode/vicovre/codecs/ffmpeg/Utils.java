@@ -1318,12 +1318,21 @@ public class Utils {
      * @return the set of formats supported
      */
     public static VideoFormat[] getVideoFormats(Dimension size,
-            float frameRate) {
+            float frameRate, PixelFormat defaultFormat) {
         Vector<VideoFormat> formats = new Vector<VideoFormat>();
-        for (PixelFormat i : PixelFormat.values()) {
-            VideoFormat format = getVideoFormat(i, size, frameRate);
+        if (defaultFormat != null) {
+            VideoFormat format = getVideoFormat(defaultFormat, size, frameRate);
             if (format != null) {
                 formats.add(format);
+            }
+        }
+        for (PixelFormat i : PixelFormat.values()) {
+            if ((defaultFormat == null)
+                    || (i.getId() != defaultFormat.getId())) {
+                VideoFormat format = getVideoFormat(i, size, frameRate);
+                if (format != null) {
+                    formats.add(format);
+                }
             }
         }
         return formats.toArray(new VideoFormat[0]);

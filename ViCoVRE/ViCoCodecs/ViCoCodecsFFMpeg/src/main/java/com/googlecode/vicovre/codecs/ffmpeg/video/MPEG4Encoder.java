@@ -34,6 +34,7 @@ package com.googlecode.vicovre.codecs.ffmpeg.video;
 
 import javax.media.format.VideoFormat;
 
+import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 /**
@@ -49,7 +50,7 @@ public class MPEG4Encoder extends FFMPEGVideoCodec {
     public MPEG4Encoder() {
         super(Utils.CODEC_ID_MPEG4,
                 new VideoFormat[]{new VideoFormat("mpeg4")},
-                true);
+                true, PixelFormat.PIX_FMT_YUV420P);
     }
 
     public VideoCodecContext getContext() {

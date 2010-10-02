@@ -35,6 +35,7 @@ package com.googlecode.vicovre.codecs.ffmpeg.video;
 import javax.media.format.VideoFormat;
 
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
+import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 /**
@@ -51,6 +52,6 @@ public class JPEGDecoder extends FFMPEGVideoCodec {
     public JPEGDecoder() {
         super(Utils.CODEC_ID_MJPEG,
                 new VideoFormat[]{new VideoFormat(VideoFormat.JPEG)},
-                false);
+                false, PixelFormat.PIX_FMT_YUV420P);
     }
 }

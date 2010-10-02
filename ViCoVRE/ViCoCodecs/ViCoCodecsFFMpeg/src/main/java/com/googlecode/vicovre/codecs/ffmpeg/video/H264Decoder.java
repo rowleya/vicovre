@@ -34,7 +34,7 @@ package com.googlecode.vicovre.codecs.ffmpeg.video;
 
 import javax.media.format.VideoFormat;
 
-import com.googlecode.vicovre.codecs.ffmpeg.Log;
+import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
 
 /**
@@ -50,7 +50,7 @@ public class H264Decoder extends FFMPEGVideoCodec {
     public H264Decoder() {
         super(Utils.CODEC_ID_H264,
                 new VideoFormat[]{new VideoFormat("h264")},
-                false);
+                false, PixelFormat.PIX_FMT_YUV420P);
     }
 
 
