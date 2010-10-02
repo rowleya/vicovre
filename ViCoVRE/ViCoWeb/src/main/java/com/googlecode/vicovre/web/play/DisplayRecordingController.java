@@ -100,21 +100,22 @@ public class DisplayRecordingController implements Controller {
 
         StringWriter aclWriter = new StringWriter();
         StringWriter readAclWriter = new StringWriter();
-        if (database instanceof SecureRecordingDatabase) {
-            SecureRecordingDatabase secureDatabase =
-                (SecureRecordingDatabase) database;
-            try {
-                marshaller.marshallToJSON(
-                        secureDatabase.getRecordingPlayAcl(recording),
-                        aclWriter);
-                marshaller.marshallToJSON(
-                        secureDatabase.getRecordingReadAcl(recording),
-                        readAclWriter);
-            } catch (UnauthorizedException e) {
-                // Do Nothing
+        if (recording != null) {
+            if (database instanceof SecureRecordingDatabase) {
+                SecureRecordingDatabase secureDatabase =
+                    (SecureRecordingDatabase) database;
+                try {
+                    marshaller.marshallToJSON(
+                            secureDatabase.getRecordingPlayAcl(recording),
+                            aclWriter);
+                    marshaller.marshallToJSON(
+                            secureDatabase.getRecordingReadAcl(recording),
+                            readAclWriter);
+                } catch (UnauthorizedException e) {
+                    // Do Nothing
+                }
             }
         }
-
 
         ModelAndView modelAndView = new ModelAndView("displayRecording");
         modelAndView.addObject("recording", recording);
