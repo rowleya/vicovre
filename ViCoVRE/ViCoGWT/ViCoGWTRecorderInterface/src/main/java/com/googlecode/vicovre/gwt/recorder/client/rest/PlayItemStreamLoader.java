@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
@@ -45,6 +46,7 @@ import com.googlecode.vicovre.gwt.client.json.JSONStreams;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
+import com.googlecode.vicovre.gwt.recorder.client.StreamComparator;
 
 public class PlayItemStreamLoader extends AbstractRestCall {
 
@@ -94,6 +96,7 @@ public class PlayItemStreamLoader extends AbstractRestCall {
             for (int i = 0; i < streamArray.length(); i++) {
                 streams.add(streamArray.get(i));
             }
+            Collections.sort(streams, new StreamComparator());
         }
         playItem.setStreams(streams);
         if (loader != null) {

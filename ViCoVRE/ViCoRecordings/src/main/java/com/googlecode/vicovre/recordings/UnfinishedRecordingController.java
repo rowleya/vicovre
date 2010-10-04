@@ -50,6 +50,7 @@ import ag3.interfaces.types.StreamDescription;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.insecure.UnfinishedRecordingListener;
+import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.Emailer;
 
@@ -64,6 +65,8 @@ public class UnfinishedRecordingController
     private RecordingDatabase database = null;
 
     private RtpTypeRepository typeRepository = null;
+
+    private LayoutRepository layoutRepository = null;
 
     private Emailer emailer = null;
 
@@ -112,9 +115,11 @@ public class UnfinishedRecordingController
     }
 
     public UnfinishedRecordingController(RecordingDatabase database,
-            RtpTypeRepository typeRepository, Emailer emailer) {
+            RtpTypeRepository typeRepository,
+            LayoutRepository layoutRepository, Emailer emailer) {
         this.database = database;
         this.typeRepository = typeRepository;
+        this.layoutRepository = layoutRepository;
         this.emailer = emailer;
         database.addUnfinishedRecordingListener(this);
     }
@@ -129,7 +134,8 @@ public class UnfinishedRecordingController
         }
         File directory = new File(database.getFile(recording.getFolder()),
                 recording.getFinishedRecordingId());
-        RecordArchiveManager manager = new RecordArchiveManager(typeRepository,
+        RecordArchiveManager manager = new RecordArchiveManager(
+                layoutRepository, typeRepository,
                 recording.getFolder(), recording.getFinishedRecordingId(),
                 directory);
         managers.put(recording, manager);

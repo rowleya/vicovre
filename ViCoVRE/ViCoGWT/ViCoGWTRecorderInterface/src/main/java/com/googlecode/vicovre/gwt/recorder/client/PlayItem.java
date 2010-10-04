@@ -54,6 +54,7 @@ import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.recorder.client.rest.ChangesAnnotator;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutLoader;
@@ -77,6 +78,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private final Image LAYOUT = new Image("images/layout.gif");
 
     private final Image PLAY = new Image("images/play.gif");
+
+    private final Image ANNOTATE = new Image("images/annotate.gif");
 
     private FolderPanel folderPanel = null;
 
@@ -105,6 +108,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private PushButton editLayoutButton = new PushButton(LAYOUT);
 
     private PushButton playButton = new PushButton(PLAY);
+
+    private PushButton annotateButton = new PushButton(ANNOTATE);
 
     private MetadataPopup metadataPopup = null;
 
@@ -138,8 +143,9 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         buttons.add(playToVenueButton);
         buttons.add(editButton);
         buttons.add(editLayoutButton);
+        buttons.add(annotateButton);
         buttons.add(deleteButton);
-        buttons.setWidth("100px");
+        buttons.setWidth("120px");
 
         DockPanel topLine = new DockPanel();
         topLine.add(startDate, DockPanel.WEST);
@@ -149,7 +155,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         topLine.setWidth("100%");
 
         topLine.setCellWidth(duration, "100px");
-        topLine.setCellWidth(buttons, "100px");
+        topLine.setCellWidth(buttons, "120px");
         topLine.setCellWidth(startDate, "160px");
         this.name.setWidth("100%");
 
@@ -169,6 +175,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     public String getId() {
         return id;
+    }
+
+    public Date getStartDate() {
+        return start;
     }
 
     public void setStartDate(Date date) {
@@ -219,6 +229,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
             ActionLoader loader = new ActionLoader(playPopup, 1,
                     "Loading recording details...", null, true, false);
             PlayItemLayoutLoader.loadLayouts(this, loader, url);
+        } else if (event.getSource().equals(annotateButton)) {
+            ChangesAnnotator.annotate(url, this);
         }
     }
 

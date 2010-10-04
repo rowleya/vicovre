@@ -1,6 +1,7 @@
 package com.googlecode.vicovre.recordings.db.secure;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -195,6 +196,16 @@ public class SecureRecording extends Recording {
     public boolean isPlayable() {
         checkRead();
         return database.canPlayRecording(folder, id);
+    }
+
+    public void annotateChanges(long time) throws IOException {
+        checkEdit();
+        recording.annotateChanges(time);
+    }
+
+    public double getAnnotationProgress(long time) {
+        checkEdit();
+        return recording.getAnnotationProgress(time);
     }
 
 }

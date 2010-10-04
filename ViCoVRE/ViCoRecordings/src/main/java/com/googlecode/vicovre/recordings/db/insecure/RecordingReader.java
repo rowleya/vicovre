@@ -78,7 +78,8 @@ public class RecordingReader {
         Node doc = XmlIo.read(input);
         String id = XmlIo.readValue(doc, "id");
         InsecureRecording recording =
-            new InsecureRecording(folder, id, directory);
+            new InsecureRecording(folder, id, directory, layoutRepository,
+                    typeRepository);
 
         String[] pauseTimes = XmlIo.readValues(doc, "pauseTime");
         for (String time : pauseTimes) {

@@ -35,6 +35,7 @@
 package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,10 +46,15 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.RecordingMetadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
+import com.googlecode.vicovre.repositories.layout.Layout;
+import com.googlecode.vicovre.repositories.layout.LayoutPosition;
+import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 
 
 /**
@@ -79,6 +85,9 @@ public class InsecureRecording extends Recording {
     private HashMap<Long, ReplayLayout> replayLayouts =
         new HashMap<Long, ReplayLayout>();
 
+    private HashMap<Long, ScreenChangeDetector> screenChangeDetectors =
+        new HashMap<Long, ScreenChangeDetector>();
+
     private Vector<Long> pauseTimes = new Vector<Long>();
 
     // The directory holding the streams
@@ -92,14 +101,22 @@ public class InsecureRecording extends Recording {
 
     private String emailAddress = null;
 
+    private LayoutRepository layoutRepository = null;
+
+    private RtpTypeRepository typeRepository = null;
+
     public InsecureRecording() {
         // Does Nothing
     }
 
-    public InsecureRecording(String folder, String id, File directory) {
+    public InsecureRecording(String folder, String id, File directory,
+            LayoutRepository layoutRepostory,
+            RtpTypeRepository typeRepository) {
         this.folder = folder;
         this.id = id;
         this.directory = directory;
+        this.layoutRepository = layoutRepostory;
+        this.typeRepository = typeRepository;
 
         if (id == null) {
             throw new RuntimeException("Null id recording in folder " + folder);
@@ -320,5 +337,32 @@ public class InsecureRecording extends Recording {
 
     public boolean isPlayable() {
         return true;
+    }
+
+    public void annotateChanges(long time) throws IOException {
+        if (!screenChangeDetectors.containsKey(time)) {
+            ReplayLayout replayLayout = replayLayouts.get(time);
+            Layout layout = layoutRepository.findLayout(replayLayout.getName());
+            for (LayoutPosition position : layout.getStreamPositions()) {
+                if (position.hasChanges()) {
+                    Stream stream = replayLayout.getStream(position.getName());
+                    try {
+                        ScreenChangeDetector detector =
+                            new ScreenChangeDetector(directory,
+                                    stream.getSsrc(), typeRepository);
+                        screenChangeDetectors.put(time, detector);
+                    } catch (Exception e) {
+                        throw new IOException(e);
+                    }
+                }
+            }
+        }
+    }
+
+    public double getAnnotationProgress(long time) {
+        if (screenChangeDetectors.containsKey(time)) {
+            return screenChangeDetectors.get(time).getProgress();
+        }
+        return 1.0;
     }
 }

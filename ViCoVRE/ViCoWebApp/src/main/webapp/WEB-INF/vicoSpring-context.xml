@@ -61,6 +61,7 @@
     <bean id="unfinishedRecordingController" class="com.googlecode.vicovre.recordings.UnfinishedRecordingController" destroy-method="shutdown">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"/></constructor-arg>
+        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
