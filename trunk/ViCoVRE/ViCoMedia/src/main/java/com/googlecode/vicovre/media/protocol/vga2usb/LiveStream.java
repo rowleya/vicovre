@@ -177,7 +177,6 @@ public class LiveStream implements Runnable, PushBufferStream,
                     handler.transferData(this);
                     if (frame == null) {
                         try {
-                            System.err.println("Sleeping");
                             Thread.sleep(WAIT_GRABBER_TIME);
                         } catch (InterruptedException e) {
                             // Do Nothing
