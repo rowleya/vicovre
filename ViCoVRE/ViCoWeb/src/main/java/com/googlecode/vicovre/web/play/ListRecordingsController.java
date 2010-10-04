@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.web.play;
 
 import java.io.File;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
+import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public class ListRecordingsController implements Controller {
@@ -58,12 +60,19 @@ public class ListRecordingsController implements Controller {
         File path = new File(folder);
         folder = path.getParent();
 
+        List<String> subFolders = database.getSubFolders(folder);
+        List<Recording> recordings = database.getRecordings(folder);
+        if ((subFolders == null) || (recordings == null)) {
+            folder = null;
+        }
+
         ModelAndView modelAndView = new ModelAndView("listRecordings");
         modelAndView.addObject("folder", folder);
         modelAndView.addObject("subfolders", database.getSubFolders(folder));
         modelAndView.addObject("recordings", database.getRecordings(folder));
-        modelAndView.addObject("isTopLevel", folder.equals("")
-                || folder.equals("/") || folder.equals("\\"));
+        modelAndView.addObject("isTopLevel", (folder != null)
+            && (folder.equals("") || folder.equals("/")
+                    || folder.equals("\\")));
         return modelAndView;
     }
 
