@@ -63,8 +63,12 @@ public class FolderFilter implements FileFilter {
         if (pathname.isDirectory()) {
             File recording = new File(pathname,
                     RecordingConstants.RECORDING_INDEX);
+            File recordingInProgress = new File(pathname,
+                    RecordingConstants.RECORDING_INPROGRESS);
             if (recording.exists() == isRecording) {
                 return true;
+            } else if (recordingInProgress.exists()) {
+                return false;
             }
         }
         return false;
