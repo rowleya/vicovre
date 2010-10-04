@@ -34,7 +34,6 @@ package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -138,12 +137,11 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
             if (path.exists() && path.isDirectory()) {
                 File recordingIndex = new File(path,
                         RecordingConstants.RECORDING_INDEX);
-                File unfinishedRecordingIndex = new File(path.getParentFile(),
-                        path.getName()
-                        + RecordingConstants.UNFINISHED_RECORDING_INDEX);
+                File recordingInProgress = new File(path,
+                        RecordingConstants.RECORDING_INPROGRESS);
 
                 if (!recordingIndex.exists()
-                        && !unfinishedRecordingIndex.exists()) {
+                        && !recordingInProgress.exists()) {
                     String folderName = path.getAbsolutePath().substring(
                         topLevelFolder.getFile().getAbsolutePath().length());
                     folderName = folderName.replace('\\', '/');

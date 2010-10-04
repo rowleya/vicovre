@@ -81,6 +81,9 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
     // The directory containing the files
     private File directory = null;
 
+    // The file to indicate recording is in progress
+    private File touchFile = null;
+
     // True if we are currently recording
     private boolean recordFlag = false;
 
@@ -140,6 +143,8 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
         this.typeRepository = typeRepository;
         recording = new InsecureRecording(folder, recordingId, directory);
         this.directory = directory;
+        touchFile = new File(directory,
+                RecordingConstants.RECORDING_INPROGRESS);
         start();
     }
 
@@ -269,6 +274,12 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
                 // If it doesn't exist and has not been stopped, create it
                 if ((streamArchive == null) && !isStopped) {
                     directory.mkdirs();
+                    try {
+                        touchFile.createNewFile();
+                    } catch (IOException e) {
+                        System.err.println(
+                                "Warning: can't create in-progress file");
+                    }
                     streamArchive = new StreamArchive(this, directory,
                             packetHeader.getSsrc(), typeRepository);
                     synchronized (streamMap) {
@@ -422,6 +433,9 @@ public class RecordArchiveManager extends Thread implements RTPPacketSink,
 
         for (Long time : pauseTimes) {
             recording.addPauseTime(time);
+        }
+        if (touchFile.exists()) {
+            touchFile.delete();
         }
     }
 

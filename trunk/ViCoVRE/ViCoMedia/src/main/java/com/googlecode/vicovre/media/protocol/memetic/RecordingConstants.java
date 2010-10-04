@@ -68,6 +68,8 @@ public interface RecordingConstants {
      */
     String RECORDING_INDEX = ".rec_index";
 
+    String RECORDING_INPROGRESS = ".rec_inprogress";
+
     /**
      * The name of the recording metadata
      */
