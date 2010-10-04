@@ -52,6 +52,7 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.utils.ExtensionFilter;
 
 /**
  * A database for recordings
@@ -444,6 +445,11 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
     public void updateRecordingLayouts(Recording recording) throws IOException {
         if (readOnly) {
             throw new IOException("Cannot edit in read only mode");
+        }
+        File[] currentLayouts = recording.getDirectory().listFiles(
+                new ExtensionFilter(RecordingConstants.LAYOUT));
+        for (File layout : currentLayouts) {
+            layout.delete();
         }
         for (ReplayLayout layout : recording.getReplayLayouts()) {
             File layoutOutput = new File(recording.getDirectory(),

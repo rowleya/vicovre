@@ -73,6 +73,7 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 import com.googlecode.vicovre.utils.Emailer;
 import com.googlecode.vicovre.web.rest.response.RecordingsResponse;
@@ -85,15 +86,19 @@ public class RecordingHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
+    private RtpTypeRepository typeRepository = null;
+
     private String adminEmail = null;
 
     private Emailer emailer = null;
 
     public RecordingHandler(@Inject("database") RecordingDatabase database,
             @Inject("layoutRepository") LayoutRepository layoutRepository,
+            @Inject RtpTypeRepository typeRepository,
             @Inject Emailer emailer) {
         super(database);
         this.layoutRepository = layoutRepository;
+        this.typeRepository = typeRepository;
         this.adminEmail = emailer.getAdminEmailAddress();
         this.emailer = emailer;
         if (!Misc.isCodecsConfigured()) {
@@ -148,6 +153,7 @@ public class RecordingHandler extends AbstractHandler {
         }
 
         recording.removeLayout(time);
+        getDatabase().updateRecordingLayouts(recording);
         return Response.ok().build();
     }
 
@@ -167,7 +173,8 @@ public class RecordingHandler extends AbstractHandler {
         File directory = new File(getDatabase().getFile(folder), recordingId);
 
         InsecureRecording recording =
-            new InsecureRecording(folder, recordingId, directory);
+            new InsecureRecording(folder, recordingId, directory,
+                    layoutRepository, typeRepository);
         getDatabase().addRecording(recording, null);
 
         ZipInputStream input = new ZipInputStream(request.getInputStream());
@@ -246,8 +253,39 @@ public class RecordingHandler extends AbstractHandler {
         layout.setRecording(recording);
         layout.setEndTime(endTime);
         recording.setReplayLayout(layout);
+        getDatabase().updateRecordingLayouts(recording);
 
         return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/annotateChanges/{time}")
+    @PUT
+    public Response annotateChanges(@Context UriInfo uriInfo,
+            @PathParam("time") long time) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+
+        recording.annotateChanges(time);
+        return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/annotateChanges/{time}")
+    @GET
+    @Produces("text/plain")
+    public Response getChangesProgress(@Context UriInfo uriInfo,
+            @PathParam("time") long time) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+        return Response.ok(
+                String.valueOf(recording.getAnnotationProgress(time))).build();
     }
 
     @Path("{folder: .*}")

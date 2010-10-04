@@ -842,8 +842,8 @@ public class Recorder extends JFrame implements ActionListener, ChangeListener,
     private void startRecording() {
         String id = RecordArchiveManager.generateId(new Date());
         File directory = new File(recordingDatabase.getFile(""), id);
-        archiveManager = new RecordArchiveManager(typeRepository,
-                "", id, directory);
+        archiveManager = new RecordArchiveManager(layoutRepository,
+                typeRepository, "", id, directory);
         archiveManager.enableRecording();
         recordingSource.setArchiveManager(archiveManager);
         recordButton.setText("Stop Recording");

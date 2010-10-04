@@ -35,6 +35,7 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -151,4 +152,8 @@ public abstract class Recording implements Comparable<Recording> {
 
     @XmlElement
     public abstract boolean isEditable();
+
+    public abstract void annotateChanges(long time) throws IOException;
+
+    public abstract double getAnnotationProgress(long time);
 }

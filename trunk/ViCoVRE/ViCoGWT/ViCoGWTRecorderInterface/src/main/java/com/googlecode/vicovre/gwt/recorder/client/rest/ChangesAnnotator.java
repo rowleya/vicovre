@@ -35,65 +35,51 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
 
-import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.LayoutPopup;
+import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 
-public class PlayItemLayoutChanger extends AbstractRestCall {
-
-    private LayoutPopup popup = null;
+public class ChangesAnnotator extends AbstractRestCall {
 
     private String url = null;
 
-    private String itemUrl = null;
+    private String name = null;
 
-    private boolean deleted = false;
-
-    public static void setLayout(LayoutPopup popup, String url) {
-        PlayItemLayoutChanger changer = new PlayItemLayoutChanger(popup, url);
-        changer.go();
+    public static void annotate(String url, PlayItem item) {
+        ChangesAnnotator annotator = new ChangesAnnotator(url, item);
+        annotator.go();
     }
 
-    private PlayItemLayoutChanger(LayoutPopup popup, String url) {
-        this.popup = popup;
-        this.url = url + "recording" + popup.getFolder();
+    public ChangesAnnotator(String url, PlayItem item) {
+        this.url = url + "recording" + item.getFolder();
         if (!this.url.endsWith("/")) {
             this.url += "/";
         }
-        this.url += popup.getId() + "/layout";
+        this.url += item.getId() + "/annotateChanges/"
+            + item.getReplayLayouts().get(0).getTime();
     }
 
     public void go() {
-        itemUrl = url + "/" + popup.getLayoutTime() + "?"
-            + popup.getLayoutDetailsAsUrl();
-        long originalLayoutTime = popup.getOriginalLayoutTime();
-        if (originalLayoutTime != -1) {
-            String deleteUrl = url + "/" + originalLayoutTime;
-            GWT.log("Delete layout url = " + deleteUrl);
-            go(deleteUrl, Method.DELETE);
-        } else {
-            deleted = true;
-            GWT.log("Create layout url = " + itemUrl);
-            go(itemUrl, Method.PUT);
-        }
+        go(url, Method.PUT);
+        MessagePopup popup = new MessagePopup(
+            "Annotating changes.  You will be notified when this is complete",
+            null, MessagePopup.INFO, MessageResponse.OK);
+        popup.center();
     }
 
     protected void onError(String message) {
-        MessagePopup errorPopup = new MessagePopup(
-                "Error setting layout: " + message, null,
+        MessagePopup popup = new MessagePopup(
+                "Error annotating changes: " + message, null,
                 MessagePopup.ERROR, MessageResponse.OK);
-        errorPopup.center();
+        popup.center();
     }
 
     protected void onSuccess(Response response) {
-        if (!deleted && (popup.getLayoutTime() != -1)) {
-            deleted = true;
-            go(itemUrl, Method.PUT);
-        } else {
-            popup.hide();
-        }
+        MessagePopup popup = new MessagePopup(
+                "Change annotation complete for recording " + name, null,
+                MessagePopup.INFO, MessageResponse.OK);
+        popup.center();
     }
 
 }
