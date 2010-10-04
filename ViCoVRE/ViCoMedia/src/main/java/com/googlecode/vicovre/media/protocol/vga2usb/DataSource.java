@@ -72,11 +72,11 @@ public class DataSource extends PushBufferDataSource {
     }
 
     public void start() throws IOException {
-        // Does Nothing
+        connect();
     }
 
     public void stop() throws IOException {
-        // Does Nothing
+        disconnect();
     }
 
 }
