@@ -90,6 +90,8 @@ public class VideoWebServer extends Thread {
     private HashMap<String, StreamUpdateListener> streams =
         new HashMap<String, StreamUpdateListener>();
 
+    private Vector<String> streamIds = new Vector<String>();
+
     private HashMap<InetAddress, Boolean> isNewStream =
         new HashMap<InetAddress, Boolean>();
 
@@ -295,6 +297,7 @@ public class VideoWebServer extends Thread {
                         offlineData);
                 listener.setName(name);
                 streams.put(id, listener);
+                streamIds.add(id);
                 indicateNewStream();
             }
             return streams.get(id);
@@ -302,7 +305,12 @@ public class VideoWebServer extends Thread {
     }
 
     public List<StreamUpdateListener> getStreams() {
-        return new Vector<StreamUpdateListener>(streams.values());
+        Vector<StreamUpdateListener> listeners =
+            new Vector<StreamUpdateListener>();
+        for (String id : streamIds) {
+            listeners.add(streams.get(id));
+        }
+        return listeners;
     }
 
     public boolean isNewStream(InetAddress client) {
