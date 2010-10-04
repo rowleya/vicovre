@@ -37,6 +37,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -147,9 +149,12 @@ public class VideoWebHandler extends Thread {
                         }
                     }
 
-
                     if (uri.equals("/") || uri.equals("")) {
-                        uri += "streams.html";
+                        if (server.getStreams().size() == 1) {
+                            uri += "index.html";
+                        } else {
+                            uri += "streams.html";
+                        }
                     } else if (uri.endsWith("/")) {
                         uri += INDEX_FILENAME;
                     }
@@ -160,9 +165,17 @@ public class VideoWebHandler extends Thread {
                     }
 
                     File uriFile = new File(uri);
-                    String streamId = uriFile.getParent();
+                    String parent = uriFile.getParent();
+                    String streamId = null;
+                    if (parent != null) {
+                        streamId = URLDecoder.decode(uriFile.getParent(),
+                                "UTF8");
+                    }
                     StreamUpdateListener stream = server.getStream(streamId,
                             null);
+                    if ((stream == null) && !server.getStreams().isEmpty()) {
+                        stream = server.getStreams().get(0);
+                    }
                     if (stream != null) {
                         stream.addClient(client.getInetAddress());
                     }
@@ -181,7 +194,10 @@ public class VideoWebHandler extends Thread {
                             String name = listener.getName();
                             if (name != null) {
                                 writer.println("<stream name=\"" + name + "\""
-                                    + " id=\"" + listener.getId() + "\"/>");
+                                    + " id=\""
+                                    + URLEncoder.encode(listener.getId(),
+                                            "UTF8")
+                                    + "\"/>");
                             }
                         }
                         writer.println("</result>");

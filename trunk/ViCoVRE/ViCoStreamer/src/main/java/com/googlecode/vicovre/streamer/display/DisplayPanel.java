@@ -256,7 +256,7 @@ public class DisplayPanel extends JPanel implements StreamListener,
             localSsrcs.add(ssrc);
         }
         StreamUpdateListener listener = webServer.getStream(
-                String.valueOf(ssrc), name);
+                name, name);
         ChangeDetectionEffect cdEffect = new ChangeDetectionEffect();
         cdEffect.addScreenListener(listener);
         VideoPanel panel = new VideoPanel(dataSource, "", false,

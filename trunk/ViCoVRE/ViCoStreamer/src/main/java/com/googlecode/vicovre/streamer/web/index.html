@@ -5,7 +5,8 @@
             <!--
             function startWindow()
                 {
-                win = window.open('screen.html', '', 'toolbar=no,resizable=yes,scrollbars=no,top=0,left=0,status=no');
+                var id = window.location.search.substring(1);
+                win = window.open(id + '/screen.html', '', 'toolbar=no,resizable=yes,scrollbars=no,top=0,left=0,status=no');
                 win.resizeTo(screen.availWidth, screen.availHeight);
                 win.focus();
                 top.opener=self;

@@ -189,19 +189,6 @@ public class ChangeDetectionEffect implements Effect {
             horRatio = (float) size.getWidth() / IMAGE_WIDTH;
             verRatio = (float) size.getHeight() / IMAGE_HEIGHT;
         }
-        if (lastBuffer == null) {
-            Object data = null;
-            lastBuffer = new Buffer();
-            lastBuffer.copy(bufIn);
-            if (format.getDataType() == Format.byteArray) {
-                data = new byte[((byte[]) bufIn.getData()).length];
-            } else if (format.getDataType() == Format.shortArray) {
-                data = new short[((short[]) bufIn.getData()).length];
-            } else if (format.getDataType() == Format.intArray) {
-                data = new int[((int[]) bufIn.getData()).length];
-            }
-            lastBuffer.setData(data);
-        }
         if ((lastBuffer == null) || hasChanged(lastBuffer, bufIn)) {
             lastBuffer = (Buffer) bufIn.clone();
             for (int i = 0; i < screenListeners.size(); i++) {
