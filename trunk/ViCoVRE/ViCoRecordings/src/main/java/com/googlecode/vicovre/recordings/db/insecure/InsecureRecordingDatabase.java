@@ -34,15 +34,12 @@ package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.xml.sax.SAXException;
 
@@ -226,6 +223,9 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     public List<String> getSubFolders(String folder) {
         InsecureFolder f = getFolder(getFile(folder));
+        if (f == null) {
+            return null;
+        }
         return f.getFolders();
     }
 
