@@ -258,18 +258,20 @@ public class RecordingHandler extends AbstractHandler {
         return Response.ok().build();
     }
 
-    @Path("{folder:.*}/annotateChanges/{time}")
+    @Path("{folder:.*}/annotateChanges")
     @PUT
-    public Response annotateChanges(@Context UriInfo uriInfo,
-            @PathParam("time") long time) throws IOException {
-        String folder = getFolderPath(uriInfo, 1, 3);
-        String id = getId(uriInfo, 2);
+    public Response annotateChanges(@Context UriInfo uriInfo)
+            throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
         Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
-
-        recording.annotateChanges(time);
+        List<ReplayLayout> layouts = recording.getReplayLayouts();
+        for (ReplayLayout layout : layouts) {
+            recording.annotateChanges(layout.getTime());
+        }
         return Response.ok().build();
     }
 

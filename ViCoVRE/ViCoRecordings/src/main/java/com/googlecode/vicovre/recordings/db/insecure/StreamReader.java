@@ -156,40 +156,47 @@ public class StreamReader {
                         rtcpHeader = new RTCPHeader(data, rtcpPos,
                                 length - rtcpPos);
                     }
-                    RTCPSDES sdes = new RTCPSDES(data,
-                            rtcpPos + RTCPHeader.SIZE, length);
-                    if (sdes.getCname() != null) {
-                        stream.setCname(sdes.getCname());
-                    }
-                    if (sdes.getName() != null) {
-                        stream.setName(sdes.getName());
-                    }
-                    if (sdes.getEmail() != null) {
-                        stream.setEmail(sdes.getEmail());
-                    }
-                    if (sdes.getPhone() != null) {
-                        stream.setPhone(sdes.getPhone());
-                    }
-                    if (sdes.getLocation() != null) {
-                        stream.setLocation(sdes.getLocation());
-                    }
-                    if (sdes.getTool() != null) {
-                        stream.setTool(sdes.getTool());
-                    }
-                    if (sdes.getNote() != null) {
-                        stream.setNote(sdes.getNote());
+                    try {
+                        RTCPSDES sdes = new RTCPSDES(data,
+                                rtcpPos + RTCPHeader.SIZE, length);
+                        if (sdes.getCname() != null) {
+                            stream.setCname(sdes.getCname());
+                        }
+                        if (sdes.getName() != null) {
+                            stream.setName(sdes.getName());
+                        }
+                        if (sdes.getEmail() != null) {
+                            stream.setEmail(sdes.getEmail());
+                        }
+                        if (sdes.getPhone() != null) {
+                            stream.setPhone(sdes.getPhone());
+                        }
+                        if (sdes.getLocation() != null) {
+                            stream.setLocation(sdes.getLocation());
+                        }
+                        if (sdes.getTool() != null) {
+                            stream.setTool(sdes.getTool());
+                        }
+                        if (sdes.getNote() != null) {
+                            stream.setNote(sdes.getNote());
+                        }
+                    } catch (Exception e) {
+                        // Do Nothing
                     }
                 }
 
-                FileOutputStream output = new FileOutputStream(streamMetadata);
-                writeStreamMetadata(stream, output);
-                output.close();
-            } catch (Exception e) {
+            } catch (EOFException e) {
                 // Do Nothing
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             fileInput.close();
             indexFileInput.close();
+
+            FileOutputStream output = new FileOutputStream(streamMetadata);
+            writeStreamMetadata(stream, output);
+            output.close();
         }
 
         return stream;

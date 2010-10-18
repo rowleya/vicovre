@@ -46,18 +46,18 @@ public class ChangesAnnotator extends AbstractRestCall {
 
     private String name = null;
 
-    public static void annotate(String url, PlayItem item) {
-        ChangesAnnotator annotator = new ChangesAnnotator(url, item);
+    public static void annotate(String url, PlayItem item, String name) {
+        ChangesAnnotator annotator = new ChangesAnnotator(url, item, name);
         annotator.go();
     }
 
-    public ChangesAnnotator(String url, PlayItem item) {
+    public ChangesAnnotator(String url, PlayItem item, String name) {
         this.url = url + "recording" + item.getFolder();
         if (!this.url.endsWith("/")) {
             this.url += "/";
         }
-        this.url += item.getId() + "/annotateChanges/"
-            + item.getReplayLayouts().get(0).getTime();
+        this.url += item.getId() + "/annotateChanges";
+        this.name = name;
     }
 
     public void go() {

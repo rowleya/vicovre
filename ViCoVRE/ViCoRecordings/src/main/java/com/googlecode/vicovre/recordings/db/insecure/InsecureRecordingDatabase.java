@@ -68,6 +68,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
 
     private InsecureFolder topLevelFolder = null;
 
+    private File backupFolder = null;
+
     private HashMap<File, InsecureFolder> folderCache =
         new HashMap<File, InsecureFolder>();
 

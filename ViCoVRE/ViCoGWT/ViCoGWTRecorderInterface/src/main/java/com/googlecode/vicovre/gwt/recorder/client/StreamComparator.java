@@ -47,13 +47,22 @@ public class StreamComparator implements Comparator<JSONStream> {
             if (stream.getNote() != null) {
                 text += " - " + stream.getNote();
             }
-        } else {
+        } else if (stream.getCname() != null) {
             text = stream.getCname();
+        } else {
+            text = stream.getSsrc();
         }
         return text;
     }
 
     public int compare(JSONStream s1, JSONStream s2) {
+        if ((s1.getCname() == null) && (s2.getCname() == null)) {
+            return s1.getSsrc().compareTo(s2.getSsrc());
+        } else if (s1.getCname() == null) {
+            return 1;
+        } else if (s2.getCname() == null) {
+            return -1;
+        }
         if (!s1.getCname().equals(s2.getCname())) {
             return s1.getCname().compareTo(s2.getCname());
         }

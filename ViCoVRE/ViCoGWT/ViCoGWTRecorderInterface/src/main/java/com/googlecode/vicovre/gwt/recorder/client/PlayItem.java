@@ -167,6 +167,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         playToVenueButton.addClickHandler(this);
         editLayoutButton.addClickHandler(this);
         playButton.addClickHandler(this);
+        annotateButton.addClickHandler(this);
     }
 
     public String getFolder() {
@@ -230,7 +231,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
                     "Loading recording details...", null, true, false);
             PlayItemLayoutLoader.loadLayouts(this, loader, url);
         } else if (event.getSource().equals(annotateButton)) {
-            ChangesAnnotator.annotate(url, this);
+            ChangesAnnotator.annotate(url, this, name.getText());
         }
     }
 

@@ -579,6 +579,9 @@ public class SimpleProcessor {
         }
 
         if (!iterator.hasNext()) {
+            outputFormat = iterator.getOutputFormat();
+            outputBuffer = iterator.getOutputBuffer();
+
             if (!firstFrameProcessed) {
                 synchronized (firstFrameSync) {
                     firstFrameProcessed = true;
@@ -599,8 +602,6 @@ public class SimpleProcessor {
             for (ProcessorListener listener : listeners) {
                 listener.finishedProcessing(iterator.getOutputBuffer());
             }
-            outputFormat = iterator.getOutputFormat();
-            outputBuffer = iterator.getOutputBuffer();
             return status;
         }
 
