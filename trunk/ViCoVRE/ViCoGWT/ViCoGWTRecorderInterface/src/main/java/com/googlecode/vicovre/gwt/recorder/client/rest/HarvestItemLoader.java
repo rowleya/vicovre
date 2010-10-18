@@ -172,6 +172,7 @@ public class HarvestItemLoader extends AbstractRestCall {
                 }
             }
         }
+        GWT.log("Finished loading harvest items");
         loader.itemLoaded();
     }
 

@@ -66,6 +66,9 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
     private HashMap<String, TextBoxBase> items =
         new HashMap<String, TextBoxBase>();
 
+    private HashMap<String, Label> labels =
+        new HashMap<String, Label>();
+
     private HashMap<String, Boolean> isEditable =
         new HashMap<String, Boolean>();
 
@@ -143,23 +146,43 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
         itemBox.setWidth("100%");
         items.put(key, itemBox);
         if (editable) {
-            Label itemLabel = new Label(getDisplayName(key) + ":");
-            maxFieldWidth = Math.max(maxFieldWidth, itemLabel.getOffsetWidth());
+            String displayName = getDisplayName(key);
+            Label itemLabel = new Label(displayName + ":");
+            labels.put(key, itemLabel);
             grid.resizeRows(gridRows + 1);
             grid.setWidget(gridRows, 0, itemLabel);
             grid.setWidget(gridRows, 1, itemBox);
             grid.getRowFormatter().setVerticalAlign(gridRows,
                     VerticalPanel.ALIGN_TOP);
-            grid.getColumnFormatter().setWidth(0, maxFieldWidth + "px");
-            grid.getColumnFormatter().setWidth(1, (WIDTH - maxFieldWidth)
-                    + "px");
             gridRows += 1;
+
+            if (isShowing()) {
+                maxFieldWidth = Math.max(maxFieldWidth,
+                        itemLabel.getOffsetWidth());
+                grid.getColumnFormatter().setWidth(0, maxFieldWidth + "px");
+                grid.getColumnFormatter().setWidth(1, (WIDTH - maxFieldWidth)
+                        + "px");
+            }
+
         }
 
         keys.add(key);
         isEditable.put(key, editable);
         isVisible.put(key, visible);
         isMultiline.put(key, multiline);
+    }
+
+    public void center() {
+        super.center();
+        maxFieldWidth = 0;
+        for (Label label : labels.values()) {
+            maxFieldWidth = Math.max(maxFieldWidth, label.getOffsetWidth());
+        }
+        for (int i = 0; i < gridRows; i++) {
+            grid.getColumnFormatter().setWidth(0, maxFieldWidth + "px");
+            grid.getColumnFormatter().setWidth(1, (WIDTH - maxFieldWidth)
+                    + "px");
+        }
     }
 
     public void setMetadata(Map<String, Object> metadata) {

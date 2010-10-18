@@ -84,6 +84,9 @@ public class Harvester implements HarvestSourceListener {
 
     private List<UnfinishedRecording> harvest(HarvestSource harvestSource,
             boolean manual) {
+        if (!manual) {
+            schedule(harvestSource);
+        }
         try {
             List<HarvestedEvent> events = harvestSource.harvest();
             List<UnfinishedRecording> recordings =

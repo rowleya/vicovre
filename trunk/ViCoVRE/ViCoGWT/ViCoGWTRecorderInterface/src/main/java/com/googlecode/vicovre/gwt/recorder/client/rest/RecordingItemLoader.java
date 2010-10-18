@@ -184,6 +184,7 @@ public class RecordingItemLoader extends AbstractRestCall {
                 }
             }
         }
+        GWT.log("Finished loading recording items");
         loader.itemLoaded();
 
     }

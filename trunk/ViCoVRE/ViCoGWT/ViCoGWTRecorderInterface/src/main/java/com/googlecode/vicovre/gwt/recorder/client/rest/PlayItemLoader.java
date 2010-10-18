@@ -108,8 +108,9 @@ public class PlayItemLoader extends AbstractRestCall {
             GWT.log("Warning: Recording metadata is missing");
             return null;
         }
+        String primaryKey = metadata.getPrimaryKey();
         MetadataPopup popup = new MetadataPopup(baseUrl,
-                metadata.getPrimaryKey());
+                primaryKey);
         popup.setMetadata(metadata);
         PlayItem playItem = new PlayItem(baseUrl, folderPanel, id, popup,
                 layouts, customLayouts);
@@ -143,6 +144,7 @@ public class PlayItemLoader extends AbstractRestCall {
                 }
             }
         }
+        GWT.log("Finished loading play items");
         loader.itemLoaded();
     }
 

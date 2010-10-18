@@ -351,6 +351,8 @@ public class InsecureRecording extends Recording {
                             new ScreenChangeDetector(directory,
                                     stream.getSsrc(), typeRepository);
                         screenChangeDetectors.put(time, detector);
+                        detector.run();
+                        screenChangeDetectors.remove(time);
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
