@@ -83,6 +83,8 @@ public class SecurityDatabase {
     private HashMap<File, HashMap<String, ACL>> acls =
         new HashMap<File, HashMap<String,ACL>>();
 
+    private Vector<ACLListener> aclListeners = new Vector<ACLListener>();
+
     private File topLevelFolder = null;
 
     private Emailer emailer = null;
@@ -195,6 +197,15 @@ public class SecurityDatabase {
         }
     }
 
+    public void addACLListener(ACLListener listener) {
+        aclListeners.add(listener);
+        for (HashMap<String, ACL> folder : acls.values()) {
+            for (ACL acl : folder.values()) {
+                listener.ACLCreated(acl.getFolder(), acl.getId());
+            }
+        }
+    }
+
     private File getFile(String folder) {
         if ((folder == null) || folder.equals("/") || folder.equals("")
                 || folder.equals("\\")) {
@@ -216,6 +227,9 @@ public class SecurityDatabase {
                 ACL acl = ACLReader.readACL(folderName, input, users,
                         unverifiedUsers, groups, Role.ROLES);
                 aclMap.put(acl.getId(), acl);
+                for (ACLListener listener : aclListeners) {
+                    listener.ACLCreated(acl.getFolder(), acl.getId());
+                }
             } else if (aclFile.isDirectory()) {
                 readACLs(aclFile, folderName + "/" + aclFile.getName());
             }
@@ -798,6 +812,9 @@ public class SecurityDatabase {
 
                 writeAcl(folderFile, acl);
             }
+            for (ACLListener listener : aclListeners) {
+                listener.ACLCreated(folder, id);
+            }
         }
     }
 
@@ -851,6 +868,9 @@ public class SecurityDatabase {
                 writeAcl(folderFile, acl);
             }
         }
+        for (ACLListener listener : aclListeners) {
+            listener.ACLUpdated(folder, id);
+        }
     }
 
     public void setAclOwner(String folder, String id, String owner)
@@ -868,6 +888,9 @@ public class SecurityDatabase {
                 acl.setOwner(user);
                 writeAcl(folderFile, acl);
             }
+        }
+        for (ACLListener listener : aclListeners) {
+            listener.ACLUpdated(folder, id);
         }
     }
 
@@ -894,6 +917,9 @@ public class SecurityDatabase {
                 }
                 File aclFile = new File(folderFile, acl.getId() + ".acl");
                 aclFile.delete();
+            }
+            for (ACLListener listener : aclListeners) {
+                listener.ACLDeleted(folder, id);
             }
         }
     }

@@ -54,15 +54,15 @@ import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
 public class SecureRecordingDatabase implements RecordingDatabase {
 
-    protected static final String HARVEST_ID_PREFIX = "harvestSource";
+    public static final String HARVEST_ID_PREFIX = "harvestSource";
 
-    protected static final String READ_RECORDING_ID_PREFIX = "readRecording";
+    public static final String READ_RECORDING_ID_PREFIX = "readRecording";
 
-    protected static final String CHANGE_RECORDING_ID_PREFIX = "editRecording";
+    public static final String CHANGE_RECORDING_ID_PREFIX = "editRecording";
 
-    protected static final String PLAY_RECORDING_ID_PREFIX = "playRecording";
+    public static final String PLAY_RECORDING_ID_PREFIX = "playRecording";
 
-    protected static final String UNFINISHED_ID_PREFIX = "unfinishedRecording";
+    public static final String UNFINISHED_ID_PREFIX = "unfinishedRecording";
 
     private RecordingDatabase database = null;
 
