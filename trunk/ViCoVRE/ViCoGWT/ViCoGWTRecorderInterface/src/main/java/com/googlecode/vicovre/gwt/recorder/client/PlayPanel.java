@@ -32,29 +32,54 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.DefaultLayoutLoader;
 
-public class PlayPanel extends HorizontalPanel {
+public class PlayPanel extends VerticalPanel implements ClickHandler {
 
     private VerticalPanel items = new VerticalPanel();
 
-    public PlayPanel() {
+    private Button layoutButton = new Button(
+            "Set default layout for all items in this folder");
+
+    private String url = null;
+
+    private FolderPanel folderPanel = null;
+
+    private Layout[] layouts = null;
+
+    private Layout[] customLayouts = null;
+
+    public PlayPanel(FolderPanel folderPanel, String url, Layout[] layouts,
+            Layout[] customLayouts) {
+        this.folderPanel = folderPanel;
+        this.url = url;
+        this.layouts = layouts;
+        this.customLayouts = customLayouts;
+
         setWidth("100%");
         setHeight("100%");
-        setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+        setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
         ScrollPanel scroller = new ScrollPanel(items);
         items.setWidth("100%");
         scroller.setHeight("100%");
 
+        add(layoutButton);
         add(scroller);
         setCellWidth(scroller, "100%");
         setCellHeight(scroller, "100%");
+
+        layoutButton.addClickHandler(this);
+        layoutButton.setVisible(false);
     }
 
     public void addItem(PlayItem item) {
@@ -63,5 +88,17 @@ public class PlayPanel extends HorizontalPanel {
 
     public void clear() {
         items.clear();
+    }
+
+    public void onClick(ClickEvent event) {
+        DefaultLayoutPopup popup =
+            new DefaultLayoutPopup(layouts, customLayouts, url,
+                    folderPanel.getCurrentFolder());
+        DefaultLayoutLoader.loadLayouts(folderPanel.getCurrentFolder(),
+                popup, url);
+    }
+
+    public void setUserIsAdministrator(boolean isAdministrator) {
+        layoutButton.setVisible(isAdministrator);
     }
 }

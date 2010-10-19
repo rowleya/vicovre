@@ -310,5 +310,6 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         editButton.setEnabled(editable);
         deleteButton.setEnabled(editable);
         editLayoutButton.setEnabled(editable);
+        annotateButton.setEnabled(editable);
     }
 }

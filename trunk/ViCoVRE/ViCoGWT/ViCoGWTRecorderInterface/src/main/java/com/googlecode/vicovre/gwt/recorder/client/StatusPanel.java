@@ -142,6 +142,11 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
         } else {
             folderPanel.setUserIsWriter(false);
         }
+        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)) {
+            folderPanel.setUserIsAdministrator(true);
+        } else {
+            folderPanel.setUserIsAdministrator(false);
+        }
         DOM.setStyleAttribute(status.getElement(), "color",
                 "black");
     }
@@ -154,6 +159,11 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
             folderPanel.setUserIsWriter(true);
         } else {
             folderPanel.setUserIsWriter(false);
+        }
+        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)) {
+            folderPanel.setUserIsAdministrator(true);
+        } else {
+            folderPanel.setUserIsAdministrator(false);
         }
         folderPanel.reload();
     }
@@ -179,6 +189,7 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
         this.role = null;
         DOM.setStyleAttribute(status.getElement(), "color", "black");
         folderPanel.setUserIsWriter(false);
+        folderPanel.setUserIsAdministrator(false);
         folderPanel.reload();
     }
 

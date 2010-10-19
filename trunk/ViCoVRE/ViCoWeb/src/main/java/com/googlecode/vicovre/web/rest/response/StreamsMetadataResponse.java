@@ -30,51 +30,44 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db.insecure;
+package com.googlecode.vicovre.web.rest.response;
 
-import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Vector;
 
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-import com.googlecode.vicovre.recordings.BooleanFieldSet;
-import com.googlecode.vicovre.utils.XmlIo;
+import com.googlecode.vicovre.recordings.Stream;
 
-public class BooleanFieldSetReader {
+@XmlRootElement(name="streams")
+public class StreamsMetadataResponse {
 
-    public static BooleanFieldSet readFieldSet(Node node)
-            throws SAXException {
-        Node operation = XmlIo.readNode(node, "operation");
-        String op = XmlIo.readAttr(operation, "type", null);
-        if (op == null) {
-            throw new SAXException("Operation type missing");
-        }
-        BooleanFieldSet fieldSet = new BooleanFieldSet(op);
+    private HashSet<StreamMetadataResponse> streams =
+        new HashSet<StreamMetadataResponse>();
 
-        Node[] fields = XmlIo.readNodes(operation, "field");
-        for (Node field : fields) {
-            String name = XmlIo.readAttr(field, "name", null);
-            String value = XmlIo.readAttr(field, "value", null);
-            fieldSet.addField(name, value);
-        }
-
-        Node[] operations = XmlIo.readNodes(operation, "operation");
-        for (Node opNode : operations) {
-            fieldSet.addSet(readFieldSet(opNode));
-        }
-
-        return fieldSet;
+    public StreamsMetadataResponse() {
+        // Does Nothing
     }
 
-    public static void writeFieldSet(PrintWriter writer, BooleanFieldSet set) {
-        writer.println("<operation type=\"" + set.getOperation() + "\">");
-        for (String field : set.getFields()) {
-            writer.println("<field name=\"" + field + "\" value=\""
-                    + set.getValue(field) + "\"/>");
-        }
-        for (BooleanFieldSet subset : set.getSets()) {
-            writeFieldSet(writer, subset);
-        }
-        writer.println("</operation>");
+    public StreamsMetadataResponse(List<Stream> streams) {
+        addStreams(streams);
     }
+
+    public void addStreams(List<Stream> streams) {
+        for (Stream stream : streams) {
+            this.streams.add(new StreamMetadataResponse(stream));
+        }
+    }
+
+    public void addStream(Stream stream) {
+        streams.add(new StreamMetadataResponse(stream));
+    }
+
+    @XmlElement(name="stream")
+    public List<StreamMetadataResponse> getStreams() {
+        return new Vector<StreamMetadataResponse>(streams);
+    }
+
 }

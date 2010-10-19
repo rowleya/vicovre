@@ -34,6 +34,8 @@ package com.googlecode.vicovre.recordings.db.insecure;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
@@ -64,5 +66,27 @@ public class DefaultLayoutReader {
                     audioStream));
         }
         return layout;
+    }
+
+    public static void writeLayout(OutputStream output, DefaultLayout layout) {
+        PrintWriter writer = new PrintWriter(output);
+        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        writer.println("<layout>");
+        XmlIo.writeValue("name", layout.getName(), writer);
+        XmlIo.writeValue("time", String.valueOf(layout.getTime()), writer);
+        XmlIo.writeValue("endTime", String.valueOf(layout.getEndTime()),
+                writer);
+        for (DefaultLayoutPosition position : layout.getLayoutPositions()) {
+            writer.println("<pos" + position.getName() + ">");
+            BooleanFieldSetReader.writeFieldSet(writer, position.getFieldSet());
+            writer.println("</pos" + position.getName() + ">");
+        }
+        for (DefaultLayoutPosition audio : layout.getAudioStreams()) {
+            writer.println("<audioStream>");
+            BooleanFieldSetReader.writeFieldSet(writer, audio.getFieldSet());
+            writer.println("</audioStream>");
+        }
+        writer.println("</layout>");
+        writer.flush();
     }
 }

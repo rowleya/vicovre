@@ -30,51 +30,53 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db.insecure;
+package com.googlecode.vicovre.gwt.recorder.client;
 
-import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONStreamMetadata;
 
-import com.googlecode.vicovre.recordings.BooleanFieldSet;
-import com.googlecode.vicovre.utils.XmlIo;
+public class DefaultLayout {
 
-public class BooleanFieldSetReader {
+    private String name = null;
 
-    public static BooleanFieldSet readFieldSet(Node node)
-            throws SAXException {
-        Node operation = XmlIo.readNode(node, "operation");
-        String op = XmlIo.readAttr(operation, "type", null);
-        if (op == null) {
-            throw new SAXException("Operation type missing");
-        }
-        BooleanFieldSet fieldSet = new BooleanFieldSet(op);
+    private long time = 0;
 
-        Node[] fields = XmlIo.readNodes(operation, "field");
-        for (Node field : fields) {
-            String name = XmlIo.readAttr(field, "name", null);
-            String value = XmlIo.readAttr(field, "value", null);
-            fieldSet.addField(name, value);
-        }
+    private long endTime = 0;
 
-        Node[] operations = XmlIo.readNodes(operation, "operation");
-        for (Node opNode : operations) {
-            fieldSet.addSet(readFieldSet(opNode));
-        }
+    private Map<String, JSONStreamMetadata> positions = null;
 
-        return fieldSet;
+    private List<JSONStreamMetadata> audioStreams = null;
+
+    public DefaultLayout(String name, long time, long endTime,
+            Map<String, JSONStreamMetadata> positions,
+            List<JSONStreamMetadata> audioStreams) {
+        this.name = name;
+        this.time = time;
+        this.endTime = endTime;
+        this.positions = positions;
+        this.audioStreams = audioStreams;
     }
 
-    public static void writeFieldSet(PrintWriter writer, BooleanFieldSet set) {
-        writer.println("<operation type=\"" + set.getOperation() + "\">");
-        for (String field : set.getFields()) {
-            writer.println("<field name=\"" + field + "\" value=\""
-                    + set.getValue(field) + "\"/>");
-        }
-        for (BooleanFieldSet subset : set.getSets()) {
-            writeFieldSet(writer, subset);
-        }
-        writer.println("</operation>");
+    public String getName() {
+        return name;
     }
+
+    public long getTime() {
+        return time;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
+    public JSONStreamMetadata getStream(String position) {
+        return positions.get(position);
+    }
+
+    public List<JSONStreamMetadata> getAudioStreams() {
+        return audioStreams;
+    }
+
 }

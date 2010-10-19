@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
+import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
@@ -418,4 +419,15 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             UnfinishedRecordingListener listener) {
         database.addUnfinishedRecordingListener(listener);
     }
+
+    public void setDefaultLayout(String folder, DefaultLayout layout)
+            throws IOException {
+         if (!securityDatabase.hasRole(Role.ADMINISTRATOR)) {
+             throw new UnauthorizedException(
+                 "Only an administrator can set the default folder layout");
+         }
+         database.setDefaultLayout(folder, layout);
+    }
+
+
 }

@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
@@ -103,6 +104,9 @@ public interface RecordingDatabase {
             throws IOException;
 
     public void addRecordingListener(RecordingListener recordingListener);
+
+    public void setDefaultLayout(String folder, DefaultLayout layout)
+        throws IOException;
 
     public void shutdown();
 }
