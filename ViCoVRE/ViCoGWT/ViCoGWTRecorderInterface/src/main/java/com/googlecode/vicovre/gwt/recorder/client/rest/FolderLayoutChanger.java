@@ -30,51 +30,52 @@
  *
  */
 
-package com.googlecode.vicovre.recordings.db.insecure;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import java.io.PrintWriter;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
 
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
+import com.google.gwt.core.client.GWT;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.DefaultLayoutPopup;
 
-import com.googlecode.vicovre.recordings.BooleanFieldSet;
-import com.googlecode.vicovre.utils.XmlIo;
+public class FolderLayoutChanger extends AbstractRestCall {
 
-public class BooleanFieldSetReader {
+    private DefaultLayoutPopup popup = null;
 
-    public static BooleanFieldSet readFieldSet(Node node)
-            throws SAXException {
-        Node operation = XmlIo.readNode(node, "operation");
-        String op = XmlIo.readAttr(operation, "type", null);
-        if (op == null) {
-            throw new SAXException("Operation type missing");
-        }
-        BooleanFieldSet fieldSet = new BooleanFieldSet(op);
+    private String url = null;
 
-        Node[] fields = XmlIo.readNodes(operation, "field");
-        for (Node field : fields) {
-            String name = XmlIo.readAttr(field, "name", null);
-            String value = XmlIo.readAttr(field, "value", null);
-            fieldSet.addField(name, value);
-        }
-
-        Node[] operations = XmlIo.readNodes(operation, "operation");
-        for (Node opNode : operations) {
-            fieldSet.addSet(readFieldSet(opNode));
-        }
-
-        return fieldSet;
+    public static void setLayout(DefaultLayoutPopup popup, String url) {
+        FolderLayoutChanger changer = new FolderLayoutChanger(popup, url);
+        changer.go();
     }
 
-    public static void writeFieldSet(PrintWriter writer, BooleanFieldSet set) {
-        writer.println("<operation type=\"" + set.getOperation() + "\">");
-        for (String field : set.getFields()) {
-            writer.println("<field name=\"" + field + "\" value=\""
-                    + set.getValue(field) + "\"/>");
+    private FolderLayoutChanger(DefaultLayoutPopup popup, String url) {
+        this.popup = popup;
+        this.url = url + "folders" + popup.getFolder();
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
         }
-        for (BooleanFieldSet subset : set.getSets()) {
-            writeFieldSet(writer, subset);
-        }
-        writer.println("</operation>");
+        this.url += "layout";
     }
+
+    public void go() {
+        String itemUrl = url + "?" + popup.getLayoutDetailsAsUrl();
+        GWT.log("Changing layout with url " + itemUrl);
+        go(itemUrl, Method.PUT);
+    }
+
+    protected void onError(String message) {
+        MessagePopup errorPopup = new MessagePopup(
+                "Error setting layout: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
+    }
+
+    protected void onSuccess(Response response) {
+        popup.hide();
+    }
+
 }

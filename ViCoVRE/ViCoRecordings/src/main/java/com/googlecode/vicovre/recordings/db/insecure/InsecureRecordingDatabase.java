@@ -43,6 +43,7 @@ import java.util.Vector;
 import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
+import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
@@ -528,6 +529,29 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
     public void addRecordingListener(RecordingListener listener) {
         recordingListeners.add(listener);
         traverseRecordings(topLevelFolder, listener);
+    }
+
+    public void setDefaultLayout(String folderName, DefaultLayout layout)
+            throws IOException {
+        InsecureFolder folder = getFolder(getFile(folderName));
+        if (folder == null) {
+            throw new IOException("Folder " + folderName + " not found");
+        }
+        File layoutFile = new File(folder.getFile(),
+                layout.getName() + RecordingConstants.LAYOUT);
+        FileOutputStream output = new FileOutputStream(layoutFile);
+        DefaultLayoutReader.writeLayout(output, layout);
+        output.close();
+
+        List<Recording> recordings = folder.getRecordings();
+        for (Recording recording : recordings) {
+            if (recording.getReplayLayouts().isEmpty()) {
+                ReplayLayout replayLayout = layout.matchLayout(recording);
+                if (replayLayout != null) {
+                    recording.setReplayLayout(replayLayout);
+                }
+            }
+        }
     }
 
 

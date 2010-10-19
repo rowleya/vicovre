@@ -32,12 +32,11 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.OptGroupElement;
 import com.google.gwt.dom.client.OptionElement;
@@ -46,6 +45,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbsolutePanel;
@@ -60,14 +60,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.json.JSONRecording;
-import com.googlecode.vicovre.gwt.client.json.JSONStream;
-import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutChanger;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLayoutChanger;
+import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONStreamMetadata;
 
-public class LayoutPopup extends ModalPopup<VerticalPanel> implements
+public class DefaultLayoutPopup extends ModalPopup<VerticalPanel> implements
         ClickHandler, ChangeHandler {
-
-    private PlayItem item = null;
 
     private ListBox layoutBox = new ListBox();
 
@@ -81,8 +78,6 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     private TimeBox startTime = new TimeBox(1, 1);
 
-    private long originalStartTime = -1;
-
     private TimeBox stopTime = new TimeBox(1, 1);
 
     private Button okButton = new Button("OK");
@@ -91,13 +86,17 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     private HashMap<String, Layout> layouts = new HashMap<String, Layout>();
 
+    private JsArray<JSONStreamMetadata> streams = null;
+
     private String url = null;
 
-    public LayoutPopup(PlayItem item, Layout[] layouts,
-            Layout[] customLayouts, String url) {
+    private String folder = null;
+
+    public DefaultLayoutPopup(Layout[] layouts,
+            Layout[] customLayouts, String url, String folder) {
         super(new VerticalPanel());
-        this.item = item;
         this.url = url;
+        this.folder = folder;
 
         HorizontalPanel layoutSelectPanel = new HorizontalPanel();
         layoutSelectPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_LEFT);
@@ -171,61 +170,30 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         okButton.addClickHandler(this);
         cancelButton.addClickHandler(this);
         layoutBox.addChangeHandler(this);
+
+        layoutBox.setSelectedIndex(0);
+        updateLayout();
+        startTime.setValue(0);
+        stopTime.setValue(0);
+    }
+
+    public void setStreams(JsArray<JSONStreamMetadata> streams) {
+        this.streams = streams;
     }
 
     public void center() {
-        List<ReplayLayout> layouts = item.getReplayLayouts();
-        if (layouts.size() > 0) {
-            setLayout(layouts.get(0));
-        } else {
-            setLayout(null);
-        }
         super.center();
     }
 
-    private String getTimeString(long value) {
-        long remainder = value / 1000;
-        long hours = remainder / 3600;
-        remainder -= (hours * 3600);
-        long minutes = remainder / 60;
-        remainder -= (minutes * 60);
-        long seconds = remainder;
-
-        String hourString = hours + ":";
-        if (hours < 10) {
-            hourString = "0" + hourString;
-        }
-        String minuteString = minutes + ":";
-        if (minutes < 10) {
-            minuteString = "0" + minuteString;
-        }
-        String secondString = seconds + "";
-        if (seconds < 10) {
-            secondString = "0" + secondString;
-        }
-        return hourString + minuteString + secondString;
-    }
-
-    private String getStreamName(JSONStream stream) {
+    private String getStreamName(JSONStreamMetadata stream) {
         String text = "";
         if (stream.getName() != null) {
             text = stream.getName();
             if (stream.getNote() != null) {
                 text += " - " + stream.getNote();
             }
-
-            Date start = JSONRecording.DATE_FORMAT.parse(stream.getStartTime());
-            Date end = JSONRecording.DATE_FORMAT.parse(stream.getEndTime());
-            long duration = end.getTime() - start.getTime();
-            long startOffset = start.getTime() - item.getStartDate().getTime();
-            text += " (" + getTimeString(duration);
-            if (startOffset > 0) {
-                text += " starting at " + getTimeString(startOffset);
-            }
-            text += ")";
         } else {
-            text = stream.getCname() + " ("
-                + stream.getSsrc() + ")";
+            return null;
         }
         return text;
     }
@@ -240,10 +208,11 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
             layout.setWidth("0px");
             layout.setHeight("0px");
         } else {
-            for (JSONStream stream : item.getStreams()) {
+            for (int i = 0; i < streams.length(); i++) {
+                JSONStreamMetadata stream = streams.get(i);
                 if (stream.getMediaType().equalsIgnoreCase("Audio")) {
                     CheckBox box = new CheckBox(getStreamName(stream));
-                    box.setFormValue(stream.getSsrc());
+                    box.setFormValue(String.valueOf(i));
                     box.setValue(true);
                     audioBoxes.add(box);
                     audioStreams.add(box);
@@ -270,10 +239,11 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
                 Widget widget = null;
                 if (position.isAssignable()) {
                     ListBox box = new ListBox();
-                    for (JSONStream stream : item.getStreams()) {
+                    for (int i = 0; i < streams.length(); i++) {
+                        JSONStreamMetadata stream = streams.get(i);
                         if (stream.getMediaType().equalsIgnoreCase("Video")) {
                             box.addItem(getStreamName(stream),
-                                    stream.getSsrc());
+                                    String.valueOf(i));
                         }
                     }
 
@@ -304,45 +274,9 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         }
     }
 
-    private void setValue(ListBox box, String value) {
-        for (int i = 0; i < box.getItemCount(); i++) {
-            if (box.getValue(i).equals(value)) {
-                box.setSelectedIndex(i);
-                break;
-            }
-        }
-    }
-
-    private void setLayout(ReplayLayout replayLayout) {
-        if (replayLayout == null) {
-            setValue(layoutBox, "");
-            updateLayout();
-            startTime.setValue(0);
-            stopTime.setValue(item.getDuration());
-            originalStartTime = -1;
-        } else {
-            setValue(layoutBox, replayLayout.getName());
-            updateLayout();
-            Layout layout = layouts.get(replayLayout.getName());
-            for (LayoutPosition position : layout.getPositions()) {
-                String stream = replayLayout.getStream(position.getName());
-                if (position.isAssignable()) {
-                    setValue(positions.get(position.getName()), stream);
-                }
-            }
-            List<String> audioStreams = replayLayout.getAudioStreams();
-            for (CheckBox box : audioBoxes) {
-                box.setValue(audioStreams.contains(box.getFormValue()));
-            }
-            originalStartTime = replayLayout.getTime();
-            startTime.setValue(originalStartTime);
-            stopTime.setValue(replayLayout.getEndTime());
-        }
-    }
-
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(okButton)) {
-            PlayItemLayoutChanger.setLayout(this, url);
+            FolderLayoutChanger.setLayout(this, url);
         } else if (event.getSource().equals(cancelButton)) {
             hide();
         }
@@ -352,11 +286,7 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         updateLayout();
     }
 
-    public String getId() {
-        return item.getId();
-    }
-
-    public ReplayLayout getLayout() {
+    public DefaultLayout getLayout() {
         String name = layoutBox.getItemText(layoutBox.getSelectedIndex());
         if ((name == null) || name.equals("")) {
             return null;
@@ -364,30 +294,27 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         long time = startTime.getValue();
         long endTime = stopTime.getValue();
         Layout layout = layouts.get(name);
-        HashMap<String, String> positionMap = new HashMap<String, String>();
+        HashMap<String, JSONStreamMetadata> positionMap =
+            new HashMap<String, JSONStreamMetadata>();
         for (LayoutPosition position : layout.getPositions()) {
             if (position.isAssignable()) {
                 ListBox box = positions.get(position.getName());
-                positionMap.put(position.getName(),
-                        box.getValue(box.getSelectedIndex()));
+                int index = Integer.parseInt(box.getValue(
+                        box.getSelectedIndex()));
+                positionMap.put(position.getName(), streams.get(index));
             }
         }
-        Vector<String> audioStreams = new Vector<String>();
+        Vector<JSONStreamMetadata> audioStreams =
+            new Vector<JSONStreamMetadata>();
         for (CheckBox box : audioBoxes) {
             if (box.getValue()) {
-                audioStreams.add(box.getFormValue());
+                int index = Integer.parseInt(box.getFormValue());
+                audioStreams.add(streams.get(index));
             }
         }
 
-        return new ReplayLayout(name, time, endTime, positionMap, audioStreams);
-    }
-
-    public long getLayoutTime() {
-        return startTime.getValue();
-    }
-
-    public long getOriginalLayoutTime() {
-        return originalStartTime;
+        return new DefaultLayout(name, time, endTime, positionMap,
+                audioStreams);
     }
 
     public String getLayoutDetailsAsUrl() {
@@ -395,61 +322,36 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         if ((name == null) || name.equals("")) {
             return null;
         }
-        String itemUrl = "name=" + name;
+        String itemUrl = "name=" + URL.encodeComponent(name);
+        itemUrl += "&startTime=" + startTime.getValue();
         itemUrl += "&endTime=" + stopTime.getValue();
 
         Layout layout = layouts.get(name);
         for (LayoutPosition position : layout.getPositions()) {
             if (position.isAssignable()) {
                 ListBox box = positions.get(position.getName());
-                String stream = box.getValue(box.getSelectedIndex());
-                itemUrl += "&" + position.getName() + "=" + stream;
+                int index = Integer.parseInt(box.getValue(
+                        box.getSelectedIndex()));
+                JSONStreamMetadata stream = streams.get(index);
+                itemUrl += "&" + position.getName() + "Name="
+                    + URL.encodeComponent(stream.getName());
+                if (stream.getNote() != null) {
+                    itemUrl += "&" + position.getName() + "Note="
+                        + URL.encodeComponent(stream.getNote());
+                }
             }
         }
         for (CheckBox box : audioBoxes) {
             if (box.getValue()) {
-                itemUrl += "&audioStream=" + box.getFormValue();
+                int index = Integer.parseInt(box.getFormValue());
+                itemUrl += "&audioName="
+                    + URL.encodeComponent(streams.get(index).getName());
             }
         }
         return itemUrl;
     }
 
-    public List<Map<String, Object>> getLayoutDetails() {
-        List<Map<String, Object>> allDetails = new Vector<Map<String,Object>>();
-        Map<String, Object> details = new HashMap<String, Object>();
-        String name = layoutBox.getItemText(layoutBox.getSelectedIndex());
-        if ((name == null) || name.equals("")) {
-            return null;
-        }
-        long time = startTime.getValue();
-        long endTime = stopTime.getValue();
-        Layout layout = layouts.get(name);
-        HashMap<String, String> positionMap = new HashMap<String, String>();
-        for (LayoutPosition position : layout.getPositions()) {
-            if (position.isAssignable()) {
-                ListBox box = positions.get(position.getName());
-                positionMap.put(position.getName(),
-                        box.getValue(box.getSelectedIndex()));
-            }
-        }
-        Vector<String> audioStreams = new Vector<String>();
-        for (CheckBox box : audioBoxes) {
-            if (box.getValue()) {
-                audioStreams.add(box.getFormValue());
-            }
-        }
-        details.put("name", name);
-        details.put("time", new Long(time).intValue());
-        details.put("endTime", new Long(endTime).intValue());
-        details.put("positions", positionMap);
-        details.put("audioStreams", audioStreams);
-
-        allDetails.add(details);
-
-        return allDetails;
-    }
-
     public String getFolder() {
-        return item.getFolder();
+        return folder;
     }
 }

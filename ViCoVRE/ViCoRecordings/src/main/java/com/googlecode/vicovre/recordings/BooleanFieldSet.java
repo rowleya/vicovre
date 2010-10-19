@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.recordings;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -124,5 +125,21 @@ public class BooleanFieldSet {
             return false;
         }
         throw new RuntimeException("Unknown operation " + operation);
+    }
+
+    public String getOperation() {
+        return operation;
+    }
+
+    public List<String> getFields() {
+        return fields;
+    }
+
+    public String getValue(String field) {
+        return values.get(fields.indexOf(field));
+    }
+
+    public List<BooleanFieldSet> getSets() {
+        return sets;
     }
 }

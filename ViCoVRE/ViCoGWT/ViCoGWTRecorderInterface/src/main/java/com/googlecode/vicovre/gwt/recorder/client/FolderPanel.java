@@ -62,7 +62,7 @@ public class FolderPanel extends HorizontalPanel
 
     private TabPanel panel = new TabPanel();
 
-    private PlayPanel playPanel = new PlayPanel();
+    private PlayPanel playPanel = null;
 
     private RecordPanel recordPanel = null;
 
@@ -86,6 +86,7 @@ public class FolderPanel extends HorizontalPanel
         this.layouts = layouts;
         this.customLayouts = customLayouts;
 
+        playPanel = new PlayPanel(this, url, layouts, customLayouts);
         recordPanel = new RecordPanel(this, playPanel, url, layouts,
                 customLayouts);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
@@ -203,6 +204,10 @@ public class FolderPanel extends HorizontalPanel
         if (event.getSource().equals(createButton)) {
             FolderCreator.createFolder(this, url);
         }
+    }
+
+    public void setUserIsAdministrator(boolean isAdministrator) {
+        playPanel.setUserIsAdministrator(isAdministrator);
     }
 
     public void setUserIsWriter(boolean isWriter) {
