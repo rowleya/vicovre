@@ -70,6 +70,18 @@
         <constructor-arg><ref bean="emailer"/></constructor-arg>
     </bean>
 
+    <bean id="backupHandler" class="com.googlecode.vicovre.recordings.BackupHandler" destroy-method="shutdown">
+        <constructor-arg><value>${recording.backup.location}</value></constructor-arg>
+        <constructor-arg><ref bean="insecureDatabase"/></constructor-arg>
+        <constructor-arg><value>${recording.backup.enabled}</value></constructor-arg>
+    </bean>
+    <bean id="backupSecurityHandler" class="com.googlecode.vicovre.recordings.BackupSecurityHandler" destroy-method="shutdown">
+        <constructor-arg><value>${security.location}</value></constructor-arg>
+        <constructor-arg><value>${security.backup.location}</value></constructor-arg>
+        <constructor-arg><ref bean="securityDatabase"/></constructor-arg>
+        <constructor-arg><value>${security.backup.enabled}</value></constructor-arg>
+    </bean>
+
     <bean id="convertSessionManager" class="com.googlecode.vicovre.web.convert.ConvertSessionManager">
     </bean>
 
