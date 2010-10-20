@@ -155,7 +155,7 @@ public class VideoExtractor {
 
         if (videoReaders != null) {
             videoMixer = new VideoMixer(videoReaders, positions,
-                    backgroundColour);
+                    backgroundColour, true);
             videoSource = new VideoMediaSource(videoMixer, multiplexer,
                     videoTrack);
         }

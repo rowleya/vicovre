@@ -70,8 +70,10 @@ public class VideoMixer {
 
     private Buffer buffer = null;
 
+    private boolean firstFrameRead = false;
+
     public VideoMixer(MemeticFileReader[] sources, Rectangle[] positions,
-            int backgroundColour)
+            int backgroundColour, boolean forceFillFirstFrame)
             throws UnsupportedFormatException {
         this.sources = new VideoSource[sources.length];
         sourceFinished = new boolean[sources.length];
@@ -139,6 +141,8 @@ public class VideoMixer {
         buffer.setOffset(0);
         buffer.setLength(data.length);
         buffer.setFormat(format);
+
+        firstFrameRead = !forceFillFirstFrame;
     }
 
     public void streamSeek(long offset) throws IOException {
@@ -178,9 +182,14 @@ public class VideoMixer {
     }
 
     public boolean readNextBuffer() throws IOException {
+        boolean force = false;
+        if (!firstFrameRead) {
+            force = true;
+            firstFrameRead = true;
+        }
         for (int i = 0; i < sources.length; i++) {
             if (!sourceFinished[i]) {
-                boolean finished = !sources[i].readNextBuffer(buffer, false);
+                boolean finished = !sources[i].readNextBuffer(buffer, force);
                 if (finished && !sourceFinished[i]) {
                     sourceFinished[i] = true;
                     sources[i].readNextBuffer(buffer, true);
