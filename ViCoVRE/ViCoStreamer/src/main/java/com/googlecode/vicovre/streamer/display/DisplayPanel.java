@@ -53,9 +53,9 @@ import javax.swing.JSplitPane;
 
 import com.googlecode.vicovre.media.controls.PlayControl;
 import com.googlecode.vicovre.media.rtp.StreamListener;
+import com.googlecode.vicovre.media.screencapture.ChangeDetection;
 import com.googlecode.vicovre.media.ui.FileListener;
 import com.googlecode.vicovre.media.ui.LocalStreamListener;
-import com.googlecode.vicovre.streamer.web.ChangeDetectionEffect;
 import com.googlecode.vicovre.streamer.web.StreamUpdateListener;
 import com.googlecode.vicovre.streamer.web.VideoWebServer;
 
@@ -257,8 +257,7 @@ public class DisplayPanel extends JPanel implements StreamListener,
         }
         StreamUpdateListener listener = webServer.getStream(
                 name, name);
-        ChangeDetectionEffect cdEffect = new ChangeDetectionEffect();
-        cdEffect.addScreenListener(listener);
+        ChangeDetection cdEffect = listener.getChangeDetection();
         VideoPanel panel = new VideoPanel(dataSource, "", false,
                 new Effect[]{cdEffect});
         localStreamListeners.put(dataSource, listener);
