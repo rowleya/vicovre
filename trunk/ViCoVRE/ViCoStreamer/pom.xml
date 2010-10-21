@@ -110,7 +110,7 @@
                         <mainClass>com.googlecode.vicovre.streamer.Streamer</mainClass>
                     </jnlp>
                     <sign>
-                        <keystore>../keystore</keystore>
+                        <keystore>${project.build.sourceDirectory}/../keystore</keystore>
                         <keypass>password</keypass>
                         <storepass>password</storepass>
                         <alias>cert</alias>
