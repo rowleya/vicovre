@@ -416,8 +416,10 @@ public class SimpleProcessor {
         while (iterator.hasNext()) {
             iterator.next();
             Format input = iterator.getInputFormat();
+            System.err.println("Trying input format " + input);
             Format inputFormat = effect.setInputFormat(input);
             if (inputFormat != null) {
+                System.err.println("Input format " + input + " works!");
                 Format outputFormat = effect.setOutputFormat(inputFormat);
                 Buffer output = createBuffer(outputFormat);
                 iterator.insertBefore(effect, inputFormat, outputFormat,

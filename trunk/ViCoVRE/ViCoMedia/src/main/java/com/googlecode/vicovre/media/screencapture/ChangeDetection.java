@@ -14,6 +14,7 @@ import java.awt.image.ColorModel;
 import java.util.Vector;
 
 import javax.media.Buffer;
+import javax.media.Effect;
 import javax.media.Format;
 import javax.media.Renderer;
 import javax.media.format.RGBFormat;
@@ -32,7 +33,7 @@ import com.googlecode.vicovre.media.processor.SimpleProcessor;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class ChangeDetection implements Renderer {
+public class ChangeDetection implements Renderer, Effect {
 
     // The CCITT RGB to YUV Y Blue multiplier
     private static final double CCITT_Y_BLUE_MULTIPLIER = 0.114;
@@ -177,6 +178,12 @@ public class ChangeDetection implements Renderer {
         return inputFormats;
     }
 
+    public Format[] getSupportedOutputFormats(Format input) {
+        if (input == null) {
+            return inputFormats;
+        }
+        return new Format[]{input};
+    }
 
     private void save(QuickArrayAbstract lum, int pos, int stride) {
         for (int i = 16; --i >= 0;) {
@@ -247,6 +254,14 @@ public class ChangeDetection implements Renderer {
         for (int i = 0; i < 16; i++) {
             convertBlockLine(inBuf, devBuf, i, blkx, blky);
         }
+    }
+
+
+
+    public int process(Buffer input, Buffer output) {
+        int result = process(input);
+        output.copy(input);
+        return result;
     }
 
     /**
@@ -511,6 +526,10 @@ public class ChangeDetection implements Renderer {
         }
 
         return null;
+    }
+
+    public Format setOutputFormat(Format format) {
+        return format;
     }
 
     /**

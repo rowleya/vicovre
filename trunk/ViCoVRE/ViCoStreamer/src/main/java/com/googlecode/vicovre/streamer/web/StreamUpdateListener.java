@@ -40,6 +40,9 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import com.googlecode.vicovre.media.screencapture.CaptureChangeListener;
+import com.googlecode.vicovre.media.screencapture.ChangeDetection;
+
 public class StreamUpdateListener implements CaptureChangeListener {
 
     private static final int WAIT_TIME = 10000;
@@ -55,9 +58,14 @@ public class StreamUpdateListener implements CaptureChangeListener {
 
     private String id = null;
 
+    private ChangeDetection changeDetection = new ChangeDetection();
+
     public StreamUpdateListener(String id, byte[] offlineData) {
         this.id = id;
         this.offlineData = offlineData;
+        changeDetection.addScreenListener(this);
+        changeDetection.setFirstSceneChangeThreshold(0.0);
+        changeDetection.setImmediatlyNotifyChange(true);
     }
 
     private void indicateChange() {
@@ -67,21 +75,6 @@ public class StreamUpdateListener implements CaptureChangeListener {
             }
             imageUpdated.notifyAll();
         }
-    }
-
-    public void captureDone(BufferedImage image) {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        try {
-            ImageIO.write(image, "jpg", output);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Write the image data to the array
-        synchronized (this) {
-            imageData = output.toByteArray();
-        }
-        indicateChange();
     }
 
     /**
@@ -140,5 +133,25 @@ public class StreamUpdateListener implements CaptureChangeListener {
 
     public String getId() {
         return id;
+    }
+
+    public void captureDone(long sequence) {
+        BufferedImage image = changeDetection.getImage();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(image, "jpg", output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Write the image data to the array
+        synchronized (this) {
+            imageData = output.toByteArray();
+        }
+        indicateChange();
+    }
+
+    public ChangeDetection getChangeDetection() {
+        return changeDetection;
     }
 }

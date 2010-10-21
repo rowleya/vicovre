@@ -1,0 +1,155 @@
+<project name="changeDetection" default="main">
+    <property name="resources" value="resources"/>
+    <property name="msys.path" value="C:\msys\1.0" />
+    <property name="mingw.path" value="C:\mingw"/>
+    <property environment="getenv"/>
+
+    <import file="../../../../../../ViCoCodecs/ViCoCodecsCommons/src/main/native/resources/os.xml"/>
+
+    <macrodef name="build">
+        <attribute name="cc"/>
+        <attribute name="output"/>
+        <element name="includes" optional="true"/>
+        <element name="ccopts" optional="true"/>
+        <element name="libdirs" optional="true"/>
+        <element name="libs" optional="true"/>
+        <element name="envopts" optional="true"/>
+        <sequential>
+            <dirname file="../../../resources/native/@{output}" property="outdir"/>
+            <mkdir dir="${outdir}"/>
+            <exec dir="." executable="@{cc}" failonerror="true">
+                <envopts/>
+                <includes/>
+                <arg line="-O3"/>
+                <ccopts/>
+                <arg line="-o"/>
+                <arg file="../../../resources/native/@{output}"/>
+
+                <arg file="grabber.cpp"/>
+                <libdirs/>
+                <libs/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="build.windows">
+        <attribute name="arch"/>
+        <sequential>
+            <build cc="${mingw.path}\bin\g++.exe" output="@{arch}/windows/${ant.project.name}.dll">
+                <ccopts>
+                    <arg line="-shared" />
+                    <arg line="-static-libgcc"/>
+                    <arg line="-Wl,--add-stdcall-alias" />
+                </ccopts>
+                <envopts>
+                    <env key="Path" value="${msys.path}\bin;${msys.path}\local\bin;${mingw.path}\bin;${getenv.Path}"/>
+                </envopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="${resources}/@{arch}/windows/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include" />
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include/win32" />
+                </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/windows/lib"/>
+                </libdirs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.windows32" if="os.isWindows32">
+        <build.windows arch="x86"/>
+    </target>
+
+    <target name="build.windows64" if="os.isWindows64">
+        <build.windows arch="amd64"/>
+    </target>
+
+    <macrodef name="build.mac">
+        <attribute name="arch"/>
+        <element name="macccopts" optional="true"/>
+        <sequential>
+            <build cc="g++" output="@{arch}/mac/lib${ant.project.name}.jnilib">
+                <ccopts>
+                    <arg line="-dynamiclib" />
+                    <arg line="-single_module" />
+                    <macccopts/>
+                </ccopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="resources/@{arch}/mac/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../Headers" />
+                </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/mac/lib"/>
+                </libdirs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.mac32" if="os.isMac32">
+        <build.mac arch="x86">
+            <macccopts>
+                <arg line="-read_only_relocs suppress" />
+            </macccopts>
+        </build.mac>
+    </target>
+
+    <target name="build.mac64" if="os.isMac64">
+        <build.mac arch="x86_64">
+            <macccopts>
+                <arg line="-m64"/>
+                <arg line="-isysroot /Developer/SDKs/MacOSX10.5.sdk"/>
+                <arg line="-mmacosx-version-min=10.5"/>
+            </macccopts>
+        </build.mac>
+    </target>
+
+    <macrodef name="build.unix">
+        <attribute name="arch"/>
+        <sequential>
+            <build cc="gcc" output="@{arch}/linux/lib${ant.project.name}.so">
+                <ccopts>
+                    <arg line="-shared" />
+                </ccopts>
+                <includes>
+                    <arg line="-I"/>
+                    <arg path="resources/@{arch}/unix/include"/>
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include" />
+                    <arg line="-I"/>
+                    <arg path="${java.home}/../include/linux" />
+                </includes>
+                <libdirs>
+                    <arg line="-L"/>
+                    <arg path="${resources}/@{arch}/unix/lib"/>
+                </libdirs>
+                <libs>
+                    <arg line="-lstdc++"/>
+                </libs>
+            </build>
+        </sequential>
+    </macrodef>
+
+    <target name="build.unix32" if="os.isUnix32">
+        <build.unix arch="i386"/>
+    </target>
+
+    <target name="build.unix64" if="os.isUnix64">
+        <build.unix arch="amd64"/>
+    </target>
+
+    <target name="main">
+        <antcall target="build.windows32"/>
+        <antcall target="build.windows64"/>
+        <antcall target="build.mac32"/>
+        <antcall target="build.mac64"/>
+        <antcall target="build.unix32"/>
+        <antcall target="build.unix64"/>
+    </target>
+</project>
