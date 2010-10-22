@@ -68,8 +68,8 @@ public class ListRecordingsController implements Controller {
 
         ModelAndView modelAndView = new ModelAndView("listRecordings");
         modelAndView.addObject("folder", folder);
-        modelAndView.addObject("subfolders", database.getSubFolders(folder));
-        modelAndView.addObject("recordings", database.getRecordings(folder));
+        modelAndView.addObject("subfolders", subFolders);
+        modelAndView.addObject("recordings", recordings);
         modelAndView.addObject("isTopLevel", (folder != null)
             && (folder.equals("") || folder.equals("/")
                     || folder.equals("\\")));
