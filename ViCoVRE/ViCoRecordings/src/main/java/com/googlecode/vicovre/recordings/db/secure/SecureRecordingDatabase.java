@@ -293,17 +293,17 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public List<Recording> getRecordings(String folder) {
         List<Recording> recordings = database.getRecordings(folder);
-        Vector<Recording> secureRecordings = new Vector<Recording>();
-        for (Recording recording : recordings) {
-            if (securityDatabase.isAllowed(folder,
-                    READ_RECORDING_ID_PREFIX + recording.getId(), true)) {
-                System.err.println("Can read " + recording.getId() + " in folder " + folder);
-                secureRecordings.add(new SecureRecording(this, recording));
-            } else {
-                System.err.println("Cannot read " + recording.getId() + " in folder " + folder);
+        if (recordings != null) {
+            Vector<Recording> secureRecordings = new Vector<Recording>();
+            for (Recording recording : recordings) {
+                if (securityDatabase.isAllowed(folder,
+                        READ_RECORDING_ID_PREFIX + recording.getId(), true)) {
+                    secureRecordings.add(new SecureRecording(this, recording));
+                }
             }
+            return secureRecordings;
         }
-        return secureRecordings;
+        return null;
     }
 
     public void updateRecordingLayouts(Recording recording) throws IOException {
