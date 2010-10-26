@@ -115,4 +115,18 @@
         <constructor-arg index="0" ref="profileRepository"/>
         <constructor-arg index="1" ref="cabotoDatabase"/>
     </bean>
+
+    <bean id="namespaces" class="java.util.HashMap">
+        <constructor-arg>
+            <map>
+            </map>
+        </constructor-arg>
+    </bean>
+
+    <bean id="metadataMap" class="java.util.HashMap">
+        <constructor-arg>
+            <map>
+            </map>
+        </constructor-arg>
+    </bean>
 </beans>
