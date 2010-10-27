@@ -44,7 +44,7 @@ import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
  */
 public class HarvestedEvent extends HarvestedItem {
 
-    private RecordingMetadata metadata = null;
+    private Metadata metadata = null;
 
     private Date startDate = null;
 
@@ -72,7 +72,7 @@ public class HarvestedEvent extends HarvestedItem {
      * Gets the metadata of the event
      * @return The metadata
      */
-    public RecordingMetadata getMetadata() {
+    public Metadata getMetadata() {
         return metadata;
     }
 
@@ -96,7 +96,7 @@ public class HarvestedEvent extends HarvestedItem {
      * Sets the metadata of the event
      * @param metadata The metadata
      */
-    public void setMetadata(RecordingMetadata metadata) {
+    public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
     }
 

@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.security.UnauthorizedException;
@@ -124,7 +124,7 @@ public class SecureRecording extends Recording {
         return recording.getLifetime();
     }
 
-    public RecordingMetadata getMetadata() {
+    public Metadata getMetadata() {
         checkRead();
         return recording.getMetadata();
     }
@@ -174,7 +174,7 @@ public class SecureRecording extends Recording {
         recording.setLifetime(lifetime);
     }
 
-    public void setMetadata(RecordingMetadata metadata) {
+    public void setMetadata(Metadata metadata) {
         checkEdit();
         recording.setMetadata(metadata);
     }

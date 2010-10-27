@@ -38,6 +38,7 @@ import java.util.List;
 
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.insecure.HarvestSourceListener;
@@ -53,6 +54,19 @@ public interface RecordingDatabase {
     public File getFile(String folder);
 
     public List<String> getSubFolders(String folder);
+
+    public boolean addFolder(String parent, String folder) throws IOException;
+
+    public void deleteFolder(String folder) throws IOException;
+
+    public boolean canReadFolder(String folder);
+
+    public boolean canWriteFolder(String folder);
+
+    public Metadata getFolderMetadata(String folder);
+
+    public void setFolderMetadata(String folder, Metadata metadata)
+        throws IOException;
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException;

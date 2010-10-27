@@ -41,7 +41,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.utils.XmlIo;
 
 /**
@@ -50,9 +50,9 @@ import com.googlecode.vicovre.utils.XmlIo;
  * @author Andrew G D Rowley
  * @version 1.0
  */
-public class RecordingMetadataReader {
+public class MetadataReader {
 
-    public static RecordingMetadata readMetadata(InputStream input)
+    public static Metadata readMetadata(InputStream input)
             throws SAXException, IOException {
         Node doc = XmlIo.read(input);
         Node primaryKeyNode = XmlIo.readNode(doc, "primaryKey");
@@ -64,7 +64,7 @@ public class RecordingMetadataReader {
         if (primaryValue == null) {
             throw new SAXException("Missing primaryValue");
         }
-        RecordingMetadata metadata = new RecordingMetadata(primaryKey,
+        Metadata metadata = new Metadata(primaryKey,
                 primaryValue);
         Node[] keys = XmlIo.readNodes(doc, "key");
         for (Node keyNode : keys) {
@@ -79,17 +79,17 @@ public class RecordingMetadataReader {
         return metadata;
     }
 
-    public static RecordingMetadata readOldMetadata(InputStream input)
+    public static Metadata readOldMetadata(InputStream input)
             throws IOException, SAXException{
         Node doc = XmlIo.read(input);
-        RecordingMetadata metadata = new RecordingMetadata("name", "");
+        Metadata metadata = new Metadata("name", "");
         String className = XmlIo.readValue(doc, "class");
         String[] fields = XmlIo.readFields(doc);
         for (String field : fields) {
             if (!field.equals("class")) {
                 Node node = XmlIo.readNode(doc, field);
                 String value = XmlIo.readAttr(node, "value", null);
-                String key = RecordingMetadata.getKey(field);
+                String key = Metadata.getKey(field);
                 boolean editable = true;
                 boolean visible = true;
                 boolean multiline = false;
@@ -110,7 +110,7 @@ public class RecordingMetadataReader {
         return metadata;
     }
 
-    public static void writeMetadata(RecordingMetadata metadata,
+    public static void writeMetadata(Metadata metadata,
             OutputStream output) {
         PrintWriter writer = new PrintWriter(output);
         writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

@@ -329,21 +329,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
     }
 
     public String getDetailsAsUrl() {
-        String itemUrl = "metadataPrimaryKey=" + URL.encodeComponent(
-                metadataPopup.getPrimaryKey());
-        for (String key : metadataPopup.getKeys()) {
-            String value = metadataPopup.getRealValue(key);
-            if (!value.isEmpty()) {
-                itemUrl += "&metadata" + key + "="
-                    + URL.encodeComponent(value);
-                itemUrl += "&metadata" + key + "Multiline="
-                    + metadataPopup.isMultiline(key);
-                itemUrl += "&metadata" + key + "Visible="
-                    + metadataPopup.isVisible(key);
-                itemUrl += "&metadata" + key + "Editable="
-                    + metadataPopup.isEditable(key);
-            }
-        }
+        String itemUrl = metadataPopup.getDetailsAsUrl();
 
         Date startDate = getStartDate();
         if (startDate != null) {

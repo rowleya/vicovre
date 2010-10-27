@@ -39,7 +39,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 public abstract class AbstractHandler {
@@ -72,7 +72,7 @@ public abstract class AbstractHandler {
         return id;
     }
 
-    protected RecordingMetadata getMetadata(
+    protected Metadata getMetadata(
             MultivaluedMap<String, String> details) throws IOException {
         String primaryKey = details.getFirst("metadataPrimaryKey");
         if (primaryKey == null) {
@@ -83,7 +83,7 @@ public abstract class AbstractHandler {
             throw new IOException("Missing metadata primary value");
         }
 
-        RecordingMetadata metadata = new RecordingMetadata(primaryKey,
+        Metadata metadata = new Metadata(primaryKey,
                 primaryValue);
         for (String key : details.keySet()) {
             if (key.startsWith("metadata") && !key.equals("metadataPrimaryKey")

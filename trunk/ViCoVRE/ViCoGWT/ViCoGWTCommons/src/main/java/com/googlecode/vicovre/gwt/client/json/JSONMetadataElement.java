@@ -34,9 +34,9 @@ package com.googlecode.vicovre.gwt.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class JSONRecordingMetadataElement extends JavaScriptObject {
+public class JSONMetadataElement extends JavaScriptObject {
 
-    protected JSONRecordingMetadataElement() {
+    protected JSONMetadataElement() {
         // Does Nothing
     }
 

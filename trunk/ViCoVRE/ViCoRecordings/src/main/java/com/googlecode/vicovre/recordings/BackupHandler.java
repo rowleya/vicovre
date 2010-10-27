@@ -43,7 +43,7 @@ import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.insecure.LayoutReader;
 import com.googlecode.vicovre.recordings.db.insecure.RecordingListener;
-import com.googlecode.vicovre.recordings.db.insecure.RecordingMetadataReader;
+import com.googlecode.vicovre.recordings.db.insecure.MetadataReader;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 
 public class BackupHandler extends Thread implements RecordingListener {
@@ -268,7 +268,7 @@ public class BackupHandler extends Thread implements RecordingListener {
             File metadataFile = new File(backupDirectory,
                     RecordingConstants.METADATA);
             FileOutputStream outputStream = new FileOutputStream(metadataFile);
-            RecordingMetadataReader.writeMetadata(recording.getMetadata(),
+            MetadataReader.writeMetadata(recording.getMetadata(),
                     outputStream);
             outputStream.close();
         } catch (IOException e) {

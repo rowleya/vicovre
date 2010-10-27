@@ -45,6 +45,7 @@ import org.xml.sax.SAXException;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.PlaybackManager;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
@@ -151,6 +152,21 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                         typeRepository, layoutRepository,
                         harvestFormatRepository, readOnly,
                         defaultRecordingLifetime);
+                    File metadataFile = new File(path,
+                            RecordingConstants.FOLDER_METADATA);
+                    if (metadataFile.exists()) {
+                        try {
+                            FileInputStream input = new FileInputStream(
+                                    metadataFile);
+                            folder.setMetadata(MetadataReader.readMetadata(
+                                    input));
+                            input.close();
+                        } catch (Exception e) {
+                            System.err.println(
+                                "Warning: error reading folder metadata: "
+                                    + e.getMessage());
+                        }
+                    }
                     folderCache.put(path, folder);
                 }
             }
@@ -435,7 +451,7 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         File metadataFile = new File(recording.getDirectory(),
                 RecordingConstants.METADATA);
         FileOutputStream outputStream = new FileOutputStream(metadataFile);
-        RecordingMetadataReader.writeMetadata(recording.getMetadata(),
+        MetadataReader.writeMetadata(recording.getMetadata(),
                 outputStream);
         outputStream.close();
         for (RecordingListener listener : recordingListeners) {
@@ -551,6 +567,49 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                     recording.setReplayLayout(replayLayout);
                 }
             }
+        }
+    }
+
+    public boolean addFolder(String parent, String folder) {
+        File file = getFile(parent + "/" + folder);
+        return file.mkdirs();
+    }
+
+    public void deleteFolder(String folder) throws IOException {
+        File file = getFile(folder);
+        if (file.isDirectory() && (file.listFiles().length == 0)) {
+            file.delete();
+        } else {
+            throw new IOException("The folder must be empty to be deleted");
+        }
+    }
+
+    public boolean canReadFolder(String folder) {
+        return true;
+    }
+
+    public boolean canWriteFolder(String folder) {
+        return true;
+    }
+
+    public Metadata getFolderMetadata(String folderPath) {
+        InsecureFolder folder = getFolder(getFile(folderPath));
+        if (folder != null) {
+            return folder.getMetadata();
+        }
+        return null;
+    }
+
+    public void setFolderMetadata(String folderPath, Metadata metadata)
+            throws IOException {
+        File file = getFile(folderPath);
+        InsecureFolder folder = getFolder(file);
+        if (folder != null) {
+            folder.setMetadata(metadata);
+            FileOutputStream output = new FileOutputStream(
+                    new File(file, RecordingConstants.FOLDER_METADATA));
+            MetadataReader.writeMetadata(metadata, output);
+            output.close();
         }
     }
 

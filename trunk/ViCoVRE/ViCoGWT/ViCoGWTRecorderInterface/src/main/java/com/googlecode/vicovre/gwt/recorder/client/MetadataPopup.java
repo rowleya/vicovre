@@ -41,6 +41,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -53,8 +54,8 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.json.JSONRecordingMetadata;
-import com.googlecode.vicovre.gwt.client.json.JSONRecordingMetadataElement;
+import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
+import com.googlecode.vicovre.gwt.client.json.JSONMetadataElement;
 
 public class MetadataPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, MessageResponseHandler {
@@ -215,16 +216,16 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
         }
     }
 
-    public void setMetadata(JSONRecordingMetadata metadata) {
+    public void setMetadata(JSONMetadata metadata) {
         items.clear();
         keys.clear();
         gridRows = 0;
         grid.clear();
         grid.resize(0, 2);
         primaryKey = metadata.getPrimaryKey();
-        JsArray<JSONRecordingMetadataElement> keys = metadata.getKeys();
+        JsArray<JSONMetadataElement> keys = metadata.getKeys();
         for (int i = 0; i < keys.length(); i++) {
-            JSONRecordingMetadataElement element = keys.get(i);
+            JSONMetadataElement element = keys.get(i);
             addItem(element.getName(), element.getValue(),
                     element.isMultiline(), element.isVisible(),
                     element.isEditable());
@@ -364,4 +365,22 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
         }
     }
 
+    public String getDetailsAsUrl() {
+        String itemUrl = "metadataPrimaryKey=" + URL.encodeComponent(
+                primaryKey);
+        for (String key : keys) {
+            String value = getRealValue(key);
+            if (!value.isEmpty()) {
+                itemUrl += "&metadata" + key + "="
+                    + URL.encodeComponent(value);
+                itemUrl += "&metadata" + key + "Multiline="
+                    + isMultiline(key);
+                itemUrl += "&metadata" + key + "Visible="
+                    + isVisible(key);
+                itemUrl += "&metadata" + key + "Editable="
+                    + isEditable(key);
+            }
+        }
+        return itemUrl;
+    }
 }

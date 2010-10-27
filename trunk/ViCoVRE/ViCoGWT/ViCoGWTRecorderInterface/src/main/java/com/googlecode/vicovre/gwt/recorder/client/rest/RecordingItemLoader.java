@@ -42,7 +42,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.json.client.JSONValue;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.json.JSONRecordingMetadata;
+import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
@@ -117,7 +117,7 @@ public class RecordingItemLoader extends AbstractRestCall {
             return null;
         }
 
-        JSONRecordingMetadata metadata = recording.getMetadata();
+        JSONMetadata metadata = recording.getMetadata();
         if (metadata == null) {
             GWT.log("Warning: Recording metadata is missing");
             return null;

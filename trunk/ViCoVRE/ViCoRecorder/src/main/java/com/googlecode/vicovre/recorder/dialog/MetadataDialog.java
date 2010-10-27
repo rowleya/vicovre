@@ -54,13 +54,13 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
 
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 
 public class MetadataDialog extends JDialog implements ActionListener {
 
     private static final int WIDTH = 600;
 
-    private RecordingMetadata metadata = null;
+    private Metadata metadata = null;
 
     private HashMap<String, JTextComponent> fields =
         new HashMap<String, JTextComponent>();
@@ -88,12 +88,12 @@ public class MetadataDialog extends JDialog implements ActionListener {
 
     private boolean cancelled = false;
 
-    public MetadataDialog(JDialog parent, RecordingMetadata recMetadata) {
+    public MetadataDialog(JDialog parent, Metadata recMetadata) {
         super(parent, "Enter Metadata for the Recording", true);
         setResizable(false);
         metadata = recMetadata;
         if (metadata == null) {
-            metadata = new RecordingMetadata("name", "");
+            metadata = new Metadata("name", "");
         }
 
         buttons = new JPanel();
@@ -151,7 +151,7 @@ public class MetadataDialog extends JDialog implements ActionListener {
         fields.put(key, field);
         components.put(key, component);
 
-        String name = RecordingMetadata.getDisplayName(key);
+        String name = Metadata.getDisplayName(key);
         JLabel label = new JLabel(name + ":");
         Dimension labelSize = label.getMaximumSize();
         maxLabelWidth = Math.max(maxLabelWidth, labelSize.width);
@@ -197,7 +197,7 @@ public class MetadataDialog extends JDialog implements ActionListener {
             String key = metadata.getPrimaryKey();
             JTextComponent value = fields.get(key);
             if (value.getText().equals("")) {
-                String displayName = RecordingMetadata.getDisplayName(key);
+                String displayName = Metadata.getDisplayName(key);
                 JOptionPane.showMessageDialog(this,
                         displayName + " cannot be blank!",
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -209,7 +209,7 @@ public class MetadataDialog extends JDialog implements ActionListener {
                 || e.getSource().equals(addMutlilineItem)) {
             String name = JOptionPane.showInputDialog(this, "Item name:");
             if ((name != null) && !name.equals("")) {
-                String key = RecordingMetadata.getKey(name);
+                String key = Metadata.getKey(name);
                 if (metadata.getValue(key) != null) {
                     JOptionPane.showMessageDialog(this,
                             "An item by this name already exists!", "Error",
@@ -235,7 +235,7 @@ public class MetadataDialog extends JDialog implements ActionListener {
         super.setVisible(visible);
     }
 
-    public RecordingMetadata getMetadata() {
+    public Metadata getMetadata() {
         for (String key : metadata.getKeys()) {
             String value = fields.get(key).getText();
             metadata.setValue(key, value);

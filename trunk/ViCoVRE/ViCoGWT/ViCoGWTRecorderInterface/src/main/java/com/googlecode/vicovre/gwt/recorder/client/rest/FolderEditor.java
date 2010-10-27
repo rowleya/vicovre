@@ -30,58 +30,53 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client.json;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import org.restlet.gwt.data.Method;
+import org.restlet.gwt.data.Response;
 
-public class JSONRecording extends JavaScriptObject {
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.recorder.client.MetadataPopup;
 
-    public static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
+public class FolderEditor extends AbstractRestCall {
 
-    protected JSONRecording() {
-        // Does Nothing
+    private String url = null;
+
+    private MetadataPopup popup = null;
+
+    public static void editFolder(MetadataPopup popup, String folder,
+            String url) {
+        FolderEditor editor = new FolderEditor(popup, folder, url);
+        editor.go();
     }
 
-    public static final native JSONRecording parse(String json) /*-{
-        return eval('(' + json + ')');
-    }-*/;
+    public FolderEditor(MetadataPopup popup, String folder, String url) {
+        this.popup = popup;
+        this.url = url + "folders" + folder;
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += "metadata";
+    }
 
-    public final native String getId() /*-{
-        return this.id;
-    }-*/;
+    public void go() {
+        String itemUrl = url + "?" + popup.getDetailsAsUrl();
+        go(itemUrl, Method.PUT);
+    }
 
-    public final native String getFolder() /*-{
-        return this.folder;
-    }-*/;
+    protected void onError(String message) {
+        MessagePopup popup = new MessagePopup(
+                "Error editing item: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
+    }
 
-    public final native String getName() /*-{
-        return this.name;
-    }-*/;
+    protected void onSuccess(Response response) {
+        // Do Nothing
+    }
 
-    public final native String getStartTime() /*-{
-        return this.startTime;
-    }-*/;
 
-    public final native int getDuration() /*-{
-        return this.duration;
-    }-*/;
-
-    public final native JSONMetadata getMetadata() /*-{
-        return this.metadata;
-    }-*/;
-
-    public final native int getLifetime() /*-{
-        return this.lifetime;
-    }-*/;
-
-    public final native boolean isPlayable() /*-{
-        return this.playable;
-    }-*/;
-
-    public final native boolean isEditable() /*-{
-        return this.editable;
-    }-*/;
 
 }

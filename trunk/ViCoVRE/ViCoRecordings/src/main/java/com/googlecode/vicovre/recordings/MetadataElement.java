@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="key")
-public class RecordingMetadataElement {
+public class MetadataElement {
 
     private String name = null;
 
@@ -49,16 +49,16 @@ public class RecordingMetadataElement {
 
     private boolean multiline = false;
 
-    public RecordingMetadataElement() {
+    public MetadataElement() {
         // Does Nothing
     }
 
-    public RecordingMetadataElement(String name, String value) {
+    public MetadataElement(String name, String value) {
         this.name = name;
         this.value = value;
     }
 
-    public RecordingMetadataElement(String name, String value, boolean visible,
+    public MetadataElement(String name, String value, boolean visible,
             boolean editable, boolean multiline) {
         this(name, value);
         this.visible = visible;

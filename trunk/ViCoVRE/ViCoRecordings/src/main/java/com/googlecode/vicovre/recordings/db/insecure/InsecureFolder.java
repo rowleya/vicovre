@@ -46,6 +46,7 @@ import org.w3c.dom.Node;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
@@ -63,6 +64,8 @@ import com.googlecode.vicovre.utils.XmlIo;
 public class InsecureFolder {
 
     private File file = null;
+
+    private Metadata metadata = null;
 
     private HashMap<String, Recording> recordings =
         new HashMap<String, Recording>();
@@ -115,6 +118,17 @@ public class InsecureFolder {
         }
     }
 
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+
+    public Metadata getMetadata() {
+        if (metadata == null) {
+            return new Metadata("name", file.getName());
+        }
+        return metadata;
+    }
+
     /**
      * Gets the file
      * @return The file
@@ -128,20 +142,7 @@ public class InsecureFolder {
      * @return the name
      */
     public String getName() {
-        String name = file.getName();
-        File description = new File(file, RecordingConstants.NAME);
-        try {
-            if (description.exists()) {
-                FileInputStream input = new FileInputStream(description);
-                Node doc = XmlIo.read(input);
-                name = XmlIo.readValue(doc, "name");
-                input.close();
-            }
-        } catch (Exception e) {
-            System.err.println("Warning: Error reading folder metadata");
-            e.printStackTrace();
-        }
-        return name;
+        return file.getName();
     }
 
     /**

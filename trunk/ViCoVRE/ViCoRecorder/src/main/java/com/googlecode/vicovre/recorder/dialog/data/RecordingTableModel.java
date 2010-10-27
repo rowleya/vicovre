@@ -47,7 +47,7 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 
 /**
@@ -98,7 +98,7 @@ public class RecordingTableModel extends AbstractTableModel {
 
     private Date recordingStart = null;
 
-    private RecordingMetadata currentRecordingMetadata = null;
+    private Metadata currentRecordingMetadata = null;
 
     /**
      *
@@ -190,7 +190,7 @@ public class RecordingTableModel extends AbstractTableModel {
         } else if (column.equals(DURATION_COLUMN)) {
             return getTimeText(recording.getDuration());
         } else if (column.equals(NAME_COLUMN)) {
-            RecordingMetadata metadata = recording.getMetadata();
+            Metadata metadata = recording.getMetadata();
             if (metadata != null) {
                 return metadata.getPrimaryValue();
             }
@@ -236,7 +236,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * Sets the metadata of the current recording
      * @param metadata The metadata to set
      */
-    public void setCurrentRecordingMetadata(RecordingMetadata metadata) {
+    public void setCurrentRecordingMetadata(Metadata metadata) {
         this.currentRecordingMetadata = metadata;
         fireTableRowsUpdated(recordings.size(), recordings.size());
     }
@@ -319,7 +319,7 @@ public class RecordingTableModel extends AbstractTableModel {
      * Gets the metadata for the current recording
      * @return The metadata
      */
-    public RecordingMetadata getCurrentRecordingMetadata() {
+    public Metadata getCurrentRecordingMetadata() {
         return currentRecordingMetadata;
     }
 }

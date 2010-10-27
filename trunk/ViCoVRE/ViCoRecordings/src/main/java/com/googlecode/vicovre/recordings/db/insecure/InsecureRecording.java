@@ -48,7 +48,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.repositories.layout.Layout;
@@ -68,7 +68,7 @@ import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 public class InsecureRecording extends Recording {
 
     // The recording metadata
-    private RecordingMetadata metadata = null;
+    private Metadata metadata = null;
 
     // The id of the recording
     private String id = null;
@@ -267,7 +267,7 @@ public class InsecureRecording extends Recording {
      * Gets the metadata
      * @return The metadata
      */
-    public RecordingMetadata getMetadata() {
+    public Metadata getMetadata() {
         return metadata;
     }
 
@@ -275,7 +275,7 @@ public class InsecureRecording extends Recording {
      * Sets the metadata
      * @param metadata The metadata to set
      */
-    public void setMetadata(RecordingMetadata metadata) {
+    public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
     }
 
