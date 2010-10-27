@@ -40,7 +40,7 @@ import java.util.Vector;
 import org.w3c.dom.Node;
 
 import com.googlecode.vicovre.recordings.HarvestedEvent;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatReader;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestedItem;
 import com.googlecode.vicovre.utils.XmlIo;
@@ -68,8 +68,8 @@ public class MAGICFormatReader implements HarvestFormatReader {
                     String url = XmlIo.readContent(node, "url");
                     String location = XmlIo.readContent(node, "location");
 
-                    RecordingMetadata metadata =
-                        new RecordingMetadata("name", name);
+                    Metadata metadata =
+                        new Metadata("name", name);
                     metadata.setValue("type", type, false, true, false);
                     metadata.setValue("url", url, false, true, false);
                     metadata.setValue("location", location, false, true, false);

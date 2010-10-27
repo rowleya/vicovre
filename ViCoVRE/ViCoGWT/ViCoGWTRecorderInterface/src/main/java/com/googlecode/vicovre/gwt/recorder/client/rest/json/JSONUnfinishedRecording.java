@@ -35,7 +35,7 @@ package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
-import com.googlecode.vicovre.gwt.client.json.JSONRecordingMetadata;
+import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 
 public class JSONUnfinishedRecording extends JavaScriptObject {
 
@@ -58,7 +58,7 @@ public class JSONUnfinishedRecording extends JavaScriptObject {
         return this.folder;
     }-*/;
 
-    public final native JSONRecordingMetadata getMetadata() /*-{
+    public final native JSONMetadata getMetadata() /*-{
         return this.metadata;
     }-*/;
 

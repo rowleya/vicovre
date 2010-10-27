@@ -39,6 +39,7 @@ import java.util.Vector;
 
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -65,6 +66,10 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public static final String UNFINISHED_ID_PREFIX = "unfinishedRecording";
 
+    public static final String READ_FOLDER_PREFIX = "readFolder";
+
+    public static final String WRITE_FOLDER_PREFIX = "writeFolder";
+
     private RecordingDatabase database = null;
 
     private SecurityDatabase securityDatabase = null;
@@ -87,12 +92,28 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         return database.getFile(folder);
     }
 
+    private void checkRead(String folder) {
+        if (!canReadFolder(folder)) {
+            throw new UnauthorizedException(
+                "You do not have permission to read this folder");
+        }
+    }
+
+    private void checkWrite(String folder) {
+        if (!canWriteFolder(folder)) {
+            throw new UnauthorizedException(
+                "You do not have permission to write to this folder");
+        }
+    }
+
     public List<String> getSubFolders(String folder) {
+        checkRead(folder);
         return database.getSubFolders(folder);
     }
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
+        checkWrite(harvestSource.getFolder());
         securityDatabase.createAcl(null, null, harvestSource.getFolder(),
                 HARVEST_ID_PREFIX + harvestSource.getId(), false, true);
         database.addHarvestSource(harvestSource);
@@ -125,6 +146,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public List<HarvestSource> getHarvestSources(String folder) {
+        checkRead(folder);
         List<HarvestSource> harvestSources = database.getHarvestSources(folder);
         Vector<HarvestSource> secureHarvestSources =
             new Vector<HarvestSource>();
@@ -147,6 +169,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
+        checkWrite(folder);
         securityDatabase.createAcl(creatorFolder,
                 HARVEST_ID_PREFIX + creatorId, folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), false, true);
@@ -226,6 +249,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public List<UnfinishedRecording> getUnfinishedRecordings(String folder) {
+        checkRead(folder);
         List<UnfinishedRecording> recordings =
             database.getUnfinishedRecordings(folder);
         Vector<UnfinishedRecording> secureRecordings =
@@ -248,6 +272,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
+        checkWrite(folder);
         securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
                 CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true);
@@ -292,6 +317,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public List<Recording> getRecordings(String folder) {
+        checkRead(folder);
         List<Recording> recordings = database.getRecordings(folder);
         if (recordings != null) {
             Vector<Recording> secureRecordings = new Vector<Recording>();
@@ -407,6 +433,17 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 false);
     }
 
+    public void setRecordingOwner(Recording recording, String owner)
+            throws IOException {
+        String folder = recording.getFolder();
+        securityDatabase.setAclOwner(folder,
+                PLAY_RECORDING_ID_PREFIX + recording.getId(), owner);
+        securityDatabase.setAclOwner(folder,
+                READ_RECORDING_ID_PREFIX + recording.getId(), owner);
+        securityDatabase.setAclOwner(folder,
+                CHANGE_RECORDING_ID_PREFIX + recording.getId(), owner);
+    }
+
     public void addHarvestSourceListener(HarvestSourceListener listener) {
         database.addHarvestSourceListener(listener);
     }
@@ -422,12 +459,62 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void setDefaultLayout(String folder, DefaultLayout layout)
             throws IOException {
-         if (!securityDatabase.hasRole(Role.ADMINISTRATOR)) {
-             throw new UnauthorizedException(
-                 "Only an administrator can set the default folder layout");
-         }
+         checkWrite(folder);
          database.setDefaultLayout(folder, layout);
     }
 
+    public boolean addFolder(String parent, String folder) throws IOException {
+        checkWrite(parent);
+        securityDatabase.createAcl(null, null, parent + "/" + folder,
+                WRITE_FOLDER_PREFIX, false, false);
+        securityDatabase.createAcl(null, null, parent + "/" + folder,
+                READ_FOLDER_PREFIX, true, false);
+        return database.addFolder(parent, folder);
+    }
 
+    public void deleteFolder(String folder) throws IOException {
+        File file = getFile(folder);
+        if (file.isDirectory() && (file.listFiles().length == 0)) {
+            securityDatabase.deleteAcl(folder, WRITE_FOLDER_PREFIX);
+            securityDatabase.deleteAcl(folder, READ_FOLDER_PREFIX);
+            database.deleteFolder(folder);
+        } else {
+            throw new IOException("The folder must be empty to be deleted");
+        }
+    }
+
+    public boolean canReadFolder(String folder) {
+        return securityDatabase.isAllowed(folder, READ_FOLDER_PREFIX, true);
+    }
+
+    public boolean canWriteFolder(String folder) {
+        return securityDatabase.isAllowed(folder, WRITE_FOLDER_PREFIX, false);
+    }
+
+    public Metadata getFolderMetadata(String folder) {
+        checkRead(folder);
+        return database.getFolderMetadata(folder);
+    }
+
+    public void setFolderMetadata(String folder, Metadata metadata)
+            throws IOException {
+        checkWrite(folder);
+        database.setFolderMetadata(folder, metadata);
+    }
+
+    public void setFolderReadAcl(String folder, boolean isPublic,
+            WriteOnlyEntity... exceptions) throws IOException {
+        securityDatabase.setAcl(folder, READ_FOLDER_PREFIX, isPublic,
+                exceptions);
+    }
+
+    public ReadOnlyACL getFolderReadAcl(String folder) {
+        return securityDatabase.getAcl(folder, READ_FOLDER_PREFIX, true);
+    }
+
+    public void setFolderOwner(String folder, String newOwner)
+            throws IOException {
+        securityDatabase.setAclOwner(folder, READ_FOLDER_PREFIX, newOwner);
+        securityDatabase.setAclOwner(folder, WRITE_FOLDER_PREFIX, newOwner);
+    }
 }

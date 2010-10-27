@@ -32,7 +32,6 @@
 
 package com.googlecode.vicovre.web.rest;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
@@ -51,6 +50,7 @@ import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.recordings.BooleanFieldSet;
 import com.googlecode.vicovre.recordings.DefaultLayout;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -94,14 +94,21 @@ public class FolderHandler extends AbstractHandler {
         }
     }
 
-    @Path("/{folder: .*}")
+    @Path("/{parent: .*}/{folder}")
     @PUT
-    public Response createFolder(@PathParam("folder") String folder) {
-        File file = getDatabase().getFile(folder);
-        if (file.mkdirs()) {
+    public Response createFolder(@PathParam("parent") String parent,
+            @PathParam("folder") String folder) throws IOException {
+        if (getDatabase().addFolder(parent, folder)) {
             return Response.ok().build();
         }
         return Response.notModified().build();
+    }
+
+    @Path("/{folder}")
+    @PUT
+    public Response createFolder(@PathParam("folder") String folder)
+            throws IOException {
+        return createFolder("", folder);
     }
 
     @Path("/{folder: .*}/streams")
@@ -190,5 +197,36 @@ public class FolderHandler extends AbstractHandler {
             @QueryParam("endTime") long endTime,
             @Context UriInfo uriInfo) throws IOException {
         return setDefaultFolderLayout("", name, startTime, endTime, uriInfo);
+    }
+
+    @Path("/{folder: .*}/metadata")
+    @PUT
+    public Response setFolderMetadata(@Context UriInfo uriInfo)
+            throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 1);
+        getDatabase().setFolderMetadata(folder,
+                getMetadata(uriInfo.getQueryParameters()));
+        return Response.ok().build();
+    }
+
+    @Path("/metadata")
+    @PUT
+    public Response setBaseFolderMetadata(@Context UriInfo uriInfo)
+            throws IOException {
+        return setFolderMetadata(uriInfo);
+    }
+    @Path("/{folder: .*}/metadata")
+    @GET
+    @Produces({"text/xml", "application/json"})
+    public Response getFolderMetadata(@PathParam("folder") String folder) {
+        Metadata metadata = getDatabase().getFolderMetadata(folder);
+        return Response.ok(metadata).build();
+    }
+
+    @Path("/metadata")
+    @GET
+    @Produces({"text/xml", "application/json"})
+    public Response getFolderMetadata() {
+        return getFolderMetadata("");
     }
 }

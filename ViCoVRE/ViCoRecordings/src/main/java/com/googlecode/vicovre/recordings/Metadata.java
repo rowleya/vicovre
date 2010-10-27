@@ -50,22 +50,22 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name="metadata")
 @XmlAccessorType(XmlAccessType.NONE)
-public class RecordingMetadata implements Comparable<RecordingMetadata> {
+public class Metadata implements Comparable<Metadata> {
 
     private String primaryKey = null;
 
     private Vector<String> keys = new Vector<String>();
 
-    private HashMap<String, RecordingMetadataElement> data =
-        new HashMap<String, RecordingMetadataElement>();
+    private HashMap<String, MetadataElement> data =
+        new HashMap<String, MetadataElement>();
 
-    public RecordingMetadata() {
+    public Metadata() {
         // Does Nothing
     }
 
-    public RecordingMetadata(String primaryKey, String primaryValue) {
+    public Metadata(String primaryKey, String primaryValue) {
         this.primaryKey = primaryKey;
-        data.put(primaryKey, new RecordingMetadataElement(primaryKey,
+        data.put(primaryKey, new MetadataElement(primaryKey,
                 primaryValue, true, true, false));
         keys.add(primaryKey);
     }
@@ -84,9 +84,9 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     @XmlElement(name="key")
-    public List<RecordingMetadataElement> getElements() {
-        Vector<RecordingMetadataElement> elements =
-            new Vector<RecordingMetadataElement>();
+    public List<MetadataElement> getElements() {
+        Vector<MetadataElement> elements =
+            new Vector<MetadataElement>();
         for (String key : keys) {
             elements.add(data.get(key));
         }
@@ -94,7 +94,7 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     private String getActualValue(String key) {
-        RecordingMetadataElement element = data.get(key);
+        MetadataElement element = data.get(key);
         if (element != null) {
             return element.getValue();
         }
@@ -159,9 +159,9 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     public void setValue(String key, String value) {
-        RecordingMetadataElement element = data.get(key);
+        MetadataElement element = data.get(key);
         if (element == null) {
-            element = new RecordingMetadataElement(key, value);
+            element = new MetadataElement(key, value);
             data.put(key, element);
             keys.add(key);
         } else if (element.isEditable()) {
@@ -170,9 +170,9 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     public void setValueVisible(String key, boolean visible) {
-        RecordingMetadataElement element = data.get(key);
+        MetadataElement element = data.get(key);
         if (element == null) {
-            element = new RecordingMetadataElement(key, "");
+            element = new MetadataElement(key, "");
             data.put(key, element);
             keys.add(key);
         }
@@ -180,9 +180,9 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     public void setValueEditable(String key, boolean editable) {
-        RecordingMetadataElement element = data.get(key);
+        MetadataElement element = data.get(key);
         if (element == null) {
-            element = new RecordingMetadataElement(key, "");
+            element = new MetadataElement(key, "");
             data.put(key, element);
             keys.add(key);
         }
@@ -190,9 +190,9 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
     }
 
     public void setValueMultiline(String key, boolean multiline) {
-        RecordingMetadataElement element = data.get(key);
+        MetadataElement element = data.get(key);
         if (element == null) {
-            element = new RecordingMetadataElement(key, "");
+            element = new MetadataElement(key, "");
             data.put(key, element);
             keys.add(key);
         }
@@ -201,14 +201,14 @@ public class RecordingMetadata implements Comparable<RecordingMetadata> {
 
     public void setValue(String key, String value, boolean visible,
             boolean editable, boolean multiline) {
-        data.put(key, new RecordingMetadataElement(key, value, visible,
+        data.put(key, new MetadataElement(key, value, visible,
                 editable, multiline));
         if (!keys.contains(key)) {
             keys.add(key);
         }
     }
 
-    public int compareTo(RecordingMetadata m) {
+    public int compareTo(Metadata m) {
         return getValue(primaryKey).compareTo(m.getValue(m.primaryKey));
     }
 

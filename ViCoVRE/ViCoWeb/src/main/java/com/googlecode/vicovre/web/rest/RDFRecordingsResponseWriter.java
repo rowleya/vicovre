@@ -56,7 +56,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 
 @Provider
@@ -188,7 +188,7 @@ public class RDFRecordingsResponseWriter
     }
 
     private String writeMetadata(PrintWriter writer,
-            RecordingMetadata metadata) {
+            Metadata metadata) {
         for (String key : metadata.getKeys()) {
             if (metadata.isVisible(key)) {
                 String value = metadata.getValue(key);
@@ -265,7 +265,7 @@ public class RDFRecordingsResponseWriter
             String partOf) {
         long startTime = recording.getStartTime().getTime();
         long endTime = startTime + recording.getDuration();
-        RecordingMetadata metadata = recording.getMetadata();
+        Metadata metadata = recording.getMetadata();
         String title = metadata.getPrimaryValue();
         startEvent(writer, recording.getFolder(), recording.getId());
         if (partOf == null) {
@@ -350,6 +350,9 @@ public class RDFRecordingsResponseWriter
                 String subfolderPath = folder + "/" + subfolder;
                 writePart(writer, getId(subfolderPath));
             }
+            String locationData = writeMetadata(writer,
+                    database.getFolderMetadata(folder));
+            writer.print(locationData);
             endEvent(writer);
         }
 

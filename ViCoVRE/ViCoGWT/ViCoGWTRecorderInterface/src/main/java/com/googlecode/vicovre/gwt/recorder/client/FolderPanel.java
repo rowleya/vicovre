@@ -50,15 +50,23 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderEditor;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderMetadataLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemLoader;
 
 public class FolderPanel extends HorizontalPanel
-        implements SelectionHandler<TreeItem>, ClickHandler {
+        implements SelectionHandler<TreeItem>, ClickHandler,
+        MessageResponseHandler {
 
     private Button createButton = new Button("New Folder");
+
+    private Button editMetadataButton = new Button("Edit Metadata");
 
     private TabPanel panel = new TabPanel();
 
@@ -77,9 +85,13 @@ public class FolderPanel extends HorizontalPanel
 
     private String currentPath = null;
 
+    private MetadataPopup metadataPopup = null;
+
     private Layout[] layouts = null;
 
     private Layout[] customLayouts = null;
+
+    private boolean userIsWriter = false;
 
     public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts) {
         this.url = url;
@@ -91,6 +103,8 @@ public class FolderPanel extends HorizontalPanel
                 customLayouts);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
                 layouts, customLayouts);
+        metadataPopup = new MetadataPopup(url, "name");
+        metadataPopup.setHandler(this);
 
         setWidth("95%");
         setHeight("100%");
@@ -115,6 +129,7 @@ public class FolderPanel extends HorizontalPanel
         folderTree.add(folderTitle);
         folderTree.add(createButton);
         folderTree.add(folderScroller);
+        folderTree.add(editMetadataButton);
 
         add(folderTree);
         add(panel);
@@ -130,6 +145,7 @@ public class FolderPanel extends HorizontalPanel
 
         folders.addSelectionHandler(this);
         createButton.addClickHandler(this);
+        editMetadataButton.addClickHandler(this);
     }
 
     public void addFolder(String path) {
@@ -165,7 +181,7 @@ public class FolderPanel extends HorizontalPanel
         }
         currentPath = path;
 
-        ActionLoader loader = new ActionLoader(null, 3,
+        ActionLoader loader = new ActionLoader(null, 4,
                 "Loading Folder",
                 "There was an error loading the folder.\n"
                 + "Please try again.",
@@ -181,6 +197,16 @@ public class FolderPanel extends HorizontalPanel
                 recordPanel, loader, url, layouts, customLayouts);
         HarvestItemLoader.loadHarvestItems(path, this, recordPanel, playPanel,
                 harvestPanel, loader, url, layouts, customLayouts);
+        FolderMetadataLoader.loadMetadata(path, this, loader, url);
+        if (path.equals("") || path.equals("/") || !userIsWriter) {
+            editMetadataButton.setEnabled(false);
+        } else {
+            editMetadataButton.setEnabled(true);
+        }
+    }
+
+    public void setMetadata(JSONMetadata metadata) {
+        metadataPopup.setMetadata(metadata);
     }
 
     public void reload() {
@@ -203,6 +229,8 @@ public class FolderPanel extends HorizontalPanel
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
             FolderCreator.createFolder(this, url);
+        } else if (event.getSource().equals(editMetadataButton)) {
+            metadataPopup.center();
         }
     }
 
@@ -211,12 +239,19 @@ public class FolderPanel extends HorizontalPanel
     }
 
     public void setUserIsWriter(boolean isWriter) {
+        this.userIsWriter = isWriter;
         if (isWriter) {
             panel.add(recordPanel, "Record");
             panel.add(harvestPanel, "Harvest");
         } else {
             panel.remove(recordPanel);
             panel.remove(harvestPanel);
+        }
+    }
+
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.OK) {
+            FolderEditor.editFolder(metadataPopup, currentPath, url);
         }
     }
 

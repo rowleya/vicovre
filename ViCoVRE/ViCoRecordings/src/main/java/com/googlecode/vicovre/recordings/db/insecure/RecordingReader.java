@@ -47,7 +47,7 @@ import org.xml.sax.SAXException;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -144,8 +144,8 @@ public class RecordingReader {
         if (metadataFile.exists()) {
             try {
                 FileInputStream inputStream = new FileInputStream(metadataFile);
-                RecordingMetadata metadata =
-                    RecordingMetadataReader.readMetadata(inputStream);
+                Metadata metadata =
+                    MetadataReader.readMetadata(inputStream);
                 recording.setMetadata(metadata);
                 inputStream.close();
             } catch (Exception e) {
@@ -157,13 +157,13 @@ public class RecordingReader {
             try {
                 FileInputStream inputStream = new FileInputStream(
                         oldMetadataFile);
-                RecordingMetadata metadata =
-                    RecordingMetadataReader.readOldMetadata(inputStream);
+                Metadata metadata =
+                    MetadataReader.readOldMetadata(inputStream);
                 recording.setMetadata(metadata);
                 inputStream.close();
                 FileOutputStream outputStream = new FileOutputStream(
                         metadataFile);
-                RecordingMetadataReader.writeMetadata(metadata, outputStream);
+                MetadataReader.writeMetadata(metadata, outputStream);
                 outputStream.close();
                 oldMetadataFile.delete();
             } catch (Exception e) {
@@ -207,12 +207,12 @@ public class RecordingReader {
             outputLayout.close();
         }
 
-        RecordingMetadata metadata = recording.getMetadata();
+        Metadata metadata = recording.getMetadata();
         if (metadata != null) {
             File metadataFile = new File(recording.getDirectory(),
                     RecordingConstants.METADATA);
             FileOutputStream outputStream = new FileOutputStream(metadataFile);
-            RecordingMetadataReader.writeMetadata(metadata, outputStream);
+            MetadataReader.writeMetadata(metadata, outputStream);
             outputStream.close();
         }
 

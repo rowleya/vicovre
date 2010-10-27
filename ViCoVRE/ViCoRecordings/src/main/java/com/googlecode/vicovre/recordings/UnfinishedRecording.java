@@ -72,7 +72,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private String id = null;
 
-    private RecordingMetadata metadata = null;
+    private Metadata metadata = null;
 
     private String ag3VenueServer = null;
 
@@ -124,7 +124,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * @return the metadata
      */
     @XmlElement
-    public RecordingMetadata getMetadata() {
+    public Metadata getMetadata() {
         return metadata;
     }
 
@@ -132,7 +132,7 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      * Sets the metadata
      * @param metadata the metadata to set
      */
-    public void setMetadata(RecordingMetadata metadata) {
+    public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
     }
 

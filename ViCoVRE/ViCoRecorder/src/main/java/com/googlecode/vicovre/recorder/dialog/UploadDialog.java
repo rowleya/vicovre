@@ -82,7 +82,7 @@ import com.googlecode.vicovre.media.ui.OtherThread;
 import com.googlecode.vicovre.media.ui.ProgressDialog;
 import com.googlecode.vicovre.recorder.dialog.data.RecordingTableModel;
 import com.googlecode.vicovre.recordings.Recording;
-import com.googlecode.vicovre.recordings.RecordingMetadata;
+import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -302,7 +302,7 @@ public class UploadDialog extends JDialog implements ActionListener,
     }
 
     private void enterMetadataForRecording(int index) {
-        RecordingMetadata metadata = null;
+        Metadata metadata = null;
         InsecureRecording recording = null;
         if (index == (recordingModel.getRowCount() - 1)) {
             metadata = recordingModel.getCurrentRecordingMetadata();
@@ -615,7 +615,7 @@ public class UploadDialog extends JDialog implements ActionListener,
         url = url.replace("<folder>", folder);
         url = url.replace("<id>", recording.getId());
 
-        RecordingMetadata metadata = recording.getMetadata();
+        Metadata metadata = recording.getMetadata();
         String content = "";
         if (metadata != null) {
             content += "metadataPrimaryKey="

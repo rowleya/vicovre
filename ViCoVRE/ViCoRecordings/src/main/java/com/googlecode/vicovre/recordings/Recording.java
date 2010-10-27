@@ -127,13 +127,13 @@ public abstract class Recording implements Comparable<Recording> {
      * @return The metadata
      */
     @XmlElement
-    public abstract RecordingMetadata getMetadata();
+    public abstract Metadata getMetadata();
 
     /**
      * Sets the metadata
      * @param metadata The metadata to set
      */
-    public abstract void setMetadata(RecordingMetadata metadata);
+    public abstract void setMetadata(Metadata metadata);
 
     public abstract List<Long> getPauseTimes();
 

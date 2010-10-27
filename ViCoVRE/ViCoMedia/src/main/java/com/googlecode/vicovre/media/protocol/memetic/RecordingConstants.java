@@ -77,6 +77,8 @@ public interface RecordingConstants {
 
     String OLD_METADATA = ".rec_metadata";
 
+    String FOLDER_METADATA = ".folder_metadata";
+
     /**
      * The name of the recording lifetime
      */

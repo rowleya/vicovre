@@ -35,17 +35,21 @@ package com.googlecode.vicovre.gwt.client.json;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class JSONRecordingMetadata extends JavaScriptObject {
+public class JSONMetadata extends JavaScriptObject {
 
-    protected JSONRecordingMetadata() {
+    protected JSONMetadata() {
         // Does Nothing
     }
+
+    public static final native JSONMetadata parse(String json) /*-{
+        return eval('(' + json + ')');
+    }-*/;
 
     public final native String getPrimaryKey() /*-{
         return this.primaryKey;
     }-*/;
 
-    public final native JsArray<JSONRecordingMetadataElement> getKeys() /*-{
+    public final native JsArray<JSONMetadataElement> getKeys() /*-{
         return this.key;
     }-*/;
 }
