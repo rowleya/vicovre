@@ -32,9 +32,7 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import java.util.Date;
-import java.util.HashMap;
-
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HTML;
@@ -44,24 +42,25 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TreeItem;
+import com.googlecode.vicovre.gwt.annotations.client.json.JSONAnnotation;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
 public class Annotation implements ClickHandler {
 
-    private static final StringDateTimeFormat DATE_FORMAT =
-        new StringDateTimeFormat("'['HH:mm:ss']'");
+    private static final StringDateTimeFormat TIME_FORMAT =
+        new StringDateTimeFormat("'['HH':'mm':'ss']'");
+
+    private static final String URL_PATTERN = "(^|[ \t\r\n])((ftp|http|https|"
+            + "gopher|mailto|news|nntp|telnet|wais|file|prospero|"
+            + "aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%"
+            + "[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!"
+            + "*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))";
 
     private static final int ICON_SIZE = 20;
 
     private Application application = null;
 
-    private String id = null;
-
-    private String type = null;
-
-    private String timestamp = null;
-
-    private HashMap<String, String> body = new HashMap<String, String>();
+    private JSONAnnotation annotation = null;
 
     private HorizontalPanel panel = new HorizontalPanel();
 
@@ -69,28 +68,29 @@ public class Annotation implements ClickHandler {
 
     private PushButton editButton = null;
 
-    private HashMap<PushButton, LiveAnnotationType> inlineButtons =
-        new HashMap<PushButton, LiveAnnotationType>();
+    private PushButton respondButton = null;
 
-    public Annotation(Application application, String id, String type,
-            String author, String timestamp, HashMap<String, String> body,
-            String html) {
+    private HTML htmlItem = new HTML();
+
+    private LiveAnnotationType responseType = null;
+
+    public Annotation(Application application, JSONAnnotation annotation) {
         this.application = application;
-        this.id = id;
-        this.type = type;
-        this.timestamp = timestamp;
-        this.body = body;
+        this.annotation = annotation;
+
+        responseType = new LiveAnnotationType(application, "Response");
 
         item.setState(true);
 
         panel.setHorizontalAlignment(HorizontalPanel.ALIGN_LEFT);
 
-        Label timeLabel = new Label(DATE_FORMAT.format(
-                new Date(Long.parseLong(timestamp))));
+        Label timeLabel = new Label(TIME_FORMAT.format(
+                JSONAnnotation.TIMESTAMP_FORMAT.parse(
+                        annotation.getTimestamp())));
         panel.add(timeLabel);
         panel.setCellWidth(timeLabel, "80px");
-        if (author.equals(application.getAuthor())) {
-            Image editImage = new Image("images/edit.png");
+        if (annotation.getAuthor().equals(application.getAuthor())) {
+            Image editImage = new Image("images/annotations/edit.png");
             editImage.setWidth(ICON_SIZE + "px");
             editImage.setHeight(ICON_SIZE + "px");
             editButton = new PushButton(editImage);
@@ -100,76 +100,67 @@ public class Annotation implements ClickHandler {
             editButton.setWidth(ICON_SIZE + "px");
             editButton.setHeight(ICON_SIZE + "px");
         }
-        for (LiveAnnotationType laType : application.getInlineButtonTypes()) {
-            String imageUrl = laType.getImage();
-            if (imageUrl.startsWith("/")) {
-                imageUrl = imageUrl.substring(1);
-            }
-            Image buttonImage = new Image(application.getUrl() + imageUrl);
-            buttonImage.setWidth(ICON_SIZE + "px");
-            buttonImage.setHeight(ICON_SIZE + "px");
-            PushButton button = new PushButton(buttonImage);
-            inlineButtons.put(button, laType);
-            panel.add(button);
-            panel.setCellWidth(button, (ICON_SIZE + 10) + "px");
-            button.addClickHandler(this);
-            button.setWidth(ICON_SIZE + "px");
-            button.setHeight(ICON_SIZE + "px");
-        }
+        Image respondImage = new Image("images/annotations/Response.png");
+        respondImage.setWidth(ICON_SIZE + "px");
+        respondImage.setHeight(ICON_SIZE + "px");
+        respondButton = new PushButton(respondImage);
+        panel.add(respondButton);
+        panel.setCellWidth(respondButton, (ICON_SIZE + 10) + "px");
+        respondButton.addClickHandler(this);
+        respondButton.setWidth(ICON_SIZE + "px");
+        respondButton.setHeight(ICON_SIZE + "px");
 
-        LiveAnnotationType laType = application.getType(type);
-        User user = application.getUser(author);
+        panel.add(htmlItem);
+        setHtml();
+    }
+
+    private void setHtml() {
+        User user = application.getUser(annotation.getAuthor());
         String htmlMsg = "<span style=\"color: " + user.getColour() + "\">";
         htmlMsg += user.getName() + ": ";
-        String imageUrl = laType.getImage();
-        if (imageUrl.startsWith("/")) {
-            imageUrl = imageUrl.substring(1);
-        }
-        htmlMsg += "<img src=\"" + application.getUrl() + imageUrl
-            + "\"/ width=\"" + ICON_SIZE
-            + "\" height=\"" + ICON_SIZE + "\">";
-        htmlMsg += html;
+        htmlMsg += annotation.getMessage().replaceAll(URL_PATTERN,
+                "$1<a href=\"$2\" target=\"_blank\">$2</a>");
         htmlMsg += "</span>";
-        HTML htmlItem = new HTML(htmlMsg);
-        panel.add(htmlItem);
+        htmlItem.setHTML(htmlMsg);
     }
 
     public Panel getPanel() {
         return panel;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public String getBodyItem(String item) {
-        return body.get(item);
-    }
-
     public TreeItem getItem() {
         return item;
     }
 
-    public void setItem(TreeItem item) {
-        this.item = item;
-        item.setWidget(panel);
+    public void setAnnotation(JSONAnnotation annotation) {
+        this.annotation = annotation;
+        setHtml();
+    }
+
+    public JSONAnnotation getAnnotation() {
+        return annotation;
     }
 
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(editButton)) {
-            LiveAnnotationType laType = application.getType(type);
-            laType.edit(this);
-            application.displayAnnotationPanel(laType);
-        } else {
-            LiveAnnotationType laType = inlineButtons.get(event.getSource());
-            if (laType != null) {
-                laType.setRelatesTo(id);
-                TimeReceiver.getTime(application, laType);
+            JsArrayString tags = annotation.getTags();
+            LiveAnnotationType type = null;
+            for (int i = 0; (i < tags.length()) && (type == null); i++) {
+                type = application.getType(tags.get(i));
             }
+            for (int i = 0; (i < tags.length()) && (type == null); i++) {
+                if (tags.get(i).equals(responseType.getTag())) {
+                    type = responseType;
+                }
+            }
+            if (type == null) {
+                type = application.getType(Application.DEFAULT_TAG);
+            }
+            type.edit(annotation);
+            application.displayAnnotationPanel(type);
+        } else if (event.getSource().equals(respondButton)) {
+            responseType.setResponseTo(annotation.getId());
+            TimeReceiver.getTime(application, responseType);
         }
     }
 

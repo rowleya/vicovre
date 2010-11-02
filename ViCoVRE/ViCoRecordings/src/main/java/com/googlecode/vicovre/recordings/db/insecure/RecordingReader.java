@@ -39,11 +39,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Vector;
 
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.Recording;
@@ -177,6 +179,16 @@ public class RecordingReader {
         recording.setLifetime(LifetimeReader.readLifetime(
                 recording.getDirectory(), defaultLifetime));
 
+        File annotationFile = new File(recording.getDirectory(),
+                RecordingConstants.ANNOTATIONS);
+        if (annotationFile.exists()) {
+            FileInputStream inputStream = new FileInputStream(annotationFile);
+            List<Annotation> annotations =
+                AnnotationsReader.readAnnotations(inputStream);
+            recording.setAnnotations(annotations);
+            inputStream.close();
+        }
+
         return recording;
     }
 
@@ -218,6 +230,16 @@ public class RecordingReader {
 
         LifetimeReader.writeLifetime(recording.getDirectory(),
                 recording.getLifetime());
+
+        List<Annotation> annotations = recording.getAnnotations();
+        if (annotations != null && !annotations.isEmpty()) {
+            File annotationFile = new File(recording.getDirectory(),
+                     RecordingConstants.ANNOTATIONS);
+            FileOutputStream outputStream = new FileOutputStream(
+                    annotationFile);
+            AnnotationsReader.writeAnnotations(outputStream, annotations);
+            outputStream.close();
+        }
 
         writer.println("</recording>");
         writer.flush();

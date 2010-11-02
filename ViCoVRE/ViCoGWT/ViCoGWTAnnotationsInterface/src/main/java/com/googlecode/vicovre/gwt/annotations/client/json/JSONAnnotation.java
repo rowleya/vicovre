@@ -30,49 +30,47 @@
  *
  */
 
-package com.googlecode.vicovre.annotations.live.rest;
+package com.googlecode.vicovre.gwt.annotations.client.json;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.MessageBodyWriter;
-import javax.ws.rs.ext.Provider;
+public class JSONAnnotation extends JavaScriptObject {
 
-import com.googlecode.vicovre.annotations.live.Message;
+    public static final  StringDateTimeFormat TIMESTAMP_FORMAT =
+        new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-@Provider
-@Produces("text/xml")
-public class MessageXMLWriter implements MessageBodyWriter<Message> {
-
-    public long getSize(Message message, Class<?> type, Type genericType,
-            Annotation[] annotations, MediaType mediaType) {
-        return -1;
+    protected JSONAnnotation() {
+        // Does Nothing
     }
 
-    public boolean isWriteable(Class<?> type, Type genericType,
-            Annotation[] annotations, MediaType mediaType) {
-        return Message.class.isAssignableFrom(type);
-    }
+    public final native String getId() /*-{
+        return this.id;
+    }-*/;
 
-    public void writeTo(Message message, Class<?> type, Type genericType,
-            Annotation[] annotations, MediaType mediaType,
-            MultivaluedMap<String, Object> httpHeaders,
-            OutputStream entityStream)
-            throws IOException, WebApplicationException {
-        PrintWriter writer = new PrintWriter(entityStream);
-        writer.println("<messages>");
-        writer.println("<type>" + message.getType() + "</type>");
-        writer.println(message.getXml());
-        writer.println("</messages>");
-        writer.flush();
-        writer.close();
-    }
+    public final native String getTimestamp() /*-{
+        return this.timestamp;
+    }-*/;
+
+    public final native String getAuthor() /*-{
+        return this.author;
+    }-*/;
+
+    public final native String getMessage() /*-{
+        return this.message;
+    }-*/;
+
+    public final native JsArrayString getTags() /*-{
+        return this.tag;
+    }-*/;
+
+    public final native JsArrayString getPeople() /*-{
+        return this.person;
+    }-*/;
+
+    public final native String getResponseTo() /*-{
+        return this.responseTo;
+    }-*/;
 
 }

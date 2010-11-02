@@ -32,24 +32,18 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-public class NoMessage implements Message {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.NONE)
+public class NoMessage extends Message {
 
     public static final String TYPE = "None";
 
-    public String getType() {
-        return TYPE;
-    }
-
-    public String getXml() {
-        return "";
-    }
-
-    public boolean isPrivate() {
-        return false;
-    }
-
-    public Client getClient() {
-        return null;
+    public NoMessage() {
+        super(null, TYPE, false);
     }
 
 }

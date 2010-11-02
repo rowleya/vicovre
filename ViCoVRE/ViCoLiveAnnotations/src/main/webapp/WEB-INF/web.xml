@@ -20,6 +20,6 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>Jersey Spring Web Application</servlet-name>
-        <url-pattern>/annotations/*</url-pattern>
+        <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 </web-app>

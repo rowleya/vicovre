@@ -32,38 +32,31 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import java.util.HashMap;
-
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Preference;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
-import org.restlet.gwt.resource.XmlRepresentation;
+import org.restlet.gwt.resource.JsonRepresentation;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.xml.client.Document;
-import com.google.gwt.xml.client.Node;
-import com.google.gwt.xml.client.NodeList;
+import com.google.gwt.json.client.JSONValue;
+import com.googlecode.vicovre.gwt.annotations.client.json.JSONAddAnnotationMessage;
+import com.googlecode.vicovre.gwt.annotations.client.json.JSONMessage;
+import com.googlecode.vicovre.gwt.annotations.client.json.JSONUserMessage;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 
-public class MessageReceiver implements Callback,
-        MessageResponseHandler {
+public class MessageReceiver extends AbstractRestCall
+        implements MessageResponseHandler {
 
     private Application application = null;
 
     private boolean done = false;
 
-    private Client client = new Client(Protocol.HTTP);
+    private String url = null;
 
     public MessageReceiver(Application application) {
         this.application = application;
+        this.url = application.getUrl();
     }
 
     public void start() {
@@ -76,92 +69,7 @@ public class MessageReceiver implements Callback,
     }
 
     private void getNextMessage() {
-        String url = application.getUrl();
-        url += "annotations/get";
-        Request request = new Request(Method.GET, url);
-        request.getClientInfo().getAcceptedMediaTypes().add(
-                new Preference<MediaType>(MediaType.TEXT_XML));
-        client.setConnectTimeout(20000);
-        client.handle(request, this);
-        GWT.log("Getting messages...", null);
-    }
-
-    private String getNodeText(Node node) {
-        return node.getChildNodes().item(0).getNodeValue();
-    }
-
-    public void onEvent(Request request, Response response) {
-        if (!done) {
-            GWT.log("Message received " + response.getStatus(), null);
-            if (response.getStatus().equals(Status.SUCCESS_OK)) {
-                XmlRepresentation xml = response.getEntityAsXml();
-                Document doc = xml.getDocument();
-                String type = getNodeText(
-                        doc.getElementsByTagName("type").item(0));
-                GWT.log("Message, type = " + type, null);
-                if (type.equals("AddUser")) {
-                    String name = getNodeText(
-                            doc.getElementsByTagName("name").item(0));
-                    String email = getNodeText(
-                            doc.getElementsByTagName("email").item(0));
-                    User user = new User(name, email);
-                    application.addUser(user);
-                } else if (type.equals("DeleteUser")) {
-                    String email = getNodeText(
-                            doc.getElementsByTagName("email").item(0));
-                    application.removeUser(email);
-                } else if (type.equals("AddAnnotation")) {
-                    NodeList annotations =
-                        doc.getElementsByTagName("annotation");
-                    String html = getNodeText(
-                            doc.getElementsByTagName("html").item(0));
-                    for (int i = 0; i < annotations.getLength(); i++) {
-                        Node annotation = annotations.item(i);
-                        NodeList children = annotation.getChildNodes();
-                        String annotationType = null;
-                        String id = null;
-                        String author = null;
-                        String timestamp = null;
-                        HashMap<String, String> body =
-                            new HashMap<String, String>();
-                        for (int j = 0; j < children.getLength(); j++) {
-                            Node child = children.item(j);
-                            String name = child.getNodeName();
-                            String value = getNodeText(child);
-                            if (name.equals("type")) {
-                                annotationType = value;
-                            } else if (name.equals("id")) {
-                                id = value;
-                            } else if (name.equals("author")) {
-                                author = value;
-                            } else if (name.equals("timestamp")) {
-                                timestamp = value;
-                            } else {
-                                body.put(name, value);
-                            }
-                        }
-                        Annotation ann = new Annotation(application, id,
-                                annotationType, author, timestamp, body, html);
-                        application.addAnnotation(ann);
-                    }
-                }
-
-                if (!type.equals("Done")) {
-                    getNextMessage();
-                } else {
-                    application.close();
-                }
-            } else {
-                String errorMessage = "Error receiving messages "
-                    + response.getStatus().getCode() + ": "
-                    + response.getStatus().getDescription() + "\n"
-                    + "Do you want to retry?  If not, the client will stop!";
-                MessagePopup error = new MessagePopup(errorMessage,
-                        this, MessagePopup.ERROR, MessageResponse.YES,
-                        MessageResponse.NO);
-                error.center();
-            }
-        }
+        go(url);
     }
 
     public void handleResponse(MessageResponse response) {
@@ -169,6 +77,49 @@ public class MessageReceiver implements Callback,
             getNextMessage();
         } else {
             application.close();
+        }
+    }
+
+    protected void onError(String message) {
+        if (!done) {
+            String errorMessage = "Error receiving messages: "
+                + message + "\n"
+                + "Do you want to retry?  If not, the client will stop!";
+            MessagePopup error = new MessagePopup(errorMessage,
+                    this, MessagePopup.ERROR, MessageResponse.YES,
+                    MessageResponse.NO);
+            error.center();
+        }
+    }
+
+    protected void onSuccess(Response response) {
+        if (done) {
+            return;
+        }
+        JsonRepresentation representation = response.getEntityAsJson();
+        JSONValue object = representation.getValue();
+        if ((object != null) && (object.isNull() == null)) {
+            GWT.log("Message = " + object.toString());
+            JSONMessage message = JSONMessage.parse(object.toString());
+            String type = message.getType();
+            if (type.equals(JSONUserMessage.TYPE_ADD)) {
+                JSONUserMessage userMessage = message.cast();
+                User user = new User(userMessage.getName(),
+                        userMessage.getEmail());
+                application.addUser(user);
+            } else if (type.equals(JSONUserMessage.TYPE_DELETE)) {
+                JSONUserMessage userMessage = message.cast();
+                application.removeUser(userMessage.getEmail());
+            } else if (type.equals(JSONAddAnnotationMessage.TYPE)) {
+                JSONAddAnnotationMessage addMessage = message.cast();
+                application.addAnnotation(addMessage.getAnnotation());
+            }
+
+            if (!type.equals(JSONMessage.TYPE_DONE)) {
+                getNextMessage();
+            } else {
+                application.close();
+            }
         }
     }
 

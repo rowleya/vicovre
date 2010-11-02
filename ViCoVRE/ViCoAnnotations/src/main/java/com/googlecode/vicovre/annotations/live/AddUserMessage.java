@@ -32,29 +32,31 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-public class AddUserMessage implements Message {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-    private Client client = null;
+@XmlRootElement(name="message")
+@XmlAccessorType(XmlAccessType.NONE)
+public class AddUserMessage extends Message {
+
+    public AddUserMessage() {
+        // Does Nothing
+    }
 
     public AddUserMessage(Client client) {
-        this.client = client;
+        super(client, "AddUser", false);
     }
 
-    public String getType() {
-        return "AddUser";
+    @XmlElement
+    public String getName() {
+        return getClient().getName();
     }
 
-    public String getXml() {
-        return "<name>" + client.getName() + "</name>"
-             + "<email>" + client.getEmail() + "</email>";
-    }
-
-    public Client getClient() {
-        return client;
-    }
-
-    public boolean isPrivate() {
-        return false;
+    @XmlElement
+    public String getEmail() {
+        return getClient().getEmail();
     }
 
 }

@@ -35,11 +35,17 @@
 package com.googlecode.vicovre.annotations.live;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import com.googlecode.vicovre.annotations.Annotation;
 
 public class Server extends Thread {
 
@@ -51,24 +57,59 @@ public class Server extends Thread {
 
     private HashSet<String> usernames = new HashSet<String>();
 
-    private File storeDirectory = null;
+    private Integer storeSync = new Integer(0);
 
-    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
+    private PrintWriter storeWriter = null;
+
+    private Marshaller marshaller = null;
 
     private boolean done = false;
 
-    public Server(LiveAnnotationTypeRepository liveAnnotationTypes) {
-        this.liveAnnotationTypeRepository = liveAnnotationTypes;
+    public Server() {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(Annotation.class);
+            marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty("jaxb.fragment", true);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
         Runtime.getRuntime().addShutdownHook(new DoShutdown());
         start();
     }
 
-    public LiveAnnotationTypeRepository getLiveAnnotationTypeRepository() {
-        return liveAnnotationTypeRepository;
+    private PrintWriter getStoreWriter(File storeDirectory)
+            throws FileNotFoundException {
+        File file = new File(storeDirectory, ".annotations");
+        file.getParentFile().mkdirs();
+        PrintWriter writer = new PrintWriter(file);
+        writer.println("<annotations>");
+        return writer;
+    }
+
+    public void setStoreDirectory(String storeDirectory) {
+        setStoreDirectory(new File(storeDirectory));
     }
 
     public void setStoreDirectory(File storeDirectory) {
-        this.storeDirectory = storeDirectory;
+        synchronized (storeSync) {
+            if (storeDirectory != null) {
+                try {
+                    if (storeWriter != null) {
+                        storeWriter.println("</annotations>");
+                        storeWriter.close();
+                    }
+                    storeWriter = getStoreWriter(storeDirectory);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                if (storeWriter != null) {
+                    storeWriter.println("</annotations>");
+                    storeWriter.close();
+                }
+                storeWriter = null;
+            }
+        }
     }
 
     public void run() {
@@ -80,7 +121,7 @@ public class Server extends Thread {
 
     public Client createClient(String name, String email)
             throws NameInUseException {
-        Client client = new Client(this, storeDirectory, name, email);
+        Client client = new Client(this, name, email);
         synchronized (clients) {
             if (clients.containsKey(email)) {
                 throw new NameInUseException();
@@ -118,6 +159,12 @@ public class Server extends Thread {
                 }
             }
         }
+        synchronized (storeSync) {
+            if (storeWriter != null) {
+                storeWriter.println("</annotations>");
+                storeWriter.close();
+            }
+        }
     }
 
     public void addMessage(Message message) {
@@ -125,6 +172,19 @@ public class Server extends Thread {
             if (!done) {
                 queue.addLast(message);
                 queue.notifyAll();
+            }
+        }
+        if (message instanceof AddAnnotationMessage) {
+            synchronized (storeSync) {
+                if ((storeWriter != null) && (marshaller != null)) {
+                    try {
+                        Annotation annotation =
+                            ((AddAnnotationMessage) message).getAnnotation();
+                        marshaller.marshal(annotation, storeWriter);
+                    } catch (JAXBException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }

@@ -44,6 +44,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.googlecode.vicovre.annotations.Annotation;
+
 
 /**
  * Represents a recording
@@ -153,7 +155,23 @@ public abstract class Recording implements Comparable<Recording> {
     @XmlElement
     public abstract boolean isEditable();
 
+    @XmlElement
+    public abstract boolean isAnnotatable();
+
     public abstract void annotateChanges(long time) throws IOException;
 
     public abstract double getAnnotationProgress(long time);
+
+    public abstract List<Annotation> getAnnotations();
+
+    public abstract void setAnnotations(List<Annotation> annotations);
+
+    public abstract void addAnnotation(Annotation annotation)
+        throws IOException;
+
+    public abstract void deleteAnnotation(Annotation annotation)
+        throws IOException;
+
+    public abstract void updateAnnotation(Annotation annotation)
+        throws IOException;
 }

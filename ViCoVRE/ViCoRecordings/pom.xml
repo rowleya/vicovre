@@ -41,6 +41,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoAnnotations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>pag</groupId>
             <artifactId>ag3</artifactId>
             <version>1.0.4</version>

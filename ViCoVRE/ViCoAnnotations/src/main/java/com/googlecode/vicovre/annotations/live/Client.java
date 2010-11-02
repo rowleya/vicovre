@@ -36,16 +36,13 @@ package com.googlecode.vicovre.annotations.live;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Vector;
 
 import javax.swing.Timer;
 
 
-import com.googlecode.vicovre.annotations.LiveAnnotation;
+import com.googlecode.vicovre.annotations.Annotation;
 
 public class Client implements ActionListener {
 
@@ -61,53 +58,19 @@ public class Client implements ActionListener {
 
     private Server server = null;
 
-    private Integer storeSync = new Integer(0);
-
-    private PrintWriter storeWriter = null;
-
     private Timer timer = null;
 
     /**
      * Creates a new Client
      *
      */
-    protected Client(Server server, File storeDirectory, String name,
-            String email) {
+    protected Client(Server server, String name, String email) {
         this.server = server;
         this.name = name;
         this.email = email;
-        if (storeDirectory != null) {
-            try {
-                this.storeWriter = new PrintWriter(
-                        getStoreFile(storeDirectory));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
         timer = new Timer(WAIT_TIME * 2, this);
         timer.start();
-    }
 
-    private File getStoreFile(File storeDirectory) {
-        File file = new File(storeDirectory,
-                email.replace("@", "_at_") + "_annotations.xml");
-        file.getParentFile().mkdirs();
-        return file;
-    }
-
-    protected void setStoreDirectory(File storeDirectory) {
-        synchronized (storeSync) {
-            if (storeDirectory != null) {
-                try {
-                    this.storeWriter = new PrintWriter(
-                            getStoreFile(storeDirectory));
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                this.storeWriter = null;
-            }
-        }
     }
 
     // Gets all the messages in the queue
@@ -156,21 +119,10 @@ public class Client implements ActionListener {
     public void close() {
         timer.stop();
         done = true;
-        synchronized (storeSync) {
-            if (storeWriter != null) {
-                storeWriter.close();
-            }
-        }
         server.deleteClient(this);
     }
 
-    public void setMessage(LiveAnnotation annotation) {
-        annotation.setAuthor(email);
-        synchronized (storeSync) {
-            if (storeWriter != null) {
-                storeWriter.println(annotation.toXml());
-            }
-        }
+    public void setMessage(Annotation annotation) {
         server.addMessage(new AddAnnotationMessage(this, annotation));
     }
 

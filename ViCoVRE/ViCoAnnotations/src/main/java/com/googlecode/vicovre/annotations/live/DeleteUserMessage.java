@@ -32,29 +32,30 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-public class DeleteUserMessage implements Message {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-    private Client client = null;
+@XmlRootElement(name="message")
+@XmlAccessorType(XmlAccessType.NONE)
+public class DeleteUserMessage extends Message {
+
+    public DeleteUserMessage() {
+        // Does Nothing
+    }
 
     public DeleteUserMessage(Client client) {
-        this.client = client;
+        super(client, "DeleteUser", false);
     }
 
-    public String getType() {
-        return "DeleteUser";
+    @XmlElement
+    public String getName() {
+        return getClient().getName();
     }
 
-    public String getXml() {
-        return "<name>" + client.getName() + "</name>"
-             + "<email>" + client.getEmail() + "</email>";
+    @XmlElement
+    public String getEmail() {
+        return getClient().getEmail();
     }
-
-    public Client getClient() {
-        return client;
-    }
-
-    public boolean isPrivate() {
-        return false;
-    }
-
 }

@@ -61,6 +61,10 @@ public class MetadataAnnotation {
         return text;
     }
 
+    public void setText(String text) {
+        this.text = text;
+    }
+
     /**
      * Returns the nodeType
      *
@@ -125,13 +129,5 @@ public class MetadataAnnotation {
     public int hashCode() {
         String hash = nodeType + text + start;
         return hash.hashCode();
-    }
-
-    public boolean update(double startTime, String text) {
-        if ((start <= startTime) && (end >= startTime)) {
-            this.text = text;
-            return true;
-        }
-        return false;
     }
 }

@@ -779,12 +779,12 @@ public class SecurityDatabase {
 
     public void createAcl(String creatorFolder, String creatorId,
             String folder, String id, boolean allow, boolean canProxy,
-            WriteOnlyEntity... exceptions)
+            Role requiredRole, WriteOnlyEntity... exceptions)
             throws IOException {
         User currentUser = getCurrentUser(creatorFolder, creatorId);
-        if (!currentUser.getRole().is(Role.WRITER)) {
+        if (!currentUser.getRole().is(requiredRole)) {
             throw new UnauthorizedException(
-                    "You must have write permission to perform this operation");
+                    "You do not have permission to perform this operation");
         }
         synchronized (acls) {
             File folderFile = getFile(folder);

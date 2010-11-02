@@ -30,20 +30,20 @@
  *
  */
 
-package com.googlecode.vicovre.annotations.live;
+package com.googlecode.vicovre.gwt.annotations.client.json;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.google.gwt.core.client.JavaScriptObject;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.NONE)
-public class DoneMessage extends Message {
+public class JSONAddAnnotationMessage extends JavaScriptObject {
 
-    public static final String TYPE = "Done";
+    public static final String TYPE = "AddAnnotation";
 
-    public DoneMessage() {
-        super(null, TYPE, false);
+    protected JSONAddAnnotationMessage() {
+        // Does Nothing
     }
 
+    public final native JSONAnnotation getAnnotation() /*-{
+        return this.annotation;
+    }-*/;
 }
+

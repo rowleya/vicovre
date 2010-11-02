@@ -613,5 +613,14 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
+    public void updateRecordingAnnotations(Recording recording)
+            throws IOException {
+        File annotationFile = new File(recording.getDirectory(),
+                RecordingConstants.ANNOTATIONS);
+        FileOutputStream output = new FileOutputStream(annotationFile);
+        AnnotationsReader.writeAnnotations(output, recording.getAnnotations());
+        output.close();
+    }
+
 
 }

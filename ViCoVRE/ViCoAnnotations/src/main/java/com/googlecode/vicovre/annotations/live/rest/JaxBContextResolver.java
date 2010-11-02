@@ -1,6 +1,5 @@
-/*
- * Copyright (c) 2008, University of Bristol
- * Copyright (c) 2008, University of Manchester
+/**
+ * Copyright (c) 2009, University of Manchester
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +12,9 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- * 3) Neither the names of the University of Bristol and the
- *    University of Manchester nor the names of their
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
+ * 3) Neither the name of the and the University of Manchester nor the names of
+ *    its contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -32,23 +30,26 @@
  *
  */
 
-package com.googlecode.vicovre.repositories.liveAnnotation;
+package com.googlecode.vicovre.annotations.live.rest;
 
-import java.util.List;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Provider;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
-/**
- * A repository of Known Player layouts
- * @author Tobias M Schiebeck
- * @version 1.0
- */
-public interface LiveAnnotationTypeRepository {
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
 
-    /**
-     * Finds an RTP type
-     * @param rtptype The rtp packet identifier
-     * @return The type
-     */
-    LiveAnnotationProperties getProperties();
-    LiveAnnotationType findLiveAnnotationType(String liveAnnotationTypeName);
-    List<String> getLiveAnnotationTypes();
+@Provider
+public class JaxBContextResolver implements ContextResolver<JAXBContext> {
+
+    public JAXBContext getContext(Class<?> objectType) {
+        try {
+            return new JSONJAXBContext(
+                    JSONConfiguration.natural().build(), objectType);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

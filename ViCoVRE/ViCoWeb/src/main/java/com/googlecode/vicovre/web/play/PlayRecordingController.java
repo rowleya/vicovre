@@ -54,19 +54,17 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.caboto.dao.AnnotationDao;
-import org.caboto.domain.Annotation;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
-import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
-import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
+import com.googlecode.vicovre.utils.URLLinkReplacer;
 import com.googlecode.vicovre.web.play.metadata.MetadataAnnotation;
 import com.googlecode.vicovre.web.play.metadata.MetadataAnnotationType;
 import com.googlecode.vicovre.web.play.metadata.MetadataLayout;
@@ -78,11 +76,25 @@ import com.googlecode.vicovre.web.play.metadata.Thumbnail;
 
 public class PlayRecordingController implements Controller {
 
+    private static final String[] TAGS = new String[] {
+        "Question", "Answer", "Link"
+    };
+
+    private static final String[] COLOURS = new String[] {
+        "#61C4DC", "#FFFF99", "#5CD43A"
+    };
+
     private static final byte[] FLV_TYPE = new byte[] {0x46, 0x4C, 0x56};
 
     private static final String[] SLIDE_COLOURS = {"#0000ff", "#ff0000"};
 
+    private static final int SLIDE_INDEX = 0;
+
     private static final String SLIDE_TYPE = "Slide";
+
+    private static final String DEFAULT_COLOUR = "#FFFFFF";
+
+    private static final String DEFAULT_TYPE = "Note";
 
     private static final int FLV_DATA_TAG = 0x12;
 
@@ -102,28 +114,13 @@ public class PlayRecordingController implements Controller {
 
     private LayoutRepository layoutRepository = null;
 
-    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
-
-    private AnnotationDao annotationDao = null;
-
-    private String recordingUriPrefix = null;
+    private String imageLocation = null;
 
     public PlayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository,
-            LiveAnnotationTypeRepository liveAnnotationTypeRepository) {
-        this(database, layoutRepository, liveAnnotationTypeRepository, null,
-                null);
-    }
-
-    public PlayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository,
-            LiveAnnotationTypeRepository liveAnnotationTypeRepository,
-            AnnotationDao annotationDao, String recordingUriPrefix) {
+            LayoutRepository layoutRepository, String imageLocation) {
         this.database = database;
         this.layoutRepository = layoutRepository;
-        this.liveAnnotationTypeRepository = liveAnnotationTypeRepository;
-        this.annotationDao = annotationDao;
-        this.recordingUriPrefix = recordingUriPrefix;
+        this.imageLocation = imageLocation;
     }
 
     private Vector<Thumbnail> getSlides(String server, Recording recording,
@@ -376,77 +373,86 @@ public class PlayRecordingController implements Controller {
                     }
                 }
             }
+
+            String imageDir = server + imageLocation;
+            if (!imageDir.endsWith("/")) {
+                imageDir += "/";
+            }
+
             if (slideThumbs.size() != 0) {
-                LiveAnnotationType latype =
-                    liveAnnotationTypeRepository.findLiveAnnotationType(
-                            SLIDE_TYPE);
                 MetadataAnnotationType matype = new MetadataAnnotationType(
-                        SLIDE_TYPE,
-                        server + latype.getThumbnail(),
-                        latype.getName(), latype.getIndex());
+                        SLIDE_TYPE, imageDir + SLIDE_TYPE + ".jpg",
+                        SLIDE_TYPE, SLIDE_INDEX);
                 if (!metadataAnnotationTypes.contains(matype)) {
                     metadataAnnotationTypes.add(matype);
                 }
-                int colindex = 0;
+                int colourindex = 0;
                 for (Thumbnail thumb : slideThumbs) {
                     slideAnnotations.add(
                         new MetadataAnnotation(thumb.getStart(), thumb.getEnd(),
-                                SLIDE_TYPE, "",  SLIDE_COLOURS[colindex]));
-                    colindex = (colindex + 1) % SLIDE_COLOURS.length;
+                                SLIDE_TYPE, "",  SLIDE_COLOURS[colourindex]));
+                    colourindex = (colourindex + 1) % SLIDE_COLOURS.length;
                 }
             } else {
-                LiveAnnotationType latype =
-                    liveAnnotationTypeRepository.findLiveAnnotationType(
-                            SLIDE_TYPE);
-                MetadataAnnotationType matype =
-                    new MetadataAnnotationType(SLIDE_TYPE, "",
-                            "", latype.getIndex());
-                if (!metadataAnnotationTypes.contains(matype)) {
-                    metadataAnnotationTypes.add(matype);
+                MetadataAnnotationType type = new MetadataAnnotationType(
+                        SLIDE_TYPE, "", "", SLIDE_INDEX);
+                if (!metadataAnnotationTypes.contains(type)) {
+                    metadataAnnotationTypes.add(type);
                 }
             }
 
-            if (annotationDao != null) {
+            List<Annotation> annotations = recording.getAnnotations();
+            if ((annotations != null) && !annotations.isEmpty()) {
                 long annLength = duration / 100;
-                for (Annotation annotation :
-                        annotationDao.getAnnotations(recordingUriPrefix
-                                + recording.getId())) {
-                    if (annotation.getType().equals("LiveAnnotation")) {
-                        double start = (annotation.getCreated().getTime()
-                                - recording.getStartTime().getTime()) / 1000;
-                        double end = start + (annLength / 1000);
-                        boolean addAnn = true;
-                        String aType = annotation.getBody().get(
-                                "liveAnnotationType");
-                        LiveAnnotationType latype =
-                            liveAnnotationTypeRepository.findLiveAnnotationType(
-                                    aType);
-                        String text = latype.formatAnnotation("player",
-                                annotation.getBody());
-                        if (latype.getName().equals("Slide")) {
-                            for (MetadataAnnotation ann : slideAnnotations) {
-                                if (ann.update(start, text)) {
-                                    addAnn = false;
-                                }
+                for (Annotation annotation : annotations) {
+                    double start = (annotation.getTimestamp()
+                            - recording.getStartTime().getTime()) / 1000;
+                    double end = start + (annLength / 1000);
+                    boolean addAnnotation = true;
+                    String text = URLLinkReplacer.format(
+                            annotation.getMessage());
+
+                    String type = DEFAULT_TYPE;
+                    int index = TAGS.length + 1;
+                    String colour = DEFAULT_COLOUR;
+                    for (int i = 0; i < TAGS.length; i++) {
+                        if (annotation.hasTag(TAGS[i])) {
+                            index = i + 1;
+                            type = TAGS[i];
+                            colour = COLOURS[i];
+                            break;
+                        }
+                    }
+
+                    if (annotation.hasTag(SLIDE_TYPE)) {
+                        for (MetadataAnnotation slideAnnotation
+                                : slideAnnotations) {
+                            if ((slideAnnotation.getStart() >= start)
+                                    && (slideAnnotation.getEnd() <= end)) {
+                                slideAnnotation.setText(text);
+                                addAnnotation = false;
                             }
                         }
-                        MetadataAnnotation metaAnn = new MetadataAnnotation(
-                                start, end, aType, text, latype.getColour());
-                        if (addAnn && (!metadataAnnotations.contains(metaAnn))) {
-                            metadataAnnotations.add(metaAnn);
-                        }
-                        TextThumbnail textThumb = new TextThumbnail(start, end,
-                                server + latype.getThumbnail(), text, aType);
-                        if (!thumbs.contains(textThumb)) {
-                            thumbs.add(textThumb);
-                        }
-                        MetadataAnnotationType matype =
-                            new MetadataAnnotationType(aType,
-                                    server + latype.getThumbnail(),
-                                    latype.getName(), latype.getIndex());
-                        if (!metadataAnnotationTypes.contains(matype)) {
-                            metadataAnnotationTypes.add(matype);
-                        }
+                    }
+
+                    MetadataAnnotation metaAnn = new MetadataAnnotation(
+                            start, end, type, text, colour);
+                    if (addAnnotation &&
+                            !metadataAnnotations.contains(metaAnn)) {
+                        metadataAnnotations.add(metaAnn);
+                    }
+
+                    String image = imageDir + type + ".jpg";
+                    TextThumbnail textThumb = new TextThumbnail(start, end,
+                            image, text, type);
+                    if (!thumbs.contains(textThumb)) {
+                        thumbs.add(textThumb);
+                    }
+                    MetadataAnnotationType matype =
+                        new MetadataAnnotationType(type, image,
+                                type, index);
+                    if (!metadataAnnotationTypes.contains(matype)) {
+                        metadataAnnotationTypes.add(matype);
                     }
                 }
             }

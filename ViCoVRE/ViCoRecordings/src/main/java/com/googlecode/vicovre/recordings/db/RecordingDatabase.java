@@ -117,6 +117,9 @@ public interface RecordingDatabase {
     public void updateRecordingLifetime(Recording recording)
             throws IOException;
 
+    public void updateRecordingAnnotations(Recording recording)
+            throws IOException;
+
     public void addRecordingListener(RecordingListener recordingListener);
 
     public void setDefaultLayout(String folder, DefaultLayout layout)

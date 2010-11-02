@@ -2,7 +2,6 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans>
-
     <bean id="viewResolver"
           class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
@@ -14,9 +13,7 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="liveAnnotationTypeRepository"/></constructor-arg>
-        <!-- Comment out the following lines to ignore annotations -->
-        <constructor-arg><ref bean="annotationDao"/></constructor-arg>
-        <constructor-arg><value>${recording.prefix}</value></constructor-arg>
+        <constructor-arg><value>/images/annotations/small</value></constructor-arg>
     </bean>
     <bean name="/flv.do" class="com.googlecode.vicovre.web.play.FlvController">
         <constructor-arg><ref bean="database"/></constructor-arg>

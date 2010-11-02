@@ -30,20 +30,44 @@
  *
  */
 
-package com.googlecode.vicovre.annotations.live;
+package com.googlecode.vicovre.utils;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.NONE)
-public class DoneMessage extends Message {
+public class URLLinkReplacer {
 
-    public static final String TYPE = "Done";
+    private static final Pattern URL_PATTERN =
+        Pattern.compile("(^|[ \t\r\n])((ftp|http|https|"
+            + "gopher|mailto|news|nntp|telnet|wais|file|prospero|"
+            + "aim|webcal):(([A-Za-z0-9$_.+!*(),;/?:@&~=-])|%"
+            + "[A-Fa-f0-9]{2}){2,}(#([a-zA-Z0-9][a-zA-Z0-9$_.+!"
+            + "*(),;/?:@&~=%-]*))?([A-Za-z0-9$_+!*();/?:~-]))");
 
-    public DoneMessage() {
-        super(null, TYPE, false);
+    private URLLinkReplacer() {
+        // Does Nothing
+    }
+
+    public static String format(String message) {
+        Matcher matcher = URL_PATTERN.matcher(message);
+
+        int lastEnd = 0;
+        String newMessage = "";
+        while (matcher.find()) {
+            int start = matcher.start();
+            if (start != 0) {
+                start += 1;
+            }
+            int end = matcher.end();
+            newMessage += message.substring(lastEnd, start);
+            lastEnd = end;
+            newMessage += "<a href='" + message.substring(start, end)
+                + "' target='_blank'>";
+            newMessage += message.substring(start, end);
+            newMessage += "</a>";
+        }
+        newMessage += message.substring(lastEnd);
+        return newMessage;
     }
 
 }

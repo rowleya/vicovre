@@ -30,20 +30,26 @@
  *
  */
 
-package com.googlecode.vicovre.annotations.live;
+package com.googlecode.vicovre.gwt.annotations.client.json;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.google.gwt.core.client.JavaScriptObject;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.NONE)
-public class DoneMessage extends Message {
+public class JSONUserMessage extends JavaScriptObject {
 
-    public static final String TYPE = "Done";
+    public static final String TYPE_ADD = "AddUser";
 
-    public DoneMessage() {
-        super(null, TYPE, false);
+    public static final String TYPE_DELETE = "DeleteUser";
+
+    protected JSONUserMessage() {
+        // Does Nothing
     }
+
+    public final native String getName() /*-{
+        return this.name;
+    }-*/;
+
+    public final native String getEmail() /*-{
+        return this.email;
+    }-*/;
 
 }

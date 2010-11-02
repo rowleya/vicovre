@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Metadata;
@@ -62,6 +63,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public static final String CHANGE_RECORDING_ID_PREFIX = "editRecording";
 
+    public static final String ANNOTATE_RECORDING_ID_PREFIX =
+        "annotateRecording";
+
     public static final String PLAY_RECORDING_ID_PREFIX = "playRecording";
 
     public static final String UNFINISHED_ID_PREFIX = "unfinishedRecording";
@@ -69,6 +73,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     public static final String READ_FOLDER_PREFIX = "readFolder";
 
     public static final String WRITE_FOLDER_PREFIX = "writeFolder";
+
+    public static final String ANNOTATION_ID_PREFIX = "annotation";
 
     private RecordingDatabase database = null;
 
@@ -115,7 +121,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             throws IOException {
         checkWrite(harvestSource.getFolder());
         securityDatabase.createAcl(null, null, harvestSource.getFolder(),
-                HARVEST_ID_PREFIX + harvestSource.getId(), false, true);
+                HARVEST_ID_PREFIX + harvestSource.getId(), false, true,
+                Role.WRITER);
         database.addHarvestSource(harvestSource);
     }
 
@@ -172,15 +179,21 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         checkWrite(folder);
         securityDatabase.createAcl(creatorFolder,
                 HARVEST_ID_PREFIX + creatorId, folder,
-                UNFINISHED_ID_PREFIX + recording.getId(), false, true);
+                UNFINISHED_ID_PREFIX + recording.getId(), false, true,
+                Role.WRITER);
         securityDatabase.createAcl(folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), folder,
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                true, true);
+                true, true, Role.WRITER);
         securityDatabase.createAcl(folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), folder,
                 PLAY_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
-                false, true);
+                false, true, Role.WRITER);
+        securityDatabase.createAcl(folder,
+                UNFINISHED_ID_PREFIX + recording.getId(), folder,
+                ANNOTATE_RECORDING_ID_PREFIX
+                    + recording.getFinishedRecordingId(),
+                false, true, Role.WRITER);
         database.addUnfinishedRecording(recording, creator);
     }
 
@@ -197,7 +210,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                     entity.getType());
         }
         securityDatabase.createAcl(creatorFolder, creatorId, folder, newId,
-                acl.isAllow(), true, exceptions);
+                acl.isAllow(), true, Role.WRITER, exceptions);
     }
 
     public void updateUnfinishedRecording(UnfinishedRecording recording)
@@ -219,9 +232,14 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 + recording.getOldFinishedRecordingId();
             String newPlayId = PLAY_RECORDING_ID_PREFIX
                 + recording.getFinishedRecordingId();
+            String oldAnnotateId = ANNOTATE_RECORDING_ID_PREFIX
+                + recording.getOldFinishedRecordingId();
+            String newAnnotateId = ANNOTATE_RECORDING_ID_PREFIX
+                + recording.getFinishedRecordingId();
 
             updateAclId(folder, id, folder, oldReadId, newReadId);
             updateAclId(folder, id, folder, oldPlayId, newPlayId);
+            updateAclId(folder, id, folder, oldAnnotateId, newAnnotateId);
         }
         database.updateUnfinishedRecording(recording);
     }
@@ -235,6 +253,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId());
         securityDatabase.deleteAcl(folder,
                 PLAY_RECORDING_ID_PREFIX + recording.getFinishedRecordingId());
+        securityDatabase.deleteAcl(folder,
+                ANNOTATE_RECORDING_ID_PREFIX
+                + recording.getFinishedRecordingId());
         database.deleteUnfinishedRecording(recording);
     }
 
@@ -275,21 +296,33 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         checkWrite(folder);
         securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
-                CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true);
+                CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true,
+                Role.WRITER);
         try {
             securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
-                READ_RECORDING_ID_PREFIX + recording.getId(), true, true);
+                READ_RECORDING_ID_PREFIX + recording.getId(), true, true,
+                Role.WRITER);
         } catch (AlreadyExistsException e) {
             // Do Nothing
         }
         try {
             securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
-                PLAY_RECORDING_ID_PREFIX + recording.getId(), false, true);
+                PLAY_RECORDING_ID_PREFIX + recording.getId(), false, true,
+                Role.WRITER);
         } catch (AlreadyExistsException e) {
             // Do Nothing
         }
+        try {
+            securityDatabase.createAcl(creatorFolder,
+                UNFINISHED_ID_PREFIX + creatorId, folder,
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), false, true,
+                Role.WRITER);
+        } catch (AlreadyExistsException e) {
+            // Do Nothing
+        }
+
         database.addRecording(recording, creator);
     }
 
@@ -300,6 +333,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 READ_RECORDING_ID_PREFIX + recording.getId());
         securityDatabase.deleteAcl(recording.getFolder(),
                 PLAY_RECORDING_ID_PREFIX + recording.getId());
+        securityDatabase.deleteAcl(recording.getFolder(),
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId());
         database.deleteRecording(recording);
     }
 
@@ -360,6 +395,16 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         database.updateRecordingMetadata(recording);
     }
 
+    public void updateRecordingAnnotations(Recording recording)
+            throws IOException {
+        if (!securityDatabase.isAllowed(recording.getFolder(),
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), false)) {
+            throw new UnauthorizedException(
+                    "You do not have permission to do this");
+        }
+        database.updateRecordingAnnotations(recording);
+    }
+
     public boolean canEditRecording(String folder, String id) {
         return securityDatabase.isAllowed(folder,
                 CHANGE_RECORDING_ID_PREFIX + id, false);
@@ -373,6 +418,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     public boolean canReadRecording(String folder, String id) {
         return securityDatabase.isAllowed(folder,
                 READ_RECORDING_ID_PREFIX + id, true);
+    }
+
+    public boolean canAnnotateRecording(String folder, String id) {
+        return securityDatabase.isAllowed(folder,
+                ANNOTATE_RECORDING_ID_PREFIX + id, true);
     }
 
     public void shutdown() {
@@ -393,6 +443,13 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 isPublic, exceptions);
     }
 
+    public void setRecordingAnnotateAcl(Recording recording, boolean isPublic,
+            WriteOnlyEntity... exceptions) throws IOException {
+        securityDatabase.setAcl(recording.getFolder(),
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId(),
+                isPublic, exceptions);
+    }
+
     public ReadOnlyACL getRecordingReadAcl(Recording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
                 READ_RECORDING_ID_PREFIX + recording.getId(), true);
@@ -401,6 +458,11 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     public ReadOnlyACL getRecordingPlayAcl(Recording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
                 PLAY_RECORDING_ID_PREFIX + recording.getId(), false);
+    }
+
+    public ReadOnlyACL getRecordingAnnotateAcl(Recording recording) {
+        return securityDatabase.getAcl(recording.getFolder(),
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), false);
     }
 
     public void setRecordingReadAcl(UnfinishedRecording recording,
@@ -421,6 +483,15 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             isPublic, exceptions);
     }
 
+    public void setRecordingAnnotateAcl(UnfinishedRecording recording,
+            boolean isPublic, WriteOnlyEntity... exceptions)
+            throws IOException {
+        String folder = recording.getFolder();
+        securityDatabase.setAcl(folder,
+            ANNOTATE_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
+            isPublic, exceptions);
+    }
+
     public ReadOnlyACL getRecordingReadAcl(UnfinishedRecording recording) {
         return securityDatabase.getAcl(recording.getFolder(),
                 READ_RECORDING_ID_PREFIX + recording.getFinishedRecordingId(),
@@ -433,15 +504,24 @@ public class SecureRecordingDatabase implements RecordingDatabase {
                 false);
     }
 
+    public ReadOnlyACL getRecordingAnnotateAcl(UnfinishedRecording recording) {
+        return securityDatabase.getAcl(recording.getFolder(),
+                ANNOTATE_RECORDING_ID_PREFIX
+                    + recording.getFinishedRecordingId(),
+                false);
+    }
+
     public void setRecordingOwner(Recording recording, String owner)
             throws IOException {
         String folder = recording.getFolder();
+        securityDatabase.setAclOwner(folder,
+                CHANGE_RECORDING_ID_PREFIX + recording.getId(), owner);
         securityDatabase.setAclOwner(folder,
                 PLAY_RECORDING_ID_PREFIX + recording.getId(), owner);
         securityDatabase.setAclOwner(folder,
                 READ_RECORDING_ID_PREFIX + recording.getId(), owner);
         securityDatabase.setAclOwner(folder,
-                CHANGE_RECORDING_ID_PREFIX + recording.getId(), owner);
+                ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), owner);
     }
 
     public void addHarvestSourceListener(HarvestSourceListener listener) {
@@ -466,9 +546,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     public boolean addFolder(String parent, String folder) throws IOException {
         checkWrite(parent);
         securityDatabase.createAcl(null, null, parent + "/" + folder,
-                WRITE_FOLDER_PREFIX, false, false);
+                WRITE_FOLDER_PREFIX, false, false, Role.WRITER);
         securityDatabase.createAcl(null, null, parent + "/" + folder,
-                READ_FOLDER_PREFIX, true, false);
+                READ_FOLDER_PREFIX, true, false, Role.WRITER);
         return database.addFolder(parent, folder);
     }
 
@@ -488,7 +568,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     }
 
     public boolean canWriteFolder(String folder) {
-        return securityDatabase.isAllowed(folder, WRITE_FOLDER_PREFIX, false);
+        return securityDatabase.isAllowed(folder, WRITE_FOLDER_PREFIX,
+                (folder == null) || folder.equals(""));
     }
 
     public Metadata getFolderMetadata(String folder) {
@@ -516,5 +597,33 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             throws IOException {
         securityDatabase.setAclOwner(folder, READ_FOLDER_PREFIX, newOwner);
         securityDatabase.setAclOwner(folder, WRITE_FOLDER_PREFIX, newOwner);
+    }
+
+    protected void addAnnotation(Recording recording,
+            Annotation annotation) throws IOException {
+        if (!canAnnotateRecording(recording.getFolder(), recording.getId())) {
+            throw new UnauthorizedException(
+                    "You do not have permission to annotate this recording");
+        }
+        String folder = recording.getFolder() + "/" + recording.getId();
+        securityDatabase.createAcl(recording.getFolder(), recording.getId(),
+                folder, ANNOTATION_ID_PREFIX + annotation.getId(), false,
+                false, Role.AUTHUSER);
+    }
+
+    protected void deleteAnnotation(Recording recording,
+            Annotation annotation)  {
+        String folder = recording.getFolder() + "/" + recording.getId();
+        securityDatabase.deleteAcl(folder, annotation.getId());
+    }
+
+    protected void updateAnnotation(Recording recording,
+            Annotation annotation) {
+        String folder = recording.getFolder() + "/" + recording.getId();
+        if (!securityDatabase.isAllowed(folder,
+                ANNOTATION_ID_PREFIX + annotation.getId(), false)) {
+            throw new UnauthorizedException(
+                    "Only the owner of an annotation can edit it");
+        }
     }
 }
