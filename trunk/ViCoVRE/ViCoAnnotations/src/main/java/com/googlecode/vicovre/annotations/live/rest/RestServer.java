@@ -33,42 +33,40 @@
 package com.googlecode.vicovre.annotations.live.rest;
 
 import java.util.List;
-import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
-import com.googlecode.vicovre.annotations.LiveAnnotation;
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.annotations.live.Client;
 import com.googlecode.vicovre.annotations.live.DoneMessage;
 import com.googlecode.vicovre.annotations.live.Message;
 import com.googlecode.vicovre.annotations.live.NameInUseException;
 import com.googlecode.vicovre.annotations.live.Server;
-import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationType;
-import com.googlecode.vicovre.repositories.liveAnnotation.LiveAnnotationTypeRepository;
 import com.sun.jersey.spi.inject.Inject;
 
-@Path("/")
+@Path("/annotations")
 public class RestServer {
 
     private static final String CLIENT = "client";
 
-    @Inject
     private Server server = null;
 
-    @Inject
-    private LiveAnnotationTypeRepository liveAnnotationTypeRepository = null;
+    public RestServer(@Inject Server server) {
+        this.server = server;
+    }
 
     private CacheControl getNoCache() {
         CacheControl cacheControl = new CacheControl();
@@ -99,13 +97,41 @@ public class RestServer {
 
     @Path("/send")
     @POST
-    public Response sendMessage(@Context UriInfo uriInfo,
-                                @Context HttpServletRequest request) {
+    public Response sendMessage(@Context HttpServletRequest request,
+            @QueryParam("timestamp") long timestamp,
+            @QueryParam("author") String author,
+            @QueryParam("message") String message,
+            @QueryParam("tag") List<String> tags,
+            @QueryParam("person") List<String> people,
+            @QueryParam("responseTo") String responseTo) {
         HttpSession session = request.getSession();
         Client client = (Client) session.getAttribute(CLIENT);
         if (client != null) {
-            client.setMessage(new LiveAnnotation(liveAnnotationTypeRepository,
-                    uriInfo.getQueryParameters()));
+            client.setMessage(new Annotation(timestamp, author, message,
+                    tags.toArray(new String[0]), people.toArray(new String[0]),
+                    responseTo));
+            return Response.status(Status.OK).build();
+        }
+        return Response.status(Status.UNAUTHORIZED).build();
+    }
+
+    @Path("/edit/{id}")
+    @PUT
+    public Response editMessage(@Context HttpServletRequest request,
+            @PathParam("id") String id,
+            @QueryParam("timestamp") long timestamp,
+            @QueryParam("author") String author,
+            @QueryParam("message") String message,
+            @QueryParam("tag") List<String> tags,
+            @QueryParam("person") List<String> people,
+            @QueryParam("responseTo") String responseTo) {
+        HttpSession session = request.getSession();
+        Client client = (Client) session.getAttribute(CLIENT);
+        if (client != null) {
+
+            client.setMessage(new Annotation(id, timestamp, author, message,
+                    tags.toArray(new String[0]), people.toArray(new String[0]),
+                    responseTo));
             return Response.status(Status.OK).build();
         }
         return Response.status(Status.UNAUTHORIZED).build();
@@ -120,8 +146,7 @@ public class RestServer {
         return Response.ok(timestamp).cacheControl(getNoCache()).build();
     }
 
-    @Path("/get")
-    @Produces("text/xml")
+    @Produces({"text/xml", "application/json"})
     @GET
     public Response getMessage(@Context HttpServletRequest request) {
         HttpSession session = request.getSession();
@@ -144,19 +169,5 @@ public class RestServer {
             session.removeAttribute(CLIENT);
         }
         return Response.ok().build();
-    }
-
-    @Path("/types")
-    @Produces("text/xml")
-    @GET
-    public List<LiveAnnotationType> getTypes() {
-        System.err.println("Getting types");
-        Vector<LiveAnnotationType> types = new Vector<LiveAnnotationType>();
-        for (String type
-                : liveAnnotationTypeRepository.getLiveAnnotationTypes()) {
-            types.add(
-                    liveAnnotationTypeRepository.findLiveAnnotationType(type));
-        }
-        return types;
     }
 }

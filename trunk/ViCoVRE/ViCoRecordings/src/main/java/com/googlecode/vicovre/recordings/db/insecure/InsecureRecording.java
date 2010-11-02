@@ -45,6 +45,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.media.screencapture.ScreenChangeDetector;
 import com.googlecode.vicovre.recordings.Recording;
@@ -104,6 +105,9 @@ public class InsecureRecording extends Recording {
     private LayoutRepository layoutRepository = null;
 
     private RtpTypeRepository typeRepository = null;
+
+    private HashMap<String, Annotation> annotations =
+        new HashMap<String, Annotation>();
 
     public InsecureRecording() {
         // Does Nothing
@@ -366,5 +370,32 @@ public class InsecureRecording extends Recording {
             return screenChangeDetectors.get(time).getProgress();
         }
         return 1.0;
+    }
+
+    public List<Annotation> getAnnotations() {
+        return new Vector<Annotation>(annotations.values());
+    }
+
+    public void setAnnotations(List<Annotation> annotations) {
+        this.annotations.clear();
+        for (Annotation annotation : annotations) {
+            this.annotations.put(annotation.getId(), annotation);
+        }
+    }
+
+    public void addAnnotation(Annotation annotation) throws IOException {
+        annotations.put(annotation.getId(), annotation);
+    }
+
+    public void deleteAnnotation(Annotation annotation) throws IOException {
+        annotations.remove(annotation.getId());
+    }
+
+    public boolean isAnnotatable() {
+        return true;
+    }
+
+    public void updateAnnotation(Annotation annotation) throws IOException {
+        annotations.put(annotation.getId(), annotation);
     }
 }

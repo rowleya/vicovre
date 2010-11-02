@@ -34,13 +34,41 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-public interface Message {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-    String getXml();
+@XmlRootElement(name="message")
+@XmlAccessorType(XmlAccessType.NONE)
+public abstract class Message {
 
-    String getType();
+    private Client client = null;
 
-    Client getClient();
+    private String type = null;
 
-    boolean isPrivate();
+    private boolean isPrivate = false;
+
+    protected Message() {
+        // Does Nothing
+    }
+
+    protected Message(Client client, String type, boolean isPrivate) {
+        this.client = client;
+        this.type = type;
+        this.isPrivate = isPrivate;
+    }
+
+    @XmlElement
+    public String getType() {
+        return type;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
 }

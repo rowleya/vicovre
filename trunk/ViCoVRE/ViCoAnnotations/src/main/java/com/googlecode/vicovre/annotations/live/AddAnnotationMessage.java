@@ -32,36 +32,33 @@
 
 package com.googlecode.vicovre.annotations.live;
 
-import com.googlecode.vicovre.annotations.LiveAnnotation;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class AddAnnotationMessage implements Message {
+import com.googlecode.vicovre.annotations.Annotation;
+
+@XmlRootElement(name="message")
+@XmlAccessorType(XmlAccessType.NONE)
+public class AddAnnotationMessage extends Message {
 
     public static final String TYPE = "AddAnnotation";
 
-    private LiveAnnotation annotation = null;
+    private Annotation annotation = null;
 
-    private Client client = null;
+    public AddAnnotationMessage() {
+        // Does Nothing
+    }
 
-    public AddAnnotationMessage(Client client, LiveAnnotation annotation) {
-        this.client = client;
+    public AddAnnotationMessage(Client client, Annotation annotation) {
+        super(client, TYPE, !annotation.isPublic());
         this.annotation = annotation;
     }
 
-    public String getType() {
-        return TYPE;
-    }
-
-    public String getXml() {
-        return annotation.toXml()
-             + "<html>" + annotation.getToolText() + "</html>";
-    }
-
-    public boolean isPrivate() {
-        return annotation.getPrivacy() == LiveAnnotation.PRIVATE;
-    }
-
-    public Client getClient() {
-        return client;
+    @XmlElement
+    public Annotation getAnnotation() {
+        return annotation;
     }
 
 }

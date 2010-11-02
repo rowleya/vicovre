@@ -33,8 +33,6 @@
 package com.googlecode.vicovre.gwt.annotations.client;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -57,9 +55,12 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.annotations.client.json.JSONAnnotation;
 
 public class Application implements EntryPoint, ClickHandler,
         CloseHandler<Window>, SelectionHandler<TreeItem> {
+
+    public static final String DEFAULT_TAG = "Note";
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
@@ -73,9 +74,6 @@ public class Application implements EntryPoint, ClickHandler,
 
     private HashMap<String, Annotation> annotations =
         new HashMap<String, Annotation>();
-
-    private Vector<LiveAnnotationType> inlineButtons =
-        new Vector<LiveAnnotationType>();
 
     private HashMap<PushButton, LiveAnnotationType> buttons =
         new HashMap<PushButton, LiveAnnotationType>();
@@ -114,7 +112,8 @@ public class Application implements EntryPoint, ClickHandler,
     }
 
     public void onModuleLoad() {
-        LiveAnnotationTypeReceiver.getLiveAnnotations(this);
+        setupInterface(new String[]{"Question", "Answer", "Note", "Link",
+                "Slide"});
     }
 
     public void loginDone(String name, String email) {
@@ -123,7 +122,7 @@ public class Application implements EntryPoint, ClickHandler,
         closeHandler = Window.addCloseHandler(this);
     }
 
-    public void setupInterface(List<LiveAnnotationType> laTypes) {
+    public void setupInterface(String[] tags) {
         VerticalPanel mainPanel = new VerticalPanel();
         mainPanel.setWidth("100%");
         mainPanel.setHeight("100%");
@@ -152,24 +151,17 @@ public class Application implements EntryPoint, ClickHandler,
         buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
         buttonPanel.setWidth("100%");
         buttonPanel.setHeight("100%");
-        for (LiveAnnotationType type : laTypes) {
-            liveAnnotationTypes.put(type.getName(), type);
-            if (type.getVisible().equals("true")) {
-                String image = type.getImage();
-                if (image.startsWith("/")) {
-                    image = image.substring(1);
-                }
-                PushButton button = new PushButton(new Image(getUrl()
-                        + image));
-                button.setTitle(type.getName());
-                button.setWidth("100px");
-                button.setHeight("100px");
-                buttonPanel.add(button);
-                buttons.put(button, type);
-                button.addClickHandler(this);
-            } else {
-                inlineButtons.add(type);
-            }
+        for (String tag : tags) {
+            LiveAnnotationType type = new LiveAnnotationType(this, tag);
+            liveAnnotationTypes.put(tag, type);
+            PushButton button = new PushButton(new Image("images/annotations/"
+                    + tag + ".png"));
+            button.setTitle(tag);
+            button.setWidth("100px");
+            button.setHeight("100px");
+            buttonPanel.add(button);
+            buttons.put(button, type);
+            button.addClickHandler(this);
         }
 
         bottomPanel.setWidth("100%");
@@ -222,30 +214,26 @@ public class Application implements EntryPoint, ClickHandler,
         return liveAnnotationTypes.get(name);
     }
 
-    public List<LiveAnnotationType> getInlineButtonTypes() {
-        return inlineButtons;
-    }
-
-    public void addAnnotation(Annotation annotation) {
+    public void addAnnotation(JSONAnnotation annotation) {
         String id = annotation.getId();
         Annotation currentAnnotation = annotations.get(id);
         if (currentAnnotation == null) {
-            String relatesTo =
-                annotation.getBodyItem("CrewLiveAnnotationRelatesTo");
-            if (relatesTo == null) {
-                annotationPanel.addItem(annotation.getItem());
+            currentAnnotation = new Annotation(this, annotation);
+            String responseTo = annotation.getResponseTo();
+            if (responseTo == null) {
+                annotationPanel.addItem(currentAnnotation.getItem());
                 annotationScroll.setScrollPosition(
                         annotationPanel.getOffsetHeight());
             } else {
-                Annotation relatesToAnnotation = annotations.get(relatesTo);
-                relatesToAnnotation.getItem().addItem(annotation.getItem());
-                relatesToAnnotation.getItem().setState(true);
+                Annotation responseToAnnotation = annotations.get(responseTo);
+                responseToAnnotation.getItem().addItem(
+                        currentAnnotation.getItem());
+                responseToAnnotation.getItem().setState(true);
             }
+            annotations.put(id, currentAnnotation);
         } else {
-            TreeItem currentItem = currentAnnotation.getItem();
-            annotation.setItem(currentItem);
+            currentAnnotation.setAnnotation(annotation);
         }
-        annotations.put(id, annotation);
     }
 
     public void close() {
@@ -282,6 +270,7 @@ public class Application implements EntryPoint, ClickHandler,
     public void displayAnnotationPanel(LiveAnnotationType laType) {
         bottomPanel.remove(buttonPanel);
         bottomPanel.add(laType.getPanel());
+        laType.focus();
     }
 
     public void onClose(CloseEvent<Window> event) {

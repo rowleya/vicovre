@@ -98,7 +98,7 @@ public class LoginPopup extends ModalPopup<Grid> implements ClickHandler {
         } else {
             Client client = new Client(Protocol.HTTP);
             String url = application.getUrl();
-            url += "annotations/login?";
+            url += "login?";
             url += "name=" + URL.encodeComponent(name.getText().trim());
             url += "&email=" + URL.encodeComponent(email.getText().trim());
             GWT.log("URL = " + url, null);

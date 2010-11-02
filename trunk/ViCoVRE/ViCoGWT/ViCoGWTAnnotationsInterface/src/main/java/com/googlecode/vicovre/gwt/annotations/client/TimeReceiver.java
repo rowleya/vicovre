@@ -32,18 +32,16 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
 
 import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 
-public class TimeReceiver implements Callback {
+public class TimeReceiver extends AbstractRestCall {
 
     private Application application = null;
 
@@ -62,27 +60,23 @@ public class TimeReceiver implements Callback {
 
     public void go() {
         application.clearPanel();
-        Client client = new Client(Protocol.HTTP);
-        String url = application.getUrl();
-        url += "annotations/date";
-        client.get(url, this);
+        go(application.getUrl() + "date", Method.GET, MediaType.TEXT_PLAIN);
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().equals(Status.SUCCESS_OK)) {
-            String timestamp = response.getEntity().getText();
-            GWT.log("Timestamp = " + timestamp, null);
-            type.setTimestamp(timestamp);
-            application.displayAnnotationPanel(type);
-        } else {
-            application.displayButtonPanel();
-            String errorMessage = "Error receiving time "
-                + response.getStatus().getCode() + ": "
-                + response.getStatus().getDescription();
-            MessagePopup error = new MessagePopup(errorMessage,
-                    null, MessagePopup.ERROR, MessageResponse.OK);
-            error.center();
-        }
+    protected void onError(String message) {
+        application.displayButtonPanel();
+        String errorMessage = "Error receiving time: "
+            + message;
+        MessagePopup error = new MessagePopup(errorMessage,
+                null, MessagePopup.ERROR, MessageResponse.OK);
+        error.center();
+    }
+
+    protected void onSuccess(Response response) {
+        String timestamp = response.getEntity().getText();
+        GWT.log("Timestamp = " + timestamp, null);
+        type.setTimestamp(timestamp);
+        application.displayAnnotationPanel(type);
     }
 
 }

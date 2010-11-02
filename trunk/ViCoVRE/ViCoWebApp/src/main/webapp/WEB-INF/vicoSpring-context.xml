@@ -101,21 +101,6 @@
         <constructor-arg><value>31</value></constructor-arg>
     </bean>
 
-    <!-- Annotations implementation - comment out to ignore annotations -->
-    <bean id="profileRepository" class="org.caboto.profile.ProfileRepositoryXmlImpl">
-        <constructor-arg index="0" value="profiles.xml"/>
-    </bean>
-
-    <bean id="cabotoDatabase" class="org.caboto.jena.db.impl.SDBDatabase">
-        <constructor-arg index="0" value="caboto.db"/>
-        <constructor-arg index="1" value="/caboto.properties"/>
-    </bean>
-
-    <bean id="annotationDao" class="org.caboto.dao.AnnotationDaoImpl">
-        <constructor-arg index="0" ref="profileRepository"/>
-        <constructor-arg index="1" ref="cabotoDatabase"/>
-    </bean>
-
     <bean id="namespaces" class="java.util.HashMap">
         <constructor-arg>
             <map>

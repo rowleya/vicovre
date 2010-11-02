@@ -119,6 +119,8 @@ public interface RecordingConstants {
      */
     String STREAM_INDEX2 = "_index";
 
+    String ANNOTATIONS = ".annotations";
+
     /**
      * The id of an RTP Packet within a recording
      */

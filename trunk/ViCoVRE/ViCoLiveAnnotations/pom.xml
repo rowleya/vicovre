@@ -43,6 +43,8 @@
                             <value>file:./target/ViCoVRE/WEB-INF/classes/log4j.properties</value>
                         </systemproperty>
                     </systemproperties>
+                    <stopPort>9966</stopPort>
+                    <stopKey>foo</stopKey>
                 </configuration>
                 <dependencies>
                     <dependency>
