@@ -114,4 +114,8 @@
             </map>
         </constructor-arg>
     </bean>
+
+    <bean id="critterHarvester" class="com.googlecode.vicovre.recordings.CritterAnnotationHarvester">
+        <constructor-arg><value>https://crew.rcs.manchester.ac.uk/critter/events/</value></constructor-arg>
+    </bean>
 </beans>

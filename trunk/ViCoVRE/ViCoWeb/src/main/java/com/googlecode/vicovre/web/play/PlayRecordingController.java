@@ -58,6 +58,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
 import com.googlecode.vicovre.annotations.Annotation;
+import com.googlecode.vicovre.recordings.CritterAnnotationHarvester;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
@@ -116,11 +117,15 @@ public class PlayRecordingController implements Controller {
 
     private String imageLocation = null;
 
+    private CritterAnnotationHarvester critterHarvester = null;
+
     public PlayRecordingController(RecordingDatabase database,
-            LayoutRepository layoutRepository, String imageLocation) {
+            LayoutRepository layoutRepository, String imageLocation,
+            CritterAnnotationHarvester critterHarvester) {
         this.database = database;
         this.layoutRepository = layoutRepository;
         this.imageLocation = imageLocation;
+        this.critterHarvester = critterHarvester;
     }
 
     private Vector<Thumbnail> getSlides(String server, Recording recording,
@@ -402,6 +407,14 @@ public class PlayRecordingController implements Controller {
             }
 
             List<Annotation> annotations = recording.getAnnotations();
+            String critterEvent = recording.getMetadata().getValue(
+                    "critterEvent");
+            if ((critterEvent != null) && (critterHarvester != null)) {
+                List<Annotation> critterAnnotations =
+                    critterHarvester.harvestAnnotations(critterEvent);
+                annotations.addAll(critterAnnotations);
+            }
+
             if ((annotations != null) && !annotations.isEmpty()) {
                 long annLength = duration / 100;
                 for (Annotation annotation : annotations) {
