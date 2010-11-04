@@ -57,6 +57,7 @@ import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 import javax.media.format.RGBFormat;
 import javax.media.format.UnsupportedFormatException;
+import javax.media.format.VideoFormat;
 import javax.media.format.YUVFormat;
 import javax.media.protocol.DataSource;
 import javax.media.protocol.PushBufferDataSource;
@@ -677,31 +678,8 @@ public class SimpleProcessor {
 
     private Codecs findImmediateCodecs(Format input, Format output) {
         Vector< ? > codecsFromHere = null;
-        if (output == null) {
-            if (input instanceof AudioFormat) {
-                codecsFromHere = PlugInManager.getPlugInList(input,
-                        new AudioFormat(AudioFormat.LINEAR),
-                        PlugInManager.CODEC);
-                if (!codecsFromHere.isEmpty()) {
-                    output = new AudioFormat(AudioFormat.LINEAR);
-                }
-            } else {
-                codecsFromHere = PlugInManager.getPlugInList(input,
-                        new RGBFormat(), PlugInManager.CODEC);
-                if (!codecsFromHere.isEmpty()) {
-                    output = new RGBFormat();
-                } else {
-                    codecsFromHere = PlugInManager.getPlugInList(input,
-                            new YUVFormat(), PlugInManager.CODEC);
-                    if (!codecsFromHere.isEmpty()) {
-                        output = new YUVFormat();
-                    }
-                }
-            }
-        } else {
-            codecsFromHere = PlugInManager.getPlugInList(
-                    input, output, PlugInManager.CODEC);
-        }
+        codecsFromHere = PlugInManager.getPlugInList(input,
+                output, PlugInManager.CODEC);
         System.err.println(input + " --> " + output);
         System.err.println("Trying immediate codecs " + codecsFromHere);
         if (!codecsFromHere.isEmpty()) {
@@ -710,20 +688,30 @@ public class SimpleProcessor {
                 String codecClassName = (String) codecsFromHere.get(i);
                 try {
                     Codec codec = (Codec) Misc.loadPlugin(codecClassName);
-                    int matched = -1;
                     Format out = null;
                     Format in = codec.setInputFormat(input);
                     Format[] outs = codec.getSupportedOutputFormats(in);
                     for (int j = 0; (j < outs.length)
-                            && (matched == -1); j++) {
-                        if (output.matches(outs[j])) {
+                            && (out == null); j++) {
+                        if (output == null) {
+                            if (input instanceof AudioFormat) {
+                                if (outs[j].getEncoding().equals(
+                                        AudioFormat.LINEAR)) {
+                                    out = codec.setOutputFormat(outs[j]);
+                                }
+                            } else if (input instanceof VideoFormat) {
+                                if ((outs[j] instanceof RGBFormat)
+                                        || (outs[j] instanceof YUVFormat)) {
+                                    out = codec.setOutputFormat(outs[j]);
+                                }
+                            }
+                        } else if (output.matches(outs[j])) {
                             out = codec.setOutputFormat(output.intersects(
                                     outs[j]));
-                            matched = j;
                         }
                     }
 
-                    if (matched != -1) {
+                    if (out != null) {
                         codec.open();
                         searchCodecs.codecList.addFirst(codec);
                         searchCodecs.inputFormatList.addFirst(in);
