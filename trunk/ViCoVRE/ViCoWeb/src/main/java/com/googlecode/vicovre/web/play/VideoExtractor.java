@@ -31,6 +31,7 @@
 
 package com.googlecode.vicovre.web.play;
 
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -105,7 +106,8 @@ public class VideoExtractor {
     public VideoExtractor(String contentType, String[] videoFilenames,
             Rectangle[] positions,
             String[] audioFilenames, String[] syncFilenames,
-            int backgroundColour, RtpTypeRepository rtpTypeRepository)
+            int backgroundColour, RtpTypeRepository rtpTypeRepository,
+            Dimension outputSize)
             throws IOException, UnsupportedFormatException,
             ResourceUnavailableException {
 
@@ -155,7 +157,7 @@ public class VideoExtractor {
 
         if (videoReaders != null) {
             videoMixer = new VideoMixer(videoReaders, positions,
-                    backgroundColour, true);
+                    backgroundColour, true, outputSize);
             videoSource = new VideoMediaSource(videoMixer, multiplexer,
                     videoTrack);
         }
@@ -404,7 +406,10 @@ public class VideoExtractor {
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
-            new String[]{"../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/2792696808"},
+            new String[]{
+                    "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1911227824",
+                    "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/2792696808",
+                    "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1254543160",},
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
             //"../../recordings/1273840957545552375448/2941173072",
             /*new String[]{
@@ -430,7 +435,10 @@ public class VideoExtractor {
                 //new Rectangle(30, 30, 240, 196),
                 //new Rectangle(286, 30, 720, 540),
                 //new Rectangle(286, 30, 720, 540),
-                new Rectangle(640, 480),
+                //new Rectangle(640, 480),
+                new Rectangle(0, 0, 500, 376),
+                new Rectangle(505, 0, 500, 376),
+                new Rectangle(0, 380, 240, 196),
             },
 
             // Audio
@@ -467,11 +475,11 @@ public class VideoExtractor {
             },*/
 
             // Sync
-            //null,
+            null,
             /*new String[]{"VicoWeb/target/recordings/2009-10-05_090000-000095270/1254428040",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
                     "VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",}, */
-            new String[]{
+            /*new String[]{
                     "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1911227824",
                     "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1254543160"
             },
@@ -482,7 +490,8 @@ public class VideoExtractor {
                 "../../recordings/127435969591176530449/3521524142",
             }, */
             0x000000,
-            new RtpTypeRepositoryXmlImpl("/rtptypes.xml"));
+            new RtpTypeRepositoryXmlImpl("/rtptypes.xml"),
+            new Dimension(640, 366));
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream(
                 "test.flv"
@@ -491,7 +500,7 @@ public class VideoExtractor {
                 //"test.mp4"
                 //"test.wma"
                 );
-        extractor.transferToStream(testout, 0, 0, 60000, null);
+        extractor.transferToStream(testout, 300000, 0, 3000000, null);
         System.exit(0);
     }
 }

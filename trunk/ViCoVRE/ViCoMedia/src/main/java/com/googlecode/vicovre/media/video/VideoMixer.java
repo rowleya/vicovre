@@ -73,7 +73,8 @@ public class VideoMixer {
     private boolean firstFrameRead = false;
 
     public VideoMixer(MemeticFileReader[] sources, Rectangle[] positions,
-            int backgroundColour, boolean forceFillFirstFrame)
+            int backgroundColour, boolean forceFillFirstFrame,
+            Dimension outputSize)
             throws UnsupportedFormatException {
         this.sources = new VideoSource[sources.length];
         sourceFinished = new boolean[sources.length];
@@ -89,37 +90,61 @@ public class VideoMixer {
         int miny = Integer.MAX_VALUE;
         int maxy = 0;
         for (int i = 0; i < sources.length; i++) {
-            Dimension size = new Dimension(positions[i].width,
-                    positions[i].height);
-            int ysize = size.width * size.height;
-            int csize = ysize / 4;
-            int maxdatalength = ysize + (csize * 2);
-            YUVFormat convertFormat = new YUVFormat(size, maxdatalength,
-                    DATA_TYPE, FRAME_RATE, YUV_TYPE, size.width, size.width / 2,
-                    0, ysize, ysize + csize);
-            this.sources[i] = new VideoSource(sources[i], convertFormat,
-                    minStartTime, positions[i].x, positions[i].y);
-            sourceFinished[i] = false;
+            int posWidth = positions[i].width;
+            int posHeight = positions[i].height;
+
             minx = Math.min(minx, positions[i].x);
-            maxx = Math.max(maxx, positions[i].x + size.width);
+            maxx = Math.max(maxx, positions[i].x + posWidth);
             miny = Math.min(miny, positions[i].y);
-            maxy = Math.max(maxy, positions[i].y + size.height);
+            maxy = Math.max(maxy, positions[i].y + posHeight);
         }
 
-        Dimension size = new Dimension(maxx + minx, maxy + miny);
-        if ((size.width % 16) != 0) {
-            size.width += 16 - (size.width % 16);
+        Dimension outSize = null;
+        if (outputSize != null) {
+            outSize = new Dimension(outputSize);
+        } else {
+            outSize = new Dimension(minx + maxx, miny + maxy);
         }
-        if ((size.height % 16) != 0) {
-            size.height += 16 - (size.height % 16);
+        if ((outSize.width % 16) != 0) {
+            outSize.width += 16 - (outSize.width % 16);
         }
-        System.err.println("Output size = " + size);
-        int ysize = size.width * size.height;
+        if ((outSize.height % 16) != 0) {
+            outSize.height += 16 - (outSize.height % 16);
+        }
+        System.err.println("Output size = " + outSize);
+        double scaleWidth = (double) outSize.width / (minx + maxx);
+        double scaleHeight = (double) outSize.height / (miny + maxy);
+
+        for (int i = 0; i < sources.length; i++) {
+            int posWidth = (int) (positions[i].width * scaleWidth);
+            int posHeight = (int) (positions[i].height * scaleHeight);
+            if ((posWidth % 2) != 0) {
+                posWidth += 1;
+            }
+            if ((posHeight % 2) != 0) {
+                posHeight += 1;
+            }
+
+            int ysize = posWidth * posHeight;
+            int csize = ysize / 4;
+            int maxdatalength = ysize + (csize * 2);
+            YUVFormat convertFormat = new YUVFormat(
+                    new Dimension(posWidth, posHeight), maxdatalength,
+                    DATA_TYPE, FRAME_RATE, YUV_TYPE, posWidth, posWidth / 2,
+                    0, ysize, ysize + csize);
+            this.sources[i] = new VideoSource(sources[i], convertFormat,
+                    minStartTime, (int) (positions[i].x * scaleWidth),
+                    (int) (positions[i].y * scaleHeight));
+            sourceFinished[i] = false;
+        }
+
+
+        int ysize = outSize.width * outSize.height;
         int csize = ysize / 4;
         int maxdatalength = ysize + (csize * 2);
-        format = new YUVFormat(size, maxdatalength,
-                DATA_TYPE, FRAME_RATE, YUV_TYPE, size.width, size.width / 2,
-                0, ysize, ysize + csize);
+        format = new YUVFormat(outSize, maxdatalength,
+                DATA_TYPE, FRAME_RATE, YUV_TYPE, outSize.width,
+                outSize.width / 2, 0, ysize, ysize + csize);
 
         data = new byte[maxdatalength];
         Color bg = new Color(backgroundColour);
