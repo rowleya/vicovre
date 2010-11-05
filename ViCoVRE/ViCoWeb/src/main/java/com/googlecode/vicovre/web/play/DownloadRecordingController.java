@@ -154,7 +154,7 @@ public class DownloadRecordingController implements Controller {
                 audioFilenames[i] = file.getAbsolutePath();
             }
             VideoExtractor extractor = new VideoExtractor(format, null, null,
-                    audioFilenames, null, 0, typeRepository);
+                    audioFilenames, null, 0, typeRepository, null);
             extractor.setGenerationSpeed(Double.parseDouble(genSpeed));
 
             response.setContentType(format);

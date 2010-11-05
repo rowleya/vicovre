@@ -146,7 +146,8 @@ public class FlvController implements Controller {
                     "video/x-flv",
                     new String[]{videoFile.getAbsolutePath()},
                     new Rectangle[]{rect},
-                    audioStreams, syncStreams, 0x000000, rtpTypeRepository);
+                    audioStreams, syncStreams, 0x000000, rtpTypeRepository,
+                    null);
             extractor.setGenerationSpeed(generationSpeed);
             response.setContentType("video/x-flv");
             response.setStatus(HttpServletResponse.SC_OK);
