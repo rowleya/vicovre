@@ -18,6 +18,7 @@
         <module>ViCoLiveAnnotations</module>
         <module>ViCoMedia</module>
         <module>ViCoPlayer</module>
+        <module>ViCoPlayerSimple</module>
         <module>ViCoRecorder</module>
         <module>ViCoRecordings</module>
         <module>ViCoRepositories</module>
