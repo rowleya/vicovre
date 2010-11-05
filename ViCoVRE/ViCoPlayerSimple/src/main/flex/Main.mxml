@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:s="library://ns.adobe.com/flex/spark"
+    applicationComplete="start();">
+
+    <fx:Script>
+        <![CDATA[
+            import org.osmf.events.MediaPlayerStateChangeEvent;
+            import org.osmf.media.MediaPlayerState;
+            import mx.core.FlexGlobals;
+
+            private var started:Boolean = false;
+
+            private var file:String = null;
+
+            private var timeParam:String = null;
+
+            private var startTime:Number = NaN;
+
+            private var playing:Boolean = false;
+
+            protected function player_mediaPlayerStateChangeHandler(
+                    event:MediaPlayerStateChangeEvent):void {
+                switch (event.state) {
+                    case MediaPlayerState.LOADING:
+                        error.visible = false;
+                        break;
+                    case MediaPlayerState.PLAYBACK_ERROR:
+                        error.text = "Unable to load video " + player.source;
+                        error.visible = true;
+                        playPauseButton.selected = false;
+                        playing = false;
+                        break;
+                }
+            }
+
+            protected function player_durationChangeHandler(dur:Number):void {
+                position.maximum = dur;
+                duration.text = getTimeString(dur);
+            }
+
+            protected function player_timeChangeHandler():void {
+                position.value = player.currentTime;
+                time.text = getTimeString(player.currentTime);
+            }
+
+            protected function player_positionChangeHandler():void {
+                seek(position.value);
+            }
+
+            protected function getParam(param:String):String {
+                if (param in FlexGlobals.topLevelApplication.parameters) {
+                    return FlexGlobals.topLevelApplication.parameters[param];
+                }
+                return null;
+            }
+
+            protected function getNumberParam(param:String):Number {
+                var value:String = getParam(param);
+                return Number(value);
+            }
+
+            protected function start():void {
+                file = getParam("file");
+                timeParam = getParam("timeParam");
+                startTime = getNumberParam("startTime");
+                player_durationChangeHandler(getNumberParam("duration"));
+            }
+
+            protected function seek(time:Number):void {
+                if (file == null) {
+                    error.text = "File not specified";
+                    error.visible = true;
+                    playPauseButton.enabled = false;
+                    volume.enabled = false;
+                } else {
+                    var url:String = file;
+                    if (timeParam != null) {
+                        if (file.indexOf("?") != -1) {
+                            url += "&";
+                        } else {
+                            url += "?";
+                        }
+                        url += timeParam + "=" + time;
+                    }
+                    player.source = url;
+                    if (playing) {
+                        player.play();
+                    }
+                }
+            }
+
+            protected function playPauseButton_click():void {
+                if (playPauseButton.selected) {
+                    if (!started) {
+                        seek(startTime);
+                        started = true;
+                    }
+                    player.play();
+                    playing = true;
+                } else {
+                    player.pause();
+                    playing = false;
+                }
+            }
+
+            protected function formatTimeDigit(digit:Number):String {
+                var value:String = "";
+                if (digit < 10) {
+                    value = "0";
+                }
+                value += digit;
+                return value;
+            }
+
+            protected function getTimeString(secs:Number):String {
+                var seconds:Number = secs;
+                var hours:Number = Math.round(seconds / 3600);
+                seconds = seconds - (hours * 3600);
+                var minutes:Number = Math.round(seconds / 60);
+                seconds = seconds - (minutes * 60);
+                seconds = Math.round(seconds);
+
+                var time:String = "";
+                time += formatTimeDigit(hours) + ":";
+                time += formatTimeDigit(minutes) + ":";
+                time += formatTimeDigit(seconds);
+                return time;
+            }
+
+            public function setFile(file:String):void {
+                this.file = file;
+                seek(0);
+            }
+
+            public function getTimeInMillis():Number {
+                return Math.round(player.currentTime * 1000);
+            }
+        ]]>
+    </fx:Script>
+
+    <s:VideoDisplay id="player" bottom="24" left="0" right="0" top="0"
+        opaqueBackground="0x000000"
+        autoPlay="false" autoDisplayFirstFrame="false" autoRewind="true"
+        mediaPlayerStateChange="player_mediaPlayerStateChangeHandler(event);"
+        durationChange="player_durationChangeHandler(player.duration);"
+        currentTimeChange="player_timeChangeHandler();"/>
+
+    <s:ToggleButton id="playPauseButton" bottom="0" left="0"
+        skinClass="spark.skins.spark.mediaClasses.normal.PlayPauseButtonSkin"
+        click="playPauseButton_click();"/>
+
+    <s:VolumeBar id="volume" bottom="0" right="0"
+        muted="false" value="{player.volume}"
+        change="player.volume=volume.value;"
+        click="player.muted=volume.muted;"/>
+
+    <s:Group bottom="0" left="39" right="47" height="23">
+
+        <s:layout>
+            <s:HorizontalLayout verticalAlign="middle" gap="1" />
+        </s:layout>
+
+        <s:ScrubBar id="position" width="100%" liveDragging="false"
+            skinClass="spark.skins.spark.mediaClasses.normal.ScrubBarSkin"
+            minimum="0" maximum="0"
+            changeStart="player.pause();"
+            changeEnd="player_positionChangeHandler();"/>
+
+        <s:Rect width="5" height="1"/>
+
+        <s:Label id="time" text="00:00:00"/>
+
+        <s:Label text="/"/>
+
+        <s:Label id="duration" text="00:00:00"/>
+    </s:Group>
+
+    <s:Label id="error" horizontalCenter="0" verticalCenter="0"
+        visible="false" color="0xFFFFFF"/>
+
+</s:Application>
