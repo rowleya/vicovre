@@ -32,14 +32,16 @@
 
 package com.googlecode.vicovre.web.play;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.net.SocketException;
 import java.util.HashMap;
 
-import javax.media.ResourceUnavailableException;
-import javax.media.format.UnsupportedFormatException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -93,10 +95,30 @@ public class DownloadRecordingController implements Controller {
         this.typeRepository = typeRepository;
     }
 
+    private long getMaxDuration(Recording recording, String[] audioStreams,
+            String[] videoStreams, String[] syncStreams) {
+        long minStart = Long.MAX_VALUE;
+        long maxEnd = 0;
+        for (int i = 0; i < audioStreams.length; i++) {
+            Stream stream = recording.getStream(audioStreams[i]);
+            minStart = Math.min(minStart, stream.getStartTime().getTime());
+            maxEnd = Math.max(maxEnd, stream.getEndTime().getTime());
+        }
+        for (int i = 0; i < videoStreams.length; i++) {
+            Stream stream = recording.getStream(videoStreams[i]);
+            minStart = Math.min(minStart, stream.getStartTime().getTime());
+            maxEnd = Math.max(maxEnd, stream.getEndTime().getTime());
+        }
+        for (int i = 0; i < syncStreams.length; i++) {
+            Stream stream = recording.getStream(syncStreams[i]);
+            minStart = Math.min(minStart, stream.getStartTime().getTime());
+        }
+        return maxEnd - minStart;
+    }
+
     public void doDownload(String format, Recording recording,
             HttpServletRequest request, HttpServletResponse response)
-            throws IOException, UnsupportedFormatException,
-            ResourceUnavailableException {
+            throws IOException {
         if (format.equals("application/x-agvcr")) {
             OutputStream output = response.getOutputStream();
             String[] streams = request.getParameterValues("stream");
@@ -112,64 +134,125 @@ public class DownloadRecordingController implements Controller {
             AGVCRWriter writer = new AGVCRWriter(typeRepository,
                     recording, streams, output);
             writer.write();
-        } else if (format.startsWith("audio")) {
+        } else {
+
+            String[] videoStreams = request.getParameterValues("video");
+            if (videoStreams == null) {
+                videoStreams = new String[0];
+            }
             String[] audioStreams = request.getParameterValues("audio");
-
-            String offsetString = request.getParameter("offset");
-            if (offsetString == null) {
-                offsetString = "0";
+            if (audioStreams == null) {
+                audioStreams = new String[0];
             }
-            long offset = Long.parseLong(offsetString);
-
-            long minStart = Long.MAX_VALUE;
-            long maxEnd = 0;
-            for (int i = 0; i < audioStreams.length; i++) {
-                Stream stream = recording.getStream(audioStreams[i]);
-                minStart = Math.min(minStart, stream.getStartTime().getTime());
-                maxEnd = Math.max(maxEnd, stream.getEndTime().getTime());
+            String[] syncStreams = request.getParameterValues("sync");
+            if (syncStreams == null) {
+                syncStreams = new String[0];
             }
-            long maxDuration = maxEnd - minStart;
+
+            String off = request.getParameter("offset");
+            if (off == null) {
+                off = "0.0";
+            }
+            long offset = (long) (Double.parseDouble(off) * 1000);
+            String strt = request.getParameter("start");
+            if (strt == null) {
+                strt = "0";
+            }
+            long start = Long.parseLong(strt);
+
+            long maxDuration = getMaxDuration(recording, audioStreams,
+                    videoStreams, syncStreams);
             if (offset > maxDuration) {
                 offset = maxDuration;
             }
-            maxDuration -= offset;
+            maxDuration -= start;
 
-            String durationString = request.getParameter("duration");
-            if (durationString == null) {
-                durationString = String.valueOf(maxDuration);
+            String dur = request.getParameter("duration");
+            if (dur == null) {
+                dur = String.valueOf(maxDuration);
             }
-            long duration = Long.parseLong(durationString);
+            long duration = Long.parseLong(dur);
             if (duration > maxDuration) {
                 duration = maxDuration;
             }
 
-            String genSpeed = request.getParameter("genSpeed");
-            if (genSpeed == null) {
-                genSpeed = "0";
+            Rectangle[] rects = new Rectangle[videoStreams.length];
+            String[] widths = request.getParameterValues("width");
+            String[] heights = request.getParameterValues("height");
+            String[] xs = request.getParameterValues("x");
+            String[] ys = request.getParameterValues("y");
+            for (int i = 0; i < videoStreams.length; i++) {
+                videoStreams[i] = new File(recording.getDirectory(),
+                        videoStreams[i]).getAbsolutePath();
+                rects[i] = new Rectangle(
+                        Integer.parseInt(xs[i]), Integer.parseInt(ys[i]),
+                        Integer.parseInt(widths[i]),
+                        Integer.parseInt(heights[i]));
             }
-
-            String[] audioFilenames = new String[audioStreams.length];
             for (int i = 0; i < audioStreams.length; i++) {
-                File file = new File(recording.getDirectory(), audioStreams[i]);
-                audioFilenames[i] = file.getAbsolutePath();
+                audioStreams[i] = new File(recording.getDirectory(),
+                        audioStreams[i]).getAbsolutePath();
             }
-            VideoExtractor extractor = new VideoExtractor(format, null, null,
-                    audioFilenames, null, 0, typeRepository, null);
-            extractor.setGenerationSpeed(Double.parseDouble(genSpeed));
-
-            response.setContentType(format);
-            String name = recording.getId();
-            if ((recording.getMetadata() != null)
-                    && (recording.getMetadata().getPrimaryValue() != null)) {
-                name = recording.getMetadata().getPrimaryValue();
+            for (int i = 0; i < syncStreams.length; i++) {
+                syncStreams[i] = new File(recording.getDirectory(),
+                        syncStreams[i]).getAbsolutePath();
             }
-            response.setHeader("Content-Disposition", "inline; filename="
-                    + name + "." + FORMAT_EXT_MAP.get(format) + ";");
-            response.flushBuffer();
-            extractor.transferToStream(response.getOutputStream(), 0, offset,
-                    duration, null);
-        } else if (format.startsWith("video")) {
 
+            Dimension outSize = null;
+            String width = request.getParameter("outwidth");
+            String height = request.getParameter("outheight");
+            if ((width != null) && (height != null)) {
+                outSize = new Dimension(Integer.parseInt(width),
+                        Integer.parseInt(height));
+                if ((outSize.width % 16) != 0) {
+                    outSize.width = outSize.width
+                        + (16 - (outSize.width % 16));
+                }
+                if ((outSize.height % 16) != 0) {
+                    outSize.height = outSize.height
+                        + (16 - (outSize.height % 16));
+                }
+            }
+
+            double generationSpeed = 1.5;
+            String genSpeed = request.getParameter("genspeed");
+            if (genSpeed != null) {
+                generationSpeed = Double.parseDouble(genSpeed);
+            }
+
+            String bgColour = request.getParameter("bgColour");
+            int backgroundColour = 0x000000;
+            if (bgColour != null) {
+                backgroundColour = Integer.parseInt(bgColour);
+            }
+
+
+            try {
+                VideoExtractor extractor = new VideoExtractor(format,
+                        videoStreams, rects, audioStreams, syncStreams,
+                        backgroundColour, typeRepository, outSize);
+                extractor.setGenerationSpeed(generationSpeed);
+                response.setContentType(format);
+                response.setStatus(HttpServletResponse.SC_OK);
+
+                // Generate the stream
+                response.flushBuffer();
+                extractor.transferToStream(response.getOutputStream(),
+                        start, offset, duration);
+            } catch (EOFException e) {
+                System.err.println("User disconnected");
+            } catch (SocketException e) {
+                System.err.println("User disconnected");
+            } catch (Exception e) {
+
+                // Handle Apache exception
+                if (e.getClass().getSimpleName().equals("ClientAbortException")) {
+                    System.err.println("User disconnected");
+                } else {
+                    e.printStackTrace();
+                    throw new IOException(e.getMessage());
+                }
+            }
         }
     }
 
@@ -183,7 +266,10 @@ public class DownloadRecordingController implements Controller {
 
         Recording recording = database.getRecording(folder, id);
 
-        String format = request.getParameter("format");
+        String format = request.getHeader("Accept");
+        if ((format == null) || format.contains("text/html")) {
+            format = request.getParameter("format");
+        }
         if (format != null) {
             doDownload(format, recording, request, response);
             return null;

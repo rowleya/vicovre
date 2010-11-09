@@ -35,10 +35,8 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.SocketException;
-import java.util.Arrays;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -61,10 +59,6 @@ public class FlvController implements Controller {
 
     private static final double DEFAULT_GENERATION_SPEED = 1.5;
 
-    private static final String EXT = ".jpg";
-
-    private static final int EXT_LEN = EXT.length();
-
     private RtpTypeRepository rtpTypeRepository = null;
 
     private RecordingDatabase database = null;
@@ -84,16 +78,28 @@ public class FlvController implements Controller {
             HttpServletResponse response) throws IOException {
         String sessionId = request.getParameter("id");
         String folder = request.getParameter("folder");
-        File videoFile = null;
 
-        String off = request.getParameter("start");
-        if (off == null) {
-            off = "0.0";
+        Recording recording = database.getRecording(folder, sessionId);
+        File path = recording.getDirectory();
+
+        String strt = request.getParameter("start");
+        if (strt == null) {
+            strt = "0.0";
         }
-        long offset = (long) (Double.parseDouble(off) * 1000);
+        long start = (long) (Double.parseDouble(strt) * 1000);
         String dur = request.getParameter("duration");
-        long duration = (long) (Double.parseDouble(dur) * 1000);
-        String videoStream = request.getParameter("video");
+        long maxDuration = recording.getDuration() - start;
+        long duration = 0;
+        if (dur != null) {
+            duration = (long) (Double.parseDouble(dur) * 1000);
+        } else {
+            duration = maxDuration;
+        }
+
+        String[] videoStreams = request.getParameterValues("video");
+        if (videoStreams == null) {
+            videoStreams = new String[0];
+        }
         String[] audioStreams = request.getParameterValues("audio");
         if (audioStreams == null) {
             audioStreams = new String[0];
@@ -102,16 +108,24 @@ public class FlvController implements Controller {
         if (syncStreams == null) {
             syncStreams = new String[0];
         }
+
         String offShift = request.getParameter("offsetShift");
         if (offShift == null) {
             offShift = "0";
         }
         long offsetShift = Long.parseLong(offShift);
 
-        Recording recording = database.getRecording(folder, sessionId);
-        File path = recording.getDirectory();
-
-        videoFile = new File(path, videoStream);
+        Rectangle[] rects = new Rectangle[videoStreams.length];
+        String[] widths = request.getParameterValues("width");
+        String[] heights = request.getParameterValues("height");
+        String[] xs = request.getParameterValues("x");
+        String[] ys = request.getParameterValues("y");
+        for (int i = 0; i < videoStreams.length; i++) {
+            videoStreams[i] = new File(path, videoStreams[i]).getAbsolutePath();
+            rects[i] = new Rectangle(
+                    Integer.parseInt(xs[i]), Integer.parseInt(ys[i]),
+                    Integer.parseInt(widths[i]), Integer.parseInt(heights[i]));
+        }
         for (int i = 0; i < audioStreams.length; i++) {
             audioStreams[i] = new File(path, audioStreams[i]).getAbsolutePath();
         }
@@ -119,17 +133,17 @@ public class FlvController implements Controller {
             syncStreams[i] = new File(path, syncStreams[i]).getAbsolutePath();
         }
 
-        Dimension size = null;
-        String width = request.getParameter("width");
-        String height = request.getParameter("height");
+        Dimension outSize = null;
+        String width = request.getParameter("outwidth");
+        String height = request.getParameter("outheight");
         if ((width != null) && (height != null)) {
-            size = new Dimension(Integer.parseInt(width),
+            outSize = new Dimension(Integer.parseInt(width),
                     Integer.parseInt(height));
-            if ((size.width % 16) != 0) {
-                size.width = size.width + (16 - (size.width % 16));
+            if ((outSize.width % 16) != 0) {
+                outSize.width = outSize.width + (16 - (outSize.width % 16));
             }
-            if ((size.height % 16) != 0) {
-                size.height = size.height + (16 - (size.height % 16));
+            if ((outSize.height % 16) != 0) {
+                outSize.height = outSize.height + (16 - (outSize.height % 16));
             }
         }
 
@@ -139,51 +153,29 @@ public class FlvController implements Controller {
             generationSpeed = Double.parseDouble(genSpeed);
         }
 
-        Rectangle rect = new Rectangle(0, 0, size.width, size.height);
+        String bgColour = request.getParameter("bgColour");
+        int backgroundColour = 0x000000;
+        if (bgColour != null) {
+            backgroundColour = Integer.parseInt(bgColour);
+        }
+
+        String contentType = request.getHeader("Accept");
+        if (contentType == null) {
+            contentType = "video/x-flv";
+        }
 
         try {
-            VideoExtractor extractor = new VideoExtractor(
-                    "video/x-flv",
-                    new String[]{videoFile.getAbsolutePath()},
-                    new Rectangle[]{rect},
-                    audioStreams, syncStreams, 0x000000, rtpTypeRepository,
-                    null);
+            VideoExtractor extractor = new VideoExtractor(contentType,
+                    videoStreams, rects, audioStreams, syncStreams,
+                    backgroundColour, rtpTypeRepository, outSize);
             extractor.setGenerationSpeed(generationSpeed);
-            response.setContentType("video/x-flv");
+            response.setContentType(contentType);
             response.setStatus(HttpServletResponse.SC_OK);
 
-            // Search for a file with name <videoStream>_<time>.yuv.zip
-            // where <time> is <= offset
-            File frameFile = null;
-            File[] files = path.listFiles(
-                    new StreamFileFilter(videoStream));
-            if (files==null) {
-                throw new IOException("Recording does not exist in Directory: "+ path.getAbsolutePath());
-            }
-            if (files.length > 0) {
-                long[] times = new long[files.length];
-                for (int i = 0; i < times.length; i++) {
-                    String fName = files[i].getName();
-                    String fTime = fName.substring(videoStream.length() + 1,
-                            fName.length() - EXT_LEN);
-                    times[i] = Long.parseLong(fTime);
-                }
-                Arrays.sort(times);
-                int pos = Arrays.binarySearch(times, offset);
-                if (pos < 0) {
-                    pos = -pos - 1;
-                    if (pos >= times.length) {
-                        pos = times.length - 1;
-                    }
-                }
-                frameFile = new File(path, videoStream + "_"
-                        + times[pos] + EXT);
-            }
             // Generate the stream
             response.flushBuffer();
             extractor.transferToStream(response.getOutputStream(),
-                    offsetShift, offset,
-                    duration - offset, frameFile);
+                    offsetShift, start, duration - start);
         } catch (EOFException e) {
             System.err.println("User disconnected");
         } catch (SocketException e) {
@@ -199,28 +191,5 @@ public class FlvController implements Controller {
             }
         }
         return null;
-    }
-
-    private class StreamFileFilter implements FileFilter {
-
-        private String streamName = null;
-
-        private StreamFileFilter(String streamName) {
-            this.streamName = streamName + "_";
-        }
-
-        /**
-         *
-         * @see java.io.FileFilter#accept(java.io.File)
-         */
-        public boolean accept(File pathname) {
-            if (pathname.getName().startsWith(streamName)
-                    && pathname.getName().endsWith(EXT)
-                    && !pathname.getName().contains("preview_")) {
-                return true;
-            }
-            return false;
-        }
-
     }
 }

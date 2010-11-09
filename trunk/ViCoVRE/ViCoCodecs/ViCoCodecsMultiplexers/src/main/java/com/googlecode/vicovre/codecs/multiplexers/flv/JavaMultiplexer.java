@@ -36,6 +36,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Vector;
 
 import javax.media.Buffer;
 import javax.media.Format;
@@ -162,6 +163,16 @@ public class JavaMultiplexer extends BasicMultiplexer
     // True if the first video packet has been seen
     private boolean firstVideoPacketSeen = false;
 
+    private long noBytesWritten = 0;
+
+    private Vector<Long> keyFrameTimestamp = new Vector<Long>();
+
+    private Vector<Long> keyFramePosition = new Vector<Long>();
+
+    private byte[] footer = null;
+
+    private int footerToWrite = 0;
+
     public JavaMultiplexer() {
         super(new ContentDescriptor[]{new ContentDescriptor(CONTENT_TYPE)},
                 new Format[]{
@@ -265,18 +276,11 @@ public class JavaMultiplexer extends BasicMultiplexer
         return new Object[]{this};
     }
 
-    private void writeFLVHeader(DataOutputStream out)
-            throws IOException {
+    private void writeMetadata(DataOutputStream out) throws IOException {
         int metaDataArraySize = 0;
         int metaDataLength = 18;
 
-        // Write the FLV header
-        int avFlag = 0;
-        if (audioTrack != -1) {
-            avFlag |= AUDIO_FLAG;
-        }
         if (videoTrack != -1) {
-            avFlag |= VIDEO_FLAG;
             metaDataArraySize += 2;
             metaDataLength += 33;
         }
@@ -285,16 +289,6 @@ public class JavaMultiplexer extends BasicMultiplexer
             metaDataLength += 19;
         }
 
-        out.write(FLV_TYPE);
-        out.write(FLV_VERSION);
-        out.write(avFlag);
-        out.writeInt(DATA_OFFSET);
-
-        // Write the initial meta tag
-        int startSize = out.size();
-
-        // Header
-        out.writeInt(0);
         out.write(FLV_DATA_TAG);
         out.write(intTo24Bits(metaDataLength));
         out.writeInt(0);
@@ -324,13 +318,45 @@ public class JavaMultiplexer extends BasicMultiplexer
             out.write(0);
             out.writeDouble((duration + offset) / 1000.0);
         }
+    }
+
+    private void writeFLVHeader(DataOutputStream out)
+            throws IOException {
+
+
+        // Write the FLV header
+        int avFlag = 0;
+        if (audioTrack != -1) {
+            avFlag |= AUDIO_FLAG;
+        }
+        if (videoTrack != -1) {
+            avFlag |= VIDEO_FLAG;
+        }
+
+        out.write(FLV_TYPE);
+        out.write(FLV_VERSION);
+        out.write(avFlag);
+        out.writeInt(DATA_OFFSET);
+        noBytesWritten = 7;
+
+        // Write the initial meta tag
+        /*int startSize = out.size();
+
+        // Last tag size
+        out.writeInt(0);
+
+        // Metadata
+        writeMetadata(out);
 
         lastTagSize = out.size() - startSize;
+        noBytesWritten += lastTagSize; */
     }
 
     private int writeAudioHeader(int length, long timestamp,
             AudioFormat format, DataOutputStream out) throws IOException {
         out.writeInt(lastTagSize);
+        noBytesWritten += 4;
+
         int startSize = out.size();
         out.write(FLV_AUDIO_TAG);
         out.write(intTo24Bits(length + 1));
@@ -390,19 +416,24 @@ public class JavaMultiplexer extends BasicMultiplexer
             break;
         }
         out.write(audioHeader);
-        return out.size() - startSize;
+        int bytesWritten = out.size() - startSize;
+        noBytesWritten += bytesWritten;
+        return bytesWritten;
     }
 
     private int writeVideoHeader(int length, long timestamp,
             VideoFormat format, DataOutputStream out, Buffer buffer)
             throws IOException, QuickArrayException {
         out.writeInt(lastTagSize);
+        noBytesWritten += 4;
+
         int startSize = out.size();
         out.write(FLV_VIDEO_TAG);
         out.write(intTo24Bits(length + 1));
         out.write(intTo24Bits((int) timestamp));
         out.write(high8Bits((int) timestamp));
         out.write(intTo24Bits(0));
+        boolean keyFrame = false;
         if (format.getEncoding().toLowerCase().equals("flv1")) {
             SorensonH263Header header =
                 new SorensonH263Header(
@@ -410,8 +441,15 @@ public class JavaMultiplexer extends BasicMultiplexer
                         buffer.getOffset(), buffer.getLength());
             out.write(((header.getPictureType() + 1) << BIT_SHIFT_4)
                     | SORENSON_H323_VIDEO_FLAG);
+            keyFrame = header.getPictureType() == 0;
         }
-        return out.size() - startSize;
+        if (keyFrame) {
+            keyFramePosition.add(noBytesWritten);
+            keyFrameTimestamp.add(timestamp);
+        }
+        int bytesWritten = out.size() - startSize;
+        noBytesWritten += bytesWritten;
+        return bytesWritten;
     }
 
     private int writeData(Buffer buffer, ByteArrayOutputStream bytes,
@@ -443,6 +481,7 @@ public class JavaMultiplexer extends BasicMultiplexer
                 out.writeInt(data[i]);
             }
         }
+        noBytesWritten += toWrite;
         return toWrite;
     }
 
@@ -507,13 +546,76 @@ public class JavaMultiplexer extends BasicMultiplexer
     }
 
     protected int readLast(byte[] buf, int off, int len) throws IOException {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream(
-                buf, off, len);
-        DataOutputStream out = new DataOutputStream(bytes);
-        out.writeInt(lastTagSize);
+        if (footer == null) {
+            java.io.ByteArrayOutputStream bytes =
+                new java.io.ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(bytes);
+            out.writeInt(lastTagSize);
+
+            int metaDataLength = 65 + (keyFramePosition.size() * 9)
+                + (keyFrameTimestamp.size() * 9);
+
+            // Header
+            out.write(FLV_DATA_TAG); // 1
+            out.write(intTo24Bits(metaDataLength)); // +3 = 4
+            out.writeInt(0); // +4 = 8
+            out.write(intTo24Bits(0)); // +3 = 11
+
+            // OnMetaData
+            out.write(2); // 1
+            out.writeUTF(ON_METADATA); // +2 +10 = 13
+
+            // ECMA Array
+            out.write(8); // +1 = 14
+            out.writeInt(1); // +4 = 18
+
+            // Keyframes variable array
+            //out.write(3); // +1 = 19
+            out.writeUTF("keyframes"); // +2 +9 = 30
+
+            // Frame Positions array
+            out.write(3); // +1 = 31
+            out.writeUTF("filepositions"); // +2 +13 = 46
+            out.write(10); // +1 = 47
+            out.writeInt(keyFramePosition.size()); // +4 = 51
+            for (long pos : keyFramePosition) {
+                out.write(0);
+                out.writeDouble(pos);
+            }
+
+            // Frame times array
+            out.writeUTF("times"); // +2 +5 = 58
+            out.write(10); // +1 = 59
+            out.writeInt(keyFrameTimestamp.size()); // +4 = 63
+            for (long time : keyFrameTimestamp) {
+                out.write(0);
+                out.writeDouble((double) time / 1000);
+            }
+
+            out.write(0); // +1 = 64
+            out.write(0); // +1 = 65
+            out.write(9); // +1 = 66
+
+            out.writeInt(metaDataLength + 11);
+
+            out.flush();
+            bytes.flush();
+            footer = bytes.toByteArray();
+            footerToWrite = footer.length;
+        }
+
+        int toWrite = footerToWrite;
+        if (toWrite > len) {
+            toWrite = len;
+        }
+        footerToWrite -= toWrite;
+        if (toWrite > 0) {
+            System.arraycopy(footer, footer.length - toWrite, buf, off,
+                    toWrite);
+        }
         setResult(BUFFER_PROCESSED_OK, true);
-        out.close();
-        return bytes.getCount();
+
+        return toWrite;
     }
 
     public void setOffset(Time offset) {
