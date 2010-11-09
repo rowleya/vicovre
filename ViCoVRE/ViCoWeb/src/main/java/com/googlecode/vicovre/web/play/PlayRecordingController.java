@@ -489,6 +489,10 @@ public class PlayRecordingController implements Controller {
             }
         }
 
+        String url = server + "/" + folder + "/" + recordingId
+            + "/downloadRecording.do?format=video%2Fx-flv&start=" + minStart
+            + "&x=0&y=0";
+
         HashMap<String, Object> values = new HashMap<String, Object>();
         Collections.sort(metadataAnnotationTypes);
         values.put("startTime", startTime);
@@ -497,8 +501,7 @@ public class PlayRecordingController implements Controller {
         values.put("layouts", metadataLayouts);
         values.put("annotations", metadataAnnotations);
         values.put("thumbnails", thumbs);
-        values.put("url", server + "/flv.do?id=" + recordingId
-                + "&offsetShift=" + minStart + "&folder=" + folder);
+        values.put("url", url);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream data = new DataOutputStream(bytes);
 

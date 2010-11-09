@@ -216,11 +216,11 @@ class com.googlecode.vicovre.player.VideoStream {
                 this.bufferTime = this.smallBufferTime;
             }
             this.videoNetStream.setBufferTime(this.bufferTime);
-            this.videoNetStream.play(seekUrl + "&start=" + time);
+            this.videoNetStream.play(seekUrl + "&offset=" + time);
         } else {
             this.bufferTime = 0.5;
             this.videoNetStream.setBufferTime(this.bufferTime);
-            this.videoNetStream.play(seekUrl + "&start="
+            this.videoNetStream.play(seekUrl + "&offset="
                 + (this.videoDuration - 1));
         }
     }

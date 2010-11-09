@@ -12,7 +12,6 @@
     <bean name="/play.do" class="com.googlecode.vicovre.web.play.PlayRecordingController">
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
-        <constructor-arg><ref bean="liveAnnotationTypeRepository"/></constructor-arg>
         <constructor-arg><value>/images/annotations/small</value></constructor-arg>
         <constructor-arg><ref bean="critterHarvester"/></constructor-arg>
     </bean>

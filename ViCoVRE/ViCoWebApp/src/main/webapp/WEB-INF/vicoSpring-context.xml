@@ -20,10 +20,6 @@
         <constructor-arg><value>/harvestFormats.xml</value></constructor-arg>
     </bean>
 
-    <bean id="liveAnnotationTypeRepository" class="com.googlecode.vicovre.repositories.liveAnnotation.impl.LiveAnnotationTypeRepositoryXmlImpl">
-        <constructor-arg><value>/liveannotations.xml</value></constructor-arg>
-    </bean>
-
     <bean id="emailer" class="com.googlecode.vicovre.utils.Emailer">
         <constructor-arg><value>${email.server.host}</value></constructor-arg>
         <constructor-arg><value>${email.server.port}</value></constructor-arg>

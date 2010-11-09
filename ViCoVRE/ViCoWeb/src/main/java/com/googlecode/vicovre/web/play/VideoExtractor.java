@@ -33,31 +33,23 @@ package com.googlecode.vicovre.web.play;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Vector;
 
-import javax.imageio.ImageIO;
-import javax.media.Buffer;
 import javax.media.Multiplexer;
 import javax.media.PlugInManager;
 import javax.media.ResourceUnavailableException;
 import javax.media.Time;
 import javax.media.format.UnsupportedFormatException;
-import javax.media.format.YUVFormat;
 import javax.media.protocol.ContentDescriptor;
-import javax.media.util.ImageToBuffer;
 
 import com.googlecode.vicovre.codecs.ffmpeg.audio.AudioMixer;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.Misc;
-import com.googlecode.vicovre.media.controls.FrameFillControl;
 import com.googlecode.vicovre.media.controls.SetDurationControl;
 import com.googlecode.vicovre.media.processor.OutputStreamDataSink;
-import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.media.video.VideoMixer;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.repositories.rtptype.impl.RtpTypeRepositoryXmlImpl;
@@ -93,12 +85,14 @@ public class VideoExtractor {
     /**
      * Creates a new VideoExtractor
      *
+     * @param contentType The contentType of the output
      * @param videoFilenames The files from which to extract video
      * @param positions The positions of the video streams
      * @param audioFilenames The files from which to extract audio
      * @param syncFilenames The files that should be synched with
      * @param backgroundColour The RGB background colour
      * @param rtpTypeRepository The RTP Type Repository
+     * @param outputSize The output dimensions (to scale to)
      * @throws IOException
      * @throws UnsupportedFormatException
      * @throws ResourceUnavailableException
@@ -250,15 +244,15 @@ public class VideoExtractor {
     }
 
     /**
-     * Transfers the data read to an
+     * Transfers the data read to an output stream (all times in milliseconds)
      * @param outputStream The outputstream to write to
-     * @param offset The offset to start from (in milliseconds)
-     * @param duration The duration to write (in milliseconds)
-     * @param delay The delay before the stream starts (in milliseconds)
+     * @param startOffset The offset of the start of the video in the recording
+     * @param offset The offset from startOffset to start from
+     * @param duration The duration of the video from startOffset
      * @throws IOException
      */
-    public void transferToStream(OutputStream outputStream, long offsetShift,
-            long offset, long duration, File firstFrame)
+    public void transferToStream(OutputStream outputStream, long startOffset,
+            long offset, long duration)
             throws IOException {
         SetDurationControl setDurationControl = (SetDurationControl)
             multiplexer.getControl(SetDurationControl.class.getName());
@@ -276,49 +270,23 @@ public class VideoExtractor {
         long videoTimestampOffset = 0;
         if (videoMixer != null) {
             videoMixer.streamSeek(offset - (videoOffset / 1000000L)
-                    + offsetShift);
+                    + startOffset);
             long videoOffsetShift =
-                (videoMixer.getOffset() - offset - offsetShift) * 1000000;
+                (videoMixer.getOffset() - offset - startOffset) * 1000000;
             videoTimestampOffset = videoOffset  + videoOffsetShift;
             videoSource.setTimestampOffset(offset * 1000000L);
         }
         if (audioMixer != null) {
             audioMixer.streamSeek(offset - (audioOffset / 1000000L)
-                    + offsetShift);
+                    + startOffset);
             long audioOffsetShift =
-                (audioMixer.getOffset() - offset - offsetShift) * 1000000;
+                (audioMixer.getOffset() - offset - startOffset) * 1000000;
             audioMixer.setTimestampOffset(audioOffset + audioOffsetShift);
             audioSource.setTimestampOffset(offset * 1000000L);
         }
 
         boolean isAudioData = false;
         boolean isVideoData = false;
-
-        // Fill in the first frame if possible
-        if (videoSource != null) {
-            FrameFillControl control = (FrameFillControl)
-                videoSource.getControl("controls.FrameFillControl");
-            if (control != null) {
-                if (firstFrame != null) {
-                    if (firstFrame.exists()) {
-                        BufferedImage image = ImageIO.read(firstFrame);
-                        Buffer buf = ImageToBuffer.createBuffer(image, -1);
-                        try {
-                            SimpleProcessor processor = new SimpleProcessor(
-                                    buf.getFormat(),
-                                    new YUVFormat(YUVFormat.YUV_420));
-                            processor.process(buf);
-                            Buffer out = processor.getOutputBuffer();
-                            byte[] data = (byte[]) out.getData();
-                            control.fillFrame(data);
-                        } catch (UnsupportedFormatException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
 
         // Output the first video frame
         if (videoMixer != null) {
@@ -500,7 +468,7 @@ public class VideoExtractor {
                 //"test.mp4"
                 //"test.wma"
                 );
-        extractor.transferToStream(testout, 300000, 0, 3000000, null);
+        extractor.transferToStream(testout, 300000, 0, 3000000);
         System.exit(0);
     }
 }
