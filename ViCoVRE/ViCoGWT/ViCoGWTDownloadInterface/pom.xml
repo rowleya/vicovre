@@ -16,6 +16,25 @@
 
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-swf</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/${project.build.finalName}/com.googlecode.vicovre.gwt.download.Application</outputDirectory>
+                            <includeTypes>swf</includeTypes>
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
                 <version>1.2</version>
@@ -53,6 +72,12 @@
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoGWTCommons</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoPlayerSimple</artifactId>
+            <version>${project.version}</version>
+            <type>swf</type>
         </dependency>
         <dependency>
             <groupId>pl.rmalinowski.gwt2swf</groupId>

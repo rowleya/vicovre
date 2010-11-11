@@ -248,7 +248,7 @@ public class VideoExtractor {
      * @param outputStream The outputstream to write to
      * @param startOffset The offset of the start of the video in the recording
      * @param offset The offset from startOffset to start from
-     * @param duration The duration of the video from startOffset
+     * @param duration The duration of the video from offset
      * @throws IOException
      */
     public void transferToStream(OutputStream outputStream, long startOffset,
@@ -351,7 +351,6 @@ public class VideoExtractor {
             audioSource.close();
         }
         multiplexer.close();
-        //dataSink.close();
         System.err.println("Extractor finished");
     }
 

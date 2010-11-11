@@ -4,7 +4,7 @@
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
         <title>
             <c:if test="${not empty recording}">
-                ${recording.metadata.name}
+                ${recording.metadata.primaryValue}
             </c:if>
             <c:if test="${empty recording}">
                 Recording Not Found
@@ -21,6 +21,8 @@
             folder: "${folder}",
             layouts: '${layoutsJSON}',
             customLayouts: '${customLayoutsJSON}',
+            canPlay: ${canPlay},
+            role: "${role}"
         };
         </script>
         <script type="text/javascript" language="javascript" src="${pageContext.request.contextPath}/com.googlecode.vicovre.gwt.download.Application.nocache.js"></script>

@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.gwt.download.client;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
@@ -40,18 +41,21 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 
-public class DownloadAudioPage extends WizardPage implements ClickHandler {
+public class DownloadVideoPage extends WizardPage implements ClickHandler {
 
     private static final StringDateTimeFormat DATE_FORMAT =
         new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
@@ -91,19 +95,20 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
 
     private JSONStream[] streams = null;
 
-    private Vector<String> streamIds = null;
+    private Layout layout = null;
+
+    private HashMap<String, String> positionStream = null;
+
+    private Vector<String> audioStreamIds = null;
 
     private ListBox format = new ListBox(false);
 
-    public DownloadAudioPage(String baseUrl, String folder,
+    public DownloadVideoPage(String baseUrl, String folder,
             String recordingId, JSONStream[] streams) {
         this.baseUrl = baseUrl;
         this.folder = folder;
         this.recordingId = recordingId;
         this.streams = streams;
-
-        setWidth("600px");
-        setHeight("200px");
 
         playerPanel.setHorizontalAlignment(ALIGN_CENTER);
         playerPanel.setWidth("100%");
@@ -129,6 +134,9 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
         setEndButton.setWidth("250px");
         add(controlPanel);
 
+        format.addItem("MP4 File", "video/mp4");
+        format.addItem("WMV File", "video/x-ms-wmv");
+        format.addItem("FLV File", "video/x-flv");
         format.addItem("MP3 File", "audio/mpeg");
         format.addItem("WMA File", "audio/x-ms-wma");
         format.setSelectedIndex(0);
@@ -164,8 +172,20 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
             url += "format=" + URL.encodeComponent(format);
         }
 
-        for (String stream : streamIds) {
+        for (String stream : audioStreamIds) {
             url += "&audio=" + stream;
+        }
+
+        if (format.startsWith("video")) {
+            for (LayoutPosition position : layout.getPositions()) {
+                if (position.isAssignable()) {
+                    url += "&video=" + positionStream.get(position.getName());
+                    url += "&width=" + position.getWidth();
+                    url += "&height=" + position.getHeight();
+                    url += "&x=" + position.getX();
+                    url += "&y=" + position.getY();
+                }
+            }
         }
         return url;
     }
@@ -182,12 +202,30 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
     }
 
     public void show(Wizard wizard) {
-        streamIds = (Vector<String>) wizard.getAttribute("audioStreams");
+        layout = (Layout) wizard.getAttribute("layout");
+        positionStream = (HashMap<String, String>)
+            wizard.getAttribute("videoStreams");
+        audioStreamIds = (Vector<String>) wizard.getAttribute("audioStreams");
+        Vector<String> videoStreams = new Vector<String>(
+                positionStream.values());
+
+        int width = layout.getWidth();
+        int height = layout.getHeight() + 200;
+        double scaleWidth = 1.0;
+        double scaleHeight = 1.0;
+        if (Window.getClientWidth() < width) {
+            scaleWidth = (double) Window.getClientWidth() / width;
+        }
+        if (Window.getClientHeight() < height) {
+            scaleHeight = (double) Window.getClientHeight() / height;
+        }
+        double scale = Math.min(scaleWidth, scaleHeight);
 
         long minStart = Long.MAX_VALUE;
         long maxEnd = 0;
         for (JSONStream stream : streams) {
-            if (streamIds.contains(stream.getSsrc())) {
+            if (audioStreamIds.contains(stream.getSsrc())
+                    || videoStreams.contains(stream.getSsrc())) {
                 Date startDate = DATE_FORMAT.parse(stream.getStartTime());
                 Date endDate = DATE_FORMAT.parse(stream.getEndTime());
                 minStart = Math.min(minStart, startDate.getTime());
@@ -205,8 +243,9 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
         playerPanel.clear();
         String url = getUrl("video/x-flv") + "&genspeed=1.5";
         GWT.log("URL = " + url);
-        player = new Player(baseUrl, 600, 120, url, "offset", true, startTime,
-                endTime - startTime, 0);
+        player = new Player(baseUrl, (int) (layout.getWidth() * scale),
+                (int) ((layout.getHeight() + 25) * scale), url, "offset",
+                false, startTime, endTime - startTime, 0);
         playerPanel.add(player);
     }
 

@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
+package com.googlecode.vicovre.gwt.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 
 public class LoginPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, KeyPressHandler {

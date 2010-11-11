@@ -865,6 +865,7 @@ public class SecurityDatabase {
                 for (Entity entity : entities) {
                     acl.addException(entity);
                 }
+                folderFile.mkdirs();
                 writeAcl(folderFile, acl);
             }
         }
