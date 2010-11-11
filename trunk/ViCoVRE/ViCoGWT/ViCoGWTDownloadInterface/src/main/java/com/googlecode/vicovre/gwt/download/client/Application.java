@@ -41,12 +41,17 @@ import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.LoginPopup;
+import com.googlecode.vicovre.gwt.client.Logout;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.json.JSONLayout;
 import com.googlecode.vicovre.gwt.client.json.JSONLayouts;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.json.JSONStreams;
 
-public class Application implements EntryPoint {
+public class Application implements EntryPoint, MessageResponseHandler {
 
     protected static final int FORMAT_SELECTION = 0;
 
@@ -68,7 +73,7 @@ public class Application implements EntryPoint {
         String url = GWT.getHostPageBaseURL();
         String recording = getFolder() + "/" + getRecordingId() + "/";
         if (url.endsWith(recording)) {
-            url = url.substring(0, url.length() - recording.length() + 1);
+            url = url.substring(0, url.length() - recording.length());
         }
         return url;
     }
@@ -92,12 +97,15 @@ public class Application implements EntryPoint {
 
     protected String getFolder() {
         String folder = parameters.get("folder");
+        if (folder.startsWith("/")) {
+            folder = folder.substring(1);
+        }
         return folder;
     }
 
     protected Layout[] getLayouts(String parameter) {
         String layoutsJSON = parameters.get(parameter);
-        if (layoutsJSON != null) {
+        if ((layoutsJSON != null) && !layoutsJSON.equals("")) {
             JSONLayouts jsonLayouts = JSONLayouts.parse(layoutsJSON);
             JsArray<JSONLayout> layoutArray = jsonLayouts.getLayouts();
             Layout[] layouts = new Layout[layoutArray.length()];
@@ -111,7 +119,7 @@ public class Application implements EntryPoint {
 
     protected JSONStream[] getStreams() {
         String streamsJSON = parameters.get("streams");
-        if (streamsJSON != null) {
+        if ((streamsJSON != null) && !streamsJSON.equals("")) {
             JSONStreams jsonStreams = JSONStreams.parse(streamsJSON);
             JsArray<JSONStream> streamArray = jsonStreams.getStreams();
             JSONStream[] streams = new JSONStream[streamArray.length()];
@@ -124,32 +132,64 @@ public class Application implements EntryPoint {
         return new JSONStream[0];
     }
 
+    protected String getRole() {
+        return parameters.get("role");
+    }
+
+    protected boolean canPlay() {
+        String canPlay = parameters.get("canPlay");
+        return (canPlay != null) && canPlay.equals("true");
+    }
+
     public void onModuleLoad() {
+
         VerticalPanel mainPanel = new VerticalPanel();
         mainPanel.setWidth("100%");
         mainPanel.setHeight("100%");
         RootPanel.get().add(mainPanel);
 
+        String role = getRole();
+        boolean canPlay = canPlay();
         String url = getUrl();
         String baseUrl = getBaseUrl();
         String recordingId = getRecordingId();
         String folder = getFolder();
-        JSONStream[] streams = getStreams();
 
-        Wizard wizard = new Wizard(getBaseUrl());
-        wizard.addPage(new FormatSelectionPage(), FORMAT_SELECTION);
-        wizard.addPage(new LayoutSelectionPage(getLayouts("layouts"),
-                getLayouts("customLayouts"), url), LAYOUT_SELECTION);
-        wizard.addPage(new VideoStreamSelectionPage(baseUrl, folder,
-                recordingId, streams), VIDEO_SELECTION);
-        wizard.addPage(new AudioSelectionPage(baseUrl, streams),
-                AUDIO_SELECTION);
-        wizard.addPage(new StreamsSelectionPage(streams,
-                baseUrl, folder, recordingId), STREAM_SELECTION);
-        wizard.addPage(new DownloadAudioPage(baseUrl, folder, recordingId,
-                streams), DOWNLOAD_AUDIO);
-        wizard.selectPage(FORMAT_SELECTION);
-        wizard.center();
+        GWT.log("Base url = " + baseUrl);
+
+        if (canPlay) {
+            JSONStream[] streams = getStreams();
+
+            Wizard wizard = new Wizard(baseUrl);
+            wizard.addPage(new FormatSelectionPage(), FORMAT_SELECTION);
+            wizard.addPage(new LayoutSelectionPage(getLayouts("layouts"),
+                    getLayouts("customLayouts"), url), LAYOUT_SELECTION);
+            wizard.addPage(new VideoStreamSelectionPage(baseUrl, folder,
+                    recordingId, streams), VIDEO_SELECTION);
+            wizard.addPage(new AudioSelectionPage(baseUrl, streams),
+                    AUDIO_SELECTION);
+            wizard.addPage(new StreamsSelectionPage(streams,
+                    baseUrl, folder, recordingId), STREAM_SELECTION);
+            wizard.addPage(new DownloadAudioPage(baseUrl, folder, recordingId,
+                    streams), DOWNLOAD_AUDIO);
+            wizard.addPage(new DownloadVideoPage(baseUrl, folder, recordingId,
+                    streams), DOWNLOAD_VIDEO);
+            wizard.selectPage(FORMAT_SELECTION);
+            wizard.center();
+        } else if (role.equals("User")) {
+            LoginPopup popup = new LoginPopup(baseUrl, url);
+            popup.center();
+        } else {
+            MessagePopup popup = new MessagePopup(
+                    "Sorry, you do not have the right permissions to download "
+                    + "this recording.",
+                    this, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+            popup.center();
+        }
+    }
+
+    public void handleResponse(MessageResponse response) {
+        Logout.logout(getBaseUrl(), getUrl());
     }
 }
 

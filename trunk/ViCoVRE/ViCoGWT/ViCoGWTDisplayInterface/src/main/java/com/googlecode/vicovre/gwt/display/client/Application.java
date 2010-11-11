@@ -46,6 +46,8 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.client.LoginPopup;
+import com.googlecode.vicovre.gwt.client.Logout;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.json.JSONGroups;
 import com.googlecode.vicovre.gwt.client.json.JSONUsers;

@@ -717,7 +717,7 @@ public class JavaMultiplexer extends BasicMultiplexer
             moovWritten = true;
             return out.getCount();
         }
-        return 0;
+        return -1;
     }
 
     public String getName() {

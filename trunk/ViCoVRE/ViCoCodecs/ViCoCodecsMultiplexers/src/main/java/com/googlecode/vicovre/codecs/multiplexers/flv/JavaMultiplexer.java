@@ -340,7 +340,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         noBytesWritten = 7;
 
         // Write the initial meta tag
-        /*int startSize = out.size();
+        int startSize = out.size();
 
         // Last tag size
         out.writeInt(0);
@@ -349,7 +349,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         writeMetadata(out);
 
         lastTagSize = out.size() - startSize;
-        noBytesWritten += lastTagSize; */
+        noBytesWritten += lastTagSize;
     }
 
     private int writeAudioHeader(int length, long timestamp,
@@ -615,7 +615,10 @@ public class JavaMultiplexer extends BasicMultiplexer
         }
         setResult(BUFFER_PROCESSED_OK, true);
 
-        return toWrite;
+        if (toWrite > 0) {
+            return toWrite;
+        }
+        return -1;
     }
 
     public void setOffset(Time offset) {

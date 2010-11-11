@@ -30,44 +30,54 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
+package com.googlecode.vicovre.gwt.client;
 
+import org.restlet.gwt.data.MediaType;
+import org.restlet.gwt.data.Method;
 import org.restlet.gwt.data.Response;
 
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window.Location;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
 
-public class Logout extends AbstractRestCall {
+public class Login extends AbstractRestCall {
 
     private String baseUrl = null;
 
     private String url = null;
 
-    private WaitPopup waitPopup = new WaitPopup("Logging Out", true);
+    private WaitPopup waitPopup = new WaitPopup("Logging In", true);
 
-    public static void logout(String baseUrl, String url) {
-        Logout logout = new Logout(baseUrl, url);
-        logout.go();
+    public static void login(String baseUrl, String url, String username,
+            String password) {
+        Login login = new Login(baseUrl, url, username, password);
+        login.go();
     }
 
-    public Logout(String baseUrl, String url) {
+    public Login(String baseUrl, String url, String username,
+            String password) {
         waitPopup.setBaseUrl(baseUrl);
         this.baseUrl = baseUrl;
-        this.url = url + "auth/logout";
+        this.url = url + "auth/form?username=" + URL.encodeComponent(username)
+            + "&password=" + URL.encodeComponent(password);
     }
 
     public void go() {
         waitPopup.center();
-        go(url);
+        go(url, Method.POST, MediaType.TEXT_PLAIN);
     }
 
     protected void onError(String message) {
         waitPopup.hide();
-        MessagePopup popup = new MessagePopup("Error logging out: " + message,
-                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+        String error = null;
+        if (message.startsWith("403")) {
+            error = "Invalid email address or password";
+        } else {
+            error = "Error logging in: " + message;
+        }
+
+        MessagePopup popup = new MessagePopup(error, null,
+                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 

@@ -20,6 +20,8 @@
 
             private var playing:Boolean = false;
 
+            private var lastSeekTime:Number = NaN;
+
             protected function player_mediaPlayerStateChangeHandler(
                     event:MediaPlayerStateChangeEvent):void {
                 switch (event.state) {
@@ -41,11 +43,15 @@
             }
 
             protected function player_timeChangeHandler():void {
-                position.value = player.currentTime;
-                time.text = getTimeString(player.currentTime);
+                if (player.currentTime >= lastSeekTime) {
+                    position.value = player.currentTime;
+                    time.text = getTimeString(player.currentTime);
+                }
             }
 
             protected function player_positionChangeHandler():void {
+                lastSeekTime = position.value;
+                time.text = getTimeString(position.value);
                 seek(position.value);
             }
 
@@ -59,13 +65,6 @@
             protected function getNumberParam(param:String):Number {
                 var value:String = getParam(param);
                 return Number(value);
-            }
-
-            protected function start():void {
-                file = getParam("file");
-                timeParam = getParam("timeParam");
-                startTime = getNumberParam("startTime");
-                player_durationChangeHandler(getNumberParam("duration"));
             }
 
             protected function seek(time:Number):void {
@@ -94,7 +93,7 @@
             protected function playPauseButton_click():void {
                 if (playPauseButton.selected) {
                     if (!started) {
-                        seek(startTime);
+                        seek(position.value);
                         started = true;
                     }
                     player.play();
@@ -116,11 +115,11 @@
 
             protected function getTimeString(secs:Number):String {
                 var seconds:Number = secs;
-                var hours:Number = Math.round(seconds / 3600);
+                var hours:Number = Math.floor(seconds / 3600);
                 seconds = seconds - (hours * 3600);
-                var minutes:Number = Math.round(seconds / 60);
+                var minutes:Number = Math.floor(seconds / 60);
                 seconds = seconds - (minutes * 60);
-                seconds = Math.round(seconds);
+                seconds = Math.floor(seconds);
 
                 var time:String = "";
                 time += formatTimeDigit(hours) + ":";
@@ -131,11 +130,43 @@
 
             public function setFile(file:String):void {
                 this.file = file;
-                seek(0);
+                lastSeekTime = startTime;
+                player.stop();
+                position.value = startTime;
+                time.text = getTimeString(startTime);
+                playPauseButton.selected = false;
+                seek(startTime);
             }
 
-            public function getTimeInMillis():Number {
-                return Math.round(player.currentTime * 1000);
+            public function setDuration(duration:Number):void {
+                player_durationChangeHandler(duration);
+            }
+
+            public function getTimeInSeconds():Number {
+                return position.value;
+            }
+
+            public function stop():void {
+                player.stop();
+                playPauseButton.selected = false;
+            }
+
+            protected function start():void {
+                file = getParam("file");
+                timeParam = getParam("timeParam");
+                startTime = getNumberParam("startTime");
+                position.value = startTime;
+                player_durationChangeHandler(getNumberParam("duration"));
+                lastSeekTime = startTime;
+                var audio:String = getParam("audio");
+                if ((audio != null) && (audio == "true")) {
+                    player.visible = false;
+                }
+                ExternalInterface.addCallback("setFile", setFile);
+                ExternalInterface.addCallback("setDuration", setDuration);
+                ExternalInterface.addCallback("getTimeInSeconds",
+                    getTimeInSeconds);
+                ExternalInterface.addCallback("stop", stop);
             }
         ]]>
     </fx:Script>
@@ -165,8 +196,8 @@
         <s:ScrubBar id="position" width="100%" liveDragging="false"
             skinClass="spark.skins.spark.mediaClasses.normal.ScrubBarSkin"
             minimum="0" maximum="0"
-            changeStart="player.pause();"
-            changeEnd="player_positionChangeHandler();"/>
+            thumbPress="player.stop();"
+            thumbRelease="player_positionChangeHandler();"/>
 
         <s:Rect width="5" height="1"/>
 

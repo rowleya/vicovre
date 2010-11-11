@@ -85,6 +85,6 @@ public class JavaMultiplexer extends BasicMultiplexer {
     }
 
     protected int readLast(byte[] buf, int off, int len) {
-        return 0;
+        return -1;
     }
 }

@@ -738,7 +738,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     }
 
     protected int readLast(byte[] buf, int off, int len) throws IOException {
-        return 0;
+        return -1;
     }
 
     public String getName() {

@@ -56,6 +56,8 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
+import com.googlecode.vicovre.security.UnauthorizedException;
+import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.web.rest.response.LayoutsResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsResponse;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -76,6 +78,8 @@ public class DownloadRecordingController implements Controller {
 
     private RecordingDatabase database = null;
 
+    private SecurityDatabase securityDatabase = null;
+
     private LayoutRepository layoutRepository = null;
 
     private EditableLayoutRepository editableLayoutRepository = null;
@@ -83,6 +87,7 @@ public class DownloadRecordingController implements Controller {
     private RtpTypeRepository typeRepository = null;
 
     public DownloadRecordingController(RecordingDatabase database,
+            SecurityDatabase securityDatabase,
             LayoutRepository layoutRepository,
             EditableLayoutRepository editableLayoutRepository,
             RtpTypeRepository typeRepository) throws IOException, SAXException {
@@ -90,6 +95,7 @@ public class DownloadRecordingController implements Controller {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         this.database = database;
+        this.securityDatabase = securityDatabase;
         this.layoutRepository = layoutRepository;
         this.editableLayoutRepository = editableLayoutRepository;
         this.typeRepository = typeRepository;
@@ -234,11 +240,15 @@ public class DownloadRecordingController implements Controller {
                 extractor.setGenerationSpeed(generationSpeed);
                 response.setContentType(format);
                 response.setStatus(HttpServletResponse.SC_OK);
+                response.setHeader("Content-Disposition",
+                        "attachment; filename=\""
+                        + recording.getMetadata().getPrimaryValue()
+                        + "." + FORMAT_EXT_MAP.get(format) + "\";");
 
                 // Generate the stream
                 response.flushBuffer();
                 extractor.transferToStream(response.getOutputStream(),
-                        start, offset, duration);
+                        start, offset, duration - offset);
             } catch (EOFException e) {
                 System.err.println("User disconnected");
             } catch (SocketException e) {
@@ -266,11 +276,10 @@ public class DownloadRecordingController implements Controller {
 
         Recording recording = database.getRecording(folder, id);
 
-        String format = request.getHeader("Accept");
-        if ((format == null) || format.contains("text/html")) {
-            format = request.getParameter("format");
-        }
+
+        String format = request.getParameter("format");
         if (format != null) {
+            System.err.println("Downloading, format = " + format);
             doDownload(format, recording, request, response);
             return null;
         }
@@ -294,16 +303,22 @@ public class DownloadRecordingController implements Controller {
         marshaller.marshallToJSON(recording, recordingWriter);
 
         StringWriter streamsWriter = new StringWriter();
-        marshaller.marshallToJSON(new StreamsResponse(recording.getStreams()),
-                streamsWriter);
+        try {
+            marshaller.marshallToJSON(new StreamsResponse(recording.getStreams()),
+                    streamsWriter);
+        } catch (UnauthorizedException e) {
+            // Do Nothing
+        }
 
         ModelAndView modelAndView = new ModelAndView("downloadRecording");
         modelAndView.addObject("recording", recording);
         modelAndView.addObject("streamsJSON", streamsWriter.toString());
-        modelAndView.addObject("folder", folder);
+        modelAndView.addObject("folder", recording.getFolder());
         modelAndView.addObject("layoutsJSON", layoutWriter.toString());
         modelAndView.addObject("customLayoutsJSON",
                 customLayoutWriter.toString());
+        modelAndView.addObject("canPlay", recording.isPlayable());
+        modelAndView.addObject("role", securityDatabase.getRole());
         return modelAndView;
     }
 
