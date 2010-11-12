@@ -89,8 +89,10 @@ public class FolderHandler extends AbstractHandler {
     private void getFolders(String folder, Vector<String> folders) {
         folders.add(folder);
         List<String> folderList = getDatabase().getSubFolders(folder);
-        for (String subFolder : folderList) {
-            getFolders(folder + "/" + subFolder, folders);
+        if (folderList != null) {
+            for (String subFolder : folderList) {
+                getFolders(folder + "/" + subFolder, folders);
+            }
         }
     }
 
