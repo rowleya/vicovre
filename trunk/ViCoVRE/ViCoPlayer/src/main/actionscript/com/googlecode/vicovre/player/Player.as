@@ -240,7 +240,7 @@ class com.googlecode.vicovre.player.Player extends MovieClip {
     public function onInitMetaData(data:Object):Void {
         this.url = data["url"];
         this.startTime = data["startTime"] / 1000;
-        this.duration = data["duration"];
+        this.duration = data["duration"] / 1000;
         this.annTypes = data["annotationTypes"];
         this.annotations = data["annotations"];
         this.videoStreams = new Array();
