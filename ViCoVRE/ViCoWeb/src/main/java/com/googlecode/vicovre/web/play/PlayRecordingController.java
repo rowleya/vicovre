@@ -496,7 +496,7 @@ public class PlayRecordingController implements Controller {
         HashMap<String, Object> values = new HashMap<String, Object>();
         Collections.sort(metadataAnnotationTypes);
         values.put("startTime", startTime);
-        values.put("duration", ((double) (duration) / 1000));
+        values.put("duration", duration);
         values.put("annotationTypes", metadataAnnotationTypes);
         values.put("layouts", metadataLayouts);
         values.put("annotations", metadataAnnotations);

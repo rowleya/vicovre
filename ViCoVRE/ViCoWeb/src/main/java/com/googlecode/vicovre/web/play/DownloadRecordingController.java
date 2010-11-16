@@ -182,6 +182,8 @@ public class DownloadRecordingController implements Controller {
                 duration = maxDuration;
             }
 
+            System.err.println("Downloading, duration = " + duration + " start = " + start + " offset = " + offset);
+
             Rectangle[] rects = new Rectangle[videoStreams.length];
             String[] widths = request.getParameterValues("width");
             String[] heights = request.getParameterValues("height");

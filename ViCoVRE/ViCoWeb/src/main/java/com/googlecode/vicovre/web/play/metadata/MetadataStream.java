@@ -18,7 +18,7 @@ public class MetadataStream {
             if (end > realEnd) {
                 end = realEnd;
             }
-            duration = ((double) (end - start)) / 1000;
+            duration = end - start;
             type = stream.getRtpType().getMediaType();
             ssrc = stream.getSsrc();
         }
