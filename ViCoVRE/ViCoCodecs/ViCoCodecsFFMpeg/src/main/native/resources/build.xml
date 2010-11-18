@@ -183,17 +183,38 @@
         </condition>
     </target>
 
+    <macrodef name="lame.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="lame${lame.version}">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <arg value="--disable-decoder"/>
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="lame" unless="os.isUnix64">
+        <lame.make/>
+    </target>
+
+    <target name="lame.unix64" if="os.isUnix64">
+        <lame.make>
+            <configureopts>
+                <arg value="--with-pic"/>
+            </configureopts>
+        </lame.make>
+    </target>
+
     <target name="build-lame" depends="mkdirs,lame.check" unless="lame.dontrun">
         <get dest="${download.path}/lame${lame.version}" src="${lame.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/lame${lame.version}" compression="${lame.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/lame${lame.version}/install-sh" perm="u+x"/>
-        <configureandmake library="lame${lame.version}">
-            <confopts>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-                <arg value="--disable-decoder"/>
-            </confopts>
-        </configureandmake>
+        <antcall target="lame"/>
+        <antcall target="lame.unix64"/>
     </target>
 
     <target name="faad.check">
@@ -438,20 +459,36 @@
         </condition>
     </target>
 
+    <macrodef name="gsm.make">
+        <sequential>
+            <make library="gsm-1.0-pl13" target="lib/libgsm.a"/>
+            <exec executable="cp">
+                <arg value="${extract.path}/gsm-1.0-pl13/lib/libgsm.a"/>
+                <arg value="${prefix.path}/lib/libgsm.a"/>
+            </exec>
+            <mkdir dir="${prefix.path}/include/gsm"/>
+            <exec executable="cp">
+                <arg value="${extract.path}/gsm-1.0-pl13/inc/gsm.h"/>
+                <arg value="${prefix.path}/include/gsm/gsm.h"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <target name="gsm" unless="os.isUnix64">
+        <replace file="${extract.path}/gsm-1.0-pl13/Makefile" token="gcc -ansi -pedantic" value="gcc"/>
+        <gsm.make/>
+    </target>
+
+    <target name="gsm.unix64" if="os.isUnix64">
+        <replace file="${extract.path}/gsm-1.0-pl13/Makefile" token="gcc -ansi -pedantic" value="gcc -fPIC"/>
+        <gsm.make/>
+    </target>
+
     <target name="build-gsm" depends="mkdirs,gsm.check" unless="gsm.dontrun">
         <get dest="${download.path}/gsm${gsm.version}" src="${gsm.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/gsm${gsm.version}" compression="${gsm.compression}" dest="${extract.path}"/>
-        <replace file="${extract.path}/gsm-1.0-pl13/Makefile" token="gcc -ansi -pedantic" value="gcc"/>
-        <make library="gsm-1.0-pl13" target="lib/libgsm.a"/>
-        <exec executable="cp">
-            <arg value="${extract.path}/gsm-1.0-pl13/lib/libgsm.a"/>
-            <arg value="${prefix.path}/lib/libgsm.a"/>
-        </exec>
-        <mkdir dir="${prefix.path}/include/gsm"/>
-        <exec executable="cp">
-            <arg value="${extract.path}/gsm-1.0-pl13/inc/gsm.h"/>
-            <arg value="${prefix.path}/include/gsm/gsm.h"/>
-        </exec>
+        <antcall target="gsm"/>
+        <antcall target="gsm.unix64"/>
     </target>
 
     <target name="amr.check">
