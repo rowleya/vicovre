@@ -605,13 +605,14 @@
     <macrodef name="amr.make">
         <element name="configureopts" optional="true"/>
         <sequential>
-            <configureandmake library="opencore-amr${amr.version}">
+            <configure library="opencore-amr${amr.version}">
                 <confopts>
                     <arg value="--disable-shared" />
                     <arg value="--enable-static" />
                     <configureopts/>
                 </confopts>
-            </configureandmake>
+            </configure>
+            <make library="opencore-amr${amr.version}/amrnb"/>
         </sequential>
     </macrodef>
 
