@@ -76,7 +76,8 @@ public class RTCPSDES {
             int id = pSDES[curptr];
             int itemStart = curptr + RTCPHeader.SDES_LENGTH_LENGTH
                 + RTCPHeader.SDES_TYPE_LENGTH;
-            length = pSDES[curptr + RTCPHeader.SDES_TYPE_LENGTH];
+            length = (short) (pSDES[curptr
+                + RTCPHeader.SDES_TYPE_LENGTH] & 0xFF);
             String value = new String(pSDES, itemStart, length);
             switch (id) {
             case SDES_CNAME:
