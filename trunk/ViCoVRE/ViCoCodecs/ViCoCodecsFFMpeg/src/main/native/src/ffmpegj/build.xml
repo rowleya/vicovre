@@ -175,6 +175,7 @@
         <build.unix arch="amd64">
             <unixccopts>
                 <arg line="-fPIC"/>
+                <arg line="-Wl,-Bsymbolic"/>
             </unixccopts>
         </build.unix>
     </target>
