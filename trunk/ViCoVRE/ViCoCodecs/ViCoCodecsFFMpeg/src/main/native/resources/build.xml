@@ -249,27 +249,49 @@
         </configureandmake>
     </target>
 
-     <target name="faac.check">
-            <condition property="faac.dontrun">
-                <and>
-                    <available file="${prefix.path.real}/lib/libfaac.a"/>
-                    <available file="${prefix.path.real}/include/faac.h"/>
-                </and>
-            </condition>
-        </target>
+    <target name="faac.check">
+        <condition property="faac.dontrun">
+            <and>
+                <available file="${prefix.path.real}/lib/libfaac.a"/>
+                <available file="${prefix.path.real}/include/faac.h"/>
+            </and>
+        </condition>
+    </target>
+
+    <macrodef name="faac.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="faac${faac.version}" ldflags="-no-undefined">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <arg value="--with-mp4v2=no"/>
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="faac" unless="os.isUnix64">
+        <faac.make/>
+    </target>
+
+    <target name="faac.unix64" if="os.isUnix64">
+        <faac.make>
+            <configureopts>
+                <arg value="--with-pic"/>
+            </configureopts>
+        </faac.make>
+    </target>
 
     <target name="build-faac" depends="mkdirs,faac.check" unless="faac.dontrun">
         <get dest="${download.path}/faac${faac.version}" src="${faac.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/faac${faac.version}" compression="${faac.compression}" dest="${extract.path}"/>
         <bootstrap library="faac${faac.version}"/>
         <chmod file="${extract.path}/faac${faac.version}/install-sh" perm="u+x"/>
-        <configureandmake library="faac${faac.version}" ldflags="-no-undefined">
-            <confopts>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-                <arg value="--with-mp4v2=no"/>
-            </confopts>
-        </configureandmake>
+
+        <antcall target="faac"/>
+        <antcall target="faac.unix64"/>
     </target>
 
     <target name="xvidcore.check">
