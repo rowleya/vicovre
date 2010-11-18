@@ -937,12 +937,18 @@ public class SecurityDatabase {
     }
 
     public boolean isAllowed(String folder, String id, boolean def) {
+        return isAllowed(null, null, folder, id, def);
+    }
+
+    public boolean isAllowed(String creatorFolder, String creatorId,
+            String folder, String id, boolean def) {
         File folderFile = getFile(folder);
         synchronized (acls) {
             try {
                 ACL acl = obtainAcl(folderFile, folder, id, def, false);
                 synchronized (acl) {
-                    return acl.isAllowed();
+                    return acl.isAllowed(getCurrentUser(creatorFolder,
+                            creatorId));
                 }
             } catch (UnknownException e) {
 

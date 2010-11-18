@@ -179,6 +179,7 @@ public class UnfinishedRecordingController
     }
 
     public Recording stopRecording(UnfinishedRecording recording) {
+        System.err.println("Stopping recording " + recording.getMetadata().getPrimaryValue() + ": " + recording.getId());
         Timer stopTimer = stopTimers.remove(recording);
         if (stopTimer != null) {
             stopTimer.cancel();
@@ -186,6 +187,8 @@ public class UnfinishedRecordingController
         if (recording.isFinished() || !recording.isStarted()) {
             return null;
         }
+
+        System.err.println("    Removing connectors");
         RecordArchiveManager manager = managers.remove(recording);
         NetworkLocation[] addrs = addresses.remove(recording);
         manager.disableRecording(false);
@@ -204,6 +207,7 @@ public class UnfinishedRecordingController
                 }
             }
         }
+        System.err.println("    Terminating Manager");
         try {
             manager.terminate();
         } catch (IOException e) {
@@ -221,11 +225,13 @@ public class UnfinishedRecordingController
                     finishedRecording.setEmailAddress(emailAddress);
                 }
 
+                System.err.println("    Adding to database");
                 recording.stopRecording();
                 database.addRecording(finishedRecording, recording);
                 database.deleteUnfinishedRecording(recording);
                 recording.setStatus(UnfinishedRecording.COMPLETED);
 
+                System.err.println("    Sending email");
                 if ((emailAddress != null) && (emailer != null)) {
                     String message = MessageReader.readMessage(
                             "recordingComplete.txt",
