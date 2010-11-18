@@ -227,6 +227,31 @@
         </condition>
     </target>
 
+    <macrodef name="faad.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="faad2" ldflags="-no-undefined">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="faad" unless="os.isUnix64">
+        <faad.make/>
+    </target>
+
+    <target name="faad.unix64" if="os.isUnix64">
+        <faad.make>
+            <configureopts>
+                <arg value="--with-pic"/>
+            </configureopts>
+        </faad.make>
+    </target>
+
     <target name="build-faad" depends="mkdirs,faad.check" unless="faad.dontrun">
         <get dest="${download.path}/faad${faad.version}" src="${faad.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/faad${faad.version}" compression="${faad.compression}" dest="${extract.path}"/>
@@ -241,12 +266,9 @@
         <replace file="${extract.path}/faad2/configure.in" token="AC_CONFIG_FILES(frontend/Makefile)" value="" />
         <bootstrap library="faad2"/>
         <chmod file="${extract.path}/faad2/install-sh" perm="u+x"/>
-        <configureandmake library="faad2" ldflags="-no-undefined">
-            <confopts>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-            </confopts>
-        </configureandmake>
+
+        <antcall target="faad"/>
+        <antcall target="faad.unix64"/>
     </target>
 
     <target name="faac.check">
