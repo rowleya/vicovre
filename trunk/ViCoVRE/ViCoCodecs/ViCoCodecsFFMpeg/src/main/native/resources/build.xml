@@ -603,14 +603,14 @@
     </target>
 
     <macrodef name="amr.make">
-        <element name="configureopts" optional="true"/>
+        <element name="confopts" optional="true"/>
         <sequential>
             <configure library="opencore-amr${amr.version}">
-                <confopts>
+                <configureopts>
                     <arg value="--disable-shared" />
                     <arg value="--enable-static" />
-                    <configureopts/>
-                </confopts>
+                    <confopts/>
+                </configureopts>
             </configure>
             <make library="opencore-amr${amr.version}/amrnb"/>
         </sequential>
@@ -622,9 +622,9 @@
 
     <target name="amr.unix64" if="os.isUnix64">
         <amr.make>
-            <configureopts>
+            <confopts>
                 <arg value="--with-pic"/>
-            </configureopts>
+            </confopts>
         </amr.make>
     </target>
 
