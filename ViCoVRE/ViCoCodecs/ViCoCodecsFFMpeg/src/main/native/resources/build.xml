@@ -136,6 +136,12 @@
     <condition property="prefix.path" value="${basedir}/x86_64/mac">
         <isset property="os.isMac64"/>
     </condition>
+    <condition property="os.isMac64orUnix64">
+        <or>
+            <isset property="os.isMac64"/>
+            <isset property="os.isUnix64"/>
+        </or>
+    </condition>
     <condition property="prefix.path.real" value="${prefix.path}">
         <not><isset property="os.isWindows"/></not>
     </condition>
@@ -404,16 +410,38 @@
         </condition>
     </target>
 
+    <macrodef name="ogg.make">
+        <element name="configureopts"/>
+        <sequential>
+            <configureandmake library="libogg${ogg.version}">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="ogg" unless="os.isUnix64">
+        <ogg.make/>
+    </target>
+
+    <target name="ogg.unix64" if="os.isUnix64">
+        <ogg.make>
+            <configureopts>
+                <arg line="--with-pic"/>
+            </configureopts>
+        </ogg.make>
+    </target>
+
     <target name="build-ogg" depends="mkdirs,ogg.check" unless="ogg.dontrun">
         <get dest="${download.path}/ogg${ogg.version}" src="${ogg.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/ogg${ogg.version}" compression="${ogg.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/libogg${ogg.version}/install-sh" perm="u+x"/>
-        <configureandmake library="libogg${ogg.version}">
-            <confopts>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-            </confopts>
-        </configureandmake>
+
+        <antcall target="ogg"/>
+        <antcall target="ogg.unix64"/>
     </target>
 
     <target name="vorbis.check">
@@ -429,18 +457,40 @@
         </condition>
     </target>
 
+    <macrodef name="vorbis.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="libvorbis${vorbis.version}">
+                <confopts>
+                    <arg value="--with-ogg-libraries=${prefix.path}/lib"/>
+                    <arg value="--with-ogg-includes=${prefix.path}/include/"/>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="vorbis" unless="os.isUnix64">
+        <vorbis.make/>
+    </target>
+
+    <target name="vorbis.unix64" if="os.isUnix64">
+        <vorbis.make>
+            <configureopts>
+                <arg line="--with-pic"/>
+            </configureopts>
+        </vorbis.make>
+    </target>
+
     <target name="build-vorbis" depends="mkdirs,vorbis.check,build-ogg" unless="vorbis.dontrun">
         <get dest="${download.path}/vorbis${vorbis.version}" src="${vorbis.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/vorbis${vorbis.version}" compression="${vorbis.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/libvorbis${vorbis.version}/install-sh" perm="u+x"/>
-        <configureandmake library="libvorbis${vorbis.version}">
-            <confopts>
-                <arg value="--with-ogg-libraries=${prefix.path}/lib"/>
-                <arg value="--with-ogg-includes=${prefix.path}/include/"/>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-            </confopts>
-        </configureandmake>
+
+        <antcall target="vorbis"/>
+        <antcall target="vorbis.unix64"/>
     </target>
 
     <target name="theora.check">
@@ -474,7 +524,7 @@
         </sequential>
     </macrodef>
 
-    <target name="theora" unless="os.isMac64">
+    <target name="theora" unless="os.isMac64orUnix64">
         <theora.make/>
     </target>
 
@@ -486,12 +536,21 @@
         </theora.make>
     </target>
 
+    <target name="theora.unix64" if="os.isUnix64">
+        <theora.make>
+            <configureopts>
+                <arg value="--with-pic"/>
+            </configureopts>
+        </theora.make>
+    </target>
+
     <target name="build-theora" depends="mkdirs,theora.check,build-ogg,build-vorbis" unless="theora.dontrun">
         <get dest="${download.path}/theora${theora.version}" src="${theora.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/theora${theora.version}" compression="${theora.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/libtheora${theora.version}/install-sh" perm="u+x"/>
         <antcall target="theora"/>
         <antcall target="theora.mac64"/>
+        <antcall target="theora.unix64"/>
     </target>
 
     <target name="gsm.check">
@@ -543,16 +602,38 @@
         </condition>
     </target>
 
+    <macrodef name="amr.make">
+        <element name="configureopts" optional="true"/>
+        <sequential>
+            <configureandmake library="opencore-amr${amr.version}">
+                <confopts>
+                    <arg value="--disable-shared" />
+                    <arg value="--enable-static" />
+                    <configureopts/>
+                </confopts>
+            </configureandmake>
+        </sequential>
+    </macrodef>
+
+    <target name="amr" unless="os.isUnix64">
+        <amr.make/>
+    </target>
+
+    <target name="amr.unix64" if="os.isUnix64">
+        <amr.make>
+            <configureopts>
+                <arg value="--with-pic"/>
+            </configureopts>
+        </amr.make>
+    </target>
+
     <target name="build-amr" depends="mkdirs,amr.check" unless="amr.dontrun">
         <get dest="${download.path}/opencore-amr${amr.version}" src="${amr.url}" verbose="true" usetimestamp="true" ignoreerrors="true"/>
         <untar src="${download.path}/opencore-amr${amr.version}" compression="${amr.compression}" dest="${extract.path}"/>
         <chmod file="${extract.path}/opencore-amr${amr.version}/install-sh" perm="u+x"/>
-        <configureandmake library="opencore-amr${amr.version}">
-            <confopts>
-                <arg value="--disable-shared" />
-                <arg value="--enable-static" />
-            </confopts>
-        </configureandmake>
+
+        <antcall target="amr"/>
+        <antcall target="amr.unix64"/>
     </target>
 
     <target name="patch-ffmpeg">
