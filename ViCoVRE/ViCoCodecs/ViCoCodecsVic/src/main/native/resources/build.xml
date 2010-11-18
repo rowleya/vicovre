@@ -134,6 +134,12 @@
     <condition property="prefix.path" value="${basedir}/x86_64/mac">
         <isset property="os.isMac64"/>
     </condition>
+    <condition property="os.isMac64orUnix64">
+        <or>
+            <isset property="os.isMac64"/>
+            <isset property="os.isUnix64"/>
+        </or>
+    </condition>
     <condition property="prefix.path.real" value="${prefix.path}">
         <not><isset property="os.isWindows"/></not>
     </condition>
@@ -193,7 +199,7 @@
         </sequential>
     </macrodef>
 
-    <target name="x264" unless="os.isMac64">
+    <target name="x264" unless="os.isMac64orUnix64">
         <x264.make/>
     </target>
 
@@ -201,6 +207,14 @@
         <x264.make>
             <configureopts>
                 <arg value="--host=x86_64-apple-darwin10"/>
+            </configureopts>
+        </x264.make>
+    </target>
+
+    <target name="x264.unix64" if="os.isUnix64">
+        <x264.make>
+            <configureopts>
+                <arg value="--enable-pic"/>
             </configureopts>
         </x264.make>
     </target>
@@ -214,6 +228,7 @@
 
         <antcall target="x264"/>
         <antcall target="x264.mac64"/>
+        <antcall target="x264.unix64"/>
     </target>
 
 </project>
