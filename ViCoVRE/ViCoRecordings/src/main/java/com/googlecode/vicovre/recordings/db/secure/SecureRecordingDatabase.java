@@ -105,8 +105,9 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
-    private void checkWrite(String folder) {
-        if (!canWriteFolder(folder)) {
+    private void checkWrite(String creatorFolder, String creatorId,
+            String folder) {
+        if (!canWriteFolder(creatorFolder, creatorId, folder)) {
             throw new UnauthorizedException(
                 "You do not have permission to write to this folder");
         }
@@ -119,7 +120,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException {
-        checkWrite(harvestSource.getFolder());
+        checkWrite(null, null, harvestSource.getFolder());
         securityDatabase.createAcl(null, null, harvestSource.getFolder(),
                 HARVEST_ID_PREFIX + harvestSource.getId(), false, true,
                 Role.WRITER);
@@ -176,7 +177,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
-        checkWrite(folder);
+        checkWrite(creatorFolder, creatorId, folder);
         securityDatabase.createAcl(creatorFolder,
                 HARVEST_ID_PREFIX + creatorId, folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), false, true,
@@ -293,7 +294,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
-        checkWrite(folder);
+        checkWrite(creatorFolder, creatorId, folder);
         securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
                 CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true,
@@ -539,12 +540,12 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void setDefaultLayout(String folder, DefaultLayout layout)
             throws IOException {
-         checkWrite(folder);
+         checkWrite(null, null, folder);
          database.setDefaultLayout(folder, layout);
     }
 
     public boolean addFolder(String parent, String folder) throws IOException {
-        checkWrite(parent);
+        checkWrite(null, null, parent);
         securityDatabase.createAcl(null, null, parent + "/" + folder,
                 WRITE_FOLDER_PREFIX, false, false, Role.WRITER);
         securityDatabase.createAcl(null, null, parent + "/" + folder,
@@ -567,6 +568,12 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         return securityDatabase.isAllowed(folder, READ_FOLDER_PREFIX, true);
     }
 
+    private boolean canWriteFolder(String creatorFolder, String creatorId,
+            String folder) {
+        return securityDatabase.isAllowed(creatorFolder, creatorId, folder,
+                WRITE_FOLDER_PREFIX, (folder == null) || folder.equals(""));
+    }
+
     public boolean canWriteFolder(String folder) {
         return securityDatabase.isAllowed(folder, WRITE_FOLDER_PREFIX,
                 (folder == null) || folder.equals(""));
@@ -579,7 +586,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
 
     public void setFolderMetadata(String folder, Metadata metadata)
             throws IOException {
-        checkWrite(folder);
+        checkWrite(null, null, folder);
         database.setFolderMetadata(folder, metadata);
     }
 
