@@ -571,7 +571,8 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     private boolean canWriteFolder(String creatorFolder, String creatorId,
             String folder) {
         return securityDatabase.isAllowed(creatorFolder, creatorId, folder,
-                WRITE_FOLDER_PREFIX, (folder == null) || folder.equals(""));
+                WRITE_FOLDER_PREFIX, securityDatabase.hasRole(
+                        creatorFolder, creatorId, Role.WRITER));
     }
 
     public boolean canWriteFolder(String folder) {
