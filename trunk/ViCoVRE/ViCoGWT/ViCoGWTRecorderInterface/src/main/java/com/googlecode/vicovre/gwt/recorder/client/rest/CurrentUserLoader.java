@@ -32,19 +32,14 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class CurrentUserLoader extends AbstractRestCall {
+public class CurrentUserLoader extends AbstractJSONRestCall {
 
     private StatusPanel panel = null;
 
@@ -61,13 +56,14 @@ public class CurrentUserLoader extends AbstractRestCall {
 
     public CurrentUserLoader(StatusPanel panel, ActionLoader loader,
             String url) {
+        super(true);
         this.panel = panel;
         this.loader = loader;
         this.url = url + "auth/user";
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.APPLICATION_JSON);
+        go(url);
     }
 
     protected void onError(String message) {
@@ -75,14 +71,10 @@ public class CurrentUserLoader extends AbstractRestCall {
         loader.itemFailed("Error loading current user: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if ((object != null) && (object.isNull() == null)) {
-            JSONUser user = JSONUser.parse(object.toString());
-            if (user.getUsername() != null) {
-                panel.setLogin(user.getUsername(), user.getRole());
-            }
+    protected void onSuccess(JSONObject object) {
+        JSONUser user = JSONUser.parse(object.toString());
+        if (user.getUsername() != null) {
+            panel.setLogin(user.getUsername(), user.getRole());
         }
         loader.itemLoaded();
     }

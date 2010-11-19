@@ -32,19 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.DefaultLayoutPopup;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONStreamsMetadata;
 
-public class DefaultLayoutLoader extends AbstractRestCall {
+public class DefaultLayoutLoader extends AbstractJSONRestCall {
 
     private DefaultLayoutPopup popup = null;
 
@@ -61,6 +58,7 @@ public class DefaultLayoutLoader extends AbstractRestCall {
 
     public DefaultLayoutLoader(String folder, DefaultLayoutPopup popup,
             String url) {
+        super(false);
         this.popup = popup;
         this.url = url + "folders" + folder;
         if (!this.url.endsWith("/")) {
@@ -85,22 +83,15 @@ public class DefaultLayoutLoader extends AbstractRestCall {
         }
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess(JSONObject object) {
         waitPopup.hide();
         if (!waitPopup.wasCancelled()) {
-            JsonRepresentation representation = response.getEntityAsJson();
-            JSONValue object = representation.getValue();
-            if ((object != null) && (object.isNull() == null)) {
+            if (object != null) {
                 JSONStreamsMetadata streamsObject =
                     JSONStreamsMetadata.parse(object.toString());
                 popup.setStreams(streamsObject.getStreams());
-                popup.center();
-            } else {
-                MessagePopup popup = new MessagePopup(
-                        "No streams found!",
-                        null, MessagePopup.ERROR, MessageResponse.OK);
-                popup.center();
             }
+            popup.center();
         }
     }
 }

@@ -32,21 +32,23 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
-public class CloseSender implements Callback {
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+
+public class CloseSender extends AbstractVoidRestCall {
 
     public static void close(Application application) {
-        Client client = new Client(Protocol.HTTP);
         String url = application.getUrl() + "annotations/close";
-        client.delete(url, new CloseSender());
+        CloseSender sender = new CloseSender();
+        sender.go(url, Method.DELETE);
     }
 
-    public void onEvent(Request request, Response response) {
+    protected void onError(String message) {
+        // Do Nothing
+    }
+
+    protected void onSuccess() {
         // Do Nothing
     }
 

@@ -32,8 +32,7 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -54,9 +53,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONAnnotation;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class LiveAnnotationType extends AbstractRestCall
+public class LiveAnnotationType extends AbstractVoidRestCall
         implements ClickHandler, KeyPressHandler {
 
     private Application application = null;
@@ -248,7 +247,7 @@ public class LiveAnnotationType extends AbstractRestCall
         error.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         application.displayButtonPanel();
         clearFields();
     }

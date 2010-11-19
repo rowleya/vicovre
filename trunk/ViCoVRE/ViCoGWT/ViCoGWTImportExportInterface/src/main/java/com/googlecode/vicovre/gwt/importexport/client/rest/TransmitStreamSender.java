@@ -32,21 +32,16 @@
 
 package com.googlecode.vicovre.gwt.importexport.client.rest;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.importexport.client.StreamPanel;
 
-public class TransmitStreamSender implements Callback {
+public class TransmitStreamSender extends AbstractPlainRestCall {
 
     private String url = null;
 
@@ -80,7 +75,6 @@ public class TransmitStreamSender implements Callback {
     }
 
     public void go() {
-        Client client = new Client(Protocol.HTTP);
         url += "export/" + URL.encodeComponent(sessionId) + "/"
             + URL.encodeComponent(streamId);
         if (substreamId != null) {
@@ -101,23 +95,18 @@ public class TransmitStreamSender implements Callback {
             error.center();
             return;
         }
-        Request request = new Request(Method.POST, url);
-        client.handle(request, this);
+        go(url, Method.POST);
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().equals(Status.SUCCESS_OK)) {
-            String streamId = response.getEntity().getText();
-            streamPanel.transmitStarted(streamId);
-        } else {
-            streamPanel.transmitFailed();
-            String errorMessage = "Error transmitting: "
-                + response.getStatus().getCode() + ": "
-                + response.getStatus().getDescription();
-            MessagePopup error = new MessagePopup(errorMessage,
-                    null, MessagePopup.ERROR, MessageResponse.OK);
-            error.center();
-        }
+    protected void onSuccess(String text) {
+         streamPanel.transmitStarted(text);
+    }
+
+    protected void onError(String message) {
+        streamPanel.transmitFailed();
+        MessagePopup error = new MessagePopup(message,
+                null, MessagePopup.ERROR, MessageResponse.OK);
+        error.center();
     }
 
 }

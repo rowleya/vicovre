@@ -32,18 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Reference;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
+import org.restlet.client.data.Reference;
 
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class PlayItemToVenue extends AbstractRestCall {
+public class PlayItemToVenue extends AbstractPlainRestCall {
 
     private PlayToVenuePopup popup = null;
 
@@ -66,7 +64,7 @@ public class PlayItemToVenue extends AbstractRestCall {
     }
 
     public void go() {
-        go(url, Method.POST, MediaType.TEXT_PLAIN);
+        go(url, Method.POST);
     }
 
     protected void onError(String message) {
@@ -77,9 +75,8 @@ public class PlayItemToVenue extends AbstractRestCall {
         errorPopup.center();
     }
 
-    protected void onSuccess(Response response) {
-        String id = new Reference(
-                response.getEntity().getText()).getLastSegment();
+    protected void onSuccess(String text) {
+        String id = new Reference(text).getLastSegment();
         popup.setId(id);
         popup.setPlaying();
     }

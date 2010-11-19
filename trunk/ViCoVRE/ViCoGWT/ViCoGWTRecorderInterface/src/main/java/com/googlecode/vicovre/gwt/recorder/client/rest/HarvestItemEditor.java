@@ -32,13 +32,12 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
 
-public class HarvestItemEditor extends AbstractRestCall {
+public class HarvestItemEditor extends AbstractVoidRestCall {
 
     private HarvestItem item = null;
 
@@ -70,7 +69,7 @@ public class HarvestItemEditor extends AbstractRestCall {
         item.setCreated(true);
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         item.setStatus("Updated - OK");
         item.setCreated(true);
     }

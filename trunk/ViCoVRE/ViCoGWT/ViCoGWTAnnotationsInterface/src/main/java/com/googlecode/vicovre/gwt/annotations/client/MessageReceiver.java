@@ -32,20 +32,17 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONAddAnnotationMessage;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONMessage;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONUserMessage;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 
-public class MessageReceiver extends AbstractRestCall
+public class MessageReceiver extends AbstractJSONRestCall
         implements MessageResponseHandler {
 
     private Application application = null;
@@ -55,6 +52,7 @@ public class MessageReceiver extends AbstractRestCall
     private String url = null;
 
     public MessageReceiver(Application application) {
+        super(true);
         this.application = application;
         this.url = application.getUrl();
     }
@@ -92,34 +90,31 @@ public class MessageReceiver extends AbstractRestCall
         }
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess(JSONObject object) {
         if (done) {
             return;
         }
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if ((object != null) && (object.isNull() == null)) {
-            GWT.log("Message = " + object.toString());
-            JSONMessage message = JSONMessage.parse(object.toString());
-            String type = message.getType();
-            if (type.equals(JSONUserMessage.TYPE_ADD)) {
-                JSONUserMessage userMessage = message.cast();
-                User user = new User(userMessage.getName(),
-                        userMessage.getEmail());
-                application.addUser(user);
-            } else if (type.equals(JSONUserMessage.TYPE_DELETE)) {
-                JSONUserMessage userMessage = message.cast();
-                application.removeUser(userMessage.getEmail());
-            } else if (type.equals(JSONAddAnnotationMessage.TYPE)) {
-                JSONAddAnnotationMessage addMessage = message.cast();
-                application.addAnnotation(addMessage.getAnnotation());
-            }
 
-            if (!type.equals(JSONMessage.TYPE_DONE)) {
-                getNextMessage();
-            } else {
-                application.close();
-            }
+        GWT.log("Message = " + object.toString());
+        JSONMessage message = JSONMessage.parse(object.toString());
+        String type = message.getType();
+        if (type.equals(JSONUserMessage.TYPE_ADD)) {
+            JSONUserMessage userMessage = message.cast();
+            User user = new User(userMessage.getName(),
+                    userMessage.getEmail());
+            application.addUser(user);
+        } else if (type.equals(JSONUserMessage.TYPE_DELETE)) {
+            JSONUserMessage userMessage = message.cast();
+            application.removeUser(userMessage.getEmail());
+        } else if (type.equals(JSONAddAnnotationMessage.TYPE)) {
+            JSONAddAnnotationMessage addMessage = message.cast();
+            application.addAnnotation(addMessage.getAnnotation());
+        }
+
+        if (!type.equals(JSONMessage.TYPE_DONE)) {
+            getNextMessage();
+        } else {
+            application.close();
         }
     }
 

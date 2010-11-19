@@ -32,15 +32,11 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
-
 import com.google.gwt.user.client.Timer;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class PlayItemTimeUpdate extends AbstractRestCall {
+public class PlayItemTimeUpdate extends AbstractPlainRestCall {
 
     private PlayToVenuePopup popup = null;
 
@@ -84,7 +80,7 @@ public class PlayItemTimeUpdate extends AbstractRestCall {
     }
 
     public void go() {
-        go(url, Method.GET, MediaType.TEXT_PLAIN);
+        go(url);
     }
 
     public void start() {
@@ -105,9 +101,8 @@ public class PlayItemTimeUpdate extends AbstractRestCall {
         }
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess(String timeString) {
         if (!cancelled) {
-            String timeString = response.getEntity().getText();
             long time = Long.parseLong(timeString);
             if (!hasFirstTime) {
                 hasFirstTime = true;

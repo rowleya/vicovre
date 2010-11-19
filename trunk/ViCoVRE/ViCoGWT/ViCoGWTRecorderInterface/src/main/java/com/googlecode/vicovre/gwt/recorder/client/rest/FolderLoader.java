@@ -32,18 +32,15 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 
-public class FolderLoader extends AbstractRestCall {
+public class FolderLoader extends AbstractJSONRestCall {
 
     private FolderPanel panel = null;
 
@@ -58,6 +55,7 @@ public class FolderLoader extends AbstractRestCall {
     }
 
     public FolderLoader(FolderPanel panel, ActionLoader loader, String url) {
+        super(true);
         this.panel = panel;
         this.loader = loader;
         this.url = url + "folders/list";
@@ -71,26 +69,19 @@ public class FolderLoader extends AbstractRestCall {
         loader.itemFailed("Error loading folders: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONObject object = representation.getValue().isObject();
-        if ((object != null) && (object.isNull() == null)) {
-            JSONValue folderValue = object.get("folder");
-            if (folderValue != null) {
-                JSONArray folders = folderValue.isArray();
-                if (folders != null) {
-                    for (int i = 0; i < folders.size(); i++) {
-                        JSONString folder = folders.get(i).isString();
-                        panel.addFolder(folder.stringValue());
-                    }
-                } else {
-                    onError("Folder is not an array");
-                    return;
+    protected void onSuccess(JSONObject object) {
+        JSONValue folderValue = object.get("folder");
+        if (folderValue != null) {
+            JSONArray folders = folderValue.isArray();
+            if (folders != null) {
+                for (int i = 0; i < folders.size(); i++) {
+                    JSONString folder = folders.get(i).isString();
+                    panel.addFolder(folder.stringValue());
                 }
+            } else {
+                onError("Folder is not an array");
+                return;
             }
-        } else {
-            onError("No Object in response!");
-            return;
         }
 
         loader.itemLoaded();

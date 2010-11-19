@@ -35,8 +35,7 @@ package com.googlecode.vicovre.gwt.display.client;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -45,9 +44,9 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class PermissionSetter extends AbstractRestCall {
+public class PermissionSetter extends AbstractVoidRestCall {
 
     private String url = null;
 
@@ -109,7 +108,7 @@ public class PermissionSetter extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         if (queries.isEmpty()) {
             waitPopup.hide();
             if (popup != null) {

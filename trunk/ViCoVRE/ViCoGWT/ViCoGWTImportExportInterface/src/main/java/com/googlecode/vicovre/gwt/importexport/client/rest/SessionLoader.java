@@ -34,28 +34,17 @@ package com.googlecode.vicovre.gwt.importexport.client.rest;
 
 import java.util.Vector;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Preference;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.importexport.client.ExportPanel;
 import com.googlecode.vicovre.gwt.importexport.client.Stream;
 
-public class SessionLoader implements Callback {
+public class SessionLoader extends AbstractJSONRestCall {
 
     private ExportPanel panel = null;
 
@@ -69,55 +58,42 @@ public class SessionLoader implements Callback {
     }
 
     public SessionLoader(ExportPanel panel, String url, String id) {
+        super(false);
         this.panel = panel;
         this.url = url;
         this.id = id;
     }
 
     public void go() {
-        Client client = new Client(Protocol.HTTP);
         url += "export/" + id + "/list";
         GWT.log("URL = " + url);
-        Request request = new Request(Method.GET, url);
-        request.getClientInfo().getAcceptedMediaTypes().add(
-                new Preference<MediaType>(MediaType.APPLICATION_JSON));
-        client.handle(request, this);
+        go(url);
     }
 
-    public void onEvent(Request request, Response response) {
-        if (response.getStatus().equals(Status.SUCCESS_OK)) {
-            JsonRepresentation representation = response.getEntityAsJson();
-            GWT.log(representation.getText());
-            if (representation.getValue().isNull() != null) {
-                panel.setStreams(null);
-            } else {
-                Vector<Stream> streams = new Vector<Stream>();
-                JSONObject object = representation.getValue().isObject();
-                if (object != null) {
-                    JSONValue value = object.get("stream");
-                    JSONArray streamsArray = value.isArray();
-                    JSONObject streamObject = value.isObject();
-                    if (streamsArray != null) {
-                        for (int i = 0; i < streamsArray.size(); i++) {
-                            JSONObject stream = streamsArray.get(i).isObject();
-                            if (stream != null) {
-                                streams.add(new Stream(stream));
-                            }
-                        }
-                    } else if (streamObject != null) {
-                        streams.add(new Stream(streamObject));
+    protected void onSuccess(JSONObject object) {
+        Vector<Stream> streams = new Vector<Stream>();
+        if (object != null) {
+            JSONValue value = object.get("stream");
+            JSONArray streamsArray = value.isArray();
+            JSONObject streamObject = value.isObject();
+            if (streamsArray != null) {
+                for (int i = 0; i < streamsArray.size(); i++) {
+                    JSONObject stream = streamsArray.get(i).isObject();
+                    if (stream != null) {
+                        streams.add(new Stream(stream));
                     }
                 }
-                panel.setStreams(streams.toArray(new Stream[0]));
+            } else if (streamObject != null) {
+                streams.add(new Stream(streamObject));
             }
-        } else {
-            String errorMessage = "Error loading session "
-                + response.getStatus().getCode() + ": "
-                + response.getStatus().getDescription();
-            MessagePopup error = new MessagePopup(errorMessage,
-                    null, MessagePopup.ERROR, MessageResponse.OK);
-            error.center();
         }
+        panel.setStreams(streams.toArray(new Stream[0]));
+    }
+
+    protected void onError(String message) {
+        MessagePopup error = new MessagePopup(message,
+                null, MessagePopup.ERROR, MessageResponse.OK);
+        error.center();
     }
 
 }

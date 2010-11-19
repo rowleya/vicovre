@@ -33,8 +33,7 @@
 
 package com.googlecode.vicovre.gwt.download.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.Layout;
@@ -42,10 +41,10 @@ import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.download.client.LayoutNamePopup;
 
-public class LayoutCreator extends AbstractRestCall {
+public class LayoutCreator extends AbstractVoidRestCall {
 
     private Layout layout = null;
 
@@ -104,7 +103,7 @@ public class LayoutCreator extends AbstractRestCall {
         error.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         if (!waitPopup.wasCancelled()) {
             waitPopup.hide();
             popup.addSuccessful();

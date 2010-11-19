@@ -32,16 +32,15 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 
-public class TimeReceiver extends AbstractRestCall {
+public class TimeReceiver extends AbstractPlainRestCall {
 
     private Application application = null;
 
@@ -72,8 +71,7 @@ public class TimeReceiver extends AbstractRestCall {
         error.center();
     }
 
-    protected void onSuccess(Response response) {
-        String timestamp = response.getEntity().getText();
+    protected void onSuccess(String timestamp) {
         GWT.log("Timestamp = " + timestamp, null);
         type.setTimestamp(timestamp);
         application.displayAnnotationPanel(type);

@@ -32,17 +32,8 @@
 
 package com.googlecode.vicovre.gwt.annotations.client;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.data.Status;
-
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -96,41 +87,8 @@ public class LoginPopup extends ModalPopup<Grid> implements ClickHandler {
                     null, MessagePopup.ERROR, MessageResponse.OK);
             error.center();
         } else {
-            Client client = new Client(Protocol.HTTP);
-            String url = application.getUrl();
-            url += "login?";
-            url += "name=" + URL.encodeComponent(name.getText().trim());
-            url += "&email=" + URL.encodeComponent(email.getText().trim());
-            GWT.log("URL = " + url, null);
-
-            client.post(url, "", new Callback() {
-                public void onEvent(Request request, Response response) {
-                    String errorMessage = null;
-                    if (!response.getStatus().equals(Status.SUCCESS_OK)) {
-                        if (response.getStatus().equals(
-                                Status.CLIENT_ERROR_CONFLICT)) {
-                            errorMessage = "Name or E-mail Address in use.";
-                        } else if (response.getStatus().equals(
-                                Status.CLIENT_ERROR_UNAUTHORIZED)) {
-                            errorMessage = "Invalid Name or E-mail Address";
-                        } else {
-                            errorMessage = "Unknown Error "
-                                + response.getStatus().getCode() + ":"
-                                + response.getStatus().getDescription();
-                        }
-                    }
-                    if (errorMessage != null) {
-                        MessagePopup error = new MessagePopup(errorMessage,
-                                null, MessagePopup.ERROR, MessageResponse.OK);
-                        error.center();
-                    } else {
-                        hide();
-                        application.loginDone(name.getText().trim(),
-                                email.getText().trim());
-                    }
-                }
-
-            });
+            Login.login(application, this, application.getUrl(), name.getText(),
+                    email.getText());
         }
     }
 

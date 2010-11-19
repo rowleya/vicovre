@@ -30,60 +30,59 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.annotations.client;
 
 import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
+import com.googlecode.vicovre.gwt.client.MessagePopup;
+import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class Registerer extends AbstractVoidRestCall {
+public class Login extends AbstractVoidRestCall {
 
-    private String baseUrl;
+    private Application application = null;
+
+    private LoginPopup popup = null;
 
     private String url = null;
 
-    private WaitPopup waitPopup = new WaitPopup("Registering", true);
+    private String name = null;
 
-    public static void register(String baseUrl, String url, String username,
-            String password, String successUrl) {
-        Registerer registerer = new Registerer(baseUrl, url, username, password,
-                successUrl);
-        registerer.go();
+    private String email = null;
+
+    public static void login(Application application, LoginPopup popup,
+            String url, String name, String email) {
+        Login login = new Login(application, popup, url, name, email);
+        login.go();
     }
 
-    public Registerer(String baseUrl, String url, String username,
-            String password, String successUrl) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
-        this.url = url + "user/" + URL.encodeComponent(username)
-            + "?password=" + URL.encodeComponent(password)
-            + "&successUrl=" + URL.encodeComponent(successUrl);
+    public Login(Application application, LoginPopup popup, String url,
+            String name, String email) {
+        this.application = application;
+        this.popup = popup;
+        this.url = url;
+        this.url += "login?";
+        this.url += "name=" + URL.encodeComponent(name.trim());
+        this.url += "&email=" + URL.encodeComponent(email.trim());
+        this.name = name.trim();
+        this.email = email.trim();
     }
 
     public void go() {
-        waitPopup.center();
-        go(url, Method.PUT);
+        go(url, Method.POST);
+    }
+
+    @Override
+    protected void onSuccess() {
+        popup.hide();
+        application.loginDone(name, email);
     }
 
     protected void onError(String message) {
-        if (!waitPopup.wasCancelled()) {
-            waitPopup.hide();
-            MessagePopup popup = new MessagePopup(
-                    "Error registering: " + message,
-                    null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
-            popup.center();
-        }
-    }
-
-    protected void onSuccess() {
-        if (!waitPopup.wasCancelled()) {
-            waitPopup.hide();
-            MessagePopup popup = new MessagePopup(
-                    "Please check your e-mail to complete the registration",
-                    null, baseUrl + MessagePopup.INFO, MessageResponse.OK);
-            popup.center();
-        }
+        MessagePopup error = new MessagePopup(message,
+                null, MessagePopup.ERROR, MessageResponse.OK);
+        error.center();
     }
 
 }

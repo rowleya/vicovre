@@ -36,19 +36,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.json.JSONStreams;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 import com.googlecode.vicovre.gwt.recorder.client.StreamComparator;
 
-public class PlayItemStreamLoader extends AbstractRestCall {
+public class PlayItemStreamLoader extends AbstractJSONRestCall {
 
     private PlayItem playItem = null;
 
@@ -69,6 +66,7 @@ public class PlayItemStreamLoader extends AbstractRestCall {
 
     private PlayItemStreamLoader(PlayItem playItem, ActionLoader loader,
             String url) {
+        super(true);
         this.playItem = playItem;
         this.loader = loader;
         this.url = url + "recording" + playItem.getFolder();
@@ -86,18 +84,14 @@ public class PlayItemStreamLoader extends AbstractRestCall {
         loader.itemFailed("Error loading layout: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
+    protected void onSuccess(JSONObject object) {
         List<JSONStream> streams = new Vector<JSONStream>();
-        if ((object != null) && (object.isNull() == null)) {
-            JSONStreams streamList = JSONStreams.parse(object.toString());
-            JsArray<JSONStream> streamArray = streamList.getStreams();
-            for (int i = 0; i < streamArray.length(); i++) {
-                streams.add(streamArray.get(i));
-            }
-            Collections.sort(streams, new StreamComparator());
+        JSONStreams streamList = JSONStreams.parse(object.toString());
+        JsArray<JSONStream> streamArray = streamList.getStreams();
+        for (int i = 0; i < streamArray.length(); i++) {
+            streams.add(streamArray.get(i));
         }
+        Collections.sort(streams, new StreamComparator());
         playItem.setStreams(streams);
         if (loader != null) {
             loader.itemLoaded();

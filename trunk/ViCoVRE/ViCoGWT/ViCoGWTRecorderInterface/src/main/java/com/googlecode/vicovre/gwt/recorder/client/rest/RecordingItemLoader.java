@@ -35,15 +35,12 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import java.util.Collections;
 import java.util.Vector;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.MetadataPopup;
@@ -54,7 +51,7 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONNetworkLocation;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecording;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecordings;
 
-public class RecordingItemLoader extends AbstractRestCall {
+public class RecordingItemLoader extends AbstractJSONRestCall {
 
     private FolderPanel folderPanel = null;
 
@@ -86,6 +83,7 @@ public class RecordingItemLoader extends AbstractRestCall {
             FolderPanel folderPanel, PlayPanel playPanel,
             RecordPanel panel, ActionLoader loader, String url,
             Layout[] layouts, Layout[] customLayouts) {
+        super(false);
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
         this.panel = panel;
@@ -159,10 +157,8 @@ public class RecordingItemLoader extends AbstractRestCall {
         return recordingItem;
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if ((object != null) && (object.isNull() == null)) {
+    protected void onSuccess(JSONObject object) {
+        if (object != null) {
             JSONUnfinishedRecordings recordingsList =
                 JSONUnfinishedRecordings.parse(object.toString());
             JsArray<JSONUnfinishedRecording> recordings =

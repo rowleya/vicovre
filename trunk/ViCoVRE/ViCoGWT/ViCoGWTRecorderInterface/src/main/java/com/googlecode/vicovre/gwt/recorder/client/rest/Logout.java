@@ -32,14 +32,12 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class Logout extends AbstractRestCall {
+public class Logout extends AbstractVoidRestCall {
 
     private StatusPanel panel = null;
 
@@ -65,7 +63,7 @@ public class Logout extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         panel.loggedOut();
     }
 

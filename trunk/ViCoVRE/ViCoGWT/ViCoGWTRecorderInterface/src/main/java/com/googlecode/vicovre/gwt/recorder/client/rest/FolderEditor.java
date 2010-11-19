@@ -32,15 +32,14 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.MetadataPopup;
 
-public class FolderEditor extends AbstractRestCall {
+public class FolderEditor extends AbstractVoidRestCall {
 
     private String url = null;
 
@@ -73,7 +72,7 @@ public class FolderEditor extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         // Do Nothing
     }
 

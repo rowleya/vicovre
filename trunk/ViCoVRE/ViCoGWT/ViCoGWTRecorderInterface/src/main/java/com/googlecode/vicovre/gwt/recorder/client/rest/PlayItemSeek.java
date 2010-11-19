@@ -32,14 +32,12 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class PlayItemSeek extends AbstractRestCall {
+public class PlayItemSeek extends AbstractVoidRestCall {
 
     private PlayToVenuePopup popup = null;
 
@@ -67,7 +65,7 @@ public class PlayItemSeek extends AbstractRestCall {
         errorPopup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         // Do Nothing
     }
 }

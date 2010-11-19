@@ -32,9 +32,6 @@
 
 package com.googlecode.vicovre.gwt.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
@@ -43,7 +40,7 @@ import com.googlecode.vicovre.gwt.client.Venue;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 
-public class RestVenueLoader extends AbstractRestCall {
+public class RestVenueLoader extends AbstractJSONRestCall {
 
     private static final WaitPopup LOAD_VENUES_POPUP =
         new WaitPopup("Loading Venues...",  true);
@@ -58,6 +55,7 @@ public class RestVenueLoader extends AbstractRestCall {
     }
 
     public RestVenueLoader(VenuePanel panel, String url) {
+        super(true);
         this.panel = panel;
         this.url = url + "venue/venues?url=" + panel.getVenueServer();
     }
@@ -72,43 +70,33 @@ public class RestVenueLoader extends AbstractRestCall {
         displayError("Error loading venues: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONObject object = representation.getValue().isObject();
-        if (object != null) {
-            JSONValue venueValue = object.get("venues");
-            JSONValue serverValue = object.get("venueServerUrl");
-            if ((venueValue != null) && (serverValue != null)) {
-                JSONString server = serverValue.isString();
-                JSONArray venues = venueValue.isArray();
-                if ((venues != null) && (server != null)) {
-                    Venue[] vs = new Venue[venues.size()];
-                    for (int i = 0; i < venues.size(); i++) {
-                        JSONObject venue = venues.get(i).isObject();
-                        if (venue != null) {
-                            String name =
-                                venue.get("name").isString().stringValue();
-                            String url =
-                                venue.get("uri").isString().stringValue();
-                            vs[i] = new Venue(name, url);
-                        }
+    protected void onSuccess(JSONObject object) {
+        JSONValue venueValue = object.get("venues");
+        JSONValue serverValue = object.get("venueServerUrl");
+        if ((venueValue != null) && (serverValue != null)) {
+            JSONString server = serverValue.isString();
+            JSONArray venues = venueValue.isArray();
+            if ((venues != null) && (server != null)) {
+                Venue[] vs = new Venue[venues.size()];
+                for (int i = 0; i < venues.size(); i++) {
+                    JSONObject venue = venues.get(i).isObject();
+                    if (venue != null) {
+                        String name =
+                            venue.get("name").isString().stringValue();
+                        String url =
+                            venue.get("uri").isString().stringValue();
+                        vs[i] = new Venue(name, url);
                     }
-                    panel.setVenues(server.stringValue(), vs);
-                    LOAD_VENUES_POPUP.hide();
-                } else {
-                    onError("Wrong types in response");
-                    return;
                 }
+                panel.setVenues(server.stringValue(), vs);
+                LOAD_VENUES_POPUP.hide();
             } else {
-                onError("Missing venues array or server in response");
+                onError("Wrong types in response");
                 return;
             }
         } else {
-            onError("Missing object in response");
+            onError("Missing venues array or server in response");
             return;
         }
     }
-
-
-
 }

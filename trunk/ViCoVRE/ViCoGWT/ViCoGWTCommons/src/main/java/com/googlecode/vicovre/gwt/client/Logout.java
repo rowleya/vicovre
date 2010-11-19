@@ -32,12 +32,10 @@
 
 package com.googlecode.vicovre.gwt.client;
 
-import org.restlet.gwt.data.Response;
-
 import com.google.gwt.user.client.Window.Location;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class Logout extends AbstractRestCall {
+public class Logout extends AbstractVoidRestCall {
 
     private String baseUrl = null;
 
@@ -68,7 +66,7 @@ public class Logout extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         Location.reload();
     }
 }
