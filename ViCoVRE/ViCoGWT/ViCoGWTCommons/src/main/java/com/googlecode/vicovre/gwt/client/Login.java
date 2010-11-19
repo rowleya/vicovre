@@ -32,15 +32,14 @@
 
 package com.googlecode.vicovre.gwt.client;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window.Location;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class Login extends AbstractRestCall {
+public class Login extends AbstractVoidRestCall {
 
     private String baseUrl = null;
 
@@ -81,7 +80,7 @@ public class Login extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         Location.reload();
     }
 }

@@ -32,16 +32,15 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.LayoutPopup;
 
-public class PlayItemLayoutChanger extends AbstractRestCall {
+public class PlayItemLayoutChanger extends AbstractVoidRestCall {
 
     private LayoutPopup popup = null;
 
@@ -87,7 +86,7 @@ public class PlayItemLayoutChanger extends AbstractRestCall {
         errorPopup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         if (!deleted && (popup.getLayoutTime() != -1)) {
             deleted = true;
             go(itemUrl, Method.PUT);

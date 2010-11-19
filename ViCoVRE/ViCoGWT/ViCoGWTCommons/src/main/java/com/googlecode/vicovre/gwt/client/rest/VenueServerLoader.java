@@ -32,15 +32,12 @@
 
 package com.googlecode.vicovre.gwt.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
-public class VenueServerLoader extends AbstractRestCall {
+public class VenueServerLoader extends AbstractJSONRestCall {
 
     private VenueServerReceiver receiver = null;
 
@@ -52,6 +49,7 @@ public class VenueServerLoader extends AbstractRestCall {
     }
 
     public VenueServerLoader(VenueServerReceiver receiver, String url) {
+        super(false);
         this.receiver = receiver;
         this.url = url + "venue/servers";
     }
@@ -64,10 +62,8 @@ public class VenueServerLoader extends AbstractRestCall {
         receiver.failedToGetVenueServers(message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONObject object = representation.getValue().isObject();
-        if ((object != null) && (object.isNull() == null)) {
+    protected void onSuccess(JSONObject object) {
+        if (object != null) {
             JSONValue serverValue = object.get("server");
             if (serverValue != null) {
                 JSONArray servers = serverValue.isArray();

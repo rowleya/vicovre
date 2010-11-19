@@ -32,17 +32,14 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 
-public class FolderMetadataLoader extends AbstractRestCall {
+public class FolderMetadataLoader extends AbstractJSONRestCall {
 
     private FolderPanel folderPanel = null;
 
@@ -59,6 +56,7 @@ public class FolderMetadataLoader extends AbstractRestCall {
 
     public FolderMetadataLoader(String folder, FolderPanel folderPanel,
             ActionLoader loader, String url) {
+        super(false);
         this.folderPanel = folderPanel;
         this.loader = loader;
         this.url = url + "folders" + folder;
@@ -78,10 +76,8 @@ public class FolderMetadataLoader extends AbstractRestCall {
         loader.itemFailed("Error loading folder metadata: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if ((object != null) && (object.isNull() == null)) {
+    protected void onSuccess(JSONObject object) {
+        if (object != null) {
             JSONMetadata metadata = JSONMetadata.parse(object.toString());
             folderPanel.setMetadata(metadata);
         }

@@ -30,55 +30,26 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.importexport.client.rest;
+package com.googlecode.vicovre.gwt.client.rest;
 
-import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
-import com.googlecode.vicovre.gwt.importexport.client.ImportPanel;
+import org.restlet.client.Response;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
 
-public class CreateSessionSender extends AbstractPlainRestCall {
+public abstract class AbstractVoidRestCall extends AbstractRestCall {
 
-    private ImportPanel panel = null;
-
-    private String url = null;
-
-    private boolean live = false;
-
-    private String name = null;
-
-    public static void createSession(ImportPanel panel, String url,
-            boolean live, String name) {
-        CreateSessionSender sender = new CreateSessionSender(panel, url, live,
-                name);
-        sender.go();
+    protected void go(String url) {
+        go(url, Method.GET, MediaType.ALL);
     }
 
-    public CreateSessionSender(ImportPanel panel, String url, boolean live,
-            String name) {
-        this.panel = panel;
-        this.url = url;
-        this.live = live;
-        this.name = name;
+    protected void go(String url, Method method) {
+        go(url, method, MediaType.ALL);
     }
 
-    public void go() {
-        url += "import/create?name=" + URL.encodeComponent(name);
-        if (live) {
-            url += "&live=true";
-        }
-        go(url);
+    protected void onSuccess(Response response) {
+        onSuccess();
     }
 
-    protected void onSuccess(String text) {
-        panel.startSession(text);
-    }
-
-    protected void onError(String message) {
-        MessagePopup error = new MessagePopup(message,
-                null, MessagePopup.ERROR, MessageResponse.OK);
-        error.center();
-    }
+    protected abstract void onSuccess();
 
 }

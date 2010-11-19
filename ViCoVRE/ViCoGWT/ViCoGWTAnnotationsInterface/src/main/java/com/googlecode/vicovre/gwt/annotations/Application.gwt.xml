@@ -8,7 +8,7 @@
       <inherits name="com.google.gwt.http.HTTP"/>
 
       <!-- Inherit Restlet GWT -->
-      <inherits name='org.restlet.GWT'/>
+      <inherits name='org.restlet.Restlet'/>
 
       <!-- Inherit css based theme -->
       <inherits name='com.google.gwt.user.theme.standard.Standard'/>

@@ -32,14 +32,12 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
 
-public class PlayItemChangeState extends AbstractRestCall {
+public class PlayItemChangeState extends AbstractVoidRestCall {
 
     private static final String STOP = "stop";
 
@@ -89,7 +87,7 @@ public class PlayItemChangeState extends AbstractRestCall {
         errorPopup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         if (operation.equals(RESUME)) {
             popup.setPlaying();
         } else if (operation.equals(STOP)) {

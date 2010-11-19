@@ -32,8 +32,7 @@
 
 package com.googlecode.vicovre.gwt.display.client;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Widget;
@@ -41,9 +40,9 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class PasswordSetter extends AbstractRestCall {
+public class PasswordSetter extends AbstractVoidRestCall {
 
     private String baseUrl = null;
 
@@ -85,7 +84,7 @@ public class PasswordSetter extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         waitPopup.hide();
         popup.hide();
     }

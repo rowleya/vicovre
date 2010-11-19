@@ -32,15 +32,13 @@
 
 package com.googlecode.vicovre.gwt.display.client;
 
-import org.restlet.gwt.data.Response;
-
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class AccessRequester extends AbstractRestCall {
+public class AccessRequester extends AbstractVoidRestCall {
 
     private String url = null;
 
@@ -76,7 +74,7 @@ public class AccessRequester extends AbstractRestCall {
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         waitPopup.hide();
         MessagePopup popup = new MessagePopup("Your request has been sent.\n"
                 + " There is no guarentee that you will receive a reply to"

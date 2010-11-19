@@ -32,14 +32,13 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-public class RecordingItemEditor extends AbstractRestCall {
+public class RecordingItemEditor extends AbstractVoidRestCall {
 
     private RecordingItem item = null;
 
@@ -76,7 +75,7 @@ public class RecordingItemEditor extends AbstractRestCall {
         item.setStatus("Error: " + message);
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         item.setCreated(true);
         item.setStatus(oldStatus);
     }

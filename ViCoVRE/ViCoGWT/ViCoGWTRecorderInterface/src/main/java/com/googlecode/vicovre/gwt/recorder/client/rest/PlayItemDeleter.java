@@ -32,17 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 
-public class PlayItemDeleter extends AbstractRestCall
+public class PlayItemDeleter extends AbstractVoidRestCall
         implements MessageResponseHandler {
 
     private PlayItem item = null;
@@ -92,7 +91,7 @@ public class PlayItemDeleter extends AbstractRestCall
         popup.center();
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         // Do Nothing
     }
 

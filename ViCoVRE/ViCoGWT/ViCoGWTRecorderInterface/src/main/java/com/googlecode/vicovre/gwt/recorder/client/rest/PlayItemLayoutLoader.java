@@ -35,20 +35,16 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import java.util.List;
 import java.util.Vector;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.google.gwt.json.client.JSONObject;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 import com.googlecode.vicovre.gwt.recorder.client.ReplayLayout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONReplayLayouts;
 
-public class PlayItemLayoutLoader extends AbstractRestCall {
+public class PlayItemLayoutLoader extends AbstractJSONRestCall {
 
     private PlayItem playItem = null;
 
@@ -69,6 +65,7 @@ public class PlayItemLayoutLoader extends AbstractRestCall {
 
     public PlayItemLayoutLoader(PlayItem playItem, ActionLoader loader,
             String url) {
+        super(false);
         this.playItem = playItem;
         this.loader = loader;
         this.url = url + "recording" + playItem.getFolder();
@@ -86,11 +83,10 @@ public class PlayItemLayoutLoader extends AbstractRestCall {
         loader.itemFailed("Error loading layout: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
+    protected void onSuccess(JSONObject object) {
         List<ReplayLayout> replayLayouts = new Vector<ReplayLayout>();
-        if ((object != null) && (object.isNull() == null)) {
+
+        if (object != null) {
             JSONReplayLayouts replayLayoutList = JSONReplayLayouts.parse(
                     object.toString());
             JsArray<JSONReplayLayout> layouts =

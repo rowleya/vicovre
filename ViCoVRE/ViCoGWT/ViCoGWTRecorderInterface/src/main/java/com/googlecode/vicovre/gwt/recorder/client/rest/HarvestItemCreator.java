@@ -32,16 +32,14 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Reference;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
+import org.restlet.client.data.Reference;
 
 import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItemPopup;
@@ -49,7 +47,7 @@ import com.googlecode.vicovre.gwt.recorder.client.HarvestPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordPanel;
 
-public class HarvestItemCreator extends AbstractRestCall
+public class HarvestItemCreator extends AbstractPlainRestCall
         implements MessageResponseHandler {
 
     private FolderPanel folderPanel = null;
@@ -105,9 +103,8 @@ public class HarvestItemCreator extends AbstractRestCall
         GWT.log("Error creating recording item: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        String id = new Reference(
-                response.getEntity().getText()).getLastSegment();
+    protected void onSuccess(String text) {
+        String id = new Reference(text).getLastSegment();
         item.setId(id);
         item.setCreated(true);
         item.setStatus("OK");
@@ -127,7 +124,7 @@ public class HarvestItemCreator extends AbstractRestCall
             itemUrl += item.getDetailsAsUrl();
 
             GWT.log("Item url = " + itemUrl);
-            go(itemUrl, Method.POST, MediaType.TEXT_PLAIN);
+            go(itemUrl, Method.POST);
         }
     }
 

@@ -32,19 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Response;
-import org.restlet.gwt.resource.JsonRepresentation;
-
-import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;
 import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-public class RecordingItemStopper extends AbstractRestCall {
+public class RecordingItemStopper extends AbstractJSONRestCall {
 
     private FolderPanel folderPanel = null;
 
@@ -73,6 +70,7 @@ public class RecordingItemStopper extends AbstractRestCall {
     public RecordingItemStopper(FolderPanel folderPanel, PlayPanel playPanel,
             RecordingItem item, String url, Layout[] layouts,
             Layout[] customLayouts) {
+        super(true);
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
         this.item = item;
@@ -99,18 +97,14 @@ public class RecordingItemStopper extends AbstractRestCall {
         item.setStatus("Error: " + message);
     }
 
-    protected void onSuccess(Response response) {
-        JsonRepresentation representation = response.getEntityAsJson();
-        JSONValue object = representation.getValue();
-        if ((object != null) && (object.isNull() == null)) {
-            JSONRecording recording = JSONRecording.parse(object.toString());
-            if (recording != null) {
+    protected void onSuccess(JSONObject object) {
+        JSONRecording recording = JSONRecording.parse(object.toString());
+        if (recording != null) {
 
-                PlayItem playItem = PlayItemLoader.buildPlayItem(recording,
-                        folderPanel, baseUrl, layouts, customLayouts);
-                if (item != null) {
-                    playPanel.addItem(playItem);
-                }
+            PlayItem playItem = PlayItemLoader.buildPlayItem(recording,
+                    folderPanel, baseUrl, layouts, customLayouts);
+            if (item != null) {
+                playPanel.addItem(playItem);
             }
         }
         item.setCreated(true);

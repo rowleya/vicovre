@@ -32,21 +32,21 @@
 
 package com.googlecode.vicovre.gwt.client.rest;
 
-import org.restlet.gwt.Callback;
-import org.restlet.gwt.Client;
-import org.restlet.gwt.data.Cookie;
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Preference;
-import org.restlet.gwt.data.Protocol;
-import org.restlet.gwt.data.Request;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.Client;
+import org.restlet.client.Request;
+import org.restlet.client.Response;
+import org.restlet.client.Uniform;
+import org.restlet.client.data.Cookie;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
+import org.restlet.client.data.Preference;
+import org.restlet.client.data.Protocol;
 
 import com.google.gwt.user.client.Cookies;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 
-public abstract class AbstractRestCall implements Callback {
+public abstract class AbstractRestCall implements Uniform {
 
     protected void go(String url, Method method, MediaType mediaType) {
         Client client = new Client(Protocol.HTTP);
@@ -60,15 +60,7 @@ public abstract class AbstractRestCall implements Callback {
         client.handle(request, this);
     }
 
-    protected void go(String url, Method method) {
-        go(url, method, MediaType.APPLICATION_JSON);
-    }
-
-    protected void go(String url) {
-        go(url, Method.GET);
-    }
-
-    public void onEvent(Request request, Response response) {
+    public void handle(Request request, Response response) {
         if (response.getStatus().isSuccess()) {
             onSuccess(response);
         } else {

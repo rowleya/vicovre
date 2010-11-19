@@ -32,17 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.core.client.GWT;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.RecordingItem;
 
-public class RecordingItemDeleter extends AbstractRestCall
+public class RecordingItemDeleter extends AbstractVoidRestCall
         implements MessageResponseHandler {
 
     private RecordingItem item = null;
@@ -76,7 +75,7 @@ public class RecordingItemDeleter extends AbstractRestCall
         GWT.log("Error deleting item: " + message);
     }
 
-    protected void onSuccess(Response response) {
+    protected void onSuccess() {
         item.removeFromParent();
     }
 

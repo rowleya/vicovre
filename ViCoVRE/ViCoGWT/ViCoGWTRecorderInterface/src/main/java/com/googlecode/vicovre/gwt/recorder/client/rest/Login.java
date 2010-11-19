@@ -32,15 +32,13 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import org.restlet.gwt.data.MediaType;
-import org.restlet.gwt.data.Method;
-import org.restlet.gwt.data.Response;
+import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.rest.AbstractRestCall;
+import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.StatusPanel;
 
-public class Login extends AbstractRestCall {
+public class Login extends AbstractPlainRestCall {
 
     private StatusPanel panel = null;
 
@@ -63,7 +61,7 @@ public class Login extends AbstractRestCall {
     }
 
     public void go() {
-        go(url, Method.POST, MediaType.TEXT_PLAIN);
+        go(url, Method.POST);
     }
 
     protected void onError(String message) {
@@ -74,8 +72,7 @@ public class Login extends AbstractRestCall {
         }
     }
 
-    protected void onSuccess(Response response) {
-        String role = response.getEntity().getText();
+    protected void onSuccess(String role) {
         panel.loginSuccessful(username, role);
     }
 }

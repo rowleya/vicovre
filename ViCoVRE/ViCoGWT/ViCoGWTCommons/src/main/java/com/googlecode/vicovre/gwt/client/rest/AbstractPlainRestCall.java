@@ -30,55 +30,40 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.importexport.client.rest;
+package com.googlecode.vicovre.gwt.client.rest;
 
-import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
-import com.googlecode.vicovre.gwt.importexport.client.ImportPanel;
+import java.io.IOException;
 
-public class CreateSessionSender extends AbstractPlainRestCall {
+import org.restlet.client.Response;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
 
-    private ImportPanel panel = null;
+import com.google.gwt.core.client.GWT;
 
-    private String url = null;
+public abstract class AbstractPlainRestCall extends AbstractRestCall {
 
-    private boolean live = false;
-
-    private String name = null;
-
-    public static void createSession(ImportPanel panel, String url,
-            boolean live, String name) {
-        CreateSessionSender sender = new CreateSessionSender(panel, url, live,
-                name);
-        sender.go();
+    protected void go(String url) {
+        go(url, Method.GET, MediaType.TEXT_PLAIN);
     }
 
-    public CreateSessionSender(ImportPanel panel, String url, boolean live,
-            String name) {
-        this.panel = panel;
-        this.url = url;
-        this.live = live;
-        this.name = name;
+    protected void go(String url, Method method) {
+        go(url, method, MediaType.TEXT_PLAIN);
     }
 
-    public void go() {
-        url += "import/create?name=" + URL.encodeComponent(name);
-        if (live) {
-            url += "&live=true";
+    protected void onSuccess(Response response) {
+        try {
+            String text = response.getEntity().getText();
+            if (text != null) {
+                onSuccess(text);
+            } else {
+                onError("Text null in response!");
+            }
+        } catch (IOException e) {
+            GWT.log("Error reading Text Plain response", e);
+            onError("Error reading Text Plain response: " + e.getMessage());
         }
-        go(url);
     }
 
-    protected void onSuccess(String text) {
-        panel.startSession(text);
-    }
-
-    protected void onError(String message) {
-        MessagePopup error = new MessagePopup(message,
-                null, MessagePopup.ERROR, MessageResponse.OK);
-        error.center();
-    }
+    protected abstract void onSuccess(String text);
 
 }
