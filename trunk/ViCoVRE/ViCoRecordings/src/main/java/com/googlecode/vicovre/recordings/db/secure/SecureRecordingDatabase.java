@@ -177,7 +177,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
-        checkWrite(creatorFolder, creatorId, folder);
+        checkWrite(creatorFolder, HARVEST_ID_PREFIX + creatorId, folder);
         securityDatabase.createAcl(creatorFolder,
                 HARVEST_ID_PREFIX + creatorId, folder,
                 UNFINISHED_ID_PREFIX + recording.getId(), false, true,
@@ -294,7 +294,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
             creatorId = creator.getId();
         }
         String folder = recording.getFolder();
-        checkWrite(creatorFolder, creatorId, folder);
+        checkWrite(creatorFolder, UNFINISHED_ID_PREFIX + creatorId, folder);
         securityDatabase.createAcl(creatorFolder,
                 UNFINISHED_ID_PREFIX + creatorId, folder,
                 CHANGE_RECORDING_ID_PREFIX + recording.getId(), false, true,
@@ -571,8 +571,7 @@ public class SecureRecordingDatabase implements RecordingDatabase {
     private boolean canWriteFolder(String creatorFolder, String creatorId,
             String folder) {
         return securityDatabase.isAllowed(creatorFolder, creatorId, folder,
-                WRITE_FOLDER_PREFIX, securityDatabase.hasRole(
-                        creatorFolder, creatorId, Role.WRITER));
+                WRITE_FOLDER_PREFIX, false);
     }
 
     public boolean canWriteFolder(String folder) {
