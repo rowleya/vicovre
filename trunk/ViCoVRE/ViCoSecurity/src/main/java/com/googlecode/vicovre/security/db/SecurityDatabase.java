@@ -758,6 +758,7 @@ public class SecurityDatabase {
     private User getCurrentUser(String requesterFolder, String requesterId) {
         User user = CurrentUser.get();
         if (user != null) {
+            System.err.println("Current user is " + user.getUsername());
             return user;
         }
 
@@ -768,6 +769,9 @@ public class SecurityDatabase {
                 ACL acl = aclList.get(requesterId);
                 if (acl != null) {
                     if (acl.canProxy()) {
+                        System.err.println("Proxing "
+                                + acl.getOwner().getUsername()
+                                + " as current user");
                         return acl.getOwner();
                     }
                 }
@@ -956,6 +960,10 @@ public class SecurityDatabase {
                 return def;
             }
         }
+    }
+
+    public boolean hasRole(String creatorFolder, String creatorId, Role role) {
+        return getCurrentUser(creatorFolder, creatorId).getRole().is(role);
     }
 
     public boolean hasRole(Role role) {
