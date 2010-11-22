@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.recordings;
 
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -345,6 +346,8 @@ public class StreamArchive {
                 offset += length - RTCPHeader.SIZE;
                 read += length - RTCPHeader.SIZE;
             }
+        } catch (EOFException e) {
+            // Do Nothing - happens regularly
         } catch (IOException e) {
             e.printStackTrace();
         }

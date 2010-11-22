@@ -245,6 +245,14 @@ public class SecureRecordingDatabase implements RecordingDatabase {
         database.updateUnfinishedRecording(recording);
     }
 
+    public void finishUnfinishedRecording(UnfinishedRecording recording)
+            throws IOException {
+        String folder = recording.getFolder();
+        securityDatabase.deleteAcl(folder,
+                UNFINISHED_ID_PREFIX + recording.getId());
+        database.finishUnfinishedRecording(recording);
+    }
+
     public void deleteUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
         String folder = recording.getFolder();
