@@ -87,6 +87,9 @@ public interface RecordingDatabase {
             HarvestSource creator)
             throws IOException;
 
+    public void finishUnfinishedRecording(UnfinishedRecording recording)
+            throws IOException;
+
     public void deleteUnfinishedRecording(UnfinishedRecording recording)
             throws IOException;
 

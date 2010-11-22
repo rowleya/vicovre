@@ -83,9 +83,11 @@ public class BackupHandler extends Thread implements RecordingListener {
     }
 
     private void startOperation(Recording recording) {
+        System.err.println("Starting operation on recording " + recording.getId());
         synchronized (performingOperation) {
             while (performingOperation.contains(recording)) {
                 try {
+                    System.err.println("Waiting to start operation on recording " + recording.getId());
                     performingOperation.wait();
                 } catch (InterruptedException e) {
                     // Do Nothing
@@ -93,13 +95,16 @@ public class BackupHandler extends Thread implements RecordingListener {
             }
             performingOperation.add(recording);
         }
+        System.err.println("Finished starting operation on recording " + recording.getId());
     }
 
     private void finishOperation(Recording recording) {
+        System.err.println("Finishing operation on recording " + recording.getId());
         synchronized (performingOperation) {
             performingOperation.remove(recording);
             performingOperation.notifyAll();
         }
+        System.err.println("Finished finishing operation on recording " + recording.getId());
     }
 
     private Recording getNextRecording() {

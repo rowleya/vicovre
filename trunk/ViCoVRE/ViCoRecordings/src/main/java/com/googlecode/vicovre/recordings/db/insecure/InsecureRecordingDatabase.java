@@ -332,11 +332,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
-    public void deleteUnfinishedRecording(UnfinishedRecording recording)
+    public void finishUnfinishedRecording(UnfinishedRecording recording)
             throws IOException {
-        if (readOnly) {
-            throw new IOException("Cannot edit in read only mode");
-        }
         recording.stopRecording();
         InsecureFolder folder = getFolder(getFile(recording.getFolder()));
         folder.deleteUnfinishedRecording(recording.getId());
@@ -346,6 +343,14 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                 recording.getId() + RecordingConstants.METADATA);
         file.delete();
         metadata.delete();
+    }
+
+    public void deleteUnfinishedRecording(UnfinishedRecording recording)
+            throws IOException {
+        if (readOnly) {
+            throw new IOException("Cannot edit in read only mode");
+        }
+        finishUnfinishedRecording(recording);
         for (UnfinishedRecordingListener listener
                 : unfinishedRecordingListeners) {
             listener.recordingDeleted(recording);
