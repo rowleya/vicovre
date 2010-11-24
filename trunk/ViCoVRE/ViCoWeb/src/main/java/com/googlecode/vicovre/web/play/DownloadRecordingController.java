@@ -41,6 +41,7 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,9 +52,13 @@ import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayout;
+import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
+import com.googlecode.vicovre.repositories.layout.Layout;
+import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.security.UnauthorizedException;
@@ -143,24 +148,67 @@ public class DownloadRecordingController implements Controller {
         } else {
 
             String[] videoStreams = request.getParameterValues("video");
+            String[] audioStreams = request.getParameterValues("audio");
+            String[] syncStreams = request.getParameterValues("sync");
+
+            String[] widths = request.getParameterValues("width");
+            String[] heights = request.getParameterValues("height");
+            String[] xs = request.getParameterValues("x");
+            String[] ys = request.getParameterValues("y");
+
+            String off = request.getParameter("offset");
+            String strt = request.getParameter("start");
+            String dur = request.getParameter("duration");
+
+            if ((videoStreams == null) && (audioStreams == null)
+                    && (syncStreams == null)) {
+                ReplayLayout replayLayout = recording.getReplayLayouts().get(0);
+                if (replayLayout != null) {
+                    audioStreams = replayLayout.getAudioStreamIds().toArray(
+                            new String[0]);
+                    syncStreams = new String[0];
+                    List<ReplayLayoutPosition> positions =
+                        replayLayout.getLayoutPositions();
+                    videoStreams = new String[positions.size()];
+                    widths = new String[positions.size()];
+                    heights = new String[positions.size()];
+                    xs = new String[positions.size()];
+                    ys = new String[positions.size()];
+                    Layout layout = layoutRepository.findLayout(
+                            replayLayout.getName());
+                    if (layout == null) {
+                        layout = editableLayoutRepository.findLayout(
+                                replayLayout.getName());
+                    }
+                    for (int i = 0; i < positions.size(); i++) {
+                        ReplayLayoutPosition pos = positions.get(i);
+                        LayoutPosition layoutPos = layout.findStreamPosition(
+                                pos.getName());
+                        videoStreams[i] = pos.getStreamId();
+                        widths[i] = String.valueOf(layoutPos.getWidth());
+                        heights[i] = String.valueOf(layoutPos.getHeight());
+                        xs[i] = String.valueOf(layoutPos.getX());
+                        ys[i] = String.valueOf(layoutPos.getY());
+                    }
+                    strt = String.valueOf(replayLayout.getTime());
+                    dur = String.valueOf(replayLayout.getEndTime()
+                            - replayLayout.getTime());
+                }
+            }
             if (videoStreams == null) {
                 videoStreams = new String[0];
             }
-            String[] audioStreams = request.getParameterValues("audio");
             if (audioStreams == null) {
                 audioStreams = new String[0];
             }
-            String[] syncStreams = request.getParameterValues("sync");
             if (syncStreams == null) {
                 syncStreams = new String[0];
             }
 
-            String off = request.getParameter("offset");
             if (off == null) {
                 off = "0.0";
             }
             long offset = (long) (Double.parseDouble(off) * 1000);
-            String strt = request.getParameter("start");
             if (strt == null) {
                 strt = "0";
             }
@@ -173,7 +221,6 @@ public class DownloadRecordingController implements Controller {
             }
             maxDuration -= start;
 
-            String dur = request.getParameter("duration");
             if (dur == null) {
                 dur = String.valueOf(maxDuration);
             }
@@ -185,10 +232,6 @@ public class DownloadRecordingController implements Controller {
             System.err.println("Downloading, duration = " + duration + " start = " + start + " offset = " + offset);
 
             Rectangle[] rects = new Rectangle[videoStreams.length];
-            String[] widths = request.getParameterValues("width");
-            String[] heights = request.getParameterValues("height");
-            String[] xs = request.getParameterValues("x");
-            String[] ys = request.getParameterValues("y");
             for (int i = 0; i < videoStreams.length; i++) {
                 videoStreams[i] = new File(recording.getDirectory(),
                         videoStreams[i]).getAbsolutePath();

@@ -46,4 +46,13 @@
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
     </bean>
+
+    <bean name="/sitemapindex.xml" class="com.googlecode.vicovre.web.SitemapIndexController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+    </bean>
+
+    <bean name="/**/sitemap.xml" class="com.googlecode.vicovre.web.SitemapController">
+        <constructor-arg><ref bean="database"/></constructor-arg>
+        <constructor-arg><ref bean="critterHarvester"/></constructor-arg>
+    </bean>
 </beans>

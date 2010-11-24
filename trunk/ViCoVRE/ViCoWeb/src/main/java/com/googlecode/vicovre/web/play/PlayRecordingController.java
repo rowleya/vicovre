@@ -137,7 +137,7 @@ public class PlayRecordingController implements Controller {
 
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return (name.startsWith(ssrc) && name.endsWith(".jpg")
+                return (name.startsWith(ssrc) && name.endsWith(".png")
                         && !name.contains("preview"));
             }
         };

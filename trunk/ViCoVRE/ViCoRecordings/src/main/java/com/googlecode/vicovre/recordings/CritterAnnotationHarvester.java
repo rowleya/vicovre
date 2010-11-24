@@ -92,6 +92,7 @@ public class CritterAnnotationHarvester {
             throws SAXException, IOException {
         URL eventUrl = new URL(url, eventId);
         URLConnection connection = eventUrl.openConnection();
+        connection.setRequestProperty("Accept", "application/xml");
         Node doc = XmlIo.read(connection.getInputStream());
         Node event = XmlIo.readNode(doc, "event");
         String eventTag = XmlIo.readContent(event, "tag");

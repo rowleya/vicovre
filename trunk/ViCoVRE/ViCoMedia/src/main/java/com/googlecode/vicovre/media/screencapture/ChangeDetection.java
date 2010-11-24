@@ -115,7 +115,7 @@ public class ChangeDetection implements Renderer, Effect {
 
     private boolean firstScene = true;
 
-    private double firstSceneChangeThreshold = 0.90;
+    private double firstSceneChangeThreshold = 0.80;
 
     private double sceneChangeThreshold = 0.05;
 
@@ -264,52 +264,10 @@ public class ChangeDetection implements Renderer, Effect {
         return result;
     }
 
-    /**
-     *
-     * @see javax.media.Renderer#process(javax.media.Buffer)
-     */
-    public int process(Buffer bufIn) {
-        if (crvec == null) {
-            setInputFormat(bufIn.getFormat());
-
-            try {
-                refbuf = new QuickArray(byte[].class, size.width * size.height);
-                refbuf.clear();
-                if (yuvFormat == null) {
-                    devbuf = new QuickArray(byte[].class,
-                            size.width * size.height);
-                    ((QuickArray) devbuf).clear();
-                }
-            } catch (QuickArrayException e) {
-                e.printStackTrace();
-                return BUFFER_PROCESSED_FAILED;
-            }
-            crvec = new int[nblk];
-            lastBuffer = null;
-        }
-        scan = (scan + 3) & 7;
-        Object inObject = bufIn.getData();
-        if (inObject == null) {
-            return BUFFER_PROCESSED_OK;
-        }
-
+    public void getDifferences(QuickArray refbuf, QuickArrayAbstract devbuf,
+            int scan, int[] crvec) {
         int ds = width;
         int rs = width;
-        QuickArrayWrapper in = null;
-        try {
-            if (yuvFormat == null) {
-                in = new QuickArrayWrapper(inObject, bufIn.getOffset(),
-                        bufIn.getLength());
-            } else {
-                in = new QuickArrayWrapper(inObject, bufIn.getOffset()
-                        + yuvFormat.getOffsetY(), bufIn.getLength());
-            }
-        } catch (QuickArrayException e) {
-            e.printStackTrace();
-            return BUFFER_PROCESSED_FAILED;
-        }
-
-        lock();
         int db = scan * ds;
         int rb = scan * rs;
         int w = blkw;
@@ -319,11 +277,6 @@ public class ChangeDetection implements Renderer, Effect {
             int nrb = rb;
             int ncrv = crv;
             for (int x = 0; x < blkw; x++) {
-                if (yuvFormat == null) {
-                    convertBlockLine(in, devbuf, scan, x, y);
-                } else {
-                    devbuf = in;
-                }
                 int left = 0;
                 int right = 0;
                 int top = 0;
@@ -432,6 +385,64 @@ public class ChangeDetection implements Renderer, Effect {
             rb = nrb + (rs << 4);
             crv = ncrv + w;
         }
+    }
+
+    /**
+     *
+     * @see javax.media.Renderer#process(javax.media.Buffer)
+     */
+    public int process(Buffer bufIn) {
+        if (crvec == null) {
+            setInputFormat(bufIn.getFormat());
+
+            try {
+                refbuf = new QuickArray(byte[].class, size.width * size.height);
+                refbuf.clear();
+                if (yuvFormat == null) {
+                    devbuf = new QuickArray(byte[].class,
+                            size.width * size.height);
+                    ((QuickArray) devbuf).clear();
+                }
+            } catch (QuickArrayException e) {
+                e.printStackTrace();
+                return BUFFER_PROCESSED_FAILED;
+            }
+            crvec = new int[nblk];
+            lastBuffer = null;
+        }
+        scan = (scan + 3) & 7;
+        Object inObject = bufIn.getData();
+        if (inObject == null) {
+            return BUFFER_PROCESSED_OK;
+        }
+
+        QuickArrayWrapper in = null;
+        try {
+            if (yuvFormat == null) {
+                in = new QuickArrayWrapper(inObject, bufIn.getOffset(),
+                        bufIn.getLength());
+            } else {
+                in = new QuickArrayWrapper(inObject, bufIn.getOffset()
+                        + yuvFormat.getOffsetY(), bufIn.getLength());
+            }
+        } catch (QuickArrayException e) {
+            e.printStackTrace();
+            return BUFFER_PROCESSED_FAILED;
+        }
+
+        lock();
+        if (yuvFormat == null) {
+            for (int y = 0; y < blkh; ++y) {
+                for (int x = 0; x < blkw; x++) {
+                    convertBlockLine(in, devbuf, scan, x, y);
+                }
+            }
+        } else {
+            devbuf = in;
+        }
+
+        getDifferences(refbuf, devbuf, scan, crvec);
+
         double diffCount = 0;
         for (int i = 0; i < nblk; i++) {
             diffCount += crvec[i];
@@ -457,28 +468,7 @@ public class ChangeDetection implements Renderer, Effect {
     }
 
     private void notifyChange(Buffer bufIn) {
-        if (yuvFormat != null) {
-            if (toRGB == null) {
-                Dimension size = yuvFormat.getSize();
-                format = new RGBFormat(size, size.width * size.height,
-                        Format.intArray,
-                        Format.NOT_SPECIFIED, 32, 0x00FF0000,
-                        0x0000FF00, 0x000000FF,
-                        1, size.width, Format.NOT_SPECIFIED,
-                        Format.NOT_SPECIFIED);
-                try {
-                    toRGB = new SimpleProcessor(yuvFormat, format);
-                } catch (UnsupportedFormatException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        if (toRGB != null) {
-            toRGB.process(bufIn);
-            lastBuffer = toRGB.getOutputBuffer();
-        } else {
-            lastBuffer = bufIn;
-        }
+        lastBuffer = bufIn;
         for (int i = 0; i < screenListeners.size(); i++) {
             final CaptureChangeListener listener = screenListeners.get(i);
             listener.captureDone(lastUpdateTime);
@@ -581,11 +571,39 @@ public class ChangeDetection implements Renderer, Effect {
         return null;
     }
 
+    public QuickArray getRefBuf() {
+        return refbuf;
+    }
+
     /**
      * Gets the latest captured image
      * @return the latest captured image
      */
     public BufferedImage getImage() {
+        if (yuvFormat != null) {
+            if (toRGB == null) {
+                Dimension size = yuvFormat.getSize();
+                format = new RGBFormat(size, size.width * size.height,
+                        Format.intArray,
+                        Format.NOT_SPECIFIED, 32, 0x00FF0000,
+                        0x0000FF00, 0x000000FF,
+                        1, size.width, Format.NOT_SPECIFIED,
+                        Format.NOT_SPECIFIED);
+                try {
+                    toRGB = new SimpleProcessor(yuvFormat, format);
+                } catch (UnsupportedFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        Buffer buffer = null;
+        if (toRGB != null) {
+            toRGB.process(lastBuffer);
+            buffer = toRGB.getOutputBuffer();
+        } else {
+            buffer = lastBuffer;
+        }
+
         BufferedImage image = null;
         if (format.getDataType() == Format.intArray) {
             image = new BufferedImage(
@@ -593,7 +611,7 @@ public class ChangeDetection implements Renderer, Effect {
                     format.getSize().height,
                     BufferedImage.TYPE_INT_RGB);
             image.setRGB(0, 0, image.getWidth(), image.getHeight(),
-                    (int[]) lastBuffer.getData(), 0, image.getWidth());
+                    (int[]) buffer.getData(), 0, image.getWidth());
         } else if (format.getDataType() == Format.byteArray) {
             int w = format.getSize().width;
             int h = format.getSize().height;
@@ -601,13 +619,13 @@ public class ChangeDetection implements Renderer, Effect {
             int scanlineStride = format.getLineStride();
             int[] bandOffsets = {format.getRedMask() - 1,
                     format.getGreenMask() - 1, format.getBlueMask() - 1};
-            byte[] data = new byte[lastBuffer.getLength()];
-            System.arraycopy(lastBuffer.getData(), lastBuffer.getOffset(),
-                    data, 0, lastBuffer.getLength());
-            DataBuffer buffer = new DataBufferByte(
+            byte[] data = new byte[buffer.getLength()];
+            System.arraycopy(buffer.getData(), buffer.getOffset(),
+                    data, 0, buffer.getLength());
+            DataBuffer databuffer = new DataBufferByte(
                     data, w * h);
             WritableRaster raster = Raster.createInterleavedRaster(
-                    buffer, w, h, scanlineStride, pixStride, bandOffsets,
+                    databuffer, w, h, scanlineStride, pixStride, bandOffsets,
                     null);
 
             ColorSpace colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);

@@ -42,8 +42,8 @@ import java.util.Locale;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -97,21 +97,26 @@ public class ImageController implements Controller {
         }
         long offset = Long.parseLong(off);
 
+        System.err.println("Finding image at offset " + offset + " for stream " + streamId);
+
         File file = new File(recording.getDirectory(),
-                streamId + "_" + offset + ".jpg");
+                streamId + "_" + offset + ".png");
+        if (!file.exists()) {
+            file = new File(recording.getDirectory(),
+                    streamId + "_" + offset + ".jpg");
+        }
         BufferedImage image = ImageIO.read(file);
         OutputStream output = response.getOutputStream();
         ImageOutputStream ios = ImageIO.createImageOutputStream(output);
         ImageWriter writer = null;
-        JPEGImageWriteParam param = new JPEGImageWriteParam(Locale
-                .getDefault());
+        //ImageWriteParam param = new ImageWriteParam(Locale.getDefault());
         Iterator<ImageWriter> iter = null;
-        param.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
-        param.setCompressionQuality(compression);
+        //param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        //param.setCompressionQuality(compression);
         response.setHeader("Cache-Control", "max-age=86400");
-        response.setContentType("image/jpeg");
+        response.setContentType("image/png");
         response.setHeader("Content-Disposition", "inline; filename="
-                + streamId + "_" + offset + ".jpg" + ";");
+                + streamId + "_" + offset + ".png" + ";");
         response.flushBuffer();
         if ((height != -1) || (width != -1)) {
             double scaleX = 0;
@@ -135,12 +140,12 @@ public class ImageController implements Controller {
             g.drawRenderedImage(oldImage, xform);
             g.dispose();
         }
-        iter = ImageIO.getImageWritersByFormatName("jpg");
+        iter = ImageIO.getImageWritersByFormatName("png");
         if (iter.hasNext()) {
             writer = iter.next();
         }
         writer.setOutput(ios);
-        writer.write(null, new IIOImage(image, null, null), param);
+        writer.write(new IIOImage(image, null, null));
         ios.flush();
         writer.dispose();
         ios.close();

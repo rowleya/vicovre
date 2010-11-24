@@ -94,9 +94,9 @@ public class PreviewGenerator implements Renderer {
         image.setRGB(0, 0, image.getWidth(), image.getHeight(),
                 (int[]) buffer.getData(), 0, image.getWidth());
         File output = new File(directory,
-                prefix + FORMAT.format(imageCount) + ".jpg");
+                prefix + FORMAT.format(imageCount) + ".png");
         try {
-            ImageIO.write(image, "JPG", output);
+            ImageIO.write(image, "PNG", output);
         } catch (IOException e) {
             e.printStackTrace();
         }
