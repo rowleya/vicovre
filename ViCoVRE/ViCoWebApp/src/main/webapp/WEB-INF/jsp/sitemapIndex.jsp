@@ -8,7 +8,7 @@
              xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
         <c:forEach items="${folders}" var="folder">
             <sitemap>
-                <loc>${baseUrl}${folder}/sitemap.xml</loc>
+                <loc><c:out escapeXml="true" value="${baseUrl}${folder}/sitemap.xml"/></loc>
             </sitemap>
         </c:forEach>
     </sitemapindex>

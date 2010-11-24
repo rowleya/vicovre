@@ -125,6 +125,14 @@ public class Application implements EntryPoint, ClickHandler {
         return parameters.get("role");
     }
 
+    protected String getStartTime() {
+        String startTime = parameters.get("startTime");
+        if (startTime != null) {
+            return startTime;
+        }
+        return "0";
+    }
+
     protected JsArrayString getUsers() {
         JSONUsers users = JSONUsers.parse(parameters.get("users"));
         return users.getUsers();
@@ -156,11 +164,12 @@ public class Application implements EntryPoint, ClickHandler {
         boolean canEdit = canEdit();
         boolean canPlay = canPlay();
         String role = getRole();
+        String startTime = getStartTime();
 
         if (canPlay) {
             player = new SWFWidget(getBaseUrl() + "Player.swf");
             String urlToPlay = playUrl + "?folder=" + folder + "%26recordingId="
-                + recordingId + "%26startTime=0";
+                + recordingId + "%26startTime=" + startTime;
             GWT.log("Playing " + urlToPlay);
             player.addParam("wmode", "opaque");
             player.addFlashVar("uri", urlToPlay);
