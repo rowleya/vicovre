@@ -199,7 +199,12 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
                 System.err.println("Connection closed");
                 close();
             } catch (IOException e) {
-                e.printStackTrace();
+                if (e.getClass().getName().equals(
+                        "org.apache.catalina.connector.ClientAbortException")) {
+                    System.err.println("Connection closed");
+                } else {
+                    e.printStackTrace();
+                }
                 close();
             }
         }

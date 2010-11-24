@@ -117,6 +117,11 @@ public class DisplayRecordingController implements Controller {
             }
         }
 
+        String startTime = request.getParameter("startTime");
+        if (startTime == null) {
+            startTime = "0";
+        }
+
         ModelAndView modelAndView = new ModelAndView("displayRecording");
         modelAndView.addObject("recording", recording);
         modelAndView.addObject("usersJSON", usersWriter.toString());
@@ -124,6 +129,7 @@ public class DisplayRecordingController implements Controller {
         modelAndView.addObject("role", securityDatabase.getRole());
         modelAndView.addObject("aclJSON", aclWriter.toString());
         modelAndView.addObject("readAclJSON", readAclWriter.toString());
+        modelAndView.addObject("startTime", startTime);
         return modelAndView;
     }
 }

@@ -42,6 +42,8 @@ import javax.media.Buffer;
 import javax.media.ResourceUnavailableException;
 import javax.media.format.UnsupportedFormatException;
 
+import com.googlecode.vicovre.codecs.utils.QuickArray;
+import com.googlecode.vicovre.codecs.utils.QuickArrayException;
 import com.googlecode.vicovre.media.MemeticFileReader;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;
 import com.googlecode.vicovre.media.rtp.RTPHeader;
@@ -76,6 +78,10 @@ public class ScreenChangeDetector extends Thread
     private long nextUpdateTime = -1;
 
     private BufferedImage nextUpdateImage = null;
+
+    private QuickArray nextRefBuf = null;
+
+    private QuickArray lastRefBuf = null;
 
     private File recordingDirectory = null;
 
@@ -185,13 +191,33 @@ public class ScreenChangeDetector extends Thread
         }
     }
 
+    private boolean doUpdate() {
+        if (lastRefBuf != null) {
+            int[] crvec = new int[renderer.getNBlocks()];
+            renderer.getDifferences(lastRefBuf, nextRefBuf,
+                    (int) (Math.random() * 8), crvec);
+            double sum = 0;
+            for (int i = 0; i < crvec.length; i++) {
+                sum += crvec[i];
+            }
+            double percentDiff = sum / crvec.length;
+            if (percentDiff > 0.05) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
     private void markUpdate() {
         if (nextUpdateTime != -1) {
             try {
-                ImageIO.write(nextUpdateImage, "JPG",
+                if (doUpdate()) {
+                    ImageIO.write(nextUpdateImage, "PNG",
                         new File(recordingDirectory,
-                                baseFileName + nextUpdateTime + ".jpg"));
-
+                                baseFileName + nextUpdateTime + ".png"));
+                    lastRefBuf = nextRefBuf;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -219,6 +245,14 @@ public class ScreenChangeDetector extends Thread
             }
             nextUpdateTime = time;
             nextUpdateImage = renderer.getImage();
+            QuickArray rendererBuf = renderer.getRefBuf();
+            try {
+                nextRefBuf = new QuickArray(rendererBuf.getType(),
+                        rendererBuf.getSize());
+                nextRefBuf.copy(rendererBuf, 0, 0, rendererBuf.getSize());
+            } catch (QuickArrayException e) {
+                e.printStackTrace();
+            }
         }
     }
 

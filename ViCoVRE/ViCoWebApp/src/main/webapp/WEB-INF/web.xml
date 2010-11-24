@@ -43,6 +43,11 @@
     </servlet-mapping>
 
     <servlet-mapping>
+        <servlet-name>vicoSpring</servlet-name>
+        <url-pattern>*.xml</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>Jersey Spring Web Application</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>

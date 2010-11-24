@@ -42,9 +42,13 @@ public class QuickArray extends QuickArrayAbstract {
 
     private long address = 0;
 
+    private int initSize = 0;
+
     private int size = 0;
 
     private boolean freed = false;
+
+    private Class<?> type = null;
 
     /**
      * Creates a new QuickArray
@@ -54,9 +58,11 @@ public class QuickArray extends QuickArrayAbstract {
      */
     public QuickArray(Class< ? > type, int size) throws QuickArrayException {
         super();
+        this.type = type;
         int elementSize = getUnsafe().arrayIndexScale(type);
         address = getUnsafe().allocateMemory(elementSize * size);
         this.size = size * elementSize;
+        this.initSize = size;
     }
 
     /**
@@ -98,6 +104,14 @@ public class QuickArray extends QuickArrayAbstract {
 
     protected long getLength() {
         return size;
+    }
+
+    public int getSize() {
+        return initSize;
+    }
+
+    public Class<?> getType() {
+        return type;
     }
 
 }

@@ -50,7 +50,7 @@
                         "100%", "100%", "8");
                 mplayer.addParam("AllowScriptAccess", "always");
                 mplayer.addParam("allowfullscreen", "false");
-                mplayer.addVariable("uri", "${pageContext.request.contextPath}/play.do?folder=${folder}%26recordingId=${recording.id}%26startTime=0");
+                mplayer.addVariable("uri", "${pageContext.request.contextPath}/play.do?folder=${folder}%26recordingId=${recording.id}%26startTime=${startTime}");
                 mplayer.write("player");
             </script>
         </c:if>

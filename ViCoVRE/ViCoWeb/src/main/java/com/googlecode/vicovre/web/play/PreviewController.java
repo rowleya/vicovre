@@ -42,8 +42,8 @@ import java.util.Locale;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -145,17 +145,16 @@ public class PreviewController implements Controller {
         OutputStream output = response.getOutputStream();
         ImageOutputStream ios = ImageIO.createImageOutputStream(output);
         ImageWriter writer = null;
-        JPEGImageWriteParam param = new JPEGImageWriteParam(Locale
-                .getDefault());
+        ImageWriteParam param = new ImageWriteParam(Locale.getDefault());
         Iterator<ImageWriter> iter = null;
-        param.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         param.setCompressionQuality(compression);
         response.setHeader("Cache-Control", "max-age=86400");
-        response.setContentType("image/jpeg");
+        response.setContentType("image/png");
         response.setHeader("Content-Disposition", "inline; filename="
-                + streamId + "_preview.jpg" + ";");
+                + streamId + "_preview.png" + ";");
         response.flushBuffer();
-        iter = ImageIO.getImageWritersByFormatName("jpg");
+        iter = ImageIO.getImageWritersByFormatName("png");
         if (iter.hasNext()) {
             writer = iter.next();
         }

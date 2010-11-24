@@ -30,35 +30,49 @@
  *
  */
 
-package com.googlecode.vicovre.web.play.metadata;
+package com.googlecode.vicovre.web;
 
-import java.io.File;
-import java.util.Comparator;
+import java.util.List;
+import java.util.Vector;
 
-public class ThumbFileSorter implements Comparator<File> {
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    private String ssrc = null;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
 
-    public ThumbFileSorter(String ssrc) {
-        this.ssrc = ssrc + "_";
+import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+
+public class SitemapIndexController implements Controller {
+
+    private RecordingDatabase database = null;
+
+    public SitemapIndexController(RecordingDatabase database) {
+        this.database = database;
     }
 
-    public int compare(File file1, File file2) {
-        if (file1.getName().startsWith(ssrc)
-                && file1.getName().endsWith(".png")
-                && file2.getName().startsWith(ssrc)
-                && file2.getName().endsWith(".png")) {
-            String name1 = file1.getName().substring(ssrc.length(),
-                    file1.getName().length() - 4);
-            String name2 = file2.getName().substring(ssrc.length(),
-                    file2.getName().length() - 4);
-            int time1 = Integer.parseInt(name1);
-            int time2 = Integer.parseInt(name2);
-            return time1 - time2;
+    public void traverseFolders(String folder, List<String> folders) {
+        if (!database.getRecordings(folder).isEmpty()) {
+            folders.add(folder);
         }
-        return 0;
+        List<String> subfolders = database.getSubFolders(folder);
+        for (String subfolder : subfolders) {
+            traverseFolders(folder + "/" + subfolder, folders);
+        }
     }
 
+    public ModelAndView handleRequest(HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
+        List<String> folders = new Vector<String>();
+        traverseFolders("", folders);
 
+        String baseUrl = request.getScheme() + "://" + request.getServerName()
+            + ":" + request.getServerPort() + request.getContextPath();
+
+        ModelAndView model = new ModelAndView("sitemapIndex");
+        model.addObject("folders", folders);
+        model.addObject("baseUrl", baseUrl);
+        return model;
+    }
 
 }
