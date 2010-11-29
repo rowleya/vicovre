@@ -12,7 +12,9 @@
             url: "/rest/",
             playUrl: "/play.do",
             layouts: '${layoutsJSON}',
-            customLayouts: '${customLayoutsJSON}'
+            customLayouts: '${customLayoutsJSON}',
+            users: '${usersJSON}',
+            groups: '${groupsJSON}'
         };
         </script>
         <script type="text/javascript" language="javascript" src="${pageContext.request.contextPath}/com.googlecode.vicovre.gwt.recorder.Application.nocache.js"></script>

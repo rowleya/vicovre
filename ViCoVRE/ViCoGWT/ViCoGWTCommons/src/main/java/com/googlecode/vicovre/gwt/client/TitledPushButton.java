@@ -30,54 +30,16 @@
  *
  */
 
-package com.googlecode.vicovre.security.servlet;
+package com.googlecode.vicovre.gwt.client;
 
-import java.io.IOException;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.PushButton;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+public class TitledPushButton extends PushButton {
 
-import com.googlecode.vicovre.security.db.User;
-
-public class SecurityFilter implements Filter {
-
-    public static final String SESSION_USER =
-        SecurityFilter.class.getPackage().getName().concat(".user");
-
-    public void destroy() {
-        // Does Nothing
-    }
-
-    public void doFilter(ServletRequest request, ServletResponse response,
-            FilterChain chain) throws IOException, ServletException {
-        boolean userFound = false;
-
-        if (request instanceof HttpServletRequest) {
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
-            HttpSession session = httpRequest.getSession(false);
-            if (session != null) {
-                User user = (User) session.getAttribute(SESSION_USER);
-                if (user != null) {
-                    userFound = true;
-                    CurrentUser.set(user);
-                }
-            }
-        }
-
-        if (!userFound) {
-            CurrentUser.set(User.GUEST);
-        }
-        chain.doFilter(request, response);
-    }
-
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // Does Nothing
+    public TitledPushButton(Image image, String title) {
+        super(image);
+        setTitle(title);
     }
 
 }

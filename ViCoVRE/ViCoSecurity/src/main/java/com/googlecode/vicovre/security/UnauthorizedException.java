@@ -33,12 +33,14 @@
 package com.googlecode.vicovre.security;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 public class UnauthorizedException extends WebApplicationException {
 
     public UnauthorizedException(String message) {
-        super(Response.status(Status.FORBIDDEN).entity(message).build());
+        super(Response.status(Status.FORBIDDEN).entity(message).type(
+                MediaType.TEXT_PLAIN).build());
     }
 }

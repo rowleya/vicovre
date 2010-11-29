@@ -393,7 +393,7 @@ public class RecordingHandler extends AbstractHandler {
     public Response getAcl(@Context UriInfo uriInfo) throws IOException {
         String folder = getFolderPath(uriInfo, 1, 3);
         String id = getId(uriInfo, 2);
-        String acltype = getId(uriInfo, 1);
+        String acltype = getId(uriInfo, 0);
 
         Recording recording = getDatabase().getRecording(folder, id);
         if (recording == null) {

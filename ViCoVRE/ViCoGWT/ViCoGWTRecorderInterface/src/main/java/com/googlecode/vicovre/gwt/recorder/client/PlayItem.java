@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -52,8 +53,10 @@ import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.client.TitledPushButton;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.recorder.client.rest.ChangesAnnotator;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PermissionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutLoader;
@@ -80,6 +83,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private final Image ANNOTATE = new Image("images/annotate.gif");
 
+    private final Image SECURITY = new Image("images/security.gif");
+
     private FolderPanel folderPanel = null;
 
     private String id = null;
@@ -98,17 +103,23 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private List<ReplayLayout> replayLayouts = null;
 
-    private PushButton editButton = new PushButton(EDIT);
+    private PushButton editButton = new TitledPushButton(EDIT, "Edit metadata");
 
-    private PushButton deleteButton = new PushButton(DELETE);
+    private PushButton deleteButton = new TitledPushButton(DELETE, "Delete");
 
-    private PushButton playToVenueButton = new PushButton(PLAY_TO_VENUE);
+    private PushButton playToVenueButton = new TitledPushButton(PLAY_TO_VENUE,
+            "Play to a Virtual Venue");
 
-    private PushButton editLayoutButton = new PushButton(LAYOUT);
+    private PushButton editLayoutButton = new TitledPushButton(LAYOUT,
+            "Layout Streams for Replay");
 
-    private PushButton playButton = new PushButton(PLAY);
+    private PushButton playButton = new TitledPushButton(PLAY, "Play");
 
-    private PushButton annotateButton = new PushButton(ANNOTATE);
+    private PushButton annotateButton = new TitledPushButton(ANNOTATE,
+            "Annotate with Screen Changes");
+
+    private PushButton securityButton = new TitledPushButton(SECURITY,
+            "Set Access Permissions");
 
     private MetadataPopup metadataPopup = null;
 
@@ -118,15 +129,21 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private Layout[] customLayouts = null;
 
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
     public PlayItem(String url, FolderPanel folderPanel, String id,
             MetadataPopup metadataPopup, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         this.url = url;
         this.folderPanel = folderPanel;
         this.id = id;
         this.metadataPopup = metadataPopup;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
         metadataPopup.setHandler(this);
         name.setText(metadataPopup.getPrimaryValue());
 
@@ -140,6 +157,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(playButton);
         buttons.add(playToVenueButton);
+        buttons.add(securityButton);
         buttons.add(editButton);
         buttons.add(editLayoutButton);
         buttons.add(annotateButton);
@@ -167,6 +185,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         editLayoutButton.addClickHandler(this);
         playButton.addClickHandler(this);
         annotateButton.addClickHandler(this);
+        securityButton.addClickHandler(this);
     }
 
     public String getFolder() {
@@ -231,6 +250,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
             PlayItemLayoutLoader.loadLayouts(this, loader, url);
         } else if (event.getSource().equals(annotateButton)) {
             ChangesAnnotator.annotate(url, this, name.getText());
+        } else if (event.getSource().equals(securityButton)) {
+            PermissionLoader.load(url, getFolder(), id, users, groups);
         }
     }
 
@@ -295,5 +316,6 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         deleteButton.setEnabled(editable);
         editLayoutButton.setEnabled(editable);
         annotateButton.setEnabled(editable);
+        securityButton.setEnabled(editable);
     }
 }

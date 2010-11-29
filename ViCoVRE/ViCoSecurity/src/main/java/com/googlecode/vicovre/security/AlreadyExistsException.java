@@ -33,13 +33,15 @@
 package com.googlecode.vicovre.security;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 public class AlreadyExistsException extends WebApplicationException {
 
     public AlreadyExistsException(String message) {
-        super(Response.status(Status.CONFLICT).entity(message).build());
+        super(Response.status(Status.CONFLICT).entity(message).type(
+                MediaType.TEXT_PLAIN).build());
     }
 
 }

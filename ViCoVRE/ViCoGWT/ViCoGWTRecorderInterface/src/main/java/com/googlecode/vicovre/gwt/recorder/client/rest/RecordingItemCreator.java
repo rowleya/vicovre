@@ -36,6 +36,7 @@ import org.restlet.client.data.Method;
 import org.restlet.client.data.Reference;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
@@ -70,18 +71,23 @@ public class RecordingItemCreator extends AbstractPlainRestCall
 
     private Layout[] customLayouts = null;
 
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
     public static void createRecordingItem(FolderPanel folderPanel,
             PlayPanel playPanel, RecordPanel panel, String url,
-            Layout[] layouts, Layout[] customLayouts) {
+            Layout[] layouts, Layout[] customLayouts,
+            JsArrayString users, JsArrayString groups) {
         RecordingItemCreator creator =
             new RecordingItemCreator(folderPanel, playPanel, panel, url,
-                    layouts, customLayouts);
+                    layouts, customLayouts, users, groups);
         creator.go();
     }
 
     private RecordingItemCreator(FolderPanel folderPanel, PlayPanel playPanel,
             RecordPanel panel, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
         this.panel = panel;
@@ -90,6 +96,8 @@ public class RecordingItemCreator extends AbstractPlainRestCall
         this.metadataPopup = new MetadataPopup(baseUrl, "Name");
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
     }
 
     public void go() {
@@ -114,7 +122,7 @@ public class RecordingItemCreator extends AbstractPlainRestCall
         if (response.getResponseCode() == MessageResponse.OK) {
             item = new RecordingItem(folderPanel, playPanel, null,
                     baseUrl, metadataPopup, popup, layouts,
-                    customLayouts);
+                    customLayouts, users, groups);
             popup.setRecordingItem(item);
             item.handleResponse(response);
             item.setCreated(false);

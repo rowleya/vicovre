@@ -30,14 +30,10 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
-
-import java.util.LinkedList;
-import java.util.List;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
 
 import org.restlet.client.data.Method;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
@@ -46,77 +42,47 @@ import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class PermissionSetter extends AbstractVoidRestCall {
+public class PasswordSetter extends AbstractVoidRestCall {
 
     private String url = null;
 
-    private String baseUrl = null;
-
     private ModalPopup<? extends Widget> popup = null;
 
-    private WaitPopup waitPopup = new WaitPopup("Setting Permissions", true);
+    private WaitPopup waitPopup = new WaitPopup("Setting Password", true);
 
-    private LinkedList<String> queries = new LinkedList<String>();
-
-    public static void setPermissions(String baseUrl, String url, String folder,
-            String recordingId, String[] aclTypes,
-            ModalPopup<? extends Widget> popup, boolean[] allow,
-            List<String>[] exceptionTypes, List<String>[] exceptions) {
-        PermissionSetter setter = new PermissionSetter(baseUrl, url, folder,
-            recordingId, aclTypes, popup, allow, exceptionTypes, exceptions);
+    public static void setPassword(String url,
+            ModalPopup<? extends Widget> popup, String oldPassword,
+            String newPassword) {
+        PasswordSetter setter = new PasswordSetter(url, popup,
+                oldPassword, newPassword);
         setter.go();
     }
 
-    public PermissionSetter(String baseUrl, String url, String folder,
-            String recordingId, String[] aclTypes,
-            ModalPopup<? extends Widget> popup,
-            boolean[] allow, List<String>[] exceptionTypes,
-            List<String>[] exceptions) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
-        this.url = url + "recording" + folder + "/" + recordingId + "/acl/";
-        for (int i = 0; i < aclTypes.length; i++) {
-             String query = aclTypes[i] + "?public=" + allow[i];
-             if (exceptionTypes[i] != null && exceptions[i] != null) {
-                 for (int j = 0; j < exceptionTypes[i].size(); j++) {
-                     query += "&exceptionType=" + URL.encodeComponent(
-                             exceptionTypes[i].get(j));
-                     query += "&exceptionName=" + URL.encodeComponent(
-                             exceptions[i].get(j));
-                 }
-             }
-             queries.addLast(query);
-        }
-
+    public PasswordSetter(String url,
+            ModalPopup<? extends Widget> popup, String oldPassword,
+            String newPassword) {
         this.popup = popup;
+        this.url = url + "user/password?oldPassword="
+            + URL.encodeComponent(oldPassword)
+            + "&password=" + URL.encodeComponent(newPassword);
     }
 
     public void go() {
-        if (!waitPopup.isShowing()) {
-            waitPopup.center();
-        }
-        String requestUrl = url + queries.removeFirst();
-        GWT.log("URL = " + requestUrl);
-        go(requestUrl, Method.PUT);
+        waitPopup.center();
+        go(url, Method.PUT);
     }
 
     protected void onError(String message) {
         waitPopup.hide();
         MessagePopup popup = new MessagePopup(
-                "Error setting permissions: " + message, null,
-                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                "Error setting password: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 
     protected void onSuccess() {
-        if (queries.isEmpty()) {
-            waitPopup.hide();
-            if (popup != null) {
-                popup.hide();
-            }
-        } else {
-            go();
-        }
+        waitPopup.hide();
+        popup.hide();
     }
 
 }

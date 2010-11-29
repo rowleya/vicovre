@@ -93,7 +93,6 @@ public class BackupSecurityHandler implements ACLListener {
     }
 
     private void copyAcl(String folder, String id) throws IOException {
-        startOperation(folder, id);
         File backupAclFile = getACLBackupFile(folder, id);
         backupAclFile.getParentFile().mkdirs();
         FileInputStream input = new FileInputStream(getACLFile(folder, id));
@@ -105,27 +104,39 @@ public class BackupSecurityHandler implements ACLListener {
         }
         input.close();
         output.close();
-        finishOperation(folder, id);
+    }
+
+    private boolean isBackedUp(String id) {
+        if (!id.startsWith(SecureRecordingDatabase.PLAY_RECORDING_ID_PREFIX) &&
+                !id.startsWith(
+                    SecureRecordingDatabase.CHANGE_RECORDING_ID_PREFIX) &&
+                 !id.startsWith(
+                     SecureRecordingDatabase.READ_RECORDING_ID_PREFIX) &&
+                 !id.startsWith(
+                     SecureRecordingDatabase.ANNOTATE_RECORDING_ID_PREFIX) &&
+                 !id.startsWith(SecureRecordingDatabase.READ_FOLDER_PREFIX) &&
+                 !id.startsWith(SecureRecordingDatabase.WRITE_FOLDER_PREFIX)) {
+            return false;
+        }
+        return true;
     }
 
     public void ACLCreated(String folder, String id) {
-        if (!id.startsWith(SecureRecordingDatabase.PLAY_RECORDING_ID_PREFIX) &&
-           !id.startsWith(SecureRecordingDatabase.CHANGE_RECORDING_ID_PREFIX) &&
-             !id.startsWith(SecureRecordingDatabase.READ_RECORDING_ID_PREFIX)) {
+        if (!isBackedUp(id)) {
             return;
         }
+        startOperation(folder, id);
         try {
             copyAcl(folder, id);
         } catch (IOException e) {
             System.err.println("Warning - error creating backup of new ACL "
                     + folder + "/" + id + ": " + e.getMessage());
         }
+        finishOperation(folder, id);
     }
 
     public void ACLDeleted(String folder, String id) {
-        if (!id.startsWith(SecureRecordingDatabase.PLAY_RECORDING_ID_PREFIX) &&
-           !id.startsWith(SecureRecordingDatabase.CHANGE_RECORDING_ID_PREFIX) &&
-             !id.startsWith(SecureRecordingDatabase.READ_RECORDING_ID_PREFIX)) {
+        if (!isBackedUp(id)) {
             return;
         }
         startOperation(folder, id);
@@ -135,16 +146,16 @@ public class BackupSecurityHandler implements ACLListener {
     }
 
     public void ACLUpdated(String folder, String id) {
-        if (!id.startsWith(SecureRecordingDatabase.PLAY_RECORDING_ID_PREFIX) &&
-           !id.startsWith(SecureRecordingDatabase.CHANGE_RECORDING_ID_PREFIX) &&
-             !id.startsWith(SecureRecordingDatabase.READ_RECORDING_ID_PREFIX)) {
+        if (!isBackedUp(id)) {
             return;
         }
+        startOperation(folder, id);
         try {
             copyAcl(folder, id);
         } catch (IOException e) {
             System.err.println("Warning - error creating backup of updated ACL "
                     + folder + "/" + id + ": " + e.getMessage());
         }
+        finishOperation(folder, id);
     }
 }

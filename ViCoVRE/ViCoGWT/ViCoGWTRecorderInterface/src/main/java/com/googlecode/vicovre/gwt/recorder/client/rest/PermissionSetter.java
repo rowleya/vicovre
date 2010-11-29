@@ -30,10 +30,13 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
+package com.googlecode.vicovre.gwt.recorder.client.rest;
+
+import java.util.LinkedList;
 
 import org.restlet.client.data.Method;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
@@ -42,51 +45,72 @@ import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 
-public class PasswordSetter extends AbstractVoidRestCall {
-
-    private String baseUrl = null;
+public class PermissionSetter extends AbstractVoidRestCall {
 
     private String url = null;
 
     private ModalPopup<? extends Widget> popup = null;
 
-    private WaitPopup waitPopup = new WaitPopup("Setting Password", true);
+    private WaitPopup waitPopup = new WaitPopup("Setting Permissions", true);
 
-    public static void setPassword(String baseUrl, String url,
-            ModalPopup<? extends Widget> popup, String oldPassword,
-            String newPassword) {
-        PasswordSetter setter = new PasswordSetter(baseUrl, url, popup,
-                oldPassword, newPassword);
+    private LinkedList<String> queries = new LinkedList<String>();
+
+    public static void setPermissions(String url, String folder,
+            String recordingId, String[] aclTypes,
+            ModalPopup<? extends Widget> popup, boolean[] allow,
+            String[][] exceptionTypes, String[][] exceptions) {
+        PermissionSetter setter = new PermissionSetter(url, folder,
+            recordingId, aclTypes, popup, allow, exceptionTypes, exceptions);
         setter.go();
     }
 
-    public PasswordSetter(String baseUrl, String url,
-            ModalPopup<? extends Widget> popup, String oldPassword,
-            String newPassword) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
+    public PermissionSetter(String url, String folder,
+            String recordingId, String[] aclTypes,
+            ModalPopup<? extends Widget> popup,
+            boolean[] allow, String[][] exceptionTypes, String[][] exceptions) {
+        this.url = url + "recording" + folder + "/" + recordingId + "/acl/";
+        for (int i = 0; i < aclTypes.length; i++) {
+             String query = aclTypes[i] + "?public=" + allow[i];
+             if (exceptionTypes[i] != null && exceptions[i] != null) {
+                 for (int j = 0; j < exceptionTypes[i].length; j++) {
+                     query += "&exceptionType=" + URL.encodeComponent(
+                             exceptionTypes[i][j]);
+                     query += "&exceptionName=" + URL.encodeComponent(
+                             exceptions[i][j]);
+                 }
+             }
+             queries.addLast(query);
+        }
+
         this.popup = popup;
-        this.url = url + "user/password?oldPassword="
-            + URL.encodeComponent(oldPassword)
-            + "&password=" + URL.encodeComponent(newPassword);
     }
 
     public void go() {
-        waitPopup.center();
-        go(url, Method.PUT);
+        if (!waitPopup.isShowing()) {
+            waitPopup.center();
+        }
+        String requestUrl = url + queries.removeFirst();
+        GWT.log("URL = " + requestUrl);
+        go(requestUrl, Method.PUT);
     }
 
     protected void onError(String message) {
         waitPopup.hide();
         MessagePopup popup = new MessagePopup(
-                "Error setting password: " + message, null,
-                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                "Error setting permissions: " + message, null,
+                MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 
     protected void onSuccess() {
-        waitPopup.hide();
-        popup.hide();
+        if (queries.isEmpty()) {
+            waitPopup.hide();
+            if (popup != null) {
+                popup.hide();
+            }
+        } else {
+            go();
+        }
     }
 
 }

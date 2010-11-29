@@ -38,16 +38,18 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.googlecode.vicovre.gwt.client.Space;
 import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
 
-public class StatusPanel extends HorizontalPanel implements ClickHandler,
+public class StatusPanel extends DockPanel implements ClickHandler,
         KeyPressHandler {
 
     private static final String LOGGED_OUT = "You are not logged in";
@@ -66,6 +68,10 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
 
     private HorizontalPanel loginPanel = new HorizontalPanel();
 
+    private HorizontalPanel logoutPanel = new HorizontalPanel();
+
+    private HorizontalPanel retryPanel = new HorizontalPanel();
+
     private TextBox username = new TextBox();
 
     private String role = null;
@@ -74,9 +80,11 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
 
     private Button loginButton = new Button(LOG_IN);
 
-    private boolean loggedIn = false;
+    private Button logoutButton = new Button(LOG_OUT);
 
-    private boolean loginError = false;
+    private Button retryButton = new Button(RETRY);
+
+    private Button changePasswordButton = new Button("Change Password");
 
     private WaitPopup loginPopup = new WaitPopup("Logging in...", true);
 
@@ -87,53 +95,68 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
     public StatusPanel(String url, FolderPanel folderPanel) {
         this.url = url;
         this.folderPanel = folderPanel;
-        add(status);
+        add(status, WEST);
         setCellVerticalAlignment(status, ALIGN_MIDDLE);
         DOM.setStyleAttribute(status.getElement(), "color", "black");
 
-        Label usernameLabel = new Label("Email Address:  ");
+        loginPanel.setVerticalAlignment(ALIGN_MIDDLE);
+        Label usernameLabel = new Label("Email Address: ");
         loginPanel.add(usernameLabel);
         loginPanel.add(username);
-        loginPanel.add(new Label("   "));
-        Label passwordLabel = new Label("Password:  ");
+        Label passwordLabel = new Label("Password: ");
         loginPanel.add(passwordLabel);
         loginPanel.add(password);
-        loginPanel.setCellVerticalAlignment(usernameLabel, ALIGN_MIDDLE);
-        loginPanel.setCellVerticalAlignment(passwordLabel, ALIGN_MIDDLE);
+        loginPanel.add(loginButton);
         username.addKeyPressHandler(this);
         password.addKeyPressHandler(this);
-
-        add(loginPanel);
-        setCellHorizontalAlignment(loginPanel, ALIGN_RIGHT);
-        setCellVerticalAlignment(loginPanel, ALIGN_MIDDLE);
-
-        add(loginButton);
-        setCellHorizontalAlignment(loginButton, ALIGN_RIGHT);
         loginButton.addClickHandler(this);
+
+        logoutPanel.setVerticalAlignment(ALIGN_MIDDLE);
+        logoutPanel.add(changePasswordButton);
+        logoutPanel.add(Space.getHorizontalSpace(5));
+        logoutPanel.add(logoutButton);
+        changePasswordButton.addClickHandler(this);
+        logoutButton.addClickHandler(this);
+
+        retryPanel.setVerticalAlignment(ALIGN_MIDDLE);
+        retryPanel.add(retryButton);
+        retryButton.addClickHandler(this);
+
+        add(loginPanel, EAST);
+        add(logoutPanel, EAST);
+        add(retryPanel, EAST);
+        setCellHorizontalAlignment(loginPanel, ALIGN_RIGHT);
+        setCellHorizontalAlignment(logoutPanel, ALIGN_RIGHT);
+        setCellHorizontalAlignment(retryPanel, ALIGN_RIGHT);
+
+        loginPanel.setVisible(true);
+        logoutPanel.setVisible(false);
+        retryPanel.setVisible(false);
+
     }
 
     public void onClick(ClickEvent event) {
         if (event.getSource() == loginButton) {
-            if (loggedIn) {
-                Logout.logout(this, url);
-            } else if (loginError) {
-                loginError = false;
-                loginPanel.setVisible(true);
-                loginButton.setText(LOG_IN);
-                status.setText(LOGGED_OUT);
-                DOM.setStyleAttribute(status.getElement(), "color", "black");
-            } else {
-                loginPopup.show();
-                Login.login(this, url, username.getText(), password.getText());
-            }
+            loginPopup.show();
+            Login.login(this, url, username.getText(), password.getText());
+        } else if (event.getSource() == logoutButton) {
+            Logout.logout(this, url);
+        } else if (event.getSource() == retryButton) {
+            loginPanel.setVisible(true);
+            logoutPanel.setVisible(false);
+            retryPanel.setVisible(false);
+            status.setText(LOGGED_OUT);
+            DOM.setStyleAttribute(status.getElement(), "color", "black");
+        } else if (event.getSource() == changePasswordButton) {
+            ChangePasswordPopup popup = new ChangePasswordPopup(url);
+            popup.center();
         }
     }
 
     public void setLogin(String username, String role) {
-        loginError = false;
-        loggedIn = true;
         loginPanel.setVisible(false);
-        loginButton.setText(LOG_OUT);
+        logoutPanel.setVisible(true);
+        retryPanel.setVisible(false);
         status.setText(username + LOGGED_IN);
         this.role = role;
         if (role.equals(JSONUser.ROLE_ADMINISTRATOR)
@@ -154,17 +177,6 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
     public void loginSuccessful(String username, String role) {
         loginPopup.hide();
         setLogin(username, role);
-        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)
-                || role.equals(JSONUser.ROLE_WRITER)) {
-            folderPanel.setUserIsWriter(true);
-        } else {
-            folderPanel.setUserIsWriter(false);
-        }
-        if (role.equals(JSONUser.ROLE_ADMINISTRATOR)) {
-            folderPanel.setUserIsAdministrator(true);
-        } else {
-            folderPanel.setUserIsAdministrator(false);
-        }
         folderPanel.reload();
     }
 
@@ -174,18 +186,18 @@ public class StatusPanel extends HorizontalPanel implements ClickHandler,
         if (message == null) {
             message = ERROR;
         }
-        loginError = true;
         loginPanel.setVisible(false);
-        loginButton.setText(RETRY);
+        logoutPanel.setVisible(false);
+        retryPanel.setVisible(true);
         status.setText(message);
         DOM.setStyleAttribute(status.getElement(), "color", "red");
     }
 
     public void loggedOut() {
-        loggedIn = false;
         loginPanel.setVisible(true);
+        logoutPanel.setVisible(false);
+        retryPanel.setVisible(false);
         loginButton.setText(LOG_IN);
-        status.setText(LOGGED_OUT);
         this.role = null;
         DOM.setStyleAttribute(status.getElement(), "color", "black");
         folderPanel.setUserIsWriter(false);

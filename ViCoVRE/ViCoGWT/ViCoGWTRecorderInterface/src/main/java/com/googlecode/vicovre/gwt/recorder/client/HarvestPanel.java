@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
@@ -61,15 +62,21 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
 
     private Layout[] customLayouts = null;
 
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
     public HarvestPanel(FolderPanel folderPanel, RecordPanel recordPanel,
             PlayPanel playPanel, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         this.folderPanel = folderPanel;
         this.recordPanel = recordPanel;
         this.playPanel = playPanel;
         this.url = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
         setWidth("100%");
         setHeight("100%");
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
@@ -93,7 +100,8 @@ public class HarvestPanel extends VerticalPanel implements ClickHandler {
     public void onClick(ClickEvent event) {
         if (event.getSource().equals(createButton)) {
             HarvestItemCreator.createHarvestItem(folderPanel, recordPanel,
-                    playPanel, this, url, layouts, customLayouts);
+                    playPanel, this, url, layouts, customLayouts, users,
+                    groups);
         }
     }
 

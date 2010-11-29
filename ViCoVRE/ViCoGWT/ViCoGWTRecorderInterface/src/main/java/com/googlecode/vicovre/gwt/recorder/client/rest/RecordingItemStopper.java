@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
@@ -59,17 +60,21 @@ public class RecordingItemStopper extends AbstractJSONRestCall {
 
     private Layout[] customLayouts = null;
 
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
     public static void stop(FolderPanel folderPanel, PlayPanel playPanel,
             RecordingItem item, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         RecordingItemStopper stopper = new RecordingItemStopper(folderPanel,
-                playPanel, item, url, layouts, customLayouts);
+                playPanel, item, url, layouts, customLayouts, users, groups);
         stopper.go();
     }
 
     public RecordingItemStopper(FolderPanel folderPanel, PlayPanel playPanel,
             RecordingItem item, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         super(true);
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
@@ -83,6 +88,8 @@ public class RecordingItemStopper extends AbstractJSONRestCall {
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
     }
 
     public void go() {
@@ -102,7 +109,8 @@ public class RecordingItemStopper extends AbstractJSONRestCall {
         if (recording != null) {
 
             PlayItem playItem = PlayItemLoader.buildPlayItem(recording,
-                    folderPanel, baseUrl, layouts, customLayouts);
+                    folderPanel, baseUrl, layouts, customLayouts, users,
+                    groups);
             if (item != null) {
                 playPanel.addItem(playItem);
             }
