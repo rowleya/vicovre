@@ -32,6 +32,8 @@
 
 package com.googlecode.vicovre.gwt.client.rest;
 
+import java.io.IOException;
+
 import org.restlet.client.Client;
 import org.restlet.client.Request;
 import org.restlet.client.Response;
@@ -64,8 +66,18 @@ public abstract class AbstractRestCall implements Uniform {
         if (response.getStatus().isSuccess()) {
             onSuccess(response);
         } else {
-            onError(response.getStatus().getCode() + ": "
-                    + response.getStatus().getDescription());
+            String message = null;
+            try {
+                if (response.getEntity().getMediaType().equals(
+                        MediaType.TEXT_PLAIN)) {
+                    message = response.getEntity().getText();
+                } else {
+                    message = response.getStatus().getDescription();
+                }
+            } catch (IOException e) {
+                message = response.getStatus().getDescription();
+            }
+            onError(response.getStatus().getCode() + ": " + message);
         }
     }
 

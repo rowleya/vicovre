@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.URL;
@@ -109,10 +110,14 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private Layout[] customLayouts = null;
 
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
     public HarvestItem(String baseUrl, FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, String id,
             String itemName, HarvestItemPopup popup, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
         this.baseUrl = baseUrl;
         this.folderPanel = folderPanel;
         this.recordPanel = recordPanel;
@@ -121,6 +126,8 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         this.popup = popup;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
         name.setText(itemName);
         setWidth("100%");
         DOM.setStyleAttribute(getElement(), "borderColor", "black");
@@ -257,7 +264,8 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
             popup.center();
         } else if (event.getSource().equals(harvestButton)) {
             HarvestItemUpdater.harvest(this, folderPanel, recordPanel,
-                    playPanel,  baseUrl, layouts, customLayouts);
+                    playPanel,  baseUrl, layouts, customLayouts,
+                    users, groups);
         } else if (event.getSource().equals(deleteButton)) {
             HarvestItemDeleter.deleteItem(this, baseUrl);
         }

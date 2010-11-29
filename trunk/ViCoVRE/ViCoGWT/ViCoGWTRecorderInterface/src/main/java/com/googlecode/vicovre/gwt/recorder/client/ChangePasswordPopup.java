@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
+package com.googlecode.vicovre.gwt.recorder.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PasswordSetter;
 
 public class ChangePasswordPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, KeyPressHandler {
@@ -61,11 +62,8 @@ public class ChangePasswordPopup extends ModalPopup<VerticalPanel>
 
     private String url = null;
 
-    private String baseUrl = null;
-
-    public ChangePasswordPopup(String baseUrl, String url) {
+    public ChangePasswordPopup(String url) {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
         this.url = url;
 
         VerticalPanel panel = getWidget();
@@ -113,12 +111,12 @@ public class ChangePasswordPopup extends ModalPopup<VerticalPanel>
     public void onClick(ClickEvent event) {
         if (event.getSource() == ok) {
             if (password.getText().equals(passwordAgain.getText())) {
-                PasswordSetter.setPassword(baseUrl, url, this,
+                PasswordSetter.setPassword(url, this,
                         oldPassword.getText(), password.getText());
             } else {
                 MessagePopup popup = new MessagePopup(
                         "The passwords do not match!", null,
-                        baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                        MessagePopup.ERROR, MessageResponse.OK);
                 popup.center();
             }
         } else if (event.getSource() == cancel) {

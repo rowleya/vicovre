@@ -30,12 +30,10 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.display.client;
+package com.googlecode.vicovre.gwt.recorder.client;
 
-import java.util.List;
 import java.util.Vector;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -52,6 +50,7 @@ import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.json.JSONACLEntity;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PermissionSetter;
 
 public class PermissionPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, ChangeHandler {
@@ -96,17 +95,14 @@ public class PermissionPopup extends ModalPopup<VerticalPanel>
 
     private String url = null;
 
-    private String baseUrl = null;
-
     private String folder = null;
 
     private String recordingId = null;
 
-    public PermissionPopup(String baseUrl, String url, String folder,
+    public PermissionPopup(String url, String folder,
             String recordingId, JsArrayString users, JsArrayString groups,
             JSONACL acl, JSONACL readAcl) {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
         this.url = url;
         this.folder = folder;
         this.recordingId = recordingId;
@@ -271,21 +267,23 @@ public class PermissionPopup extends ModalPopup<VerticalPanel>
 
             boolean allowRequest = allowList.getValue(
                     allowRequestList.getSelectedIndex()).equals("true");
-            Vector<String> requestExceptionTypes = null;
-            Vector<String> requestExceptions = null;
+            String[] requestExceptionTypes = null;
+            String[] requestExceptions = null;
             if (!allowRequest) {
-                requestExceptionTypes = exceptionTypes;
-                requestExceptions = exceptions;
+                requestExceptionTypes = exceptionTypes.toArray(new String[0]);
+                requestExceptions = exceptions.toArray(new String[0]);
             }
 
             boolean allow = allowList.getValue(
                     allowList.getSelectedIndex()).equals("true");
 
-            PermissionSetter.setPermissions(baseUrl, url, folder, recordingId,
+            PermissionSetter.setPermissions(url, folder, recordingId,
                     new String[]{"play", "read"}, this,
                     new boolean[]{allow, allowRequest},
-                    new List[]{exceptionTypes, requestExceptionTypes},
-                    new List[]{exceptions, requestExceptions});
+                    new String[][]{exceptionTypes.toArray(new String[0]),
+                        requestExceptionTypes},
+                    new String[][]{exceptions.toArray(new String[0]),
+                        requestExceptions});
         } else if (event.getSource() == addUserException) {
             moveSelectedItems(userList, userExceptionList);
         } else if (event.getSource() == removeUserException) {

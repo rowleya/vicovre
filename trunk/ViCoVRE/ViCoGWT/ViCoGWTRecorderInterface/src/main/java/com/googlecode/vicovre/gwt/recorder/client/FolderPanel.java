@@ -35,6 +35,7 @@ package com.googlecode.vicovre.gwt.recorder.client;
 import java.util.HashMap;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -93,16 +94,23 @@ public class FolderPanel extends HorizontalPanel
 
     private boolean userIsWriter = false;
 
-    public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts) {
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
+    public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts,
+            JsArrayString users, JsArrayString groups) {
         this.url = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.users = users;
+        this.groups = groups;
 
         playPanel = new PlayPanel(this, url, layouts, customLayouts);
         recordPanel = new RecordPanel(this, playPanel, url, layouts,
-                customLayouts);
+                customLayouts, users, groups);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
-                layouts, customLayouts);
+                layouts, customLayouts, users, groups);
         metadataPopup = new MetadataPopup(url, "name");
         metadataPopup.setHandler(this);
 
@@ -192,11 +200,13 @@ public class FolderPanel extends HorizontalPanel
         harvestPanel.clear();
 
         PlayItemLoader.loadPlayItems(path, this, playPanel, loader, url,
-                layouts, customLayouts);
+                layouts, customLayouts, users, groups);
         RecordingItemLoader.loadRecordingItems(path, this, playPanel,
-                recordPanel, loader, url, layouts, customLayouts);
+                recordPanel, loader, url, layouts, customLayouts, users,
+                groups);
         HarvestItemLoader.loadHarvestItems(path, this, recordPanel, playPanel,
-                harvestPanel, loader, url, layouts, customLayouts);
+                harvestPanel, loader, url, layouts, customLayouts, users,
+                groups);
         FolderMetadataLoader.loadMetadata(path, this, loader, url);
         if (path.equals("") || path.equals("/") || !userIsWriter) {
             editMetadataButton.setEnabled(false);

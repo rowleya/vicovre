@@ -32,43 +32,25 @@
 
 package com.googlecode.vicovre.gwt.display.client;
 
-import java.util.List;
-
 import pl.rmalinowski.gwt2swf.client.ui.SWFWidget;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Dictionary;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.LoginPopup;
-import com.googlecode.vicovre.gwt.client.Logout;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.json.JSONGroups;
 import com.googlecode.vicovre.gwt.client.json.JSONUsers;
 
-public class Application implements EntryPoint, ClickHandler {
+public class Application implements EntryPoint {
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
     private SWFWidget player = null;
-
-    private Button securityButton = new Button("Set Permissions");
-
-    private Button changePassword = new Button("Change Password");
-
-    private Button login = new Button("Login");
-
-    private Button logout = new Button("Logout");
-
-    private Button makePublic = new Button("Make Public");
-
-    private Button makePrivate = new Button("Make Private");
 
     protected String getBaseUrl() {
         String url = GWT.getHostPageBaseURL();
@@ -111,10 +93,6 @@ public class Application implements EntryPoint, ClickHandler {
             folder = folder.substring(1);
         }
         return folder;
-    }
-
-    protected boolean canEdit() {
-        return parameters.get("canEdit").equals("true");
     }
 
     protected boolean canPlay() {
@@ -161,7 +139,6 @@ public class Application implements EntryPoint, ClickHandler {
         String playUrl = getPlayUrl();
         String recordingId = getRecordingId();
         String folder = getFolder();
-        boolean canEdit = canEdit();
         boolean canPlay = canPlay();
         String role = getRole();
         String startTime = getStartTime();
@@ -185,29 +162,6 @@ public class Application implements EntryPoint, ClickHandler {
             mainPanel.setCellHeight(buttonPanel, "20px");
             mainPanel.setCellHeight(player, "100%");
 
-            if (role.equals("User")) {
-                buttonPanel.add(login);
-                login.addClickHandler(this);
-            } else {
-                buttonPanel.add(changePassword);
-                buttonPanel.add(logout);
-                changePassword.addClickHandler(this);
-                logout.addClickHandler(this);
-            }
-
-            if (canEdit) {
-                securityButton.setTitle("Change who can play this Recording");
-                makePublic.setTitle("Allow anyone to play this Recording");
-                makePrivate.setTitle("Stop anyone from playing this Recording");
-
-                buttonPanel.add(makePublic);
-                buttonPanel.add(makePrivate);
-                buttonPanel.add(securityButton);
-                securityButton.addClickHandler(this);
-                makePublic.addClickHandler(this);
-                makePrivate.addClickHandler(this);
-            }
-
         } else if (role.equals("User")) {
             LoginPopup popup = new LoginPopup(getBaseUrl(), url);
             popup.center();
@@ -215,34 +169,6 @@ public class Application implements EntryPoint, ClickHandler {
             RequestAccessPopup popup = new RequestAccessPopup(getBaseUrl(),
                     url, folder, recordingId);
             popup.center();
-        }
-    }
-
-    public void onClick(ClickEvent event) {
-        if (event.getSource() == makePublic) {
-            PermissionSetter.setPermissions(getBaseUrl(), getUrl(), getFolder(),
-                    getRecordingId(), new String[]{"play", "read"}, null,
-                    new boolean[]{true, true}, new List[]{null, null},
-                    new List[]{null, null});
-        } else if (event.getSource() == makePrivate) {
-            PermissionSetter.setPermissions(getBaseUrl(), getUrl(), getFolder(),
-                    getRecordingId(), new String[]{"play", "read"}, null,
-                    new boolean[]{false, false}, new List[]{null, null},
-                    new List[]{null, null});
-        } else if (event.getSource() == securityButton) {
-            PermissionPopup popup = new PermissionPopup(getBaseUrl(), getUrl(),
-                    getFolder(), getRecordingId(), getUsers(), getGroups(),
-                    getAcl(), getReadAcl());
-            popup.center();
-        } else if (event.getSource() == login) {
-            LoginPopup popup = new LoginPopup(getBaseUrl(), getUrl());
-            popup.center();
-        } else if (event.getSource() == changePassword) {
-            ChangePasswordPopup popup = new ChangePasswordPopup(getBaseUrl(),
-                    getUrl());
-            popup.center();
-        } else if (event.getSource() == logout) {
-            Logout.logout(getBaseUrl(), getUrl());
         }
     }
 }
