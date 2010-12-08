@@ -61,6 +61,8 @@ public class LiveStream implements Runnable, PushBufferStream,
 
     private static final int BLANK_HEIGHT = 768;
 
+    private static final int NO_FRAME_MAX = 10;
+
     private static final PixelFormat DEFAULT_FORMAT = PixelFormat.RGB24;
 
     private static final HashMap<PixelFormat, Format> SUPPORTED_FORMATS =
@@ -74,7 +76,11 @@ public class LiveStream implements Runnable, PushBufferStream,
 
     private Grabber grabber = null;
 
+    private RawFrame lastFrame = null;
+
     private RawFrame frame = null;
+
+    private int noFrameCount = 0;
 
     private BufferTransferHandler handler = null;
 
@@ -176,10 +182,13 @@ public class LiveStream implements Runnable, PushBufferStream,
                     }
                     handler.transferData(this);
                     if (frame == null) {
-                        try {
-                            handlerSync.wait(WAIT_GRABBER_TIME);
-                        } catch (InterruptedException e) {
-                            // Do Nothing
+                        if ((lastFrame == null)
+                                || noFrameCount >= NO_FRAME_MAX) {
+                            try {
+                                handlerSync.wait(WAIT_GRABBER_TIME);
+                            } catch (InterruptedException e) {
+                                // Do Nothing
+                            }
                         }
                     }
                 }
@@ -191,9 +200,17 @@ public class LiveStream implements Runnable, PushBufferStream,
         synchronized (handlerSync) {
             byte[] data = null;
             if (frame == null) {
-                data = emptyFrame.getData();
+                if ((lastFrame != null) && (noFrameCount < NO_FRAME_MAX)) {
+                    data = lastFrame.getPixelBuffer();
+                    noFrameCount += 1;
+                } else {
+                    data = emptyFrame.getData();
+                    lastFrame = null;
+                }
             } else {
                 data = frame.getPixelBuffer();
+                lastFrame = frame;
+                noFrameCount = 0;
             }
             buffer.setData(data);
             buffer.setOffset(0);
