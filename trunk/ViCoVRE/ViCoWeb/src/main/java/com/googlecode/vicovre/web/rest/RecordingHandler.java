@@ -68,7 +68,7 @@ import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.ReplayLayoutPosition;
 import com.googlecode.vicovre.recordings.Stream;
-import com.googlecode.vicovre.recordings.UnfinishedRecording;
+import com.googlecode.vicovre.recordings.UnfinishedRecordingController;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.insecure.InsecureRecording;
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
@@ -168,7 +168,8 @@ public class RecordingHandler extends AbstractHandler {
             throws IOException, ParseException {
 
         Date start = RecordingConstants.DATE_FORMAT.parse(startDate);
-        String recordingId = UnfinishedRecording.ID_DATE_FORMAT.format(start)
+        String recordingId =
+            UnfinishedRecordingController.ID_DATE_FORMAT.format(start)
             + UUID.randomUUID().toString();
         File directory = new File(getDatabase().getFile(folder), recordingId);
 

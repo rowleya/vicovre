@@ -98,6 +98,48 @@ public class UnfinishedRecordingReader {
             recording.setAddresses(locations);
         }
 
+        String frequency = XmlIo.readValue(doc, "repeatFrequency");
+        if ((frequency != null)
+                && !frequency.equals(UnfinishedRecording.NO_REPEAT)) {
+            recording.setRepeatFrequency(frequency);
+            XmlIo.setInt(doc, recording, "repeatStartHour");
+            XmlIo.setInt(doc, recording, "repeatStartMinute");
+            XmlIo.setInt(doc, recording, "repeatDurationMinutes");
+            XmlIo.setInt(doc, recording, "repeatItemFrequency");
+
+            if (frequency.equals(UnfinishedRecording.REPEAT_DAILY)) {
+                String ignoreWeekends = XmlIo.readValue(doc, "ignoreWeekends");
+                if ((ignoreWeekends != null) && ignoreWeekends.equals("true")) {
+                    recording.setIgnoreWeekends(true);
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_WEEKLY)) {
+                XmlIo.setInt(doc, recording, "repeatDayOfWeek");
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_MONTHLY)) {
+                String repeatDayOfMonth = XmlIo.readValue(doc,
+                        "repeatDayOfMonth");
+                if ((repeatDayOfMonth != null)
+                        && !repeatDayOfMonth.equals("-1")) {
+                    recording.setRepeatDayOfMonth(
+                            Integer.parseInt(repeatDayOfMonth));
+                } else {
+                    XmlIo.setInt(doc, recording, "repeatDayOfWeek");
+                    XmlIo.setInt(doc, recording, "repeatWeekNumber");
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_ANNUALLY)) {
+                XmlIo.setInt(doc, recording, "repeatMonth");
+                String repeatDayOfMonth = XmlIo.readValue(doc,
+                        "repeatDayOfMonth");
+                if ((repeatDayOfMonth != null)
+                        && !repeatDayOfMonth.equals("0")) {
+                    recording.setRepeatDayOfMonth(
+                            Integer.parseInt(repeatDayOfMonth));
+                } else {
+                    XmlIo.setInt(doc, recording, "repeatDayOfWeek");
+                    XmlIo.setInt(doc, recording, "repeatWeekNumber");
+                }
+            }
+        }
+
         File metadataFile = new File(directory,
                 id + RecordingConstants.METADATA);
         File oldMetadataFile = new File(directory,
@@ -143,6 +185,35 @@ public class UnfinishedRecordingReader {
                 XmlIo.writeValue(location, "host", writer);
                 XmlIo.writeValue(location, "port", writer);
                 writer.println("</address>");
+            }
+        }
+
+        XmlIo.writeValue(recording, "repeatFrequency", writer);
+        String frequency = recording.getRepeatFrequency();
+        if ((frequency != null)
+                && !frequency.equals(UnfinishedRecording.NO_REPEAT)) {
+            XmlIo.writeValue(recording, "repeatStartHour", writer);
+            XmlIo.writeValue(recording, "repeatStartMinute", writer);
+            XmlIo.writeValue(recording, "repeatDurationMinutes", writer);
+            XmlIo.writeValue(recording, "repeatItemFrequency", writer);
+
+            if (frequency.equals(UnfinishedRecording.REPEAT_DAILY)) {
+                XmlIo.writeValue(recording, "ignoreWeekends", writer);
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_WEEKLY)) {
+                XmlIo.writeValue(recording, "repeatDayOfWeek", writer);
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_MONTHLY)) {
+                XmlIo.writeValue(recording, "repeatDayOfMonth", writer);
+                if (recording.getRepeatDayOfMonth() <= 0) {
+                    XmlIo.writeValue(recording, "repeatDayOfWeek", writer);
+                    XmlIo.writeValue(recording, "repeatWeekNumber", writer);
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_ANNUALLY)) {
+                XmlIo.writeValue(recording, "repeatMonth", writer);
+                XmlIo.writeValue(recording, "repeatDayOfMonth", writer);
+                if (recording.getRepeatDayOfMonth() <= 0) {
+                    XmlIo.writeValue(recording, "repeatDayOfWeek", writer);
+                    XmlIo.writeValue(recording, "repeatWeekNumber", writer);
+                }
             }
         }
 

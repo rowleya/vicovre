@@ -12,3 +12,7 @@ button {
 margin-left: 3px;
 z-index: 1000000;
 }
+
+.dateBoxPopup {
+    z-index: 1000000;
+}

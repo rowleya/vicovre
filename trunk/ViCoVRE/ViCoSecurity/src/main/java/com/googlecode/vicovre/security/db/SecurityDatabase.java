@@ -389,7 +389,7 @@ public class SecurityDatabase {
     public void addUser(String username, String password, String roleName)
             throws IOException {
         synchronized (users) {
-            if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
+            if (!getCurrentUser(null, null).getRole().is(Role.ADMINISTRATOR)) {
                 throw new UnauthorizedException(
                    "Only an administrator can add a user with a specific role");
             }
@@ -414,7 +414,7 @@ public class SecurityDatabase {
                 throw new UnknownException("Unknown user " + username);
             }
 
-            if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
+            if (!getCurrentUser(null, null).getRole().is(Role.ADMINISTRATOR)) {
                 throw new UnauthorizedException(
                     "Only an administrator can change another user's password");
             }
@@ -429,7 +429,7 @@ public class SecurityDatabase {
 
     public void setPassword(String oldPassword,	String newPassword)
             throws IOException {
-        User user = CurrentUser.get();
+        User user = getCurrentUser(null, null);
         synchronized (user) {
             if (user.getRole().equals(Role.USER)) {
                 throw new UnauthorizedException(
@@ -446,7 +446,7 @@ public class SecurityDatabase {
 
     public void setUserRole(String username, String roleName)
             throws IOException {
-        if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)) {
+        if (!getCurrentUser(null, null).getRole().is(Role.ADMINISTRATOR)) {
             throw new UnauthorizedException(
                     "Only an administrator can change a user's role");
         }
@@ -477,8 +477,9 @@ public class SecurityDatabase {
                 throw new UnknownException("Unknown user " + username);
             }
 
-            if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)
-                    && !CurrentUser.get().equals(user)) {
+            User currentUser = getCurrentUser(null, null);
+            if (!currentUser.getRole().is(Role.ADMINISTRATOR)
+                    && !currentUser.equals(user)) {
                 throw new UnauthorizedException(
                     "Only an administrator or the user themself"
                     + " can delete a user");
@@ -495,7 +496,7 @@ public class SecurityDatabase {
     }
 
     public List<String> getUsers() {
-        if (!CurrentUser.get().getRole().is(Role.WRITER)) {
+        if (!getCurrentUser(null, null).getRole().is(Role.WRITER)) {
             throw new UnauthorizedException(
                     "You must have write permission to see the user list");
         }
@@ -519,7 +520,7 @@ public class SecurityDatabase {
     }
 
     public void addGroup(String name) throws IOException {
-        if (!CurrentUser.get().getRole().is(Role.WRITER)) {
+        if (!getCurrentUser(null, null).getRole().is(Role.WRITER)) {
             throw new UnauthorizedException(
                     "You have write permissions to be able to create a group");
         }
@@ -528,7 +529,7 @@ public class SecurityDatabase {
                 throw new AlreadyExistsException("Group already exists!");
             }
             checkGroupName(name);
-            Group group = new Group(name, CurrentUser.get());
+            Group group = new Group(name, getCurrentUser(null, null));
             synchronized (group) {
                 groups.put(group.getName(), group);
                 writeGroup(group);
@@ -548,8 +549,9 @@ public class SecurityDatabase {
                     throw new UnknownException("Unknown user " + owner);
                 }
                 synchronized (group) {
-                    if (!CurrentUser.get().getRole().equals(Role.ADMINISTRATOR)
-                            && !CurrentUser.get().equals(group.getOwner())) {
+                    User currentUser = getCurrentUser(null, null);
+                    if (!currentUser.getRole().equals(Role.ADMINISTRATOR)
+                            && !currentUser.equals(group.getOwner())) {
                         throw new UnauthorizedException(
                             "You must be an administrator or the current owner "
                             + "of the group to change the owner");
@@ -569,8 +571,9 @@ public class SecurityDatabase {
                 throw new UnknownException("Unknown group " + group);
             }
             synchronized (group) {
-                if (!CurrentUser.get().getRole().equals(Role.ADMINISTRATOR)
-                        && !CurrentUser.get().equals(group.getOwner())) {
+                User currentUser = getCurrentUser(null, null);
+                if (!currentUser.getRole().equals(Role.ADMINISTRATOR)
+                        && !currentUser.equals(group.getOwner())) {
                     throw new UnauthorizedException(
                         "You must be an administrator or the current owner "
                         + "of the group to change users in the group");
@@ -603,8 +606,9 @@ public class SecurityDatabase {
             throw new UnknownException("Unknown group " + group);
         }
         synchronized (group) {
-            if (!CurrentUser.get().getRole().equals(Role.ADMINISTRATOR)
-                    && !CurrentUser.get().equals(group.getOwner())) {
+            User currentUser = getCurrentUser(null, null);
+            if (!currentUser.getRole().equals(Role.ADMINISTRATOR)
+                    && !currentUser.equals(group.getOwner())) {
                 throw new UnauthorizedException(
                     "You must be an administrator or the current owner "
                     + "of the group to delete it");
@@ -618,14 +622,15 @@ public class SecurityDatabase {
     }
 
     public List<String> getGroups() {
-        if (!CurrentUser.get().getRole().is(Role.WRITER)) {
+        if (!getCurrentUser(null, null).getRole().is(Role.WRITER)) {
             throw new UnauthorizedException(
                     "You must have write permission to see the group list");
         }
         List<String> groupList = new Vector<String>();
         for (Group group : groups.values()) {
-            if (CurrentUser.get().getRole().is(Role.ADMINISTRATOR) ||
-                    CurrentUser.get().equals(group.getOwner())) {
+            User currentUser = getCurrentUser(null, null);
+            if (currentUser.getRole().is(Role.ADMINISTRATOR) ||
+                    currentUser.equals(group.getOwner())) {
                 groupList.add(group.getName());
             }
         }
@@ -637,8 +642,9 @@ public class SecurityDatabase {
         if (group == null) {
             throw new UnknownException("Unknown group " + name);
         }
-        if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR) &&
-                !CurrentUser.get().equals(group.getOwner())) {
+        User currentUser = getCurrentUser(null, null);
+        if (currentUser.getRole().is(Role.ADMINISTRATOR) &&
+                !currentUser.equals(group.getOwner())) {
             throw new UnauthorizedException(
                 "Only an administrator or the group owner can see"
                 + " the group users");
@@ -651,8 +657,9 @@ public class SecurityDatabase {
         if (group == null) {
             throw new UnknownException("Unknown group " + name);
         }
-        if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR) &&
-                !CurrentUser.get().equals(group.getOwner())) {
+        User currentUser = getCurrentUser(null, null);
+        if (!currentUser.getRole().is(Role.ADMINISTRATOR) &&
+                !currentUser.equals(group.getOwner())) {
             throw new UnauthorizedException(
                 "Only an administrator or the group owner can see"
                 + " the group users");
@@ -665,7 +672,7 @@ public class SecurityDatabase {
     }
 
     public List<String> getRoles() {
-        if (CurrentUser.get().getRole().equals(Role.ADMINISTRATOR)) {
+        if (getCurrentUser(null, null).getRole().equals(Role.ADMINISTRATOR)) {
             throw new UnauthorizedException(
                     "You must be an adminstrator to see the roles");
         }
@@ -677,7 +684,7 @@ public class SecurityDatabase {
         if (user == null) {
             throw new UnknownException("Unknown user " + username);
         }
-        if (CurrentUser.get().getRole().equals(Role.ADMINISTRATOR)) {
+        if (getCurrentUser(null, null).getRole().equals(Role.ADMINISTRATOR)) {
             throw new UnauthorizedException(
                     "You must be an adminstrator to get the role of a user");
         }
@@ -685,12 +692,12 @@ public class SecurityDatabase {
     }
 
     public String getRole() {
-        User user = CurrentUser.get();
+        User user = getCurrentUser(null, null);
         return user.getRole().getName();
     }
 
     public String getUsername() {
-        User user = CurrentUser.get();
+        User user = getCurrentUser(null, null);
         if (user.equals(User.GUEST)) {
             return null;
         }
@@ -841,8 +848,9 @@ public class SecurityDatabase {
         }
 
         if (check) {
-            if (!CurrentUser.get().getRole().is(Role.ADMINISTRATOR)
-                    && !CurrentUser.get().equals(acl.getOwner())) {
+            User currentUser = getCurrentUser(folder, id);
+            if (!currentUser.getRole().is(Role.ADMINISTRATOR)
+                    && !currentUser.equals(acl.getOwner())) {
                 throw new UnauthorizedException(
                     "You must be an administrator or"
                     + " the owner of this object to perform this operation");
@@ -963,6 +971,6 @@ public class SecurityDatabase {
     }
 
     public boolean hasRole(Role role) {
-        return CurrentUser.get().getRole().is(role);
+        return getCurrentUser(null, null).getRole().is(role);
     }
 }
