@@ -34,6 +34,8 @@ package com.googlecode.vicovre.recordings;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Timer;
@@ -56,6 +58,9 @@ import com.googlecode.vicovre.utils.Emailer;
 
 public class UnfinishedRecordingController
         implements UnfinishedRecordingListener {
+
+    public static final SimpleDateFormat ID_DATE_FORMAT =
+        new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
 
     private static final BridgeDescription CONNECTION = new BridgeDescription();
     static {
@@ -132,12 +137,11 @@ public class UnfinishedRecordingController
         if (recording.isStarted()) {
             return;
         }
-        File directory = new File(database.getFile(recording.getFolder()),
-                recording.getFinishedRecordingId());
+        String id = ID_DATE_FORMAT.format(new Date()) + recording.getId();
+        File directory = new File(database.getFile(recording.getFolder()), id);
         RecordArchiveManager manager = new RecordArchiveManager(
                 layoutRepository, typeRepository,
-                recording.getFolder(), recording.getFinishedRecordingId(),
-                directory);
+                recording.getFolder(), id, directory);
         managers.put(recording, manager);
         try {
             NetworkLocation[] addrs = recording.getAddresses();
@@ -227,8 +231,15 @@ public class UnfinishedRecordingController
 
                 recording.stopRecording();
                 database.addRecording(finishedRecording, recording);
-                database.finishUnfinishedRecording(recording);
-                recording.setStatus(UnfinishedRecording.COMPLETED);
+                if (recording.getRepeatFrequency().equals(
+                        UnfinishedRecording.NO_REPEAT)) {
+                    database.finishUnfinishedRecording(recording);
+                    recording.setStatus(UnfinishedRecording.COMPLETED);
+                } else {
+                    recording.resetRecording();
+                    recording.setStatus(UnfinishedRecording.STOPPED);
+                    schedule(recording);
+                }
 
                 if ((emailAddress != null) && (emailer != null)) {
                     String message = MessageReader.readMessage(
@@ -257,9 +268,17 @@ public class UnfinishedRecordingController
         System.err.println("Stopped empty recording "
                 + recording.getMetadata().getPrimaryValue()
                 + ": " + recording.getId());
-        recording.resetRecording();
-        recording.setStatus(UnfinishedRecording.STOPPED
-                + ": no streams recorded");
+        if (recording.getRepeatFrequency().equals(
+                UnfinishedRecording.NO_REPEAT)) {
+            recording.resetRecording();
+            recording.setStatus(UnfinishedRecording.STOPPED
+                    + ": no streams recorded");
+        } else {
+            recording.resetRecording();
+            recording.setStatus(UnfinishedRecording.STOPPED);
+            schedule(recording);
+        }
+
         return null;
     }
 
@@ -268,6 +287,135 @@ public class UnfinishedRecordingController
         Date now = new Date();
         Date startDate = recording.getStartDate();
         Date stopDate = recording.getStopDate();
+        String frequency = recording.getRepeatFrequency();
+
+        if (!frequency.equals(UnfinishedRecording.NO_REPEAT)) {
+            int startHour = recording.getRepeatStartHour();
+            int startMinute = recording.getRepeatStartMinute();
+            int durationMinutes = recording.getRepeatDurationMinutes();
+            Calendar nowCal = Calendar.getInstance();
+            Calendar nextStart = Calendar.getInstance();
+            if (startDate != null) {
+                nextStart.setTime(startDate);
+            }
+            nextStart.set(Calendar.HOUR_OF_DAY, startHour);
+            nextStart.set(Calendar.MINUTE, startMinute);
+            nextStart.set(Calendar.SECOND, 0);
+            nextStart.set(Calendar.MILLISECOND, 0);
+            Calendar nextEnd = Calendar.getInstance();
+
+            if (frequency.equals(UnfinishedRecording.REPEAT_DAILY)) {
+                int dayFrequency = recording.getRepeatItemFrequency();
+                nextEnd.setTime(nextStart.getTime());
+                nextEnd.add(Calendar.MINUTE, durationMinutes);
+                while (nextEnd.before(nowCal)) {
+                    nextStart.add(Calendar.DAY_OF_MONTH, dayFrequency);
+                    nextEnd.add(Calendar.DAY_OF_MONTH, dayFrequency);
+
+                    while (recording.getIgnoreWeekends()
+                            && ((nextStart.get(Calendar.DAY_OF_WEEK)
+                                    == Calendar.SATURDAY)
+                                        || nextStart.get(Calendar.DAY_OF_WEEK)
+                                            == Calendar.SUNDAY)) {
+                        nextStart.add(Calendar.DAY_OF_MONTH, 1);
+                        nextEnd.add(Calendar.DAY_OF_MONTH, 1);
+                    }
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_WEEKLY)) {
+                int weekFrequency = recording.getRepeatItemFrequency();
+                int dayOfWeek = recording.getRepeatDayOfWeek();
+                nextStart.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                nextEnd.setTime(nextStart.getTime());
+                nextEnd.add(Calendar.MINUTE, durationMinutes);
+
+                while (nextEnd.before(nowCal)) {
+                    nextStart.add(Calendar.DAY_OF_MONTH, weekFrequency * 7);
+                    nextEnd.add(Calendar.DAY_OF_MONTH, weekFrequency * 7);
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_MONTHLY)) {
+                int monthFrequency = recording.getRepeatItemFrequency();
+                int dayOfMonth = recording.getRepeatDayOfMonth();
+                if (dayOfMonth > 0) {
+                    nextStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    nextEnd.setTime(nextStart.getTime());
+                    nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    while (nextEnd.before(nowCal)) {
+                        nextStart.add(Calendar.MONTH, monthFrequency);
+                        nextEnd.add(Calendar.MONTH, monthFrequency);
+                    }
+                } else {
+                    int dayOfWeek = recording.getRepeatDayOfWeek();
+                    int weekOfMonth = recording.getRepeatWeekNumber();
+                    nextStart.setFirstDayOfWeek(dayOfWeek);
+                    nextStart.setMinimalDaysInFirstWeek(7);
+                    nextStart.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                    nextStart.set(Calendar.WEEK_OF_MONTH, weekOfMonth);
+                    nextEnd.setTime(nextStart.getTime());
+                    nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    while (nextEnd.before(nowCal)) {
+                        if (weekOfMonth > 0) {
+                            nextStart.add(Calendar.MONTH, monthFrequency);
+                        } else {
+                            nextStart.add(Calendar.MONTH, monthFrequency + 1);
+                        }
+                        nextStart.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                        nextStart.set(Calendar.WEEK_OF_MONTH, weekOfMonth);
+
+                        nextEnd.setTime(nextStart.getTime());
+                        nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    }
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_ANNUALLY)) {
+                int yearFrequency = recording.getRepeatItemFrequency();
+                int month = recording.getRepeatMonth();
+                int dayOfMonth = recording.getRepeatDayOfMonth();
+                if (dayOfMonth > 0) {
+                    nextStart.set(Calendar.MONTH, month);
+                    nextStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                    nextEnd.setTime(nextStart.getTime());
+                    nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    while (nextEnd.before(nowCal)) {
+                        nextStart.add(Calendar.YEAR, yearFrequency);
+                        nextEnd.add(Calendar.YEAR, yearFrequency);
+                    }
+                } else {
+                    int dayOfWeek = recording.getRepeatDayOfWeek();
+                    int weekOfMonth = recording.getRepeatWeekNumber();
+                    nextStart.setFirstDayOfWeek(dayOfWeek);
+                    nextStart.setMinimalDaysInFirstWeek(7);
+                    nextStart.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                    nextStart.set(Calendar.WEEK_OF_MONTH, weekOfMonth);
+                    if (weekOfMonth > 0) {
+                        nextStart.set(Calendar.MONTH, month);
+                    } else {
+                        nextStart.set(Calendar.MONTH, month + 1);
+                    }
+                    nextEnd.setTime(nextStart.getTime());
+                    nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    while (nextEnd.before(nowCal)) {
+                        nextStart.add(Calendar.YEAR, yearFrequency);
+                        if (weekOfMonth > 0) {
+                            nextStart.set(Calendar.MONTH, month);
+                        } else {
+                            nextStart.set(Calendar.MONTH, month + 1);
+                        }
+                        nextStart.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+                        nextStart.set(Calendar.WEEK_OF_MONTH, weekOfMonth);
+                        nextEnd.setTime(nextStart.getTime());
+                        nextEnd.add(Calendar.MINUTE, durationMinutes);
+                    }
+                }
+            }
+
+            if ((stopDate != null) && nextStart.getTime().after(stopDate)) {
+                return;
+            }
+
+            startDate = nextStart.getTime();
+            stopDate = nextEnd.getTime();
+            recording.setStartDate(startDate);
+        }
+
         if ((startDate != null) && !recording.isStarted() &&
                 ((stopDate == null) || stopDate.after(now))) {
             Timer startTimer = new Timer();

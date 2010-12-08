@@ -140,10 +140,62 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             throw new IOException("Missing ag3VenueServer or addresses");
         }
 
+        String frequency = details.getFirst("repeatFrequency");
+        if ((frequency != null)
+                && !frequency.equals(UnfinishedRecording.NO_REPEAT)) {
+            recording.setRepeatFrequency(frequency);
+
+            String startHour = details.getFirst("repeatStartHour");
+            String startMinute = details.getFirst("repeatStartMinute");
+            String duration = details.getFirst("repeatDurationMinutes");
+            String repeatItemFrequency = details.getFirst(
+                    "repeatItemFrequency");
+
+            recording.setRepeatStartHour(Integer.parseInt(startHour));
+            recording.setRepeatStartMinute(Integer.parseInt(startMinute));
+            recording.setRepeatDurationMinutes(Integer.parseInt(duration));
+            recording.setRepeatItemFrequency(Integer.parseInt(
+                    repeatItemFrequency));
+
+            if (frequency.equals(UnfinishedRecording.REPEAT_DAILY)) {
+                String ignoreWeekends = details.getFirst("ignoreWeekends");
+                if (ignoreWeekends != null) {
+                    recording.setIgnoreWeekends(ignoreWeekends.equals("true"));
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_WEEKLY)) {
+                String dayOfWeek = details.getFirst("repeatDayOfWeek");
+                recording.setRepeatDayOfWeek(Integer.parseInt(dayOfWeek));
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_MONTHLY)) {
+                String dayOfMonth = details.getFirst("repeatDayOfMonth");
+                if ((dayOfMonth != null) && !dayOfMonth.equals("0")) {
+                    recording.setRepeatDayOfMonth(Integer.parseInt(dayOfMonth));
+                } else {
+                    String dayOfWeek = details.getFirst("repeatDayOfWeek");
+                    String weekOfMonth = details.getFirst("repeatWeekNumber");
+                    recording.setRepeatDayOfWeek(Integer.parseInt(dayOfWeek));
+                    recording.setRepeatWeekNumber(Integer.parseInt(
+                            weekOfMonth));
+                    recording.setRepeatDayOfMonth(0);
+                }
+            } else if (frequency.equals(UnfinishedRecording.REPEAT_ANNUALLY)) {
+                String month = details.getFirst("repeatMonth");
+                recording.setRepeatMonth(Integer.parseInt(month));
+                String dayOfMonth = details.getFirst("repeatDayOfMonth");
+                if ((dayOfMonth != null) && !dayOfMonth.equals("0")) {
+                    recording.setRepeatDayOfMonth(Integer.parseInt(dayOfMonth));
+                } else {
+                    String dayOfWeek = details.getFirst("repeatDayOfWeek");
+                    String weekOfMonth = details.getFirst("repeatWeekNumber");
+                    recording.setRepeatDayOfWeek(Integer.parseInt(dayOfWeek));
+                    recording.setRepeatWeekNumber(Integer.parseInt(
+                            weekOfMonth));
+                    recording.setRepeatDayOfMonth(0);
+                }
+            }
+        }
+
         recording.setEmailAddress(details.getFirst("emailAddress"));
     }
-
-
 
     @Path("{folder: .*}")
     @POST

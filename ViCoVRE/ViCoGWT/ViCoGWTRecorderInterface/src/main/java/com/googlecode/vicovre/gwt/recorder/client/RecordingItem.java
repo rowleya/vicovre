@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import java.util.Date;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -126,6 +127,28 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
     private JsArrayString users = null;
 
     private JsArrayString groups = null;
+
+    private String emailAddress = null;
+
+    private String repeatFrequency = RecordingItemPopup.NO_REPEAT;
+
+    private int repeatStartHour = 0;
+
+    private int repeatStartMinute = 0;
+
+    private int repeatDurationMinutes = 0;
+
+    private int repeatItemFrequency = 0;
+
+    private int repeatDayOfWeek = 0;
+
+    private int repeatDayOfMonth = 0;
+
+    private int repeatWeekNumber = 0;
+
+    private int repeatMonth = 0;
+
+    private boolean ignoreWeekends = false;
 
     public RecordingItem(FolderPanel folderPanel, PlayPanel playPanel,
             String id, String url, MetadataPopup metadataPopup,
@@ -324,6 +347,18 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
                 venueServerUrl = popup.getVenueServer();
                 venueUrl = popup.getVenue();
                 addresses = popup.getAddresses();
+                repeatFrequency = popup.getRepeatFrequency();
+                if (!repeatFrequency.equals(RecordingItemPopup.NO_REPEAT)) {
+                    repeatStartHour = popup.getRepeatStartHour();
+                    repeatStartMinute = popup.getRepeatStartMinute();
+                    repeatDurationMinutes = popup.getRepeatDurationMinutes();
+                    repeatItemFrequency = popup.getRepeatItemFrequency();
+                    ignoreWeekends = popup.isIgnoreWeekends();
+                    repeatDayOfWeek = popup.getRepeatDayOfWeek();
+                    repeatDayOfMonth = popup.getRepeatDayOfMonth();
+                    repeatWeekNumber = popup.getRepeatWeekNumber();
+                    repeatMonth = popup.getRepeatMonth();
+                }
                 if (id != null) {
                     RecordingItemEditor.updateRecording(this, url);
                 }
@@ -364,6 +399,37 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
                 itemUrl += "&ttl=" + parts[2];
             }
         }
+
+        itemUrl += "&repeatFrequency=" + URL.encodeComponent(repeatFrequency);
+        if (!repeatFrequency.equals(RecordingItemPopup.NO_REPEAT)) {
+            itemUrl += "&repeatStartHour=" + repeatStartHour;
+            itemUrl += "&repeatStartMinute=" + repeatStartMinute;
+            itemUrl += "&repeatDurationMinutes=" + repeatDurationMinutes;
+            itemUrl += "&repeatItemFrequency=" + repeatItemFrequency;
+            if (repeatFrequency.equals(RecordingItemPopup.REPEAT_DAILY)) {
+                itemUrl += "&ignoreWeekends=" + ignoreWeekends;
+            } else if (repeatFrequency.equals(
+                    RecordingItemPopup.REPEAT_WEEKLY)) {
+                itemUrl += "&repeatDayOfWeek=" + repeatDayOfWeek;
+            } else if (repeatFrequency.equals(
+                    RecordingItemPopup.REPEAT_MONTHLY)) {
+                if (repeatDayOfMonth != 0) {
+                    itemUrl += "&repeatDayOfMonth=" + repeatDayOfMonth;
+                } else {
+                    itemUrl += "&repeatDayOfWeek=" + repeatDayOfWeek;
+                    itemUrl += "&repeatWeekNumber=" + repeatWeekNumber;
+                }
+            } else if (repeatFrequency.equals(
+                    RecordingItemPopup.REPEAT_ANNUALLY)) {
+                itemUrl += "&repeatMonth=" + repeatMonth;
+                if (repeatDayOfMonth != 0) {
+                    itemUrl += "&repeatDayOfMonth=" + repeatDayOfMonth;
+                } else {
+                    itemUrl += "&repeatDayOfWeek=" + repeatDayOfWeek;
+                    itemUrl += "&repeatWeekNumber=" + repeatWeekNumber;
+                }
+            }
+        }
         return itemUrl;
     }
 
@@ -395,5 +461,181 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             return stopDateCompare;
         }
         return startDateCompare;
+    }
+
+    /**
+     * Returns the repeatFrequency
+     * @return the repeatFrequency
+     */
+    public String getRepeatFrequency() {
+        return repeatFrequency;
+    }
+
+    /**
+     * Sets the repeatFrequency
+     * @param repeatFrequency the repeatFrequency to set
+     */
+    public void setRepeatFrequency(String repeatFrequency) {
+        this.repeatFrequency = repeatFrequency;
+    }
+
+    /**
+     * Returns the repeatStartHour
+     * @return the repeatStartHour
+     */
+    public int getRepeatStartHour() {
+        return repeatStartHour;
+    }
+
+    /**
+     * Sets the repeatStartHour
+     * @param repeatStartHour the repeatStartHour to set
+     */
+    public void setRepeatStartHour(int repeatStartHour) {
+        this.repeatStartHour = repeatStartHour;
+    }
+
+    /**
+     * Returns the repeatStartMinute
+     * @return the repeatStartMinute
+     */
+    public int getRepeatStartMinute() {
+        return repeatStartMinute;
+    }
+
+    /**
+     * Sets the repeatStartMinute
+     * @param repeatStartMinute the repeatStartMinute to set
+     */
+    public void setRepeatStartMinute(int repeatStartMinute) {
+        this.repeatStartMinute = repeatStartMinute;
+    }
+
+    /**
+     * Returns the repeatDurationMinutes
+     * @return the repeatDurationMinutes
+     */
+    public int getRepeatDurationMinutes() {
+        return repeatDurationMinutes;
+    }
+
+    /**
+     * Sets the repeatDurationMinutes
+     * @param repeatDurationMinutes the repeatDurationMinutes to set
+     */
+    public void setRepeatDurationMinutes(int repeatDurationMinutes) {
+        this.repeatDurationMinutes = repeatDurationMinutes;
+    }
+
+    /**
+     * Returns the repeatItemFrequency
+     * @return the repeatDailyFrequency
+     */
+    public int getRepeatItemFrequency() {
+        return repeatItemFrequency;
+    }
+
+    /**
+     * Sets the repeatItemFrequency
+     * @param repeatItemFrequency the repeatItemFrequency to set
+     */
+    public void setRepeatItemFrequency(int repeatItemFrequency) {
+        this.repeatItemFrequency = repeatItemFrequency;
+    }
+
+    /**
+     * Returns the repeatDayOfWeek
+     * @return the repeatDayOfWeek
+     */
+    public int getRepeatDayOfWeek() {
+        return repeatDayOfWeek;
+    }
+
+    /**
+     * Sets the repeatDayOfWeek
+     * @param repeatDayOfWeek the repeatDayOfWeek to set
+     */
+    public void setRepeatDayOfWeek(int repeatDayOfWeek) {
+        this.repeatDayOfWeek = repeatDayOfWeek;
+    }
+
+    /**
+     * Returns the repeatDayOfMonth
+     * @return the repeatDayOfMonth
+     */
+    public int getRepeatDayOfMonth() {
+        return repeatDayOfMonth;
+    }
+
+    /**
+     * Sets the repeatDayOfMonth
+     * @param repeatDayOfMonth the repeatDayOfMonth to set
+     */
+    public void setRepeatDayOfMonth(int repeatDayOfMonth) {
+        this.repeatDayOfMonth = repeatDayOfMonth;
+    }
+
+    /**
+     * Returns the repeatWeekNumber
+     * @return the repeatWeekNumber
+     */
+    public int getRepeatWeekNumber() {
+        return repeatWeekNumber;
+    }
+
+    /**
+     * Sets the repeatWeekNumber
+     * @param repeatWeekNumber the repeatWeekNumber to set
+     */
+    public void setRepeatWeekNumber(int repeatWeekNumber) {
+        this.repeatWeekNumber = repeatWeekNumber;
+    }
+
+    /**
+     * Returns the repeatMonth
+     * @return the repeatMonth
+     */
+    public int getRepeatMonth() {
+        return repeatMonth;
+    }
+
+    /**
+     * Sets the repeatMonth
+     * @param repeatMonth the repeatMonth to set
+     */
+    public void setRepeatMonth(int repeatMonth) {
+        this.repeatMonth = repeatMonth;
+    }
+
+    /**
+     * Returns the ignoreWeekends
+     * @return the ignoreWeekends
+     */
+    public boolean isIgnoreWeekends() {
+        return ignoreWeekends;
+    }
+
+    /**
+     * Sets the ignoreWeekends
+     * @param ignoreWeekends the ignoreWeekends to set
+     */
+    public void setIgnoreWeekends(boolean ignoreWeekends) {
+        this.ignoreWeekends = ignoreWeekends;
+    }
+
+    /**
+     * Returns the emailAddress
+     * @return the emailAddress
+     */
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    /**
+     * Sets the emailAddress
+     * @param emailAddress the emailAddress to set
+     */
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 }

@@ -33,7 +33,6 @@
 package com.googlecode.vicovre.recordings;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -55,8 +54,15 @@ import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 @XmlAccessorType(XmlAccessType.NONE)
 public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
-    public static final SimpleDateFormat ID_DATE_FORMAT =
-        new SimpleDateFormat("yyyy-MM-dd_HHmmss-SSSS");
+    public static final String NO_REPEAT = "None";
+
+    public static final String REPEAT_DAILY = "Daily";
+
+    public static final String REPEAT_WEEKLY = "Weekly";
+
+    public static final String REPEAT_MONTHLY = "Monthly";
+
+    public static final String REPEAT_ANNUALLY = "Annually";
 
     public static final String STOPPED = "Stopped";
 
@@ -90,11 +96,27 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
 
     private boolean recordingFinished = false;
 
-    private String finishedRecordingId = null;
-
-    private String oldFinishedRecordingId = null;
-
     private String emailAddress = null;
+
+    private String repeatFrequency = NO_REPEAT;
+
+    private int repeatStartHour = 0;
+
+    private int repeatStartMinute = 0;
+
+    private int repeatDurationMinutes = 0;
+
+    private int repeatItemFrequency = 0;
+
+    private int repeatDayOfWeek = 0;
+
+    private int repeatDayOfMonth = 0;
+
+    private int repeatWeekNumber = 0;
+
+    private int repeatMonth = 0;
+
+    private boolean ignoreWeekends = false;
 
     public UnfinishedRecording() {
         // Does Nothing
@@ -107,7 +129,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
     public UnfinishedRecording(String folder, String id) {
         this.folder = folder;
         this.id = id;
-        this.finishedRecordingId = getId();
     }
 
     /**
@@ -227,15 +248,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
      */
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
-        if (!recordingStarted) {
-            oldFinishedRecordingId = finishedRecordingId;
-            if (startDate == null) {
-                finishedRecordingId = getId();
-            } else {
-                finishedRecordingId =
-                    ID_DATE_FORMAT.format(startDate) + getId();
-            }
-        }
     }
 
     public void setStartDateString(String startDate) throws ParseException {
@@ -320,14 +332,6 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         }
     }
 
-    public String getFinishedRecordingId() {
-        return finishedRecordingId;
-    }
-
-    public String getOldFinishedRecordingId() {
-        return oldFinishedRecordingId;
-    }
-
     @XmlElement
     public String getEmailAddress() {
         return emailAddress;
@@ -337,4 +341,157 @@ public class UnfinishedRecording implements Comparable<UnfinishedRecording> {
         this.emailAddress = emailAddress;
     }
 
+    /**
+     * Returns the repeatFrequency
+     * @return the repeatFrequency
+     */
+    @XmlElement
+    public String getRepeatFrequency() {
+        return repeatFrequency;
+    }
+
+    /**
+     * Sets the repeatFrequency
+     * @param repeatFrequency the repeatFrequency to set
+     */
+    public void setRepeatFrequency(String repeatFrequency) {
+        this.repeatFrequency = repeatFrequency;
+    }
+
+    /**
+     * Returns the repeatStartHour
+     * @return the repeatStartHour
+     */
+    @XmlElement
+    public int getRepeatStartHour() {
+        return repeatStartHour;
+    }
+
+    /**
+     * Sets the repeatStartHour
+     * @param repeatStartHour the repeatStartHour to set
+     */
+    public void setRepeatStartHour(int repeatStartHour) {
+        this.repeatStartHour = repeatStartHour;
+    }
+
+    /**
+     * Returns the repeatStartMinute
+     * @return the repeatStartMinute
+     */
+    @XmlElement
+    public int getRepeatStartMinute() {
+        return repeatStartMinute;
+    }
+
+    /**
+     * Sets the repeatStartMinute
+     * @param repeatStartMinute the repeatStartMinute to set
+     */
+    public void setRepeatStartMinute(int repeatStartMinute) {
+        this.repeatStartMinute = repeatStartMinute;
+    }
+
+    @XmlElement
+    public int getRepeatDurationMinutes() {
+        return repeatDurationMinutes;
+    }
+
+    public void setRepeatDurationMinutes(int repeatDurationMinutes) {
+        this.repeatDurationMinutes = repeatDurationMinutes;
+    }
+
+    /**
+     * Returns the repeatItemFrequency
+     * @return the repeatItemFrequency
+     */
+    @XmlElement
+    public int getRepeatItemFrequency() {
+        return repeatItemFrequency;
+    }
+
+    /**
+     * Sets the repeatItemFrequency
+     * @param repeatItemFrequency the repeatItemFrequency to set
+     */
+    public void setRepeatItemFrequency(int repeatItemFrequency) {
+        this.repeatItemFrequency = repeatItemFrequency;
+    }
+
+    /**
+     * Returns the repeatDayOfWeek
+     * @return the repeatDayOfWeek
+     */
+    @XmlElement
+    public int getRepeatDayOfWeek() {
+        return repeatDayOfWeek;
+    }
+
+    /**
+     * Sets the repeatDayOfWeek
+     * @param repeatDayOfWeek the repeatDayOfWeek to set
+     */
+    public void setRepeatDayOfWeek(int repeatDayOfWeek) {
+        this.repeatDayOfWeek = repeatDayOfWeek;
+    }
+
+    /**
+     * Returns the repeatDayOfMonth
+     * @return the repeatDayOfMonth
+     */
+    @XmlElement
+    public int getRepeatDayOfMonth() {
+        return repeatDayOfMonth;
+    }
+
+    /**
+     * Sets the repeatDayOfMonth
+     * @param repeatDayOfMonth the repeatDayOfMonth to set
+     */
+    public void setRepeatDayOfMonth(int repeatDayOfMonth) {
+        this.repeatDayOfMonth = repeatDayOfMonth;
+    }
+
+    /**
+     * Returns the repeatWeekNumber
+     * @return the repeatWeekNumber
+     */
+    @XmlElement
+    public int getRepeatWeekNumber() {
+        return repeatWeekNumber;
+    }
+
+    /**
+     * Sets the repeatWeekNumber
+     * @param repeatWeekNumber the repeatWeekNumber to set
+     */
+    public void setRepeatWeekNumber(int repeatWeekNumber) {
+        this.repeatWeekNumber = repeatWeekNumber;
+    }
+
+    /**
+     * Returns the repeatMonth
+     * @return the repeatMonth
+     */
+    @XmlElement
+    public int getRepeatMonth() {
+        return repeatMonth;
+    }
+
+    /**
+     * Sets the repeatMonth
+     * @param repeatMonth the repeatMonth to set
+     */
+    public void setRepeatMonth(int repeatMonth) {
+        this.repeatMonth = repeatMonth;
+    }
+
+    @XmlElement
+    public boolean getIgnoreWeekends() {
+        return ignoreWeekends;
+    }
+
+    public void setIgnoreWeekends(boolean ignoreWeekends) {
+        this.ignoreWeekends = ignoreWeekends;
+    }
 }

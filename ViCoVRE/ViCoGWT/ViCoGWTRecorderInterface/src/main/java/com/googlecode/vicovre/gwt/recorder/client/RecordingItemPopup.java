@@ -34,14 +34,18 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import java.util.Date;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -50,12 +54,44 @@ import com.googlecode.vicovre.gwt.client.MessagePopup;
 import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.client.NumberBox;
+import com.googlecode.vicovre.gwt.client.Space;
+import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
 
-public class RecordingItemPopup extends ModalPopup<Grid>
-        implements ValueChangeHandler<Boolean>, ClickHandler, VenueLoader {
+public class RecordingItemPopup extends ModalPopup<FlexTable>
+        implements ValueChangeHandler<Boolean>, ClickHandler, VenueLoader,
+        ChangeHandler {
+
+    public static final String NO_REPEAT = "None";
+
+    public static final String REPEAT_DAILY = "Daily";
+
+    public static final String REPEAT_WEEKLY = "Weekly";
+
+    public static final String REPEAT_MONTHLY = "Monthly";
+
+    public static final String REPEAT_ANNUALLY = "Annually";
+
+    private static final String NOT_REPEATED = "Not Repeated";
+
+    private static final String REPEATED_DAILY = "Daily";
+
+    private static final String REPEATED_WORK_DAYS = "Work Days";
+
+    private static final String REPEATED_WEEKLY = "Weekly";
+
+    private static final String REPEATED_MONTHLY = "Monthly (specific date)";
+
+    private static final String REPEATED_MONTHLY_WEEK =
+        "Monthly (specific week)";
+
+    private static final String REPEATED_ANNUALLY = "Annually (specific date)";
+
+    private static final String REPEATED_ANNUALLY_WEEK =
+        "Annually (specific week)";
 
     private static int lastId = 0;
 
@@ -65,11 +101,15 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private VenuePanel venue = new VenuePanel(this);
 
+    private ListBox repeatFrequency = new ListBox();
+
     private RadioButton manualStart = null;
 
     private RadioButton autoStart = null;
 
     private HorizontalPanel startDatePanel = new HorizontalPanel();
+
+    private HorizontalPanel startTimePanel = new HorizontalPanel();
 
     private DateBox startDate = new DateBox();
 
@@ -81,9 +121,33 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     private HorizontalPanel stopDatePanel = new HorizontalPanel();
 
+    private HorizontalPanel stopTimePanel = new HorizontalPanel();
+
     private DateBox stopDate = new DateBox();
 
     private TimeBox stopTime = new TimeBox(5, 5);
+
+    private HorizontalPanel repeatTimePanel = new HorizontalPanel();
+
+    private HorizontalPanel repeatDetailPanel = new HorizontalPanel();
+
+    private TimeBox repeatStart = new TimeBox(5, 5);
+
+    private TimeBox repeatDuration = new TimeBox(5, 5);
+
+    private HorizontalPanel repeatItemFrequencyPanel = new HorizontalPanel();
+
+    private NumberBox repeatItemFrequency = new NumberBox();
+
+    private Label repeatItem = new Label();
+
+    private ListBox repeatDayOfWeek = new ListBox();
+
+    private ListBox repeatDayOfMonth = new ListBox();
+
+    private ListBox repeatWeekNumber = new ListBox();
+
+    private ListBox repeatMonth = new ListBox();
 
     private Button ok = new Button("OK");
 
@@ -99,7 +163,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public RecordingItemPopup(RecordingItem item, String url,
             MetadataPopup metadataPopup) {
-        super(new Grid(5, 2));
+        super(new FlexTable());
         this.item = item;
         this.handler = item;
         this.url = url;
@@ -109,7 +173,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public RecordingItemPopup(MessageResponseHandler handler, String url,
             MetadataPopup metadataPopup) {
-        super(new Grid(5, 2));
+        super(new FlexTable());
         this.handler = handler;
         this.url = url;
         this.metadataPopup = metadataPopup;
@@ -122,7 +186,7 @@ public class RecordingItemPopup extends ModalPopup<Grid>
     }
 
     private void init() {
-        Grid grid = getWidget();
+        FlexTable grid = getWidget();
 
         manualStart = new RadioButton("start" + id);
         autoStart = new RadioButton("start" + id);
@@ -145,6 +209,40 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         stopTime.setHour(now.getHours() + 1);
         stopTime.setMinute(now.getMinutes());
 
+        repeatFrequency.addItem(NOT_REPEATED, NO_REPEAT);
+        repeatFrequency.addItem(REPEATED_DAILY, REPEAT_DAILY);
+        repeatFrequency.addItem(REPEATED_WORK_DAYS, REPEAT_DAILY);
+        repeatFrequency.addItem(REPEATED_WEEKLY, REPEAT_WEEKLY);
+        repeatFrequency.addItem(REPEATED_MONTHLY, REPEAT_MONTHLY);
+        repeatFrequency.addItem(REPEATED_MONTHLY_WEEK, REPEAT_MONTHLY);
+        repeatFrequency.addItem(REPEATED_ANNUALLY, REPEAT_ANNUALLY);
+        repeatFrequency.addItem(REPEATED_ANNUALLY_WEEK, REPEAT_ANNUALLY);
+        repeatFrequency.setSelectedIndex(0);
+        repeatFrequency.addChangeHandler(this);
+        repeatDetailPanel.setVisible(false);
+        repeatTimePanel.setVisible(false);
+
+        repeatTimePanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        repeatTimePanel.add(new Label("Starting at "));
+        repeatTimePanel.add(repeatStart);
+        repeatTimePanel.add(Space.getHorizontalSpace(5));
+        repeatTimePanel.add(new Label("Duration: "));
+        repeatTimePanel.add(repeatDuration);
+        repeatStart.setSecondsVisible(false);
+        repeatDuration.setSecondsVisible(false);
+        repeatStart.setHour(now.getHours());
+        repeatStart.setMinute(now.getMinutes());
+        repeatDuration.setHour(1);
+
+        repeatItemFrequencyPanel.setVerticalAlignment(
+                HorizontalPanel.ALIGN_MIDDLE);
+        repeatItemFrequencyPanel.add(new Label("Every"));
+        repeatItemFrequencyPanel.add(Space.getHorizontalSpace(5));
+        repeatItemFrequencyPanel.add(repeatItemFrequency);
+        repeatItemFrequencyPanel.add(Space.getHorizontalSpace(5));
+        repeatItemFrequencyPanel.add(repeatItem);
+        repeatItemFrequency.setWidth("33px");
+
         manualStart.addValueChangeHandler(this);
         manualStop.addValueChangeHandler(this);
         autoStart.addValueChangeHandler(this);
@@ -152,50 +250,127 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         manualStart.setValue(true, true);
         manualStop.setValue(true, true);
 
+        StringDateTimeFormat monthFormat = new StringDateTimeFormat("MMMM");
+        StringDateTimeFormat dayFormat = new StringDateTimeFormat("d");
+        StringDateTimeFormat weekdayFormat = new StringDateTimeFormat("EEEE");
+        for (int i = 0; i < 12; i++) {
+            String value = monthFormat.format(new Date(2009, i, 1));
+            repeatMonth.addItem("of " + value, value);
+        }
+        for (int i = 1; i <= 31; i++) {
+            String ordinal = "th";
+            String value = dayFormat.format(new Date(2009, 0, i));
+            if (i < 10 || i > 20) {
+                if ((i % 10) == 1) {
+                    ordinal = "st";
+                } else if ((i % 10) == 2) {
+                    ordinal = "nd";
+                } else if ((i % 10) == 3) {
+                    ordinal = "rd";
+                }
+            }
+            repeatDayOfMonth.addItem("on the " + value + ordinal, value);
+        }
+        for (int i = 0; i < 7; i++) {
+            String value = weekdayFormat.format(new Date(2009, 8, 18 + i));
+            repeatDayOfWeek.addItem("on " + value, value);
+        }
+        repeatWeekNumber.addItem("in the First Week", "1");
+        repeatWeekNumber.addItem("in the Second Week", "2");
+        repeatWeekNumber.addItem("in the Third Week", "3");
+        repeatWeekNumber.addItem("in the Forth Week", "4");
+        repeatWeekNumber.addItem("in the Last Week", "0");
+
+        repeatDetailPanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        repeatDetailPanel.add(repeatItemFrequencyPanel);
+        repeatDetailPanel.add(repeatDayOfMonth);
+        repeatDetailPanel.add(repeatDayOfWeek);
+        repeatDetailPanel.add(repeatWeekNumber);
+        repeatDetailPanel.add(repeatMonth);
+
         grid.setWidget(0, 0, new Label(MetadataPopup.getDisplayName(
                 metadataPopup.getPrimaryKey())));
         grid.setWidget(0, 1, name);
 
+        VerticalPanel repeatPanel = new VerticalPanel();
+        HorizontalPanel repeatFirstLine = new HorizontalPanel();
+        repeatFirstLine.add(repeatFrequency);
+        repeatFirstLine.add(repeatTimePanel);
+        repeatPanel.add(repeatFirstLine);
+        repeatPanel.add(repeatDetailPanel);
+        grid.setWidget(1, 0, new Label("Repetition:"));
+        grid.setWidget(1, 1, repeatPanel);
+
         HorizontalPanel startPanel = new HorizontalPanel();
+        startPanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        startDatePanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        startTimePanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
         startPanel.add(manualStart);
         startPanel.add(autoStart);
+        startPanel.add(Space.getHorizontalSpace(5));
         startPanel.add(startDatePanel);
-        startDatePanel.add(new Label(" on "));
+        startPanel.add(Space.getHorizontalSpace(5));
+        startPanel.add(startTimePanel);
+        startDatePanel.add(new Label("on"));
         startDatePanel.add(startDate);
-        startDatePanel.add(new Label(" at "));
-        startDatePanel.add(startTime);
-        grid.setWidget(1, 0, new Label("Start:"));
-        grid.setWidget(1, 1, startPanel);
+        startTimePanel.add(new Label("at"));
+        startTimePanel.add(startTime);
+        grid.setWidget(2, 0, new Label("Start:"));
+        grid.setWidget(2, 1, startPanel);
 
         HorizontalPanel stopPanel = new HorizontalPanel();
+        stopPanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        stopDatePanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
+        stopTimePanel.setVerticalAlignment(HorizontalPanel.ALIGN_BOTTOM);
         stopPanel.add(manualStop);
         stopPanel.add(autoStop);
+        stopPanel.add(Space.getHorizontalSpace(5));
         stopPanel.add(stopDatePanel);
-        stopDatePanel.add(new Label(" on "));
+        stopPanel.add(Space.getHorizontalSpace(5));
+        stopPanel.add(stopTimePanel);
+        stopDatePanel.add(new Label("on"));
         stopDatePanel.add(stopDate);
-        stopDatePanel.add(new Label(" at "));
-        stopDatePanel.add(stopTime);
-        grid.setWidget(2, 0, new Label("Stop:"));
-        grid.setWidget(2, 1, stopPanel);
+        stopTimePanel.add(new Label("at"));
+        stopTimePanel.add(stopTime);
+        grid.setWidget(3, 0, new Label("Stop:"));
+        grid.setWidget(3, 1, stopPanel);
 
-        grid.setWidget(3, 0, new Label("Virtual Venue:"));
-        grid.setWidget(3, 1, venue);
-        grid.setWidget(4, 0, cancel);
-        grid.setWidget(4, 1, ok);
+        grid.setWidget(4, 0, new Label("Virtual Venue:"));
+        grid.setWidget(4, 1, venue);
+        grid.setWidget(5, 0, cancel);
+        grid.setWidget(5, 1, ok);
 
-        grid.getCellFormatter().setHorizontalAlignment(4, 1,
-                HorizontalPanel.ALIGN_RIGHT);
         grid.getColumnFormatter().setWidth(0, "150px");
         grid.getColumnFormatter().setWidth(1, "600px");
         grid.getCellFormatter().setVerticalAlignment(1, 0,
                 VerticalPanel.ALIGN_TOP);
         grid.getCellFormatter().setVerticalAlignment(4, 0,
                 VerticalPanel.ALIGN_TOP);
+        grid.getFlexCellFormatter().setHorizontalAlignment(5, 1,
+                HorizontalPanel.ALIGN_RIGHT);
         name.setWidth("100%");
         venue.setWidth("100%");
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
+    }
+
+    private void setValue(ListBox box, String value) {
+        for (int i = 0; i < box.getItemCount(); i++) {
+            if (box.getValue(i).equals(value)) {
+                box.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void setText(ListBox box, String value) {
+        for (int i = 0; i < box.getItemCount(); i++) {
+            if (box.getItemText(i).equals(value)) {
+                box.setSelectedIndex(i);
+                return;
+            }
+        }
     }
 
     public void center() {
@@ -225,7 +400,62 @@ public class RecordingItemPopup extends ModalPopup<Grid>
             } else {
                 venue.setAddresses(item.getAddresses());
             }
+
+            String frequency = item.getRepeatFrequency();
+            GWT.log("Frequency = " + frequency);
+            if (frequency != null) {
+                if (frequency.equals(NO_REPEAT)) {
+                    setText(repeatFrequency, NOT_REPEATED);
+                } else {
+                    repeatItemFrequency.setText(String.valueOf(
+                            item.getRepeatItemFrequency()));
+                    repeatStart.setHour(item.getRepeatStartHour());
+                    repeatStart.setMinute(item.getRepeatStartMinute());
+                    repeatDuration.setHour(
+                            item.getRepeatDurationMinutes() / 60);
+                    repeatDuration.setMinute(item.getRepeatDurationMinutes()
+                            - (repeatDuration.getHour() * 60));
+                    if (frequency.equals(REPEAT_DAILY)) {
+                        if (item.isIgnoreWeekends()) {
+                            setText(repeatFrequency, REPEATED_WORK_DAYS);
+                            repeatItemFrequency.setText("1");
+                        } else {
+                            setText(repeatFrequency, REPEATED_DAILY);
+                        }
+                    } else if (frequency.equals(REPEAT_WEEKLY)) {
+                        setText(repeatFrequency, REPEATED_WEEKLY);
+                        repeatDayOfWeek.setSelectedIndex(
+                                item.getRepeatDayOfWeek());
+                    } else if (frequency.equals(REPEAT_MONTHLY)) {
+                        if (item.getRepeatDayOfMonth() > 0) {
+                            setText(repeatFrequency, REPEATED_MONTHLY);
+                            repeatDayOfMonth.setSelectedIndex(
+                                    item.getRepeatDayOfMonth() - 1);
+                        } else {
+                            setText(repeatFrequency, REPEATED_MONTHLY_WEEK);
+                            repeatDayOfWeek.setSelectedIndex(
+                                    item.getRepeatDayOfWeek());
+                            setValue(repeatWeekNumber, String.valueOf(
+                                    item.getRepeatWeekNumber()));
+                        }
+                    } else if (frequency.equals(REPEAT_ANNUALLY)) {
+                        repeatMonth.setSelectedIndex(item.getRepeatMonth());
+                        if (item.getRepeatDayOfMonth() > 0) {
+                            setText(repeatFrequency, REPEATED_ANNUALLY);
+                            repeatDayOfMonth.setSelectedIndex(
+                                    item.getRepeatDayOfMonth() - 1);
+                        } else {
+                            setText(repeatFrequency, REPEATED_ANNUALLY_WEEK);
+                            repeatDayOfWeek.setSelectedIndex(
+                                    item.getRepeatDayOfWeek());
+                            setValue(repeatWeekNumber, String.valueOf(
+                                    item.getRepeatWeekNumber()));
+                        }
+                    }
+                }
+            }
         }
+        setupRepetition();
         super.center();
     }
 
@@ -261,6 +491,54 @@ public class RecordingItemPopup extends ModalPopup<Grid>
         return venue.getAddresses();
     }
 
+    public String getRepeatFrequency() {
+        return repeatFrequency.getValue(repeatFrequency.getSelectedIndex());
+    }
+
+    public int getRepeatStartHour() {
+        return repeatStart.getHour();
+    }
+
+    public int getRepeatStartMinute() {
+        return repeatStart.getMinute();
+    }
+
+    public int getRepeatDurationMinutes() {
+        return (repeatDuration.getHour() * 60) + repeatDuration.getMinute();
+    }
+
+    public boolean isIgnoreWeekends() {
+        return repeatFrequency.getItemText(
+                repeatFrequency.getSelectedIndex()).equals(REPEATED_WORK_DAYS);
+    }
+
+    public int getRepeatItemFrequency() {
+        return Integer.parseInt(repeatItemFrequency.getText());
+    }
+
+    public int getRepeatDayOfWeek() {
+        return repeatDayOfWeek.getSelectedIndex();
+    }
+
+    public int getRepeatDayOfMonth() {
+        int index = repeatFrequency.getSelectedIndex();
+        String frequency = repeatFrequency.getItemText(index);
+        if (frequency.equals(REPEATED_ANNUALLY)
+                || frequency.equals(REPEATED_MONTHLY)) {
+            return repeatDayOfMonth.getSelectedIndex() + 1;
+        }
+        return 0;
+    }
+
+    public int getRepeatWeekNumber() {
+        return Integer.parseInt(repeatWeekNumber.getValue(
+                repeatWeekNumber.getSelectedIndex()));
+    }
+
+    public int getRepeatMonth() {
+        return repeatMonth.getSelectedIndex();
+    }
+
     public void setRecording(boolean recording) {
         autoStart.setEnabled(!recording);
         manualStart.setEnabled(!recording);
@@ -271,14 +549,28 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public void onValueChange(ValueChangeEvent<Boolean> event) {
         if (event.getValue() == true) {
+            String frequency = repeatFrequency.getValue(
+                    repeatFrequency.getSelectedIndex());
             if (event.getSource().equals(manualStart)) {
                 startDatePanel.setVisible(false);
+                if (frequency.equals(NO_REPEAT)) {
+                    startTimePanel.setVisible(false);
+                }
             } else if (event.getSource().equals(manualStop)) {
                 stopDatePanel.setVisible(false);
+                if (frequency.equals(NO_REPEAT)) {
+                    stopTimePanel.setVisible(false);
+                }
             } else if (event.getSource().equals(autoStart)) {
                 startDatePanel.setVisible(true);
+                if (frequency.equals(NO_REPEAT)) {
+                    startTimePanel.setVisible(true);
+                }
             } else if (event.getSource().equals(autoStop)) {
                 stopDatePanel.setVisible(true);
+                if (frequency.equals(NO_REPEAT)) {
+                    stopTimePanel.setVisible(true);
+                }
             }
         }
     }
@@ -297,6 +589,11 @@ public class RecordingItemPopup extends ModalPopup<Grid>
             } else if (venue.getAddresses() != null) {
                 if (venue.getAddresses().length < 1) {
                     error = "Please enter at least one address";
+                }
+            } else if (repeatFrequency.getValue(
+                    repeatFrequency.getSelectedIndex()).equals(NO_REPEAT)) {
+                if (repeatItemFrequency.getText().equals("0")) {
+                    error = "The frequency must be more than 0";
                 }
             }
             if (error == null) {
@@ -319,6 +616,97 @@ public class RecordingItemPopup extends ModalPopup<Grid>
 
     public void loadVenues(VenuePanel panel) {
         RestVenueLoader.loadVenues(panel, url);
+    }
+
+    private void setupRepetition() {
+        int index = repeatFrequency.getSelectedIndex();
+        String frequency = repeatFrequency.getItemText(index);
+        String frequencyValue = repeatFrequency.getValue(index);
+
+        boolean repeated = !frequency.equals(NOT_REPEATED);
+        repeatTimePanel.setVisible(repeated);
+        repeatDetailPanel.setVisible(repeated);
+        manualStart.setVisible(!repeated);
+        autoStart.setVisible(!repeated);
+        manualStart.setValue(!repeated);
+        autoStart.setValue(repeated);
+        manualStop.setValue(true);
+        autoStop.setValue(false);
+        startDatePanel.setVisible(repeated);
+        stopDatePanel.setVisible(false);
+        startTimePanel.setVisible(false);
+        stopTimePanel.setVisible(false);
+
+        Date now = new Date();
+        startDate.setValue(now);
+        stopDate.setValue(now);
+
+        if (!repeated) {
+            manualStop.setText("Manually");
+            startTime.setHour(now.getHours());
+            startTime.setMinute(now.getMinutes());
+            stopTime.setHour(now.getHours() + 1);
+            stopTime.setMinute(now.getMinutes());
+        } else {
+            manualStop.setText("Never");
+            startTime.setHour(0);
+            startTime.setMinute(0);
+            stopTime.setHour(0);
+            stopTime.setMinute(0);
+            repeatItemFrequency.setText("1");
+            if (!frequency.equals(REPEATED_WORK_DAYS)) {
+                repeatItemFrequencyPanel.setVisible(true);
+                if (frequency.equals(REPEATED_DAILY)) {
+                    repeatItem.setText("Days");
+                } else if (frequencyValue.equals(REPEAT_WEEKLY)) {
+                    repeatItem.setText("Weeks");
+                } else if (frequencyValue.equals(REPEAT_MONTHLY)) {
+                    repeatItem.setText("Months");
+                } else if (frequencyValue.equals(REPEAT_ANNUALLY)) {
+                    repeatItem.setText("Years");
+                }
+            } else {
+                repeatItemFrequencyPanel.setVisible(false);
+            }
+
+            if (frequencyValue.equals(REPEAT_DAILY)) {
+                repeatDayOfMonth.setVisible(false);
+                repeatWeekNumber.setVisible(false);
+                repeatDayOfWeek.setVisible(false);
+                repeatMonth.setVisible(false);
+            } else if (frequencyValue.equals(REPEAT_WEEKLY)) {
+                repeatDayOfMonth.setVisible(false);
+                repeatWeekNumber.setVisible(false);
+                repeatDayOfWeek.setVisible(true);
+                repeatMonth.setVisible(false);
+            } else if (frequency.equals(REPEATED_MONTHLY)) {
+                repeatDayOfMonth.setVisible(true);
+                repeatWeekNumber.setVisible(false);
+                repeatDayOfWeek.setVisible(false);
+                repeatMonth.setVisible(false);
+            } else if (frequency.equals(REPEATED_MONTHLY_WEEK)) {
+                repeatDayOfMonth.setVisible(false);
+                repeatWeekNumber.setVisible(true);
+                repeatDayOfWeek.setVisible(true);
+                repeatMonth.setVisible(false);
+            } else if (frequency.equals(REPEATED_ANNUALLY)) {
+                repeatDayOfMonth.setVisible(true);
+                repeatWeekNumber.setVisible(false);
+                repeatDayOfWeek.setVisible(false);
+                repeatMonth.setVisible(true);
+            } else if (frequency.equals(REPEATED_ANNUALLY_WEEK)) {
+                repeatDayOfMonth.setVisible(false);
+                repeatWeekNumber.setVisible(true);
+                repeatDayOfWeek.setVisible(true);
+                repeatMonth.setVisible(true);
+            }
+        }
+    }
+
+    public void onChange(ChangeEvent event) {
+        if (event.getSource().equals(repeatFrequency)) {
+            setupRepetition();
+        }
     }
 
 }

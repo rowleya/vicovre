@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.DOM;
@@ -210,7 +211,7 @@ public class StatusPanel extends DockPanel implements ClickHandler,
     }
 
     public void onKeyPress(KeyPressEvent event) {
-        if (event.getCharCode() == 13) {
+        if (event.getCharCode() == KeyCodes.KEY_ENTER) {
             if (event.getSource() == username) {
                 password.setFocus(true);
             } else if (event.getSource() == password) {

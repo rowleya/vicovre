@@ -85,4 +85,48 @@ public class JSONUnfinishedRecording extends JavaScriptObject {
     public final native String getStatus() /*-{
         return this.status;
     }-*/;
+
+    public final native String getEmailAddress() /*-{
+        return this.emailAddress;
+    }-*/;
+
+    public final native String getRepeatFrequency() /*-{
+        return this.repeatFrequency;
+    }-*/;
+
+    public final native int getRepeatStartHour() /*-{
+        return this.repeatStartHour;
+    }-*/;
+
+    public final native int getRepeatStartMinute() /*-{
+        return this.repeatStartMinute;
+    }-*/;
+
+    public final native int getRepeatDurationMinutes() /*-{
+        return this.repeatDurationMinutes;
+    }-*/;
+
+    public final native int getRepeatItemFrequency() /*-{
+        return this.repeatItemFrequency;
+    }-*/;
+
+    public final native int getRepeatDayOfWeek() /*-{
+        return this.repeatDayOfWeek;
+    }-*/;
+
+    public final native int getRepeatDayOfMonth() /*-{
+        return this.repeatStartHour;
+    }-*/;
+
+    public final native int getRepeatWeekNumber() /*-{
+        return this.repeatWeekNumber;
+    }-*/;
+
+    public final native int getRepeatMonth() /*-{
+        return this.repeatMonth;
+    }-*/;
+
+    public final native boolean getIgnoreWeekends() /*-{
+        return this.ignoreWeekends;
+    }-*/;
 }

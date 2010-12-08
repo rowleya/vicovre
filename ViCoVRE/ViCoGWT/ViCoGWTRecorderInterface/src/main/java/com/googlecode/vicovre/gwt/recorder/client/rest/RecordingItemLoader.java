@@ -164,6 +164,18 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
             recordingItem.setAddresses(addrs);
         }
 
+        recordingItem.setRepeatFrequency(recording.getRepeatFrequency());
+        recordingItem.setRepeatStartHour(recording.getRepeatStartHour());
+        recordingItem.setRepeatStartMinute(recording.getRepeatStartMinute());
+        recordingItem.setRepeatDurationMinutes(
+                recording.getRepeatDurationMinutes());
+        recordingItem.setRepeatItemFrequency(
+                recording.getRepeatItemFrequency());
+        recordingItem.setRepeatDayOfWeek(recording.getRepeatDayOfWeek());
+        recordingItem.setRepeatDayOfMonth(recording.getRepeatDayOfMonth());
+        recordingItem.setRepeatWeekNumber(recording.getRepeatWeekNumber());
+        recordingItem.setRepeatMonth(recording.getRepeatMonth());
+
         recordingItem.setStatus(recording.getStatus());
         return recordingItem;
     }
