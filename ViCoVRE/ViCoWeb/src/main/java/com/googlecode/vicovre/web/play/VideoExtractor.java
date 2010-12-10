@@ -359,8 +359,8 @@ public class VideoExtractor {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         VideoExtractor extractor = new VideoExtractor(
-            //"video/x-ms-asf",
-            "video/x-flv",
+            "video/x-ms-asf",
+            //"video/x-flv",
             //"audio/mpeg",
             //"video/mp4",
             //"audio/x-ms-wma",
@@ -373,10 +373,10 @@ public class VideoExtractor {
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/1286981312",
             //"VicoWeb/target/recordings/2009-10-05_090000-000095270/3490601952",
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1911227824",
-            new String[]{
+            /*new String[]{
                     "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1911227824",
                     "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/2792696808",
-                    "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1254543160",},
+                    "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/1254543160",}, */
             //"VicoWeb/target/recordings/2009-10-08_090000-002983902/1254543160",
             //"../../recordings/1273840957545552375448/2941173072",
             /*new String[]{
@@ -392,20 +392,20 @@ public class VideoExtractor {
                 "../../recordings/2010-09-07_123054-075045934/3954838557",
                 //"../../recordings/2010-09-07_123054-075045934/3954838307"
             },*/
-            /*new String[]{
+            new String[]{
                 "../../recordings/1255351739505186065560/1220454855",
                 "../../recordings/1255351739505186065560/2848775904"
-            }, */
+            },
             //null,
 
             new Rectangle[]{
-                //new Rectangle(30, 30, 240, 196),
-                //new Rectangle(286, 30, 720, 540),
+                new Rectangle(286, 30, 720, 540),
+                new Rectangle(30, 30, 240, 196),
                 //new Rectangle(286, 30, 720, 540),
                 //new Rectangle(640, 480),
-                new Rectangle(0, 0, 500, 376),
-                new Rectangle(505, 0, 500, 376),
-                new Rectangle(0, 380, 240, 196),
+                //new Rectangle(0, 0, 500, 376),
+                //new Rectangle(505, 0, 500, 376),
+                //new Rectangle(0, 380, 240, 196),
             },
 
             // Audio
@@ -417,9 +417,9 @@ public class VideoExtractor {
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/66893508",
                 "VicoWeb/target/recordings/2009-10-05_090000-000095270/163114337"
             }, */
-            new String[]{
+            /*new String[]{
                 "../../recordings/MAGIC/2009-2010/MAGIC002/2009-10-08_090000-002983902/124113515"
-            },
+            },*/
             /*new String[]{
                 "../../recordings/1273840957545552375448/193044552",
                 "../../recordings/1273840957545552375448/2217839544",
@@ -437,9 +437,9 @@ public class VideoExtractor {
             /*new String[]{
                 "../../recordings/2010-09-07_123054-075045934/3954838838"
             }, */
-            /*new String[] {
+            new String[] {
                     "../../recordings/1255351739505186065560/635916204"
-            },*/
+            },
 
             // Sync
             null,
@@ -458,16 +458,17 @@ public class VideoExtractor {
             }, */
             0x000000,
             new RtpTypeRepositoryXmlImpl("/rtptypes.xml"),
-            new Dimension(640, 366));
+            null);
         extractor.setGenerationSpeed(-1);
         FileOutputStream testout = new FileOutputStream(
-                "test.flv"
+                //"test.flv"
                 //"test.mp3"
-                //"test.asf"
+                "test.asf"
                 //"test.mp4"
                 //"test.wma"
                 );
-        extractor.transferToStream(testout, 300000, 0, 3000000);
+        extractor.transferToStream(testout, 300000, 0, 60000);
+        Thread.sleep(1000);
         System.exit(0);
     }
 }
