@@ -70,20 +70,22 @@ public class OutputStreamDataSink extends DataSink {
      * @see DataSink#handleBuffer(javax.media.Buffer)
      */
     public void handleBuffer(Buffer buffer) throws IOException {
-        Object dataObj = buffer.getData();
-        int offset = buffer.getOffset();
-        int length = buffer.getLength();
-        if (dataObj instanceof byte[]) {
-            output.write((byte[]) dataObj, offset, length);
-        } else if (dataObj instanceof short[]) {
-            short[] data = (short []) dataObj;
-            for (int i = 0; i < length; i++) {
-                output.writeShort(data[i + offset]);
-            }
-        } else if (dataObj instanceof int[]) {
-            int[] data = (int []) dataObj;
-            for (int i = 0; i < length; i++) {
-                output.writeInt(data[i + offset]);
+        if (!buffer.isDiscard()) {
+            Object dataObj = buffer.getData();
+            int offset = buffer.getOffset();
+            int length = buffer.getLength();
+            if (dataObj instanceof byte[]) {
+                output.write((byte[]) dataObj, offset, length);
+            } else if (dataObj instanceof short[]) {
+                short[] data = (short []) dataObj;
+                for (int i = 0; i < length; i++) {
+                    output.writeShort(data[i + offset]);
+                }
+            } else if (dataObj instanceof int[]) {
+                int[] data = (int []) dataObj;
+                for (int i = 0; i < length; i++) {
+                    output.writeInt(data[i + offset]);
+                }
             }
         }
     }

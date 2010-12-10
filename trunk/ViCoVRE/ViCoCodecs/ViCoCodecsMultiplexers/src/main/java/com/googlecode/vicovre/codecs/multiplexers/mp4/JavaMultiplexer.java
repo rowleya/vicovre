@@ -51,6 +51,7 @@ import com.googlecode.vicovre.codecs.utils.ByteArrayOutputStream;
 import com.googlecode.vicovre.media.controls.SetDurationControl;
 import com.googlecode.vicovre.media.format.BitRateFormat;
 import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
+import com.sun.xml.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 public class JavaMultiplexer extends BasicMultiplexer
         implements SetDurationControl {
@@ -69,7 +70,7 @@ public class JavaMultiplexer extends BasicMultiplexer
 
     private byte[][] trackHeader = null;
 
-    private long[] lastTimestamp = null;
+    private double[] lastTimestamp = null;
 
     private Vector<Long>[] chunkOffsets = null;
 
@@ -91,7 +92,9 @@ public class JavaMultiplexer extends BasicMultiplexer
 
     private boolean sameBuffer = false;
 
-    private boolean moovWritten = false;
+    private byte[] moov = null;
+
+    private int moovSize = 0;
 
     public JavaMultiplexer() {
         super(new ContentDescriptor[]{new ContentDescriptor(CONTENT_TYPE)},
@@ -105,7 +108,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     public int setNumTracks(int numtracks) {
         int tracks = super.setNumTracks(numtracks);
         trackHeader = new byte[tracks][];
-        lastTimestamp = new long[tracks];
+        lastTimestamp = new double[tracks];
         chunkOffsets = new Vector[tracks];
         chunkNoSamples = new LinkedList[tracks];
         sampleSize = new Vector[tracks];
@@ -135,7 +138,6 @@ public class JavaMultiplexer extends BasicMultiplexer
     }
 
     private Atom getMvhd(long time, int version) throws IOException {
-
         Atom mvhd = new Atom("mvhd");
         mvhd.write(version);
         mvhd.writeInt24(0); // Flags
@@ -224,10 +226,11 @@ public class JavaMultiplexer extends BasicMultiplexer
         return tkhd;
     }
 
-    private Atom getMdhd(long time, int version) throws IOException {
+    private Atom getMdhd(long time, int version, Format format)
+            throws IOException {
         Atom mdhd = new Atom("mdhd");
         mdhd.write(version);
-        mdhd.write(0); // Flags
+        mdhd.writeInt24(0); // Flags
         if (version == 1) {
             mdhd.writeLong(time);
             mdhd.writeLong(time);
@@ -235,11 +238,22 @@ public class JavaMultiplexer extends BasicMultiplexer
             mdhd.writeInt((int) time);
             mdhd.writeInt((int) time);
         }
-        mdhd.writeInt(1000); // Timescale - milliseconds
+        if (format instanceof VideoFormat) {
+            mdhd.writeInt(1000); // Timescale - milliseconds
+        } else if (format instanceof AudioFormat) {
+            AudioFormat af = (AudioFormat) format;
+            System.err.println("Mdhd sample rate = " + (int) (af.getSampleRate()));
+            mdhd.writeInt((int) af.getSampleRate());
+        }
+        long dur = duration;
+        if (format instanceof AudioFormat) {
+            AudioFormat af = (AudioFormat) format;
+            dur = (long) ((duration * 1000) / af.getSampleRate());
+        }
         if (version == 1) {
-            mdhd.writeLong(duration);
+            mdhd.writeLong(dur);
         } else {
-            mdhd.writeInt((int) duration);
+            mdhd.writeInt((int) dur);
         }
         mdhd.writeInt(0); // Language (0 = english)
         mdhd.writeInt(0); // Quality
@@ -446,6 +460,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         stts.writeInt24(0); // Flags
         stts.writeInt(durations[track].size());
         for (Duration duration : durations[track]) {
+            System.err.println("Track " + track + " duration = " + duration.getDuration() + " count = " + duration.getCount());
             stts.writeInt(duration.getCount());
             stts.writeInt((int) duration.getDuration());
         }
@@ -469,6 +484,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         stsc.writeInt24(0); // Flags
         stsc.writeInt(chunkNoSamples[track].size());
         for (Chunk chunk : chunkNoSamples[track]) {
+            System.err.println("Chunk " + (chunk.getFirstChunk() + 1) + " no samples = " + chunk.getNoSamples());
             stsc.writeInt(chunk.getFirstChunk() + 1);
             stsc.writeInt(chunk.getNoSamples());
             stsc.writeInt(0x1); // Sample description ID
@@ -481,12 +497,14 @@ public class JavaMultiplexer extends BasicMultiplexer
         stsz.write(0); // Version
         stsz.writeInt24(0); // Flags
         if (allSampleSize[track] != -1) {
+            System.err.println("All samples size = " + allSampleSize[track] + " no samples = " + noSamples[track]);
             stsz.writeInt(allSampleSize[track]);
             stsz.writeInt(noSamples[track]);
         } else {
             stsz.writeInt(0);
             stsz.writeInt(sampleSize[track].size());
             for (int size : sampleSize[track]) {
+                System.err.println("Sample size = " + size);
                 stsz.writeInt(size);
             }
         }
@@ -545,7 +563,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     private Atom getMdia(int track, long time, int version, Format format,
             Dimension size, byte[] extradata) throws IOException {
         Atom mdia = new Atom("mdia");
-        mdia.write(getMdhd(time, version));
+        mdia.write(getMdhd(time, version, format));
         mdia.write(getHdlr(format));
         mdia.write(getMinf(track, format, size, extradata));
         return mdia;
@@ -643,9 +661,20 @@ public class JavaMultiplexer extends BasicMultiplexer
                 allSampleSize[track] = -1;
             }
 
-            long timestamp = (buffer.getTimeStamp() / 1000) - this.offset;
-            long duration = (timestamp - lastTimestamp[track]) / noSamples;
-            System.err.println("Track " + track + " Duration = " + duration);
+            double timestamp = buffer.getTimeStamp() - this.offset;
+            double realDuration = 0;
+            if (format instanceof AudioFormat) {
+                AudioFormat af = (AudioFormat) format;
+                realDuration = af.getFrameSizeInBits() / af.getSampleSizeInBits()
+                    / af.getChannels();
+            } else {
+                realDuration = (timestamp - lastTimestamp[track])
+                        / noSamples / 1000000;
+            }
+            long duration = (long) realDuration;
+            System.err.println("Track " + track + " Timestamp = " + buffer.getTimeStamp() + " Calculated = " + timestamp + " Duration = " + duration);
+
+
             boolean isKeyFrame = (buffer.getFlags()
                     & Buffer.FLAG_KEY_FRAME) > 0;
             chunkOffsets[track].add(bytesWritten);
@@ -672,7 +701,7 @@ public class JavaMultiplexer extends BasicMultiplexer
             this.noChunks[track] += 1;
             bytesWritten += size;
             dataSize -= size;
-            lastTimestamp[track] = timestamp;
+            lastTimestamp[track] = timestamp - (realDuration - duration);
         }
         int toCopy = size;
         if (toCopy > len) {
@@ -702,20 +731,27 @@ public class JavaMultiplexer extends BasicMultiplexer
             return (int) size;
         }
 
-        if (!moovWritten) {
-            System.err.println("Writting moov");
-            ByteArrayOutputStream out =
-                new ByteArrayOutputStream(buf, off, len);
-            long time = (System.currentTimeMillis() / 1000) + 0x7C25B080;
+        if (moov == null) {
+            System.err.println("Writing moov");
+            long time = (System.currentTimeMillis() / 1000) + (((1904L * 365) + 17) * 60 * 60 * 24);
             int version = 0;
             if (duration >= Math.pow(2, 32)) {
                 version = 1;
             }
+            System.err.println("Version = " + version);
+            moov = getMoov(time, version).getBytes();
+            moovSize = moov.length;
+        }
 
-            out.write(getMoov(time, version).getBytes());
-            out.flush();
-            moovWritten = true;
-            return out.getCount();
+        if (moovSize > 0) {
+            int size = moovSize;
+            System.err.println("Writing " + size + " bytes (max = " + len + ")");
+            if (size > len) {
+                size = len;
+            }
+            System.arraycopy(moov, moov.length - moovSize, buf, off, size);
+            moovSize -= size;
+            return size;
         }
         return -1;
     }
@@ -725,7 +761,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     }
 
     public void setOffset(Time offset) {
-        this.offset = offset.getNanoseconds() / 1000000;
+        this.offset = offset.getNanoseconds();
     }
 
     public void setDuration(Time duration) {

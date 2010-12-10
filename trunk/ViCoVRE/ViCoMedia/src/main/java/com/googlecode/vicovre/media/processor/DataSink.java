@@ -195,6 +195,10 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             try {
                 handleBuffer(inputBuffer[index]);
                 releaseBuffer(index);
+                if (inputBuffer[index].isEOM()) {
+                    System.err.println("End of media buffer");
+                    close();
+                }
             } catch (EOFException e) {
                 System.err.println("Connection closed");
                 close();
@@ -266,9 +270,6 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             while (!done) {
                 try {
                     int buffer = getNextBuffer();
-                    inputBuffer[buffer].setData(null);
-                    inputBuffer[buffer].setLength(0);
-                    inputBuffer[buffer].setOffset(0);
                     inputBuffer[buffer].setEOM(false);
                     inputBuffer[buffer].setDiscard(false);
                     stream.read(inputBuffer[buffer]);
@@ -298,20 +299,26 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             while (!done) {
                 try {
                     int buffer = getNextBuffer();
-                    int bytesRead = stream.read(data, 0, data.length);
-                    if (bytesRead != -1) {
-                        inputBuffer[buffer].setData(data);
-                        inputBuffer[buffer].setOffset(0);
-                        inputBuffer[buffer].setLength(bytesRead);
-                        inputBuffer[buffer].setEOM(false);
-                        inputBuffer[buffer].setDiscard(false);
-                        addBuffer(buffer);
-                    } else {
-                        inputBuffer[buffer].setEOM(true);
-                        inputBuffer[buffer].setDiscard(true);
-                        addBuffer(buffer);
+                    if (data != null) {
+                        int bytesRead = stream.read(data, 0, data.length);
+                        if (bytesRead != -1) {
+                            inputBuffer[buffer].setData(data);
+                            inputBuffer[buffer].setOffset(0);
+                            inputBuffer[buffer].setLength(bytesRead);
+                            inputBuffer[buffer].setEOM(false);
+                            inputBuffer[buffer].setDiscard(false);
+                            addBuffer(buffer);
+                        } else {
+                            System.err.println("End of media");
+                            inputBuffer[buffer].setEOM(true);
+                            inputBuffer[buffer].setDiscard(true);
+                            inputBuffer[buffer].setLength(0);
+                            inputBuffer[buffer].setOffset(0);
+                            addBuffer(buffer);
+                        }
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
                     close();
                 }
             }
@@ -373,6 +380,9 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
             } else {
                 inputBuffer[buffer].setEOM(true);
                 inputBuffer[buffer].setDiscard(true);
+                inputBuffer[buffer].setLength(0);
+                inputBuffer[buffer].setOffset(0);
+                inputBuffer[buffer].setData(null);
                 addBuffer(buffer);
             }
         } catch (IOException e) {
