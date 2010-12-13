@@ -57,10 +57,10 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.LayoutPosition;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
+import com.googlecode.vicovre.gwt.client.layout.LayoutPosition;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutChanger;
 import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 

@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.client.auth;
 
 import org.restlet.client.data.Method;
 

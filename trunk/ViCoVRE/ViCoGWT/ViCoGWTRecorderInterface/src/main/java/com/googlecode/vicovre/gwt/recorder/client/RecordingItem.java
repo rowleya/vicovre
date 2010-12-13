@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemPauser;

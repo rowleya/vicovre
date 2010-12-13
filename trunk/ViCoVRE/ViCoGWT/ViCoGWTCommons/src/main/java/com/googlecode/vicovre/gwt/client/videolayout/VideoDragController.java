@@ -30,75 +30,45 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.client.videolayout;
 
-import com.googlecode.vicovre.gwt.client.json.JSONLayoutPosition;
+import com.allen_sauer.gwt.dnd.client.DragEndEvent;
+import com.allen_sauer.gwt.dnd.client.DragHandler;
+import com.allen_sauer.gwt.dnd.client.DragStartEvent;
+import com.allen_sauer.gwt.dnd.client.PickupDragController;
+import com.allen_sauer.gwt.dnd.client.VetoDragException;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 
-public class LayoutPosition {
+public class VideoDragController extends PickupDragController
+        implements DragHandler {
 
-    private String name = null;
-
-    private int x = 0;
-
-    private int y = 0;
-
-    private int width = 0;
-
-    private int height = 0;
-
-    private boolean assignable = false;
-
-    private boolean hasChanges = false;
-
-    private boolean hasAudio = false;
-
-    public LayoutPosition(JSONLayoutPosition position) {
-        this(position.getName(), position.getX(), position.getY(),
-            position.getWidth(), position.getHeight(), position.isAssignable(),
-            position.hasChanges(), position.hasAudio());
+    public VideoDragController(AbsolutePanel boundaryPanel,
+            boolean allowDroppingOnBoundaryPanel) {
+        super(boundaryPanel, allowDroppingOnBoundaryPanel);
+        addDragHandler(this);
     }
 
-    public LayoutPosition(String name, int x, int y, int width, int height,
-            boolean assignable, boolean hasChanges, boolean hasAudio) {
-        this.name = name;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.assignable = assignable;
-        this.hasChanges = hasChanges;
-        this.hasAudio = hasAudio;
+    public void onDragEnd(DragEndEvent event) {
+        // Do Nothing
     }
 
-    public String getName() {
-        return name;
+    public void onDragStart(DragStartEvent event) {
+        VideoPreviewPanel panel =
+            (VideoPreviewPanel) event.getContext().draggable;
+        panel.stop();
     }
 
-    public int getX() {
-        return x;
+    public void onPreviewDragEnd(DragEndEvent event) throws VetoDragException {
+        // Does Nothing
     }
 
-    public int getY() {
-        return y;
+    public void onPreviewDragStart(DragStartEvent event)
+            throws VetoDragException {
+        VideoPreviewPanel panel =
+            (VideoPreviewPanel) event.getContext().draggable;
+        panel.stop();
     }
 
-    public int getWidth() {
-        return width;
-    }
 
-    public int getHeight() {
-        return height;
-    }
 
-    public boolean isAssignable() {
-        return assignable;
-    }
-
-    public boolean hasChanges() {
-        return hasChanges;
-    }
-
-    public boolean hasAudio() {
-        return hasAudio;
-    }
 }

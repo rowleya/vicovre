@@ -30,37 +30,75 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.layout;
 
-import com.google.gwt.event.dom.client.HasMouseDownHandlers;
-import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
-import com.google.gwt.event.dom.client.HasMouseUpHandlers;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.AbsolutePanel;
+import com.googlecode.vicovre.gwt.client.json.JSONLayoutPosition;
 
-public class LayoutPositionHandle extends AbsolutePanel
-        implements HasMouseDownHandlers, HasMouseMoveHandlers,
-        HasMouseUpHandlers {
+public class LayoutPosition {
 
-    public HandlerRegistration addMouseDownHandler(
-            MouseDownHandler handler) {
-        return addDomHandler(handler, MouseDownEvent.getType());
+    private String name = null;
+
+    private int x = 0;
+
+    private int y = 0;
+
+    private int width = 0;
+
+    private int height = 0;
+
+    private boolean assignable = false;
+
+    private boolean hasChanges = false;
+
+    private boolean hasAudio = false;
+
+    public LayoutPosition(JSONLayoutPosition position) {
+        this(position.getName(), position.getX(), position.getY(),
+            position.getWidth(), position.getHeight(), position.isAssignable(),
+            position.hasChanges(), position.hasAudio());
     }
 
-    public HandlerRegistration addMouseMoveHandler(
-            MouseMoveHandler handler) {
-        return addDomHandler(handler, MouseMoveEvent.getType());
+    public LayoutPosition(String name, int x, int y, int width, int height,
+            boolean assignable, boolean hasChanges, boolean hasAudio) {
+        this.name = name;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.assignable = assignable;
+        this.hasChanges = hasChanges;
+        this.hasAudio = hasAudio;
     }
 
-    public HandlerRegistration addMouseUpHandler(
-            MouseUpHandler handler) {
-        return addDomHandler(handler, MouseUpEvent.getType());
+    public String getName() {
+        return name;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public boolean isAssignable() {
+        return assignable;
+    }
+
+    public boolean hasChanges() {
+        return hasChanges;
+    }
+
+    public boolean hasAudio() {
+        return hasAudio;
+    }
 }

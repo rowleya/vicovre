@@ -50,9 +50,9 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
-import com.googlecode.vicovre.gwt.client.VenueLoader;
-import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
+import com.googlecode.vicovre.gwt.client.venue.VenueLoader;
+import com.googlecode.vicovre.gwt.client.venue.VenuePanel;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
@@ -137,7 +137,7 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
 
     private HorizontalPanel repeatItemFrequencyPanel = new HorizontalPanel();
 
-    private NumberBox repeatItemFrequency = new NumberBox();
+    private NumberBox repeatItemFrequency = new NumberBox(1);
 
     private Label repeatItem = new Label();
 
@@ -418,7 +418,7 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
                     if (frequency.equals(REPEAT_DAILY)) {
                         if (item.isIgnoreWeekends()) {
                             setText(repeatFrequency, REPEATED_WORK_DAYS);
-                            repeatItemFrequency.setText("1");
+                            repeatItemFrequency.setNumber(1);
                         } else {
                             setText(repeatFrequency, REPEATED_DAILY);
                         }
@@ -513,7 +513,7 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
     }
 
     public int getRepeatItemFrequency() {
-        return Integer.parseInt(repeatItemFrequency.getText());
+        return repeatItemFrequency.getNumber();
     }
 
     public int getRepeatDayOfWeek() {
@@ -592,7 +592,7 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
                 }
             } else if (repeatFrequency.getValue(
                     repeatFrequency.getSelectedIndex()).equals(NO_REPEAT)) {
-                if (repeatItemFrequency.getText().equals("0")) {
+                if (repeatItemFrequency.getNumber() <= 0) {
                     error = "The frequency must be more than 0";
                 }
             }
@@ -653,7 +653,7 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
             startTime.setMinute(0);
             stopTime.setHour(0);
             stopTime.setMinute(0);
-            repeatItemFrequency.setText("1");
+            repeatItemFrequency.setNumber(1);
             if (!frequency.equals(REPEATED_WORK_DAYS)) {
                 repeatItemFrequencyPanel.setVisible(true);
                 if (frequency.equals(REPEATED_DAILY)) {

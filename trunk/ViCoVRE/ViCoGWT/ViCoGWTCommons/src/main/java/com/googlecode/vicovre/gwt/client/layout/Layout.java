@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.client.layout;
 
 import java.util.HashMap;
 import java.util.List;

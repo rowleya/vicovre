@@ -30,101 +30,86 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.venue;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.download.client.rest.LayoutCreator;
-import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
-public class LayoutNamePopup extends ModalPopup<VerticalPanel>
+public class AddressInputPopup extends ModalPopup<Grid>
         implements ClickHandler {
 
-    private static final String PATTERN = "[A-Za-z][A-Za-z0-9]*";
+    private TextBox address = new TextBox();
+
+    private TextBox port = new TextBox();
+
+    private TextBox ttl = new TextBox();
 
     private Button ok = new Button("OK");
 
     private Button cancel = new Button("Cancel");
 
-    private TextBox nameBox = new TextBox();
-
     private MessageResponseHandler handler = null;
 
-    private String url = null;
-
-    private Layout layout = null;
-
-    MessagePopup errorPopup = new MessagePopup(null, null,
-            MessagePopup.ERROR, MessageResponse.OK);
-
-    public LayoutNamePopup(String url, Layout layout,
-            MessageResponseHandler handler, String name) {
-        super(new VerticalPanel());
+    public AddressInputPopup(MessageResponseHandler handler) {
+        super(new Grid(4, 2));
         this.handler = handler;
-        this.nameBox.setText(name);
-        this.url = url;
-        this.layout = layout;
 
-        VerticalPanel panel = getWidget();
-        panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
-        panel.setWidth("300px");
-        panel.setHeight("90px");
-
-        nameBox.setWidth("100%");
-        panel.add(new Label("Enter a name for the layout:"));
-        panel.add(nameBox);
-
-        HorizontalPanel buttons = new HorizontalPanel();
-        buttons.setWidth("100%");
-        buttons.add(ok);
-        buttons.add(cancel);
-        buttons.setCellHorizontalAlignment(ok, HorizontalPanel.ALIGN_LEFT);
-        buttons.setCellHorizontalAlignment(cancel, HorizontalPanel.ALIGN_RIGHT);
-        panel.add(buttons);
+        Grid grid = getWidget();
+        grid.setWidget(0, 0, new Label("Address:"));
+        grid.setWidget(0, 1, address);
+        grid.setWidget(1, 0, new Label("Port:"));
+        grid.setWidget(1, 1, port);
+        grid.setWidget(2, 0, new Label("TTL:"));
+        grid.setWidget(2, 1, ttl);
+        grid.setWidget(3, 0, cancel);
+        grid.setWidget(3, 1, ok);
 
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
+
+        grid.setWidth("400px");
     }
 
     public void onClick(ClickEvent event) {
-        if (event.getSource() == ok) {
-            String nameEntered = nameBox.getText();
-            String error = null;
-            if (nameEntered.equals("")) {
-                error = "Name cannot be blank";
-            } else if (!nameEntered.matches(PATTERN)) {
-                error = "The name must start with a letter"
-                    + " and can only contain letters and numbers";
-            }
-            if (error != null) {
-                errorPopup.setMessage(error);
-                errorPopup.center();
-            } else {
-                layout.setName(nameEntered);
-                LayoutCreator.create(layout, this, url);
-            }
-        } else {
+        if (event.getSource().equals(ok)) {
+            super.hide();
+            handler.handleResponse(new MessageResponse(MessageResponse.OK,
+                    this));
+        } else if (event.getSource().equals(cancel)) {
+            super.hide();
             handler.handleResponse(new MessageResponse(MessageResponse.CANCEL,
                     this));
-            hide();
         }
     }
 
-    public String getName() {
-        return nameBox.getText();
+    public String getAddress() {
+        return address.getText();
     }
 
-    public void addSuccessful() {
-        handler.handleResponse(new MessageResponse(MessageResponse.OK, this));
-        hide();
+    public String getPort() {
+        return port.getText();
+    }
+
+    public String getTtl() {
+        return ttl.getText();
+    }
+
+    public void setAddress(String address) {
+        this.address.setText(address);
+    }
+
+    public void setPort(String port) {
+        this.port.setText(port);
+    }
+
+    public void setTtl(String ttl) {
+        this.ttl.setText(ttl);
     }
 }

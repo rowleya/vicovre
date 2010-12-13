@@ -34,8 +34,8 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
-import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayItem;

@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.layoutcreator;
 
 import java.util.List;
 import java.util.Vector;
@@ -49,12 +49,13 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.LayoutPosition;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
+import com.googlecode.vicovre.gwt.client.layout.LayoutPosition;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.NumberBox;
 import com.googlecode.vicovre.gwt.utils.client.Space;
 
 public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>

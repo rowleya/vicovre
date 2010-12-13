@@ -30,49 +30,18 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-import com.allen_sauer.gwt.dnd.client.DragContext;
-import com.allen_sauer.gwt.dnd.client.drop.SimpleDropController;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.RadioButton;
 
-public class VideoDropController extends SimpleDropController {
+public class FormRadioButton extends RadioButton {
 
-    private VerticalPanel target = null;
-
-    private VideoStreamSelectionPage page = null;
-
-    private String position = null;
-
-    private String folder = null;
-
-    private String recordingId = null;
-
-    private int width = 0;
-
-    private int height = 0;
-
-    public VideoDropController(VideoStreamSelectionPage page, String position,
-            VerticalPanel dropTarget,
-            String folder, String recordingId, int width, int height) {
-        super(dropTarget);
-        this.page = page;
-        this.position = position;
-        this.target = dropTarget;
-        this.folder = folder;
-        this.recordingId = recordingId;
-        this.width = width;
-        this.height = height;
-    }
-
-    public void onDrop(DragContext context) {
-        super.onDrop(context);
-        VideoPreviewPanel panel = (VideoPreviewPanel) context.draggable;
-        VideoPreviewPanel clone = new VideoPreviewPanel(folder,
-                recordingId, panel.getStreamId(), width, height);
-        target.clear();
-        target.add(clone);
-        page.setPositon(position, panel.getStreamId());
+    public FormRadioButton(String name, String label, String value,
+            ClickHandler clickHandler) {
+        super(name, label);
+        setFormValue(value);
+        addClickHandler(clickHandler);
     }
 
 }
