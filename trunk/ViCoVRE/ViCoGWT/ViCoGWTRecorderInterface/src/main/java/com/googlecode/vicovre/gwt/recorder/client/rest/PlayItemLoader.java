@@ -114,8 +114,7 @@ public class PlayItemLoader extends AbstractJSONRestCall {
             return null;
         }
         String primaryKey = metadata.getPrimaryKey();
-        MetadataPopup popup = new MetadataPopup(baseUrl,
-                primaryKey);
+        MetadataPopup popup = new MetadataPopup(primaryKey);
         popup.setMetadata(metadata);
         PlayItem playItem = new PlayItem(baseUrl, folderPanel, id, popup,
                 layouts, customLayouts, users, groups);

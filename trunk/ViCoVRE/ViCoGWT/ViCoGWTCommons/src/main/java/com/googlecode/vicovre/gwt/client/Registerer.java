@@ -36,26 +36,25 @@ import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class Registerer extends AbstractVoidRestCall {
-
-    private String baseUrl;
 
     private String url = null;
 
     private WaitPopup waitPopup = new WaitPopup("Registering", true);
 
-    public static void register(String baseUrl, String url, String username,
+    public static void register(String url, String username,
             String password, String successUrl) {
-        Registerer registerer = new Registerer(baseUrl, url, username, password,
+        Registerer registerer = new Registerer(url, username, password,
                 successUrl);
         registerer.go();
     }
 
-    public Registerer(String baseUrl, String url, String username,
+    public Registerer(String url, String username,
             String password, String successUrl) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
         this.url = url + "user/" + URL.encodeComponent(username)
             + "?password=" + URL.encodeComponent(password)
             + "&successUrl=" + URL.encodeComponent(successUrl);
@@ -71,7 +70,7 @@ public class Registerer extends AbstractVoidRestCall {
             waitPopup.hide();
             MessagePopup popup = new MessagePopup(
                     "Error registering: " + message,
-                    null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                    null, MessagePopup.ERROR, MessageResponse.OK);
             popup.center();
         }
     }
@@ -81,7 +80,7 @@ public class Registerer extends AbstractVoidRestCall {
             waitPopup.hide();
             MessagePopup popup = new MessagePopup(
                     "Please check your e-mail to complete the registration",
-                    null, baseUrl + MessagePopup.INFO, MessageResponse.OK);
+                    null, MessagePopup.INFO, MessageResponse.OK);
             popup.center();
         }
     }

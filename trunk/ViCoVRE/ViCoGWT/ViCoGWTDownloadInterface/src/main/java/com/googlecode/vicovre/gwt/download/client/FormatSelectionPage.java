@@ -36,8 +36,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class FormatSelectionPage extends WizardPage implements ClickHandler {
 
@@ -92,8 +92,7 @@ public class FormatSelectionPage extends WizardPage implements ClickHandler {
     public int next(Wizard wizard) {
         if (format == null) {
             MessagePopup error = new MessagePopup("Please select a format",
-                    null, wizard.getBaseUrl() + MessagePopup.ERROR,
-                    MessageResponse.OK);
+                    null, MessagePopup.ERROR, MessageResponse.OK);
             error.center();
             return -1;
         }

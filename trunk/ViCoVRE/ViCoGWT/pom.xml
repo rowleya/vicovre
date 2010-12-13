@@ -22,6 +22,7 @@
         <module>ViCoGWTDisplayInterface</module>
         <module>ViCoGWTImportExportInterface</module>
         <module>ViCoGWTRecorderInterface</module>
+        <module>ViCoGWTUtils</module>
     </modules>
     <dependencies>
         <dependency>

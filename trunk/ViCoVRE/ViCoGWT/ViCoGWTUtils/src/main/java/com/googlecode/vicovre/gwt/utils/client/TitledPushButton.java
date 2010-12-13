@@ -30,28 +30,16 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.PushButton;
 
-public class Space {
+public class TitledPushButton extends PushButton {
 
-    private Space() {
-        // Does Nothing
-    }
-
-    public static Widget getHorizontalSpace(int width) {
-        VerticalPanel panel = new VerticalPanel();
-        panel.setWidth(width + "px");
-        return panel;
-    }
-
-    public static Widget getVerticalSpace(int height) {
-        HorizontalPanel panel = new HorizontalPanel();
-        panel.setHeight(height + "px");
-        return panel;
+    public TitledPushButton(Image image, String title) {
+        super(image);
+        setTitle(title);
     }
 
 }

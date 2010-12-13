@@ -47,11 +47,11 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemUpdater;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class HarvestItem extends HorizontalPanel implements ClickHandler,
         MessageResponseHandler, Comparable<HarvestItem> {

@@ -33,30 +33,26 @@
 package com.googlecode.vicovre.gwt.display.client;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class AccessRequester extends AbstractVoidRestCall {
 
     private String url = null;
 
-    private String baseUrl = null;
-
     private WaitPopup waitPopup = new WaitPopup("Requesting", true);
 
-    public static void requestAccess(String baseUrl, String url,
+    public static void requestAccess(String url,
             String folder, String recordingId, String emailAddress) {
-        AccessRequester requester = new AccessRequester(baseUrl, url, folder,
+        AccessRequester requester = new AccessRequester(url, folder,
                 recordingId, emailAddress);
         requester.go();
     }
 
-    public AccessRequester(String baseUrl, String url,
+    public AccessRequester(String url,
             String folder, String recordingId, String emailAddress) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
         this.url = url + "recording" + folder + "/" + recordingId
             + "/requestAccess?emailAddress="
             + URL.encodeComponent(emailAddress);
@@ -70,7 +66,7 @@ public class AccessRequester extends AbstractVoidRestCall {
     protected void onError(String error) {
         waitPopup.hide();
         MessagePopup popup = new MessagePopup("Error sending request: " + error,
-                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                null, MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 
@@ -79,7 +75,7 @@ public class AccessRequester extends AbstractVoidRestCall {
         MessagePopup popup = new MessagePopup("Your request has been sent.\n"
                 + " There is no guarentee that you will receive a reply to"
                 + " this request.",
-                null, baseUrl + MessagePopup.INFO);
+                null, MessagePopup.INFO);
         popup.center();
     }
 

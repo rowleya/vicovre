@@ -50,10 +50,6 @@ import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
-import com.googlecode.vicovre.gwt.client.TitledPushButton;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.recorder.client.rest.ChangesAnnotator;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PermissionLoader;
@@ -61,6 +57,10 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemStreamLoader;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.utils.client.TitledPushButton;
 
 public class PlayItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<PlayItem> {

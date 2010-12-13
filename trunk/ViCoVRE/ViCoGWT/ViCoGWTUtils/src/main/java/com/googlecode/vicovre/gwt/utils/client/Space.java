@@ -30,33 +30,28 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-public class NumberBox extends TextBox implements KeyPressHandler {
+public class Space {
 
-    public NumberBox() {
-        addKeyPressHandler(this);
+    private Space() {
+        // Does Nothing
     }
 
-    public void onKeyPress(KeyPressEvent event) {
-        char keyCode = event.getCharCode();
-        if ((!Character.isDigit(keyCode)) && (keyCode != KeyCodes.KEY_TAB)
-                && (keyCode != KeyCodes.KEY_BACKSPACE)
-                && (keyCode != KeyCodes.KEY_DELETE)
-                && (keyCode != KeyCodes.KEY_ENTER)
-                && (keyCode != KeyCodes.KEY_HOME)
-                && (keyCode != KeyCodes.KEY_END)
-                && (keyCode != KeyCodes.KEY_LEFT)
-                && (keyCode != KeyCodes.KEY_UP)
-                && (keyCode != KeyCodes.KEY_RIGHT)
-                && (keyCode != KeyCodes.KEY_DOWN)) {
-            ((TextBox) event.getSource()).cancelKey();
-        }
+    public static Widget getHorizontalSpace(int width) {
+        VerticalPanel panel = new VerticalPanel();
+        panel.setWidth(width + "px");
+        return panel;
+    }
+
+    public static Widget getVerticalSpace(int height) {
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.setHeight(height + "px");
+        return panel;
     }
 
 }

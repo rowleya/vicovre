@@ -49,8 +49,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemPauser;
@@ -58,6 +56,8 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemResumer;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStarter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStopper;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecording;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class RecordingItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<RecordingItem> {

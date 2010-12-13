@@ -35,9 +35,9 @@ package com.googlecode.vicovre.gwt.annotations.client;
 import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class Login extends AbstractVoidRestCall {
 

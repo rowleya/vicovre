@@ -59,10 +59,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutChanger;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         ClickHandler, ChangeHandler {

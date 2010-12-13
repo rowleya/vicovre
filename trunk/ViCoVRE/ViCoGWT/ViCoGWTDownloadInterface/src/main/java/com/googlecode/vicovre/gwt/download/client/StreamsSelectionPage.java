@@ -46,10 +46,10 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.Space;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.Space;
 
 
 public class StreamsSelectionPage extends WizardPage implements ClickHandler {
@@ -61,8 +61,6 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
     private Button selectAll = new Button("Select All");
 
     private Button clearSelection = new Button("Clear Selection");
-
-    private String baseUrl = null;
 
     private String folder = null;
 
@@ -81,9 +79,8 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
         return name;
     }
 
-    public StreamsSelectionPage(JSONStream[] streams, String baseUrl,
+    public StreamsSelectionPage(JSONStream[] streams,
             String folder, String recordingId) {
-        this.baseUrl = baseUrl;
         this.folder = folder;
         this.recordingId = recordingId;
         add(new Label(
@@ -129,7 +126,7 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
                 }
                 lastCname = stream.getCname();
                 videoCount++;
-                VideoPreviewPanel preview = new VideoPreviewPanel(baseUrl,
+                VideoPreviewPanel preview = new VideoPreviewPanel(
                         folder, recordingId, stream.getSsrc(), 160, 120);
                 VerticalPanel panel = new VerticalPanel();
                 panel.setHorizontalAlignment(ALIGN_CENTER);
@@ -212,11 +209,11 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
             if (!isStream) {
                 MessagePopup error = new MessagePopup(
                         "You must select at least one stream.", null,
-                        baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                        MessagePopup.ERROR, MessageResponse.OK);
                 error.center();
             } else {
-                String url = baseUrl + folder + "/" + recordingId
-                    + "/downloadRecording.do?";
+                String url = GWT.getModuleBaseURL() + folder + "/"
+                    + recordingId + "/downloadRecording.do?";
                 url += "format=" + URL.encodeComponent("application/x-agvcr");
                 for (CheckBox box : streamBoxes) {
                     if (box.getValue()) {

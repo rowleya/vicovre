@@ -38,25 +38,24 @@ import org.restlet.client.data.Method;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window.Location;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class Login extends AbstractVoidRestCall {
-
-    private String baseUrl = null;
 
     private String url = null;
 
     private WaitPopup waitPopup = new WaitPopup("Logging In", true);
 
-    public static void login(String baseUrl, String url, String username,
+    public static void login(String url, String username,
             String password) {
-        Login login = new Login(baseUrl, url, username, password);
+        Login login = new Login(url, username, password);
         login.go();
     }
 
-    public Login(String baseUrl, String url, String username,
+    public Login(String url, String username,
             String password) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
         this.url = url + "auth/form?username=" + URL.encodeComponent(username)
             + "&password=" + URL.encodeComponent(password);
     }
@@ -76,7 +75,7 @@ public class Login extends AbstractVoidRestCall {
         }
 
         MessagePopup popup = new MessagePopup(error, null,
-                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 

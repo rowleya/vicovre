@@ -30,33 +30,33 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-public class MessageResponse {
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.user.client.ui.TextBox;
 
-    public static final int YES = 0;
+public class NumberBox extends TextBox implements KeyPressHandler {
 
-    public static final int NO = 1;
-
-    public static final int CANCEL = 2;
-
-    public static final int OK = 3;
-
-    private int responseCode;
-
-    private ModalPopup<?> source;
-
-    public MessageResponse(int responseCode, ModalPopup<?> source) {
-        this.responseCode = responseCode;
-        this.source = source;
+    public NumberBox() {
+        addKeyPressHandler(this);
     }
 
-    public ModalPopup<?> getSource() {
-        return source;
-    }
-
-    public int getResponseCode() {
-        return responseCode;
+    public void onKeyPress(KeyPressEvent event) {
+        char keyCode = event.getCharCode();
+        if ((!Character.isDigit(keyCode)) && (keyCode != KeyCodes.KEY_TAB)
+                && (keyCode != KeyCodes.KEY_BACKSPACE)
+                && (keyCode != KeyCodes.KEY_DELETE)
+                && (keyCode != KeyCodes.KEY_ENTER)
+                && (keyCode != KeyCodes.KEY_HOME)
+                && (keyCode != KeyCodes.KEY_END)
+                && (keyCode != KeyCodes.KEY_LEFT)
+                && (keyCode != KeyCodes.KEY_UP)
+                && (keyCode != KeyCodes.KEY_RIGHT)
+                && (keyCode != KeyCodes.KEY_DOWN)) {
+            ((TextBox) event.getSource()).cancelKey();
+        }
     }
 
 }

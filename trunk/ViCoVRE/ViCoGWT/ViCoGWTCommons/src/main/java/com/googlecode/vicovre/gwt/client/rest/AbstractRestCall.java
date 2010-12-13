@@ -45,8 +45,8 @@ import org.restlet.client.data.Preference;
 import org.restlet.client.data.Protocol;
 
 import com.google.gwt.user.client.Cookies;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public abstract class AbstractRestCall implements Uniform {
 

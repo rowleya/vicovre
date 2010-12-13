@@ -38,7 +38,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class RequestAccessPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
@@ -49,16 +49,13 @@ public class RequestAccessPopup extends ModalPopup<VerticalPanel>
 
     private String url = null;
 
-    private String baseUrl = null;
-
     private String folder = null;
 
     private String recordingId = null;
 
-    public RequestAccessPopup(String baseUrl, String url, String folder,
+    public RequestAccessPopup(String url, String folder,
             String recordingId) {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
         this.url = url;
         this.folder = folder;
         this.recordingId = recordingId;
@@ -78,7 +75,7 @@ public class RequestAccessPopup extends ModalPopup<VerticalPanel>
     }
 
     public void onClick(ClickEvent event) {
-        AccessRequester.requestAccess(baseUrl, url, folder, recordingId,
+        AccessRequester.requestAccess(url, folder, recordingId,
                 emailBox.getText());
     }
 

@@ -35,10 +35,10 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PermissionPopup;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class PermissionLoader extends AbstractJSONRestCall {
 

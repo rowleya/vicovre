@@ -33,10 +33,10 @@
 package com.googlecode.vicovre.gwt.importexport.client.rest;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.importexport.client.ImportPanel;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class CreateSessionSender extends AbstractPlainRestCall {
 

@@ -130,7 +130,7 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
             GWT.log("Warning: Recording metadata is missing");
             return null;
         }
-        MetadataPopup metadataPopup = new MetadataPopup(baseUrl,
+        MetadataPopup metadataPopup = new MetadataPopup(
                 metadata.getPrimaryKey());
         metadataPopup.setMetadata(metadata);
         RecordingItem recordingItem = new RecordingItem(folderPanel, playPanel,

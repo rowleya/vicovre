@@ -38,8 +38,6 @@ import org.restlet.client.data.Reference;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
@@ -47,6 +45,8 @@ import com.googlecode.vicovre.gwt.recorder.client.HarvestItemPopup;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestPanel;
 import com.googlecode.vicovre.gwt.recorder.client.PlayPanel;
 import com.googlecode.vicovre.gwt.recorder.client.RecordPanel;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class HarvestItemCreator extends AbstractPlainRestCall
         implements MessageResponseHandler {

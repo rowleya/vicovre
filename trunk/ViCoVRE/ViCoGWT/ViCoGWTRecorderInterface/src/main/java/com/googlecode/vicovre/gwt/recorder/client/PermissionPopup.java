@@ -46,11 +46,11 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.json.JSONACLEntity;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PermissionSetter;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class PermissionPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, ChangeHandler {

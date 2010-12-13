@@ -43,13 +43,13 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LoginPopup;
 import com.googlecode.vicovre.gwt.client.Logout;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.json.JSONLayout;
 import com.googlecode.vicovre.gwt.client.json.JSONLayouts;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.json.JSONStreams;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class Application implements EntryPoint, MessageResponseHandler {
 
@@ -69,17 +69,8 @@ public class Application implements EntryPoint, MessageResponseHandler {
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
-    protected String getBaseUrl() {
-        String url = GWT.getHostPageBaseURL();
-        String recording = getFolder() + "/" + getRecordingId() + "/";
-        if (url.endsWith(recording)) {
-            url = url.substring(0, url.length() - recording.length());
-        }
-        return url;
-    }
-
     protected String getUrl() {
-        String url = getBaseUrl();
+        String url = GWT.getModuleBaseURL();
         String paramUrl = parameters.get("url");
         if (paramUrl.startsWith("/")) {
             paramUrl = paramUrl.substring(1);
@@ -151,45 +142,44 @@ public class Application implements EntryPoint, MessageResponseHandler {
         String role = getRole();
         boolean canPlay = canPlay();
         String url = getUrl();
-        String baseUrl = getBaseUrl();
         String recordingId = getRecordingId();
         String folder = getFolder();
 
-        GWT.log("Base url = " + baseUrl);
+        GWT.log("Base url = " + GWT.getModuleBaseURL());
 
         if (canPlay) {
             JSONStream[] streams = getStreams();
 
-            Wizard wizard = new Wizard(baseUrl);
+            Wizard wizard = new Wizard();
             wizard.addPage(new FormatSelectionPage(), FORMAT_SELECTION);
             wizard.addPage(new LayoutSelectionPage(getLayouts("layouts"),
                     getLayouts("customLayouts"), url), LAYOUT_SELECTION);
-            wizard.addPage(new VideoStreamSelectionPage(baseUrl, folder,
+            wizard.addPage(new VideoStreamSelectionPage(folder,
                     recordingId, streams), VIDEO_SELECTION);
-            wizard.addPage(new AudioSelectionPage(baseUrl, streams),
+            wizard.addPage(new AudioSelectionPage(streams),
                     AUDIO_SELECTION);
             wizard.addPage(new StreamsSelectionPage(streams,
-                    baseUrl, folder, recordingId), STREAM_SELECTION);
-            wizard.addPage(new DownloadAudioPage(baseUrl, folder, recordingId,
+                    folder, recordingId), STREAM_SELECTION);
+            wizard.addPage(new DownloadAudioPage(folder, recordingId,
                     streams), DOWNLOAD_AUDIO);
-            wizard.addPage(new DownloadVideoPage(baseUrl, folder, recordingId,
+            wizard.addPage(new DownloadVideoPage(folder, recordingId,
                     streams), DOWNLOAD_VIDEO);
             wizard.selectPage(FORMAT_SELECTION);
             wizard.center();
         } else if (role.equals("User")) {
-            LoginPopup popup = new LoginPopup(baseUrl, url);
+            LoginPopup popup = new LoginPopup(url);
             popup.center();
         } else {
             MessagePopup popup = new MessagePopup(
                     "Sorry, you do not have the right permissions to download "
                     + "this recording.",
-                    this, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                    this, MessagePopup.ERROR, MessageResponse.OK);
             popup.center();
         }
     }
 
     public void handleResponse(MessageResponse response) {
-        Logout.logout(getBaseUrl(), getUrl());
+        Logout.logout(getUrl());
     }
 }
 

@@ -43,7 +43,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONAnnotation;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class Annotation implements ClickHandler {
 

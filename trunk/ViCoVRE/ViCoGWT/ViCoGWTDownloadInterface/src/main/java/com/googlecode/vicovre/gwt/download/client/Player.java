@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.download.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 
 import pl.rmalinowski.gwt2swf.client.ui.SWFWidget;
@@ -44,10 +45,10 @@ public class Player extends SWFWidget {
 
     private long duration = 0;
 
-    public Player(String baseUrl, int width, int height, String file,
+    public Player(int width, int height, String file,
             String timeParam, boolean audio, long start, long duration,
             long startTime) {
-        super(baseUrl + "ViCoPlayerSimple.swf", width, height);
+        super(GWT.getModuleBaseURL() + "ViCoPlayerSimple.swf", width, height);
         this.file = file;
         this.start = start;
         this.duration = duration;

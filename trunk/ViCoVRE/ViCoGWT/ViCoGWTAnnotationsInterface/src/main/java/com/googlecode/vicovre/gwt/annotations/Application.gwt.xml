@@ -18,6 +18,8 @@
 
       <inherits name="com.googlecode.vicovre.gwt.Module"/>
 
+      <inherits name="com.googlecode.vicovre.gwt.utils.Module"/>
+
       <!-- Specify the app entry point class.                         -->
       <entry-point class='com.googlecode.vicovre.gwt.annotations.client.Application'/>
 

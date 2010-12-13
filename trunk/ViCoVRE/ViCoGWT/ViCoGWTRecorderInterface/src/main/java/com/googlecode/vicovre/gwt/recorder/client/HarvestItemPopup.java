@@ -45,13 +45,13 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class HarvestItemPopup extends ModalPopup<Grid>
         implements ClickHandler, ChangeHandler, VenueLoader {

@@ -44,8 +44,6 @@ public class VideoDropController extends SimpleDropController {
 
     private String position = null;
 
-    private String baseUrl = null;
-
     private String folder = null;
 
     private String recordingId = null;
@@ -55,13 +53,12 @@ public class VideoDropController extends SimpleDropController {
     private int height = 0;
 
     public VideoDropController(VideoStreamSelectionPage page, String position,
-            VerticalPanel dropTarget, String baseUrl,
+            VerticalPanel dropTarget,
             String folder, String recordingId, int width, int height) {
         super(dropTarget);
         this.page = page;
         this.position = position;
         this.target = dropTarget;
-        this.baseUrl = baseUrl;
         this.folder = folder;
         this.recordingId = recordingId;
         this.width = width;
@@ -71,7 +68,7 @@ public class VideoDropController extends SimpleDropController {
     public void onDrop(DragContext context) {
         super.onDrop(context);
         VideoPreviewPanel panel = (VideoPreviewPanel) context.draggable;
-        VideoPreviewPanel clone = new VideoPreviewPanel(baseUrl, folder,
+        VideoPreviewPanel clone = new VideoPreviewPanel(folder,
                 recordingId, panel.getStreamId(), width, height);
         target.clear();
         target.add(clone);

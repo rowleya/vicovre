@@ -96,7 +96,7 @@ public class Application implements EntryPoint, ClickHandler,
     private HandlerRegistration closeHandler = null;
 
     protected String getUrl() {
-        String url = GWT.getHostPageBaseURL();
+        String url = GWT.getModuleBaseURL();
         String paramUrl = parameters.get("url");
         if (paramUrl.startsWith("/")) {
             paramUrl = paramUrl.substring(1);

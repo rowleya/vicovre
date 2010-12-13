@@ -43,7 +43,7 @@ public class Application implements EntryPoint {
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
     protected String getUrl() {
-        String url = GWT.getHostPageBaseURL();
+        String url = GWT.getModuleBaseURL();
         String paramUrl = parameters.get("url");
         if (paramUrl.startsWith("/")) {
             paramUrl = paramUrl.substring(1);

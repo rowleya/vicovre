@@ -38,11 +38,11 @@ import org.restlet.client.data.Method;
 import com.google.gwt.http.client.URL;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.download.client.LayoutNamePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class LayoutCreator extends AbstractVoidRestCall {
 
@@ -50,26 +50,21 @@ public class LayoutCreator extends AbstractVoidRestCall {
 
     private LayoutNamePopup popup = null;
 
-    private String baseUrl = null;
-
     private String url = null;
 
     private WaitPopup waitPopup = new WaitPopup("Adding Layout", true);
 
     public static final void create(Layout layout, LayoutNamePopup popup,
-            String url, String baseUrl) {
-        LayoutCreator creator = new LayoutCreator(layout, popup, url, baseUrl);
+            String url) {
+        LayoutCreator creator = new LayoutCreator(layout, popup, url);
         creator.go();
     }
 
-    public LayoutCreator(Layout layout, LayoutNamePopup popup, String url,
-            String baseUrl) {
+    public LayoutCreator(Layout layout, LayoutNamePopup popup, String url) {
         this.layout = layout;
         this.popup = popup;
         this.url = url + "layout/custom/"
             + URL.encodeComponent(layout.getName()).replaceAll("+", "%20");
-        this.baseUrl = baseUrl;
-        waitPopup.setBaseUrl(baseUrl);
     }
 
     public void go() {
@@ -99,7 +94,7 @@ public class LayoutCreator extends AbstractVoidRestCall {
     protected void onError(String message) {
         waitPopup.hide();
         MessagePopup error = new MessagePopup("Error adding layout: " + message,
-                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                null, MessagePopup.ERROR, MessageResponse.OK);
         error.center();
     }
 

@@ -59,9 +59,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLayoutChanger;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONStreamMetadata;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class DefaultLayoutPopup extends ModalPopup<VerticalPanel> implements
         ClickHandler, ChangeHandler {

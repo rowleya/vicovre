@@ -30,8 +30,9 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
@@ -80,7 +81,7 @@ public class MessagePopup extends ModalPopup<HorizontalPanel>
         HorizontalPanel panel = getWidget();
         panel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
         if (messageType != null) {
-            Image image = new Image(messageType);
+            Image image = new Image(GWT.getModuleBaseURL() + messageType);
             image.setHeight("60px");
             image.setWidth("60px");
             panel.add(image);

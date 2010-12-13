@@ -50,16 +50,16 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.NumberBox;
-import com.googlecode.vicovre.gwt.client.Space;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.NumberBox;
+import com.googlecode.vicovre.gwt.utils.client.Space;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class RecordingItemPopup extends ModalPopup<FlexTable>
         implements ValueChangeHandler<Boolean>, ClickHandler, VenueLoader,

@@ -38,11 +38,9 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Locale;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -83,11 +81,6 @@ public class PreviewController implements Controller {
         long duration = (stream.getEndTime().getTime()
             - stream.getStartTime().getTime()) * 1000000;
 
-        String comp = request.getParameter("compression");
-        if (comp == null) {
-            comp = "0.5";
-        }
-        float compression = Float.valueOf(comp);
         String h = request.getParameter("height");
         String w = request.getParameter("width");
         if (h == null) {
@@ -145,10 +138,7 @@ public class PreviewController implements Controller {
         OutputStream output = response.getOutputStream();
         ImageOutputStream ios = ImageIO.createImageOutputStream(output);
         ImageWriter writer = null;
-        ImageWriteParam param = new ImageWriteParam(Locale.getDefault());
         Iterator<ImageWriter> iter = null;
-        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        param.setCompressionQuality(compression);
         response.setHeader("Cache-Control", "max-age=86400");
         response.setContentType("image/png");
         response.setHeader("Content-Disposition", "inline; filename="
@@ -159,7 +149,7 @@ public class PreviewController implements Controller {
             writer = iter.next();
         }
         writer.setOutput(ios);
-        writer.write(null, new IIOImage(finalImage, null, null), param);
+        writer.write(new IIOImage(finalImage, null, null));
         ios.flush();
         writer.dispose();
         ios.close();
