@@ -51,7 +51,6 @@ import com.googlecode.vicovre.codecs.utils.ByteArrayOutputStream;
 import com.googlecode.vicovre.media.controls.SetDurationControl;
 import com.googlecode.vicovre.media.format.BitRateFormat;
 import com.googlecode.vicovre.media.multiplexer.BasicMultiplexer;
-import com.sun.xml.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
 
 public class JavaMultiplexer extends BasicMultiplexer
         implements SetDurationControl {
@@ -242,7 +241,6 @@ public class JavaMultiplexer extends BasicMultiplexer
             mdhd.writeInt(1000); // Timescale - milliseconds
         } else if (format instanceof AudioFormat) {
             AudioFormat af = (AudioFormat) format;
-            System.err.println("Mdhd sample rate = " + (int) (af.getSampleRate()));
             mdhd.writeInt((int) af.getSampleRate());
         }
         long dur = duration;
@@ -460,7 +458,6 @@ public class JavaMultiplexer extends BasicMultiplexer
         stts.writeInt24(0); // Flags
         stts.writeInt(durations[track].size());
         for (Duration duration : durations[track]) {
-            System.err.println("Track " + track + " duration = " + duration.getDuration() + " count = " + duration.getCount());
             stts.writeInt(duration.getCount());
             stts.writeInt((int) duration.getDuration());
         }
@@ -484,7 +481,6 @@ public class JavaMultiplexer extends BasicMultiplexer
         stsc.writeInt24(0); // Flags
         stsc.writeInt(chunkNoSamples[track].size());
         for (Chunk chunk : chunkNoSamples[track]) {
-            System.err.println("Chunk " + (chunk.getFirstChunk() + 1) + " no samples = " + chunk.getNoSamples());
             stsc.writeInt(chunk.getFirstChunk() + 1);
             stsc.writeInt(chunk.getNoSamples());
             stsc.writeInt(0x1); // Sample description ID
@@ -497,14 +493,12 @@ public class JavaMultiplexer extends BasicMultiplexer
         stsz.write(0); // Version
         stsz.writeInt24(0); // Flags
         if (allSampleSize[track] != -1) {
-            System.err.println("All samples size = " + allSampleSize[track] + " no samples = " + noSamples[track]);
             stsz.writeInt(allSampleSize[track]);
             stsz.writeInt(noSamples[track]);
         } else {
             stsz.writeInt(0);
             stsz.writeInt(sampleSize[track].size());
             for (int size : sampleSize[track]) {
-                System.err.println("Sample size = " + size);
                 stsz.writeInt(size);
             }
         }
@@ -606,11 +600,9 @@ public class JavaMultiplexer extends BasicMultiplexer
                 BitRateFormat brf = (BitRateFormat) format;
                 bitrate += brf.getBitRate();
                 maxrate += brf.getBitRate() + brf.getTolerance();
-                System.err.println("Track " + i + " rate = " + brf.getBitRate() + " max = " + (brf.getBitRate() + brf.getTolerance()));
             }
         }
         dataSize = (maxrate / 8) * (duration / 1000);
-        System.err.println("dataSize = " + dataSize);
 
         out.write(getFtyp().getBytes());
         Atom mdat = new Atom("mdat", dataSize);
@@ -672,8 +664,6 @@ public class JavaMultiplexer extends BasicMultiplexer
                         / noSamples / 1000000;
             }
             long duration = (long) realDuration;
-            System.err.println("Track " + track + " Timestamp = " + buffer.getTimeStamp() + " Calculated = " + timestamp + " Duration = " + duration);
-
 
             boolean isKeyFrame = (buffer.getFlags()
                     & Buffer.FLAG_KEY_FRAME) > 0;
@@ -722,7 +712,6 @@ public class JavaMultiplexer extends BasicMultiplexer
     protected int readLast(byte[] buf, int off, int len) throws IOException {
         if (dataSize > 0) {
             long size = dataSize;
-            System.err.println("Writing " + size + " bytes (max = " + len + ")");
             if (size > len) {
                 size = len;
             }
@@ -732,20 +721,17 @@ public class JavaMultiplexer extends BasicMultiplexer
         }
 
         if (moov == null) {
-            System.err.println("Writing moov");
             long time = (System.currentTimeMillis() / 1000) + (((1904L * 365) + 17) * 60 * 60 * 24);
             int version = 0;
             if (duration >= Math.pow(2, 32)) {
                 version = 1;
             }
-            System.err.println("Version = " + version);
             moov = getMoov(time, version).getBytes();
             moovSize = moov.length;
         }
 
         if (moovSize > 0) {
             int size = moovSize;
-            System.err.println("Writing " + size + " bytes (max = " + len + ")");
             if (size > len) {
                 size = len;
             }
