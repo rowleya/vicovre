@@ -10,4 +10,7 @@
       <!-- Inherit JSON -->
       <inherits name="com.google.gwt.json.JSON" />
 
+      <!-- Inherit gwt-dnd support                   -->
+      <inherits name='com.allen_sauer.gwt.dnd.gwt-dnd'/>
+
 </module>

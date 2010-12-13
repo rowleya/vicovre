@@ -30,52 +30,38 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.client.auth;
 
-import org.restlet.client.data.MediaType;
-import org.restlet.client.data.Method;
-
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window.Location;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
-public class Login extends AbstractVoidRestCall {
+public class Logout extends AbstractVoidRestCall {
 
     private String url = null;
 
-    private WaitPopup waitPopup = new WaitPopup("Logging In", true);
+    private WaitPopup waitPopup = new WaitPopup("Logging Out", true);
 
-    public static void login(String url, String username,
-            String password) {
-        Login login = new Login(url, username, password);
-        login.go();
+    public static void logout(String url) {
+        Logout logout = new Logout(url);
+        logout.go();
     }
 
-    public Login(String url, String username,
-            String password) {
-        this.url = url + "auth/form?username=" + URL.encodeComponent(username)
-            + "&password=" + URL.encodeComponent(password);
+    public Logout(String url) {
+        this.url = url + "auth/logout";
     }
 
     public void go() {
         waitPopup.center();
-        go(url, Method.POST, MediaType.TEXT_PLAIN);
+        go(url);
     }
 
     protected void onError(String message) {
         waitPopup.hide();
-        String error = null;
-        if (message.startsWith("403")) {
-            error = "Invalid email address or password";
-        } else {
-            error = "Error logging in: " + message;
-        }
-
-        MessagePopup popup = new MessagePopup(error, null,
-                MessagePopup.ERROR, MessageResponse.OK);
+        MessagePopup popup = new MessagePopup("Error logging out: " + message,
+                null, MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 

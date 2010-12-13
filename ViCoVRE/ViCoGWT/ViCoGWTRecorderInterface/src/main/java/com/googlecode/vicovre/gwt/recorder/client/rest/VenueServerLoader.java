@@ -33,8 +33,8 @@
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
 import com.google.gwt.core.client.GWT;
-import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.VenueServerReceiver;
+import com.googlecode.vicovre.gwt.client.venue.VenuePanel;
 import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
 
 public class VenueServerLoader implements VenueServerReceiver {

@@ -47,6 +47,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.client.videolayout.VideoPreviewPanel;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.Space;

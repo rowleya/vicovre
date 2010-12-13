@@ -31,15 +31,14 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client.rest;
+package com.googlecode.vicovre.gwt.client.rest;
 
 import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
-import com.googlecode.vicovre.gwt.download.client.LayoutNamePopup;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
+import com.googlecode.vicovre.gwt.client.layout.LayoutPosition;
+import com.googlecode.vicovre.gwt.client.layoutcreator.LayoutNamePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;

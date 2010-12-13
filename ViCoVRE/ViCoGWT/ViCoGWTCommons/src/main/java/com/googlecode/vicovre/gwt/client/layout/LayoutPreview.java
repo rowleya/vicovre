@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.layout;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,8 +47,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.LayoutPosition;
 
 public class LayoutPreview extends AbsolutePanel implements HasClickHandlers,
         HasMouseOverHandlers, HasMouseOutHandlers {

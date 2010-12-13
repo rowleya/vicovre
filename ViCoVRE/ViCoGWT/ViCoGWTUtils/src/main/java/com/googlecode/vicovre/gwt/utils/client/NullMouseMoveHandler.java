@@ -30,42 +30,15 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-import com.google.gwt.user.client.Window.Location;
-import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
-import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
-import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
-import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
 
-public class Logout extends AbstractVoidRestCall {
+public class NullMouseMoveHandler implements MouseMoveHandler {
 
-    private String url = null;
-
-    private WaitPopup waitPopup = new WaitPopup("Logging Out", true);
-
-    public static void logout(String url) {
-        Logout logout = new Logout(url);
-        logout.go();
+    public void onMouseMove(MouseMoveEvent event) {
+        event.stopPropagation();
     }
 
-    public Logout(String url) {
-        this.url = url + "auth/logout";
-    }
-
-    public void go() {
-        waitPopup.center();
-        go(url);
-    }
-
-    protected void onError(String message) {
-        waitPopup.hide();
-        MessagePopup popup = new MessagePopup("Error logging out: " + message,
-                null, MessagePopup.ERROR, MessageResponse.OK);
-        popup.center();
-    }
-
-    protected void onSuccess() {
-        Location.reload();
-    }
 }

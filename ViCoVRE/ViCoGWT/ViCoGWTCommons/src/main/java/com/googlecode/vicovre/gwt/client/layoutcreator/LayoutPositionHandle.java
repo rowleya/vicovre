@@ -30,45 +30,37 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.layoutcreator;
 
-import com.allen_sauer.gwt.dnd.client.DragEndEvent;
-import com.allen_sauer.gwt.dnd.client.DragHandler;
-import com.allen_sauer.gwt.dnd.client.DragStartEvent;
-import com.allen_sauer.gwt.dnd.client.PickupDragController;
-import com.allen_sauer.gwt.dnd.client.VetoDragException;
+import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
+import com.google.gwt.event.dom.client.HasMouseUpHandlers;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 
-public class VideoDragController extends PickupDragController
-        implements DragHandler {
+public class LayoutPositionHandle extends AbsolutePanel
+        implements HasMouseDownHandlers, HasMouseMoveHandlers,
+        HasMouseUpHandlers {
 
-    public VideoDragController(AbsolutePanel boundaryPanel,
-            boolean allowDroppingOnBoundaryPanel) {
-        super(boundaryPanel, allowDroppingOnBoundaryPanel);
-        addDragHandler(this);
+    public HandlerRegistration addMouseDownHandler(
+            MouseDownHandler handler) {
+        return addDomHandler(handler, MouseDownEvent.getType());
     }
 
-    public void onDragEnd(DragEndEvent event) {
-        // Do Nothing
+    public HandlerRegistration addMouseMoveHandler(
+            MouseMoveHandler handler) {
+        return addDomHandler(handler, MouseMoveEvent.getType());
     }
 
-    public void onDragStart(DragStartEvent event) {
-        VideoPreviewPanel panel =
-            (VideoPreviewPanel) event.getContext().draggable;
-        panel.stop();
+    public HandlerRegistration addMouseUpHandler(
+            MouseUpHandler handler) {
+        return addDomHandler(handler, MouseUpEvent.getType());
     }
-
-    public void onPreviewDragEnd(DragEndEvent event) throws VetoDragException {
-        // Does Nothing
-    }
-
-    public void onPreviewDragStart(DragStartEvent event)
-            throws VetoDragException {
-        VideoPreviewPanel panel =
-            (VideoPreviewPanel) event.getContext().draggable;
-        panel.stop();
-    }
-
-
 
 }

@@ -36,8 +36,8 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.googlecode.vicovre.gwt.client.Venue;
-import com.googlecode.vicovre.gwt.client.VenuePanel;
+import com.googlecode.vicovre.gwt.client.venue.Venue;
+import com.googlecode.vicovre.gwt.client.venue.VenuePanel;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class RestVenueLoader extends AbstractJSONRestCall {

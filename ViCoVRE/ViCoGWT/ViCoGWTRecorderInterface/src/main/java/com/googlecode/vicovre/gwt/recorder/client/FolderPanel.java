@@ -50,8 +50,8 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderMetadataLoader;

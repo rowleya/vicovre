@@ -30,15 +30,49 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.videolayout;
 
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.allen_sauer.gwt.dnd.client.DragContext;
+import com.allen_sauer.gwt.dnd.client.drop.SimpleDropController;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class NullMouseMoveHandler implements MouseMoveHandler {
+public class VideoDropController extends SimpleDropController {
 
-    public void onMouseMove(MouseMoveEvent event) {
-        event.stopPropagation();
+    private VerticalPanel target = null;
+
+    private VideoStreamSelectionPanel panel = null;
+
+    private String position = null;
+
+    private String folder = null;
+
+    private String recordingId = null;
+
+    private int width = 0;
+
+    private int height = 0;
+
+    public VideoDropController(VideoStreamSelectionPanel panel, String position,
+            VerticalPanel dropTarget,
+            String folder, String recordingId, int width, int height) {
+        super(dropTarget);
+        this.panel = panel;
+        this.position = position;
+        this.target = dropTarget;
+        this.folder = folder;
+        this.recordingId = recordingId;
+        this.width = width;
+        this.height = height;
+    }
+
+    public void onDrop(DragContext context) {
+        super.onDrop(context);
+        VideoPreviewPanel panel = (VideoPreviewPanel) context.draggable;
+        VideoPreviewPanel clone = new VideoPreviewPanel(folder,
+                recordingId, panel.getStreamId(), width, height);
+        target.clear();
+        target.add(clone);
+        this.panel.setPositon(position, panel.getStreamId());
     }
 
 }

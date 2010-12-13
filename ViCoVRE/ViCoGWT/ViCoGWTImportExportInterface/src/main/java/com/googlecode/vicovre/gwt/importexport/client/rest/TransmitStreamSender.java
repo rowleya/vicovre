@@ -35,8 +35,8 @@ package com.googlecode.vicovre.gwt.importexport.client.rest;
 import org.restlet.client.data.Method;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
+import com.googlecode.vicovre.gwt.client.venue.VenuePanel;
 import com.googlecode.vicovre.gwt.importexport.client.StreamPanel;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;

@@ -19,9 +19,6 @@
       <!-- Inherit Dictionary -->
       <inherits name="com.google.gwt.i18n.I18N"/>
 
-      <!-- Inherit gwt-dnd support                   -->
-      <inherits name='com.allen_sauer.gwt.dnd.gwt-dnd'/>
-
       <!-- Inherit GWT2SWF -->
       <inherits name="pl.rmalinowski.gwt2swf.GWT2SWF"/>
 

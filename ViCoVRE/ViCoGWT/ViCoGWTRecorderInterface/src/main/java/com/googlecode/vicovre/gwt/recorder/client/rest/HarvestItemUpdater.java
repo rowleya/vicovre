@@ -39,7 +39,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
-import com.googlecode.vicovre.gwt.client.Layout;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;

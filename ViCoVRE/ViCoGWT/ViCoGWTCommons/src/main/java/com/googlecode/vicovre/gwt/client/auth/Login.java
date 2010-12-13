@@ -30,18 +30,56 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.auth;
 
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.RadioButton;
+import org.restlet.client.data.MediaType;
+import org.restlet.client.data.Method;
 
-public class FormRadioButton extends RadioButton {
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window.Location;
+import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
-    public FormRadioButton(String name, String label, String value,
-            ClickHandler clickHandler) {
-        super(name, label);
-        setFormValue(value);
-        addClickHandler(clickHandler);
+public class Login extends AbstractVoidRestCall {
+
+    private String url = null;
+
+    private WaitPopup waitPopup = new WaitPopup("Logging In", true);
+
+    public static void login(String url, String username,
+            String password) {
+        Login login = new Login(url, username, password);
+        login.go();
     }
 
+    public Login(String url, String username,
+            String password) {
+        this.url = url + "auth/form?username=" + URL.encodeComponent(username)
+            + "&password=" + URL.encodeComponent(password);
+    }
+
+    public void go() {
+        waitPopup.center();
+        go(url, Method.POST, MediaType.TEXT_PLAIN);
+    }
+
+    protected void onError(String message) {
+        waitPopup.hide();
+        String error = null;
+        if (message.startsWith("403")) {
+            error = "Invalid email address or password";
+        } else {
+            error = "Error logging in: " + message;
+        }
+
+        MessagePopup popup = new MessagePopup(error, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        popup.center();
+    }
+
+    protected void onSuccess() {
+        Location.reload();
+    }
 }
