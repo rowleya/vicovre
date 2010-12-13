@@ -50,12 +50,12 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadataElement;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class MetadataPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, MessageResponseHandler {
@@ -95,13 +95,10 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
 
     private MessageResponseHandler handler = null;
 
-    private String baseUrl = null;
-
     private int maxFieldWidth = 0;
 
-    public MetadataPopup(String baseUrl, String primaryKey) {
+    public MetadataPopup(String primaryKey) {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
         this.primaryKey = primaryKey;
 
         addItem(primaryKey, "", false, true, true);
@@ -329,8 +326,7 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
                             MessageResponse.OK, this));
                 } else {
                     MessagePopup errorPopup = new MessagePopup(error, null,
-                            baseUrl + MessagePopup.ERROR,
-                            MessageResponse.OK);
+                            MessagePopup.ERROR, MessageResponse.OK);
                     errorPopup.center();
                 }
             } else if (source == cancelButton) {
@@ -357,7 +353,7 @@ public class MetadataPopup extends ModalPopup<VerticalPanel>
             if (name.equals("")) {
                 MessagePopup errorPopup = new MessagePopup(
                         "The name of the item cannot be blank", null,
-                        baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                        MessagePopup.ERROR, MessageResponse.OK);
                 errorPopup.center();
             } else {
                 addItem(getKey(name), "", popup.isMultiline(), true, true);

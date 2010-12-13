@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.gwt.download.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
@@ -71,13 +72,13 @@ public class VideoPreviewPanel extends Image
 
     }
 
-    public VideoPreviewPanel(String baseUrl, String folder, String recordingId,
+    public VideoPreviewPanel(String folder, String recordingId,
             String streamId, int width, int height) {
         this.width = width;
         this.height = height;
         this.streamId = streamId;
         addLoadHandler(this);
-        setUrl(baseUrl + folder + "/" + recordingId
+        setUrl(GWT.getModuleBaseURL() + folder + "/" + recordingId
                 + "/preview.do?ssrc=" + streamId
                 + "&width=" + width + "&height=" + height);
     }

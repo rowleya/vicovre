@@ -40,8 +40,8 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.Space;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.Space;
 
 public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
 
@@ -51,13 +51,10 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
 
     private DeckPanel wizardPanel = new DeckPanel();
 
-    private String baseUrl = null;
-
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
 
-    public Wizard(String baseUrl) {
+    public Wizard() {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
 
         VerticalPanel panel = getWidget();
 
@@ -114,10 +111,6 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
         if (index >= 0) {
             selectPage(index, back);
         }
-    }
-
-    public String getBaseUrl() {
-        return baseUrl;
     }
 
     public void setAttribute(String name, Object value) {

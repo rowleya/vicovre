@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
 public interface MessageResponseHandler {
 

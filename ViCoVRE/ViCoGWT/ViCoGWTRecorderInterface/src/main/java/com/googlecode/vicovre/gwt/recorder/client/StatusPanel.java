@@ -44,11 +44,11 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.googlecode.vicovre.gwt.client.Space;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
+import com.googlecode.vicovre.gwt.utils.client.Space;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class StatusPanel extends DockPanel implements ClickHandler,
         KeyPressHandler {

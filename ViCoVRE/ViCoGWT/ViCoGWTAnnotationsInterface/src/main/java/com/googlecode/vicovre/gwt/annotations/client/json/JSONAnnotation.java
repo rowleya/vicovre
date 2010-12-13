@@ -34,7 +34,7 @@ package com.googlecode.vicovre.gwt.annotations.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class JSONAnnotation extends JavaScriptObject {
 

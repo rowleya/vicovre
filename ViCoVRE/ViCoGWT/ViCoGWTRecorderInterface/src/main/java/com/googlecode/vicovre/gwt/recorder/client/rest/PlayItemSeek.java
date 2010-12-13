@@ -32,10 +32,10 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class PlayItemSeek extends AbstractVoidRestCall {
 

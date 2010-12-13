@@ -37,10 +37,10 @@ import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONAddAnnotationMessage;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONMessage;
 import com.googlecode.vicovre.gwt.annotations.client.json.JSONUserMessage;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class MessageReceiver extends AbstractJSONRestCall
         implements MessageResponseHandler {

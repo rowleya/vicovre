@@ -36,10 +36,10 @@ import org.restlet.client.data.Method;
 import org.restlet.client.data.Reference;
 
 import com.google.gwt.http.client.URL;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
 import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.PlayToVenuePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class PlayItemToVenue extends AbstractPlainRestCall {
 

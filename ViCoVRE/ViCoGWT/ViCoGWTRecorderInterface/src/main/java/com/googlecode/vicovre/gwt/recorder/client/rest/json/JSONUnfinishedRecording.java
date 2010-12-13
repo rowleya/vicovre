@@ -34,8 +34,8 @@ package com.googlecode.vicovre.gwt.recorder.client.rest.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class JSONUnfinishedRecording extends JavaScriptObject {
 

@@ -30,16 +30,33 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.PushButton;
+public class MessageResponse {
 
-public class TitledPushButton extends PushButton {
+    public static final int YES = 0;
 
-    public TitledPushButton(Image image, String title) {
-        super(image);
-        setTitle(title);
+    public static final int NO = 1;
+
+    public static final int CANCEL = 2;
+
+    public static final int OK = 3;
+
+    private int responseCode;
+
+    private ModalPopup<?> source;
+
+    public MessageResponse(int responseCode, ModalPopup<?> source) {
+        this.responseCode = responseCode;
+        this.source = source;
+    }
+
+    public ModalPopup<?> getSource() {
+        return source;
+    }
+
+    public int getResponseCode() {
+        return responseCode;
     }
 
 }

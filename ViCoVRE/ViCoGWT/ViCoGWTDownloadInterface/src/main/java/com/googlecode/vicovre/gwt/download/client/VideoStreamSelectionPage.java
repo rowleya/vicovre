@@ -45,16 +45,14 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.Space;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.Space;
 
 public class VideoStreamSelectionPage extends WizardPage {
 
     private static final int MIN_WIDTH = 600;
-
-    private String baseUrl = null;
 
     private String recordingId = null;
 
@@ -82,9 +80,8 @@ public class VideoStreamSelectionPage extends WizardPage {
 
     private VideoDragController dragController = null;
 
-    public VideoStreamSelectionPage(String baseUrl, String folder,
+    public VideoStreamSelectionPage(String folder,
             String recordingId, JSONStream[] streams) {
-        this.baseUrl = baseUrl;
         this.folder = folder;
         this.recordingId = recordingId;
 
@@ -105,7 +102,7 @@ public class VideoStreamSelectionPage extends WizardPage {
             if (stream.getMediaType().equalsIgnoreCase("Video")) {
                 VerticalPanel panel = new VerticalPanel();
                 panel.setHorizontalAlignment(ALIGN_CENTER);
-                VideoPreviewPanel previewPanel = new VideoPreviewPanel(baseUrl,
+                VideoPreviewPanel previewPanel = new VideoPreviewPanel(
                         folder, recordingId, stream.getSsrc(), 160, 120);
                 panel.add(previewPanel);
                 String name = stream.getSsrc();
@@ -161,7 +158,7 @@ public class VideoStreamSelectionPage extends WizardPage {
             return Application.AUDIO_SELECTION;
         }
         MessagePopup errorPopup = new MessagePopup(error, null,
-                baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                MessagePopup.ERROR, MessageResponse.OK);
         errorPopup.center();
         return -1;
     }
@@ -208,7 +205,7 @@ public class VideoStreamSelectionPage extends WizardPage {
                 positionPanel.put(position.getName(), panel);
                 VideoDropController dropController =
                     new VideoDropController(this, position.getName(), panel,
-                            baseUrl, folder, recordingId,
+                            folder, recordingId,
                             panelWidth, panelHeight);
                 dropControllers.add(dropController);
                 dragController.registerDropController(dropController);

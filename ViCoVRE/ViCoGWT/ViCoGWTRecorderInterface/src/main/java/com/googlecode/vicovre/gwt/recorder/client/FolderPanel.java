@@ -51,8 +51,6 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderEditor;
@@ -60,6 +58,8 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.FolderMetadataLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemLoader;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class FolderPanel extends HorizontalPanel
         implements SelectionHandler<TreeItem>, ClickHandler,
@@ -111,7 +111,7 @@ public class FolderPanel extends HorizontalPanel
                 customLayouts, users, groups);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
                 layouts, customLayouts, users, groups);
-        metadataPopup = new MetadataPopup(url, "name");
+        metadataPopup = new MetadataPopup("name");
         metadataPopup.setHandler(this);
 
         setWidth("95%");

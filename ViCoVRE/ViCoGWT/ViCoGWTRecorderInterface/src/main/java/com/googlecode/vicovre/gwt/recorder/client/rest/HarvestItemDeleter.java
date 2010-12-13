@@ -34,11 +34,11 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 
 import org.restlet.client.data.Method;
 
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.HarvestItem;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class HarvestItemDeleter extends AbstractVoidRestCall implements
         MessageResponseHandler {

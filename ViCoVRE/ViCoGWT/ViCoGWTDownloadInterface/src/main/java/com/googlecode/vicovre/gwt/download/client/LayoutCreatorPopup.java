@@ -51,11 +51,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.Space;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.Space;
 
 public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
         implements MouseMoveHandler, MouseUpHandler, MouseDownHandler,
@@ -93,8 +93,6 @@ public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
     private int width = INITIAL_WIDTH;
 
     private int height = INITIAL_HEIGHT;
-
-    private String baseUrl = null;
 
     private LayoutPositionHandle resizeHandle = new LayoutPositionHandle();
 
@@ -134,12 +132,10 @@ public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
 
     private Layout layout = null;
 
-    public LayoutCreatorPopup(String url, String baseUrl,
-            MessageResponseHandler handler) {
+    public LayoutCreatorPopup(String url, MessageResponseHandler handler) {
         super(new LayoutPositionBox());
         this.url = url;
         this.handler = handler;
-        this.baseUrl = baseUrl;
         LayoutPositionBox panel = getWidget();
 
         panel.setWidth(panelWidth + "px");
@@ -371,10 +367,6 @@ public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
         return true;
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
     public void onClick(ClickEvent event) {
         Object source = event.getSource();
         if (source == create) {
@@ -428,7 +420,7 @@ public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
                 }
                 layout = new Layout("", positions);
 
-                LayoutNamePopup popup = new LayoutNamePopup(url, baseUrl,
+                LayoutNamePopup popup = new LayoutNamePopup(url,
                         layout, this, layout.getName());
                 popup.center();
             }

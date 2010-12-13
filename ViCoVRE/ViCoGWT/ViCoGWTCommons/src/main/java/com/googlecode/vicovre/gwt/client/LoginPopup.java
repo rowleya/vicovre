@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class LoginPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler, KeyPressHandler {
@@ -61,11 +62,8 @@ public class LoginPopup extends ModalPopup<VerticalPanel>
 
     private String url = null;
 
-    private String baseUrl = null;
-
-    public LoginPopup(String baseUrl, String url) {
+    public LoginPopup(String url) {
         super(new VerticalPanel());
-        this.baseUrl = baseUrl;
         this.url = url;
 
         VerticalPanel panel = getWidget();
@@ -116,11 +114,11 @@ public class LoginPopup extends ModalPopup<VerticalPanel>
 
     public void onClick(ClickEvent event) {
         if (event.getSource() == ok) {
-            Login.login(baseUrl, url, username.getText(), password.getText());
+            Login.login(url, username.getText(), password.getText());
         } else if (event.getSource() == cancel) {
             History.back();
         } else if (event.getSource() == create) {
-            Registerer.register(baseUrl, url, username.getText(),
+            Registerer.register(url, username.getText(),
                     password.getText(), Location.getHref());
         }
     }

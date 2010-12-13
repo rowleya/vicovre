@@ -46,9 +46,9 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class LayoutSelectionPage extends WizardPage implements ClickHandler,
         MouseOverHandler, MouseOutHandler, MessageResponseHandler {
@@ -68,8 +68,6 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
     private String width = null;
 
     private String url = null;
-
-    private String baseUrl = null;
 
     public LayoutSelectionPage(Layout[] predefinedLayouts,
             Layout[] customLayouts, String url) {
@@ -164,7 +162,7 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
     public int next(Wizard wizard) {
         if (selection == null) {
             MessagePopup error = new MessagePopup("Please select a layout",
-                    null, wizard.getBaseUrl() + MessagePopup.ERROR,
+                    null, MessagePopup.ERROR,
                     MessageResponse.OK);
             error.center();
             return -1;
@@ -179,7 +177,6 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
             selection.setSelected(false);
             selection = null;
         }
-        this.baseUrl = wizard.getBaseUrl();
     }
 
     public void onClick(ClickEvent event) {
@@ -192,8 +189,7 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
             selection = preview;
             selection.setSelected(true);
         } else {
-            LayoutCreatorPopup popup = new LayoutCreatorPopup(url, baseUrl,
-                    this);
+            LayoutCreatorPopup popup = new LayoutCreatorPopup(url, this);
             popup.center();
         }
     }

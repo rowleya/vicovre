@@ -53,5 +53,10 @@
             <artifactId>ViCoGWTCommons</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoGWTUtils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

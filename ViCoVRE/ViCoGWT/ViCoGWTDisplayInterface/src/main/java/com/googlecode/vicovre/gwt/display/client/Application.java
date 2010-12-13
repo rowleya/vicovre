@@ -52,17 +52,8 @@ public class Application implements EntryPoint {
 
     private SWFWidget player = null;
 
-    protected String getBaseUrl() {
-        String url = GWT.getHostPageBaseURL();
-        String recording = getFolder() + "/" + getRecordingId() + "/";
-        if (url.endsWith(recording)) {
-            url = url.substring(0, url.length() - recording.length() + 1);
-        }
-        return url;
-    }
-
     protected String getUrl() {
-        String url = getBaseUrl();
+        String url = GWT.getModuleBaseURL();
         String paramUrl = parameters.get("url");
         if (paramUrl.startsWith("/")) {
             paramUrl = paramUrl.substring(1);
@@ -74,7 +65,7 @@ public class Application implements EntryPoint {
     }
 
     protected String getPlayUrl() {
-        String url = getBaseUrl();
+        String url = GWT.getModuleBaseURL();
         String playUrl = parameters.get("playUrl");
         if (playUrl.startsWith("/")) {
             playUrl = playUrl.substring(1);
@@ -144,7 +135,7 @@ public class Application implements EntryPoint {
         String startTime = getStartTime();
 
         if (canPlay) {
-            player = new SWFWidget(getBaseUrl() + "Player.swf");
+            player = new SWFWidget(GWT.getModuleBaseURL() + "Player.swf");
             String urlToPlay = playUrl + "?folder=" + folder + "%26recordingId="
                 + recordingId + "%26startTime=" + startTime;
             GWT.log("Playing " + urlToPlay);
@@ -163,10 +154,10 @@ public class Application implements EntryPoint {
             mainPanel.setCellHeight(player, "100%");
 
         } else if (role.equals("User")) {
-            LoginPopup popup = new LoginPopup(getBaseUrl(), url);
+            LoginPopup popup = new LoginPopup(url);
             popup.center();
         } else {
-            RequestAccessPopup popup = new RequestAccessPopup(getBaseUrl(),
+            RequestAccessPopup popup = new RequestAccessPopup(
                     url, folder, recordingId);
             popup.center();
         }

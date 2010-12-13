@@ -40,11 +40,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.MessageResponseHandler;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.download.client.rest.LayoutCreator;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class LayoutNamePopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
@@ -59,23 +59,19 @@ public class LayoutNamePopup extends ModalPopup<VerticalPanel>
 
     private MessageResponseHandler handler = null;
 
-    private String baseUrl = null;
-
     private String url = null;
 
     private Layout layout = null;
 
     MessagePopup errorPopup = new MessagePopup(null, null,
-            baseUrl + MessagePopup.ERROR,
-            MessageResponse.OK);
+            MessagePopup.ERROR, MessageResponse.OK);
 
-    public LayoutNamePopup(String url, String baseUrl, Layout layout,
+    public LayoutNamePopup(String url, Layout layout,
             MessageResponseHandler handler, String name) {
         super(new VerticalPanel());
         this.handler = handler;
         this.nameBox.setText(name);
         this.url = url;
-        this.baseUrl = baseUrl;
         this.layout = layout;
 
         VerticalPanel panel = getWidget();
@@ -114,7 +110,7 @@ public class LayoutNamePopup extends ModalPopup<VerticalPanel>
                 errorPopup.center();
             } else {
                 layout.setName(nameEntered);
-                LayoutCreator.create(layout, this, url, baseUrl);
+                LayoutCreator.create(layout, this, url);
             }
         } else {
             handler.handleResponse(new MessageResponse(MessageResponse.CANCEL,

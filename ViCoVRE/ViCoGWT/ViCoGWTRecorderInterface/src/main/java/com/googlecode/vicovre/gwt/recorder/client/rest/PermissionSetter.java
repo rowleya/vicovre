@@ -39,11 +39,11 @@ import org.restlet.client.data.Method;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Widget;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
-import com.googlecode.vicovre.gwt.client.WaitPopup;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class PermissionSetter extends AbstractVoidRestCall {
 

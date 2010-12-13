@@ -30,8 +30,9 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.client;
+package com.googlecode.vicovre.gwt.utils.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -47,7 +48,7 @@ public class WaitPopup extends ModalPopup<VerticalPanel>
 
     private boolean cancelled = false;
 
-    private Image progress = new Image(PROGRESS);
+    private Image progress = new Image(GWT.getModuleBaseURL() + PROGRESS);
 
     private Button cancel = new Button("Cancel");
 
@@ -84,9 +85,5 @@ public class WaitPopup extends ModalPopup<VerticalPanel>
 
     public boolean wasCancelled() {
         return cancelled;
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        progress.setUrl(baseUrl + PROGRESS);
     }
 }

@@ -52,7 +52,7 @@ public class PreviewFilter implements FileFilter {
 
     public boolean accept(File file) {
         if (file.getName().startsWith(stream + PREFIX)
-                && file.getName().endsWith(".jpg")) {
+                && file.getName().endsWith(".png")) {
             return true;
         }
         return false;

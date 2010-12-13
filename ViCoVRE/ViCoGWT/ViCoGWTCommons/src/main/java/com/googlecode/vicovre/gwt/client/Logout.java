@@ -34,23 +34,22 @@ package com.googlecode.vicovre.gwt.client;
 
 import com.google.gwt.user.client.Window.Location;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public class Logout extends AbstractVoidRestCall {
-
-    private String baseUrl = null;
 
     private String url = null;
 
     private WaitPopup waitPopup = new WaitPopup("Logging Out", true);
 
-    public static void logout(String baseUrl, String url) {
-        Logout logout = new Logout(baseUrl, url);
+    public static void logout(String url) {
+        Logout logout = new Logout(url);
         logout.go();
     }
 
-    public Logout(String baseUrl, String url) {
-        waitPopup.setBaseUrl(baseUrl);
-        this.baseUrl = baseUrl;
+    public Logout(String url) {
         this.url = url + "auth/logout";
     }
 
@@ -62,7 +61,7 @@ public class Logout extends AbstractVoidRestCall {
     protected void onError(String message) {
         waitPopup.hide();
         MessagePopup popup = new MessagePopup("Error logging out: " + message,
-                null, baseUrl + MessagePopup.ERROR, MessageResponse.OK);
+                null, MessagePopup.ERROR, MessageResponse.OK);
         popup.center();
     }
 

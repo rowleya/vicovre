@@ -40,9 +40,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
 import com.googlecode.vicovre.gwt.client.VenueLoader;
 import com.googlecode.vicovre.gwt.client.VenuePanel;
 import com.googlecode.vicovre.gwt.client.rest.RestVenueLoader;
@@ -50,6 +47,9 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemChangeState;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemSeek;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemTimeUpdate;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemToVenue;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
         implements SlideChangeHandler, ClickHandler, VenueLoader {

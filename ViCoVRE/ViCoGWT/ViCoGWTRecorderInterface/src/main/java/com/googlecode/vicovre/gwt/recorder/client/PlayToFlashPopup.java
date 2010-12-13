@@ -44,9 +44,9 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.Layout;
 import com.googlecode.vicovre.gwt.client.LayoutPosition;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.ModalPopup;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
         implements ClickHandler {
@@ -79,7 +79,7 @@ public class PlayToFlashPopup extends ModalPopup<VerticalPanel>
             if (playUrl.startsWith("/")) {
                 playUrl = playUrl.substring(1);
             }
-            String url = GWT.getHostPageBaseURL() + playUrl;
+            String url = GWT.getModuleBaseURL() + playUrl;
             player.addFlashVar("uri", url
                     + "?folder=" + item.getFolder() + "%26recordingId="
                     + item.getId() + "%26startTime=0");

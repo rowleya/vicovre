@@ -33,7 +33,7 @@
 package com.googlecode.vicovre.gwt.client.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class JSONRecording extends JavaScriptObject {
 

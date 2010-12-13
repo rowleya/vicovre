@@ -46,10 +46,10 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.vicovre.gwt.client.MessagePopup;
-import com.googlecode.vicovre.gwt.client.MessageResponse;
-import com.googlecode.vicovre.gwt.client.StringDateTimeFormat;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class DownloadAudioPage extends WizardPage implements ClickHandler {
 
@@ -83,8 +83,6 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
 
     private long endTime = 0;
 
-    private String baseUrl = null;
-
     private String folder = null;
 
     private String recordingId = null;
@@ -95,9 +93,8 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
 
     private ListBox format = new ListBox(false);
 
-    public DownloadAudioPage(String baseUrl, String folder,
+    public DownloadAudioPage(String folder,
             String recordingId, JSONStream[] streams) {
-        this.baseUrl = baseUrl;
         this.folder = folder;
         this.recordingId = recordingId;
         this.streams = streams;
@@ -151,7 +148,7 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
     }
 
     private String getUrl(String format) {
-        String url = baseUrl;
+        String url = GWT.getModuleBaseURL();
         if (!folder.equals("")) {
             url += folder + "/";
         }
@@ -205,7 +202,7 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
         playerPanel.clear();
         String url = getUrl("video/x-flv") + "&genspeed=1.5";
         GWT.log("URL = " + url);
-        player = new Player(baseUrl, 600, 120, url, "offset", true, startTime,
+        player = new Player(600, 120, url, "offset", true, startTime,
                 endTime - startTime, 0);
         playerPanel.add(player);
     }
@@ -216,7 +213,7 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
             if (time >= endTime) {
                 MessagePopup error = new MessagePopup(
                         "The start time cannot be the same as or greater than"
-                        + " the end time", null, baseUrl + MessagePopup.ERROR,
+                        + " the end time", null, MessagePopup.ERROR,
                         MessageResponse.OK);
                 error.center();
             } else {
@@ -228,7 +225,7 @@ public class DownloadAudioPage extends WizardPage implements ClickHandler {
             if (time <= startTime) {
                 MessagePopup error = new MessagePopup(
                         "The end time cannot be the same as or less than"
-                        + " the start time", null, baseUrl + MessagePopup.ERROR,
+                        + " the start time", null, MessagePopup.ERROR,
                         MessageResponse.OK);
                 error.center();
             } else {
