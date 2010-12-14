@@ -59,7 +59,6 @@ import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
-import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
@@ -85,16 +84,13 @@ public class DownloadRecordingController implements Controller {
 
     private SecurityDatabase securityDatabase = null;
 
-    private LayoutRepository layoutRepository = null;
-
-    private EditableLayoutRepository editableLayoutRepository = null;
+    private EditableLayoutRepository layoutRepository = null;
 
     private RtpTypeRepository typeRepository = null;
 
     public DownloadRecordingController(RecordingDatabase database,
             SecurityDatabase securityDatabase,
-            LayoutRepository layoutRepository,
-            EditableLayoutRepository editableLayoutRepository,
+            EditableLayoutRepository layoutRepository,
             RtpTypeRepository typeRepository) throws IOException, SAXException {
         if (!Misc.isCodecsConfigured()) {
             Misc.configureCodecs("/knownCodecs.xml");
@@ -102,7 +98,6 @@ public class DownloadRecordingController implements Controller {
         this.database = database;
         this.securityDatabase = securityDatabase;
         this.layoutRepository = layoutRepository;
-        this.editableLayoutRepository = editableLayoutRepository;
         this.typeRepository = typeRepository;
     }
 
@@ -176,10 +171,6 @@ public class DownloadRecordingController implements Controller {
                     ys = new String[positions.size()];
                     Layout layout = layoutRepository.findLayout(
                             replayLayout.getName());
-                    if (layout == null) {
-                        layout = editableLayoutRepository.findLayout(
-                                replayLayout.getName());
-                    }
                     for (int i = 0; i < positions.size(); i++) {
                         ReplayLayoutPosition pos = positions.get(i);
                         LayoutPosition layoutPos = layout.findStreamPosition(
@@ -336,12 +327,12 @@ public class DownloadRecordingController implements Controller {
 
         StringWriter layoutWriter = new StringWriter();
         marshaller.marshallToJSON(
-                new LayoutsResponse(layoutRepository.findLayouts()),
+                new LayoutsResponse(layoutRepository.findFixedLayouts()),
                 layoutWriter);
 
         StringWriter customLayoutWriter = new StringWriter();
         marshaller.marshallToJSON(
-                new LayoutsResponse(editableLayoutRepository.findLayouts()),
+                new LayoutsResponse(layoutRepository.findEditableLayouts()),
                 customLayoutWriter);
 
         StringWriter recordingWriter = new StringWriter();

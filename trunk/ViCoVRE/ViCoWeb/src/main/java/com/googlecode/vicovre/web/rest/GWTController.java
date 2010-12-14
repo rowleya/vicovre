@@ -45,7 +45,6 @@ import org.xml.sax.SAXException;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
-import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.security.UnauthorizedException;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.rest.responses.GroupsResponse;
@@ -60,20 +59,16 @@ public class GWTController implements Controller {
 
     private SecurityDatabase securityDatabase = null;
 
-    private LayoutRepository layoutRepository = null;
-
-    private EditableLayoutRepository editableLayoutRepository = null;
+    private EditableLayoutRepository layoutRepository = null;
 
     public GWTController(SecurityDatabase securityDatabase,
-            LayoutRepository layoutRepository,
-            EditableLayoutRepository editableLayoutRepository)
+            EditableLayoutRepository layoutRepository)
             throws IOException, SAXException {
         if (!Misc.isCodecsConfigured()) {
             Misc.configureCodecs("/knownCodecs.xml");
         }
         this.securityDatabase = securityDatabase;
         this.layoutRepository = layoutRepository;
-        this.editableLayoutRepository = editableLayoutRepository;
     }
 
     public ModelAndView handleRequest(HttpServletRequest request,
@@ -87,12 +82,12 @@ public class GWTController implements Controller {
 
         StringWriter layoutWriter = new StringWriter();
         marshaller.marshallToJSON(
-                new LayoutsResponse(layoutRepository.findLayouts()),
+                new LayoutsResponse(layoutRepository.findFixedLayouts()),
                 layoutWriter);
 
         StringWriter customLayoutWriter = new StringWriter();
         marshaller.marshallToJSON(
-                new LayoutsResponse(editableLayoutRepository.findLayouts()),
+                new LayoutsResponse(layoutRepository.findEditableLayouts()),
                 customLayoutWriter);
 
         StringWriter usersWriter = new StringWriter();
