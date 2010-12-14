@@ -237,8 +237,10 @@ public class BackupHandler extends Thread implements RecordingListener {
         File backupDirectory = getRecordingBackupDirectory(recording);
         File[] currentLayouts = backupDirectory.listFiles(
                 new ExtensionFilter(RecordingConstants.LAYOUT));
-        for (File layout : currentLayouts) {
-            layout.delete();
+        if (currentLayouts != null) {
+            for (File layout : currentLayouts) {
+               layout.delete();
+            }
         }
         for (ReplayLayout layout : recording.getReplayLayouts()) {
             try {
