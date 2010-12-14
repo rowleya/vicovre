@@ -33,17 +33,38 @@
 package com.googlecode.vicovre.gwt.client.videolayout;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
+import com.google.gwt.event.dom.client.HasMouseOutHandlers;
+import com.google.gwt.event.dom.client.HasMouseUpHandlers;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class VideoPreviewPanel extends Image
-        implements MouseOverHandler, MouseOutHandler, LoadHandler {
+public class VideoPreviewPanel extends VerticalPanel
+        implements MouseOverHandler, MouseOutHandler, LoadHandler,
+        ErrorHandler, HasMouseDownHandlers, HasMouseUpHandlers,
+        HasMouseMoveHandlers, HasMouseOutHandlers {
+
+    private Image image = new Image();
+
+    private HTML message = new HTML();
 
     private String streamId = null;
 
@@ -66,7 +87,7 @@ public class VideoPreviewPanel extends Image
             if (pos >= imageHeight) {
                 timer.cancel();
             } else {
-                setVisibleRect(0, pos, width, height);
+                image.setVisibleRect(0, pos, width, height);
             }
         }
 
@@ -77,10 +98,17 @@ public class VideoPreviewPanel extends Image
         this.width = width;
         this.height = height;
         this.streamId = streamId;
-        addLoadHandler(this);
-        setUrl(GWT.getModuleBaseURL() + folder + "/" + recordingId
+        image.addLoadHandler(this);
+        image.addErrorHandler(this);
+        image.setUrl(GWT.getModuleBaseURL() + folder + "/" + recordingId
                 + "/preview.do?ssrc=" + streamId
                 + "&width=" + width + "&height=" + height);
+        setWidth(width + "px");
+        setHeight(height + "px");
+        add(image);
+        image.setVisible(false);
+        add(message);
+        message.setHTML("Loading...");
     }
 
     public void onMouseOver(MouseOverEvent event) {
@@ -96,11 +124,13 @@ public class VideoPreviewPanel extends Image
 
     public void onLoad(LoadEvent event) {
         if (!loaded) {
+            message.setVisible(false);
+            image.setVisible(true);
             loaded = true;
-            this.imageHeight = getHeight();
-            setVisibleRect(0, 0, width, height);
-            addMouseOverHandler(this);
-            addMouseOutHandler(this);
+            this.imageHeight = image.getHeight();
+            image.setVisibleRect(0, 0, width, height);
+            image.addMouseOverHandler(this);
+            image.addMouseOutHandler(this);
         }
     }
 
@@ -111,9 +141,36 @@ public class VideoPreviewPanel extends Image
     public void stop() {
         if (loaded) {
             timer.cancel();
-            setVisibleRect(0, 0, width, height);
+            image.setVisibleRect(0, 0, width, height);
             pos = 0;
         }
+    }
+
+    public void onError(ErrorEvent event) {
+        if (!loaded) {
+            message.setHTML("Error loading preview image!");
+            loaded = true;
+        }
+    }
+
+    public HandlerRegistration addMouseDownHandler(
+            MouseDownHandler handler) {
+        return addDomHandler(handler, MouseDownEvent.getType());
+    }
+
+    public HandlerRegistration addMouseUpHandler(
+            MouseUpHandler handler) {
+        return addDomHandler(handler, MouseUpEvent.getType());
+    }
+
+    public HandlerRegistration addMouseMoveHandler(
+            MouseMoveHandler handler) {
+        return addDomHandler(handler, MouseMoveEvent.getType());
+    }
+
+    public HandlerRegistration addMouseOutHandler(
+            MouseOutHandler handler) {
+        return addDomHandler(handler, MouseOutEvent.getType());
     }
 
 }

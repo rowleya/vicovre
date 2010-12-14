@@ -62,6 +62,12 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
     private HashMap<String, VerticalPanel> positionPanel =
         new HashMap<String, VerticalPanel>();
 
+    private HashMap<String, Integer> positionWidth =
+        new HashMap<String, Integer>();
+
+    private HashMap<String, Integer> positionHeight =
+        new HashMap<String, Integer>();
+
     private HashMap<String, String> positionStream =
         new HashMap<String, String>();
 
@@ -77,6 +83,10 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
     private String recordingId = null;
 
     private String folder = null;
+
+    private int width = 0;
+
+    private int height = 0;
 
     public VideoStreamSelectionPanel(String folder,
             String recordingId, JSONStream[] streams) {
@@ -94,6 +104,19 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
         dragController = new VideoDragController(mainPanel, false);
         dragController.setBehaviorDragProxy(true);
 
+        contentPanel.add(layoutPanel);
+        contentPanel.add(Space.getVerticalSpace(5));
+        contentPanel.add(streamScroller);
+
+        DOM.setStyleAttribute(streamScroller.getElement(), "border",
+            "1px solid black");
+        streamScroller.setHeight("175px");
+
+        setStreams(streams);
+    }
+
+    public void setStreams(JSONStream[] streams) {
+        streamList.clear();
         streamList.add(Space.getHorizontalSpace(5));
         for (int i = 0; i < streams.length; i++) {
             JSONStream stream = streams[i];
@@ -120,28 +143,25 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
                 dragController.makeDraggable(previewPanel);
             }
         }
-
-        contentPanel.add(layoutPanel);
-        contentPanel.add(Space.getVerticalSpace(5));
-        contentPanel.add(streamScroller);
     }
 
     private void doLayout() {
         positionPanel.clear();
+        positionWidth.clear();
+        positionHeight.clear();
         positionStream.clear();
         layoutPanel.clear();
 
         if (layout != null) {
-
-            int width = layout.getWidth();
-            int height = layout.getHeight() + 200;
+            int layoutWidth = layout.getWidth();
+            int layoutHeight = layout.getHeight();
             double scaleWidth = 1.0;
             double scaleHeight = 1.0;
-            if (Window.getClientWidth() < width) {
-                scaleWidth = (double) Window.getClientWidth() / width;
+            if ((width > 0) && (width < layoutWidth)) {
+                scaleWidth = (double) width / layoutWidth;
             }
-            if (Window.getClientHeight() < height) {
-                scaleHeight = (double) Window.getClientHeight() / height;
+            if ((height > 0) && ((height - 180) < layoutHeight)) {
+                scaleHeight = (double) (height - 180) / layoutHeight;
             }
             double scale = Math.min(scaleWidth, scaleHeight);
 
@@ -163,17 +183,18 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
                     layoutPanel.add(panel, (int) (position.getX() * scale),
                             (int) (position.getY() * scale));
                     positionPanel.put(position.getName(), panel);
+                    positionWidth.put(position.getName(), panelWidth);
+                    positionHeight.put(position.getName(), panelHeight);
                     VideoDropController dropController =
-                        new VideoDropController(this, position.getName(), panel,
-                                folder, recordingId,
-                                panelWidth, panelHeight);
+                        new VideoDropController(this, position.getName(),
+                                panel);
                     dropControllers.add(dropController);
                     dragController.registerDropController(dropController);
                 }
             }
 
-            int scrollerWidth = (int) (width * scale);
-            if (width < MIN_WIDTH) {
+            int scrollerWidth = (int) (layoutWidth * scale);
+            if (scrollerWidth < MIN_WIDTH) {
                 scrollerWidth = MIN_WIDTH;
                 if (scrollerWidth > Window.getClientWidth()) {
                     scrollerWidth = Window.getClientWidth();
@@ -192,24 +213,18 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
 
     public void setLayout(Layout layout) {
         this.layout = layout;
-        if (isAttached()) {
-            undoLayout();
-            doLayout();
-        }
-    }
-
-    protected void onLoad() {
-        super.onLoad();
-        doLayout();
-    }
-
-    protected void onUnload() {
-        super.onUnload();
         undoLayout();
+        doLayout();
     }
 
     public void setPositon(String position, String stream) {
         positionStream.put(position, stream);
+        VerticalPanel panel = positionPanel.get(position);
+        VideoPreviewPanel clone = new VideoPreviewPanel(folder,
+                recordingId, stream, positionWidth.get(position),
+                positionHeight.get(position));
+        panel.clear();
+        panel.add(clone);
     }
 
     public String verify() {
@@ -228,4 +243,11 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
         return positionStream;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
 }
