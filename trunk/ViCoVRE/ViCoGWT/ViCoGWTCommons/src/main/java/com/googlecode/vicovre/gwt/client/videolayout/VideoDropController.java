@@ -38,41 +38,21 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class VideoDropController extends SimpleDropController {
 
-    private VerticalPanel target = null;
-
     private VideoStreamSelectionPanel panel = null;
 
     private String position = null;
 
-    private String folder = null;
-
-    private String recordingId = null;
-
-    private int width = 0;
-
-    private int height = 0;
-
     public VideoDropController(VideoStreamSelectionPanel panel, String position,
-            VerticalPanel dropTarget,
-            String folder, String recordingId, int width, int height) {
+            VerticalPanel dropTarget) {
         super(dropTarget);
         this.panel = panel;
         this.position = position;
-        this.target = dropTarget;
-        this.folder = folder;
-        this.recordingId = recordingId;
-        this.width = width;
-        this.height = height;
     }
 
     public void onDrop(DragContext context) {
         super.onDrop(context);
-        VideoPreviewPanel panel = (VideoPreviewPanel) context.draggable;
-        VideoPreviewPanel clone = new VideoPreviewPanel(folder,
-                recordingId, panel.getStreamId(), width, height);
-        target.clear();
-        target.add(clone);
-        this.panel.setPositon(position, panel.getStreamId());
+        VideoPreviewPanel previewPanel = (VideoPreviewPanel) context.draggable;
+        this.panel.setPositon(position, previewPanel.getStreamId());
     }
 
 }
