@@ -81,7 +81,9 @@ public class ModalPopup<T extends Widget> extends PopupPanel
     public void show() {
         super.show();
         popup.center();
-        resizeHandler = Window.addResizeHandler(this);
+        if (resizeHandler == null) {
+            resizeHandler = Window.addResizeHandler(this);
+        }
     }
 
     public void hide() {
@@ -94,10 +96,10 @@ public class ModalPopup<T extends Widget> extends PopupPanel
     }
 
     public void onClose(CloseEvent<PopupPanel> event) {
-        super.hide();
+        hide();
     }
 
     public void onResize(ResizeEvent event) {
-        popup.center();
+        center();
     }
 }
