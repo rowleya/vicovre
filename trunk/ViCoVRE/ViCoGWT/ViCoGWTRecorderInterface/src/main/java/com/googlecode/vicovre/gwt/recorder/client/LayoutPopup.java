@@ -35,45 +35,35 @@ package com.googlecode.vicovre.gwt.recorder.client;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.OptGroupElement;
-import com.google.gwt.dom.client.OptionElement;
-import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.layout.LayoutPosition;
+import com.googlecode.vicovre.gwt.client.videolayout.VideoStreamSelectionPanel;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutChanger;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 
 public class LayoutPopup extends ModalPopup<VerticalPanel> implements
-        ClickHandler, ChangeHandler {
+        ClickHandler, MessageResponseHandler {
 
     private PlayItem item = null;
 
-    private ListBox layoutBox = new ListBox();
+    private Layout layout = null;
 
-    private AbsolutePanel layout = new AbsolutePanel();
-
-    private HashMap<String, ListBox> positions = new HashMap<String, ListBox>();
+    private VideoStreamSelectionPanel videoSelection = null;
 
     private VerticalPanel audioStreams = new VerticalPanel();
 
@@ -89,7 +79,12 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
     private Button cancelButton = new Button("Cancel");
 
+    private Button layoutButton = new Button("Change Layout");
+
     private HashMap<String, Layout> layouts = new HashMap<String, Layout>();
+
+    private HashMap<String, Layout> customLayouts =
+        new HashMap<String, Layout>();
 
     private String url = null;
 
@@ -99,32 +94,15 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         this.item = item;
         this.url = url;
 
-        HorizontalPanel layoutSelectPanel = new HorizontalPanel();
-        layoutSelectPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_LEFT);
-        layoutSelectPanel.setWidth("100%");
-        layoutBox.setVisibleItemCount(1);
-        layout.setWidth("100%");
-        layout.setHeight("20px");
-        layoutBox.addItem("", "");
-        for (Layout layout : layouts) {
-            layoutBox.addItem(layout.getName());
-            this.layouts.put(layout.getName(), layout);
+        for (Layout inputLayout : layouts) {
+            this.layouts.put(inputLayout.getName(), inputLayout);
         }
-        SelectElement select = layoutBox.getElement().cast();
-        OptGroupElement customGroup = Document.get().createOptGroupElement();
-        customGroup.setLabel("Custom Layouts");
-        for (Layout layout : customLayouts) {
-            OptionElement option = Document.get().createOptionElement();
-            option.setInnerText(layout.getName());
-            customGroup.appendChild(option);
-            this.layouts.put(layout.getName(), layout);
+        for (Layout inputLayout : customLayouts) {
+            this.customLayouts.put(inputLayout.getName(), inputLayout);
         }
-        select.appendChild(customGroup);
-        layoutBox.setSelectedIndex(0);
-        Label layoutTitle = new Label("Select a layout: ");
-        layoutSelectPanel.add(layoutTitle);
-        layoutSelectPanel.setCellWidth(layoutTitle, "100px");
-        layoutSelectPanel.add(layoutBox);
+
+        videoSelection = new VideoStreamSelectionPanel(item.getFolder(),
+                item.getId(), new JSONStream[0]);
 
         HorizontalPanel startPanel = new HorizontalPanel();
         startPanel.add(new Label("Start at:"));
@@ -157,30 +135,45 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
 
         VerticalPanel panel = getWidget();
         panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
-        panel.add(layoutSelectPanel);
-        panel.add(layout);
+        panel.add(layoutButton);
+        panel.add(videoSelection);
         panel.add(timePanel);
         panel.add(new Label("Select which audio streams are used:"));
         panel.add(audioScroll);
         panel.add(buttonPanel);
 
-        layout.setWidth("0px");
-        layout.setHeight("0px");
-        DOM.setStyleAttribute(layout.getElement(), "border", "1px solid black");
-
         okButton.addClickHandler(this);
         cancelButton.addClickHandler(this);
-        layoutBox.addChangeHandler(this);
+        layoutButton.addClickHandler(this);
     }
 
     public void center() {
-        List<ReplayLayout> layouts = item.getReplayLayouts();
-        if (layouts.size() > 0) {
-            setLayout(layouts.get(0));
+        videoSelection.setStreams(item.getStreams().toArray(new JSONStream[0]));
+        audioStreams.clear();
+        audioBoxes.clear();
+        for (JSONStream stream : item.getStreams()) {
+            if (stream.getMediaType().equalsIgnoreCase("Audio")) {
+                CheckBox box = new CheckBox(getStreamName(stream));
+                box.setFormValue(stream.getSsrc());
+                box.setValue(true);
+                audioBoxes.add(box);
+                audioStreams.add(box);
+            }
+        }
+
+        List<ReplayLayout> replayLayouts = item.getReplayLayouts();
+        if (replayLayouts.size() > 0) {
+            setLayout(replayLayouts.get(0));
         } else {
             setLayout(null);
         }
         super.center();
+        if (layout == null) {
+            LayoutSelectionPopup popup = new LayoutSelectionPopup(
+                    layouts.values().toArray(new Layout[0]),
+                    customLayouts.values().toArray(new Layout[0]), url, this);
+            popup.center();
+        }
     }
 
     private String getTimeString(long value) {
@@ -231,108 +224,46 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
     }
 
     private void updateLayout() {
-        layout.clear();
-        positions.clear();
-        audioStreams.clear();
-        audioBoxes.clear();
-        String value = layoutBox.getValue(layoutBox.getSelectedIndex());
-        if (value.equals("")) {
-            layout.setWidth("0px");
-            layout.setHeight("0px");
-        } else {
-            for (JSONStream stream : item.getStreams()) {
-                if (stream.getMediaType().equalsIgnoreCase("Audio")) {
-                    CheckBox box = new CheckBox(getStreamName(stream));
-                    box.setFormValue(stream.getSsrc());
-                    box.setValue(true);
-                    audioBoxes.add(box);
-                    audioStreams.add(box);
-                }
+        if (layout != null) {
+            int maxWidth = layout.getWidth();
+            int maxHeight = layout.getHeight() + 480;
+            if (maxWidth > Window.getClientWidth()) {
+                maxWidth = Window.getClientWidth();
             }
-            Layout layoutSelected = layouts.get(value);
-            List<LayoutPosition> positionList = layoutSelected.getPositions();
-
-            int layoutWidth = layoutSelected.getWidth();
-            int layoutHeight = layoutSelected.getHeight();
-            double width = layoutWidth + 10;
-            double height = layoutHeight + 400;
-            double scaleWidth = 1.0;
-            double scaleHeight = 1.0;
-            if (Window.getClientWidth() < width) {
-                scaleWidth = Window.getClientWidth() / width;
+            if (maxHeight > Window.getClientHeight()) {
+                maxHeight = Window.getClientHeight();
             }
-            if (Window.getClientHeight() < height) {
-                scaleHeight = Window.getClientHeight() / height;
-            }
-            double scale = Math.min(scaleWidth, scaleHeight);
-
-            for (LayoutPosition position : positionList) {
-                Widget widget = null;
-                if (position.isAssignable()) {
-                    ListBox box = new ListBox();
-                    for (JSONStream stream : item.getStreams()) {
-                        if (stream.getMediaType().equalsIgnoreCase("Video")) {
-                            box.addItem(getStreamName(stream),
-                                    stream.getSsrc());
-                        }
-                    }
-
-                    positions.put(position.getName(), box);
-                    box.setWidth((int) (position.getWidth() * scale) + "px");
-                    widget = box;
-                } else {
-                    Label label = new Label(position.getName());
-                    widget = label;
-                }
-                HorizontalPanel panel = new HorizontalPanel();
-                panel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
-                panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-                panel.add(widget);
-                panel.setWidth((int) (position.getWidth() * scale) + "px");
-                panel.setHeight((int) (position.getHeight() * scale) + "px");
-                DOM.setStyleAttribute(panel.getElement(), "border",
-                        "1px solid blue");
-                layout.add(panel, (int) (position.getX() * scale),
-                        (int) (position.getY() * scale));
-
-            }
-            layout.setWidth((int) (layoutWidth * scale) + "px");
-            layout.setHeight((int) (layoutHeight * scale) + "px");
+            videoSelection.setWidth(maxWidth);
+            videoSelection.setHeight(maxHeight - 300);
         }
+        videoSelection.setLayout(layout);
         if (isShowing()) {
             super.center();
         }
     }
 
-    private void setValue(ListBox box, String value) {
-        for (int i = 0; i < box.getItemCount(); i++) {
-            if (box.getValue(i).equals(value)) {
-                box.setSelectedIndex(i);
-                break;
-            }
-        }
-    }
-
     private void setLayout(ReplayLayout replayLayout) {
         if (replayLayout == null) {
-            setValue(layoutBox, "");
+            layout = null;
             updateLayout();
             startTime.setValue(0);
             stopTime.setValue(item.getDuration());
             originalStartTime = -1;
         } else {
-            setValue(layoutBox, replayLayout.getName());
+            layout = layouts.get(replayLayout.getName());
+            if (layout == null) {
+                layout = customLayouts.get(replayLayout.getName());
+            }
             updateLayout();
-            Layout layout = layouts.get(replayLayout.getName());
             for (LayoutPosition position : layout.getPositions()) {
                 String stream = replayLayout.getStream(position.getName());
                 if (position.isAssignable()) {
-                    setValue(positions.get(position.getName()), stream);
+                    videoSelection.setPositon(position.getName(), stream);
                 }
             }
-            List<String> audioStreams = replayLayout.getAudioStreams();
+            List<String> layoutAudioStreams = replayLayout.getAudioStreams();
             for (CheckBox box : audioBoxes) {
-                box.setValue(audioStreams.contains(box.getFormValue()));
+                box.setValue(layoutAudioStreams.contains(box.getFormValue()));
             }
             originalStartTime = replayLayout.getTime();
             startTime.setValue(originalStartTime);
@@ -345,11 +276,13 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
             PlayItemLayoutChanger.setLayout(this, url);
         } else if (event.getSource().equals(cancelButton)) {
             hide();
+        } else if (event.getSource().equals(layoutButton)) {
+            LayoutSelectionPopup popup = new LayoutSelectionPopup(
+                    layouts.values().toArray(new Layout[0]),
+                    customLayouts.values().toArray(new Layout[0]), url, this);
+            popup.setLayout(layout);
+            popup.center();
         }
-    }
-
-    public void onChange(ChangeEvent event) {
-        updateLayout();
     }
 
     public String getId() {
@@ -357,29 +290,22 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
     }
 
     public ReplayLayout getLayout() {
-        String name = layoutBox.getItemText(layoutBox.getSelectedIndex());
-        if ((name == null) || name.equals("")) {
+        if (layout == null) {
             return null;
         }
         long time = startTime.getValue();
         long endTime = stopTime.getValue();
-        Layout layout = layouts.get(name);
-        HashMap<String, String> positionMap = new HashMap<String, String>();
-        for (LayoutPosition position : layout.getPositions()) {
-            if (position.isAssignable()) {
-                ListBox box = positions.get(position.getName());
-                positionMap.put(position.getName(),
-                        box.getValue(box.getSelectedIndex()));
-            }
-        }
-        Vector<String> audioStreams = new Vector<String>();
+        HashMap<String, String> positionMap =
+            videoSelection.getPositionToStreamMap();
+        Vector<String> layoutAudioStreams = new Vector<String>();
         for (CheckBox box : audioBoxes) {
             if (box.getValue()) {
-                audioStreams.add(box.getFormValue());
+                layoutAudioStreams.add(box.getFormValue());
             }
         }
 
-        return new ReplayLayout(name, time, endTime, positionMap, audioStreams);
+        return new ReplayLayout(layout.getName(), time, endTime, positionMap,
+                layoutAudioStreams);
     }
 
     public long getLayoutTime() {
@@ -391,18 +317,17 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
     }
 
     public String getLayoutDetailsAsUrl() {
-        String name = layoutBox.getItemText(layoutBox.getSelectedIndex());
-        if ((name == null) || name.equals("")) {
+        if (layout == null) {
             return null;
         }
-        String itemUrl = "name=" + name;
+        String itemUrl = "name=" + layout.getName();
         itemUrl += "&endTime=" + stopTime.getValue();
 
-        Layout layout = layouts.get(name);
+        HashMap<String, String> positions =
+            videoSelection.getPositionToStreamMap();
         for (LayoutPosition position : layout.getPositions()) {
             if (position.isAssignable()) {
-                ListBox box = positions.get(position.getName());
-                String stream = box.getValue(box.getSelectedIndex());
+                String stream = positions.get(position.getName());
                 itemUrl += "&" + position.getName() + "=" + stream;
             }
         }
@@ -414,42 +339,18 @@ public class LayoutPopup extends ModalPopup<VerticalPanel> implements
         return itemUrl;
     }
 
-    public List<Map<String, Object>> getLayoutDetails() {
-        List<Map<String, Object>> allDetails = new Vector<Map<String,Object>>();
-        Map<String, Object> details = new HashMap<String, Object>();
-        String name = layoutBox.getItemText(layoutBox.getSelectedIndex());
-        if ((name == null) || name.equals("")) {
-            return null;
-        }
-        long time = startTime.getValue();
-        long endTime = stopTime.getValue();
-        Layout layout = layouts.get(name);
-        HashMap<String, String> positionMap = new HashMap<String, String>();
-        for (LayoutPosition position : layout.getPositions()) {
-            if (position.isAssignable()) {
-                ListBox box = positions.get(position.getName());
-                positionMap.put(position.getName(),
-                        box.getValue(box.getSelectedIndex()));
-            }
-        }
-        Vector<String> audioStreams = new Vector<String>();
-        for (CheckBox box : audioBoxes) {
-            if (box.getValue()) {
-                audioStreams.add(box.getFormValue());
-            }
-        }
-        details.put("name", name);
-        details.put("time", new Long(time).intValue());
-        details.put("endTime", new Long(endTime).intValue());
-        details.put("positions", positionMap);
-        details.put("audioStreams", audioStreams);
-
-        allDetails.add(details);
-
-        return allDetails;
-    }
-
     public String getFolder() {
         return item.getFolder();
+    }
+
+    public void handleResponse(MessageResponse response) {
+        if (response.getResponseCode() == MessageResponse.OK) {
+            LayoutSelectionPopup popup =
+                (LayoutSelectionPopup) response.getSource();
+            layout = popup.getLayout();
+            updateLayout();
+        } else if (layout == null) {
+            hide();
+        }
     }
 }
