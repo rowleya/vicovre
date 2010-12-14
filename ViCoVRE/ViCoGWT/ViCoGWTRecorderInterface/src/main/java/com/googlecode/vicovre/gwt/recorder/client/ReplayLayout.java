@@ -76,8 +76,10 @@ public class ReplayLayout {
         }
         audioStreams = new Vector<String>();
         JsArrayString layoutAudioStreams = layout.getAudioStreams();
-        for (int i = 0; i < layoutAudioStreams.length(); i++) {
-            audioStreams.add(layoutAudioStreams.get(i));
+        if (layoutAudioStreams != null) {
+            for (int i = 0; i < layoutAudioStreams.length(); i++) {
+                audioStreams.add(layoutAudioStreams.get(i));
+            }
         }
     }
 
