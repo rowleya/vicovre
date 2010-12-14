@@ -131,11 +131,11 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
         setEndButton.setWidth("250px");
         add(controlPanel);
 
-        format.addItem("MP4 File", "video/mp4");
-        format.addItem("WMV File", "video/x-ms-wmv");
-        format.addItem("FLV File", "video/x-flv");
-        format.addItem("MP3 File", "audio/mpeg");
-        format.addItem("WMA File", "audio/x-ms-wma");
+        format.addItem("MP4 Video File", "video/mp4");
+        format.addItem("WMV Video File", "video/x-ms-wmv");
+        format.addItem("FLV Video File", "video/x-flv");
+        format.addItem("MP3 Audio File", "audio/mpeg");
+        format.addItem("WMA Audio File", "audio/x-ms-wma");
         format.setSelectedIndex(0);
     }
 
