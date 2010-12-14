@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwt.download.client;
 
 import java.util.HashMap;
 
+import com.google.gwt.user.client.Window;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.videolayout.VideoStreamSelectionPanel;
@@ -78,6 +79,16 @@ public class VideoStreamSelectionPage extends WizardPage {
 
     public void show(Wizard wizard) {
         Layout layout = (Layout) wizard.getAttribute("layout");
+        int maxWidth = layout.getWidth();
+        int maxHeight = layout.getHeight() + 280;
+        if (maxWidth > Window.getClientWidth()) {
+            maxWidth = Window.getClientWidth();
+        }
+        if (maxHeight > Window.getClientHeight()) {
+            maxHeight = Window.getClientHeight();
+        }
+        panel.setWidth(maxWidth);
+        panel.setHeight(maxHeight - 180);
         panel.setLayout(layout);
     }
 }

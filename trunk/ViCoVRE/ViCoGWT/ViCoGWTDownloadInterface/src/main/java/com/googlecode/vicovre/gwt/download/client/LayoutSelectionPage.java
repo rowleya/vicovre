@@ -32,121 +32,19 @@
 
 package com.googlecode.vicovre.gwt.download.client;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DisclosurePanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
-import com.googlecode.vicovre.gwt.client.layout.LayoutPreview;
-import com.googlecode.vicovre.gwt.client.layoutcreator.LayoutCreatorPopup;
+import com.googlecode.vicovre.gwt.client.layout.LayoutSelectionPanel;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
-import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
-public class LayoutSelectionPage extends WizardPage implements ClickHandler,
-        MouseOverHandler, MouseOutHandler, MessageResponseHandler {
+public class LayoutSelectionPage extends WizardPage {
 
-    private static final int LAYOUT_WIDTH = 150;
-
-    private LayoutPreview selection = null;
-
-    private HorizontalPanel currentCustomLayoutPanel = null;
-
-    private VerticalPanel customLayoutPanel = new VerticalPanel();
-
-    private int customLayoutCount = 0;
-
-    private int noLayoutsPerWidth = 0;
-
-    private String width = null;
-
-    private String url = null;
+    private LayoutSelectionPanel panel = null;
 
     public LayoutSelectionPage(Layout[] predefinedLayouts,
             Layout[] customLayouts, String url) {
-        this.url = url;
-        this.customLayoutCount = customLayouts.length;
-
-        noLayoutsPerWidth = Window.getClientWidth() / LAYOUT_WIDTH;
-        int maxLayouts = Math.max(predefinedLayouts.length,
-                customLayouts.length);
-        if (noLayoutsPerWidth > maxLayouts) {
-            noLayoutsPerWidth = maxLayouts;
-        }
-        width = (noLayoutsPerWidth * LAYOUT_WIDTH) + "px";
-
-        add(new Label("Select a layout for the video:"));
-
-        Label predefLabel = new Label("Predefined Layouts");
-        DOM.setStyleAttribute(predefLabel.getElement(), "fontWeight", "bold");
-        add(predefLabel);
-        setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
-        addLayouts(predefinedLayouts, this, width, noLayoutsPerWidth);
-
-        customLayoutPanel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
-        DisclosurePanel customLayoutDisclosurePanel =
-            new DisclosurePanel("Custom Layouts");
-        DOM.setStyleAttribute(
-                customLayoutDisclosurePanel.getHeader().getElement(),
-                "fontWeight", "bold");
-        customLayoutDisclosurePanel.setContent(customLayoutPanel);
-        add(customLayoutDisclosurePanel);
-        currentCustomLayoutPanel = addLayouts(customLayouts, customLayoutPanel,
-                width, noLayoutsPerWidth);
-
-        Button addNewButton = new Button("Create New Layout");
-        add(addNewButton);
-        addNewButton.addClickHandler(this);
-    }
-
-    private HorizontalPanel createNextPanel(String width) {
-        HorizontalPanel panel = new HorizontalPanel();
-        panel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
-        return panel;
-    }
-
-    private LayoutPreview createPreview(Layout layout) {
-        LayoutPreview preview = new LayoutPreview(layout, LAYOUT_WIDTH - 5);
-        preview.addClickHandler(this);
-        preview.addMouseOverHandler(this);
-        preview.addMouseOutHandler(this);
-        return preview;
-    }
-
-    private HorizontalPanel addLayouts(Layout[] layouts, VerticalPanel panel,
-            String width, int noLayoutsPerWidth) {
-        HorizontalPanel layoutPanel = null;
-        int count = 0;
-        for (Layout layout : layouts) {
-            if ((count % noLayoutsPerWidth) == 0) {
-                layoutPanel = createNextPanel(width);
-                panel.add(layoutPanel);
-            }
-            LayoutPreview preview = createPreview(layout);
-            layoutPanel.add(preview);
-            count += 1;
-        }
-        return layoutPanel;
-    }
-
-    public LayoutPreview addCustomLayout(Layout layout) {
-        if ((customLayoutCount % noLayoutsPerWidth) == 0) {
-            currentCustomLayoutPanel = createNextPanel(width);
-            customLayoutPanel.add(currentCustomLayoutPanel);
-        }
-        LayoutPreview preview = createPreview(layout);
-        currentCustomLayoutPanel.add(preview);
-        customLayoutCount += 1;
-        return preview;
+        panel = new LayoutSelectionPanel(predefinedLayouts, customLayouts, url);
+        add(panel);
     }
 
     public int back(Wizard wizard) {
@@ -162,6 +60,7 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
     }
 
     public int next(Wizard wizard) {
+        Layout selection = panel.getSelection();
         if (selection == null) {
             MessagePopup error = new MessagePopup("Please select a layout",
                     null, MessagePopup.ERROR,
@@ -169,61 +68,13 @@ public class LayoutSelectionPage extends WizardPage implements ClickHandler,
             error.center();
             return -1;
         }
-        wizard.setAttribute("layout", selection.getLayout());
+        wizard.setAttribute("layout", selection);
 
         return Application.VIDEO_SELECTION;
     }
 
     public void show(Wizard wizard) {
-        if (selection != null) {
-            selection.setSelected(false);
-            selection = null;
-        }
-    }
-
-    public void onClick(ClickEvent event) {
-        Object source = event.getSource();
-        if (source instanceof LayoutPreview) {
-            LayoutPreview preview = (LayoutPreview) source;
-            if (selection != null) {
-                selection.setSelected(false);
-            }
-            selection = preview;
-            selection.setSelected(true);
-        } else {
-            LayoutCreatorPopup popup = new LayoutCreatorPopup(url, this);
-            popup.center();
-        }
-    }
-
-    public void onMouseOver(MouseOverEvent event) {
-        Object source = event.getSource();
-        if (source instanceof LayoutPreview) {
-            LayoutPreview preview = (LayoutPreview) source;
-            preview.setHighlight(true);
-        }
-    }
-
-    public void onMouseOut(MouseOutEvent event) {
-        Object source = event.getSource();
-        if (source instanceof LayoutPreview) {
-            LayoutPreview preview = (LayoutPreview) source;
-            preview.setHighlight(false);
-        }
-    }
-
-    public void handleResponse(MessageResponse response) {
-        if (response.getResponseCode() == MessageResponse.OK) {
-            LayoutCreatorPopup popup = (LayoutCreatorPopup)
-                response.getSource();
-            Layout layout = popup.getLayout();
-            LayoutPreview preview = addCustomLayout(layout);
-            if (selection != null) {
-                selection.setSelected(false);
-            }
-            selection = preview;
-            selection.setSelected(true);
-        }
+        panel.setLayout(null);
     }
 
 }
