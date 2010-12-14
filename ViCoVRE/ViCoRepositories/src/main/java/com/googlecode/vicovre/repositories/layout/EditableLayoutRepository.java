@@ -33,8 +33,13 @@
 package com.googlecode.vicovre.repositories.layout;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface EditableLayoutRepository extends LayoutRepository {
+
+    public List<Layout> findFixedLayouts();
+
+    public List<Layout> findEditableLayouts();
 
     public void addLayout(Layout layout) throws LayoutExistsException,
         IOException;

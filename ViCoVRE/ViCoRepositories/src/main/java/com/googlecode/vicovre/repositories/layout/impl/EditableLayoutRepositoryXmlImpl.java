@@ -100,11 +100,24 @@ public class EditableLayoutRepositoryXmlImpl
     }
 
     public Layout findLayout(String layoutName) {
-        return layouts.get(layoutName);
+        if (layouts.containsKey(layoutName)) {
+            return layouts.get(layoutName);
+        }
+        return readOnlyRepository.findLayout(layoutName);
     }
 
     public List<Layout> findLayouts() {
+        Vector<Layout> allLayouts = new Vector<Layout>(layouts.values());
+        allLayouts.addAll(readOnlyRepository.findLayouts());
+        return allLayouts;
+    }
+
+    public List<Layout> findEditableLayouts() {
         return new Vector<Layout>(layouts.values());
+    }
+
+    public List<Layout> findFixedLayouts() {
+        return readOnlyRepository.findLayouts();
     }
 
 
