@@ -66,15 +66,10 @@ public class FolderHandler extends AbstractHandler {
 
     private LayoutRepository layoutRepository = null;
 
-    private LayoutRepository customLayoutRepository = null;
-
     public FolderHandler(@Inject("database") RecordingDatabase database,
-            @Inject("layoutRepository") LayoutRepository layoutRepository,
-            @Inject("editableLayoutRepository")
-                LayoutRepository customLayoutRepository) {
+            @Inject("layoutRepository") LayoutRepository layoutRepository) {
         super(database);
         this.layoutRepository = layoutRepository;
-        this.customLayoutRepository = customLayoutRepository;
     }
 
     @Path("/list")
@@ -142,10 +137,6 @@ public class FolderHandler extends AbstractHandler {
             @Context UriInfo uriInfo) throws IOException {
         LayoutRepository repository = layoutRepository;
         Layout layout = layoutRepository.findLayout(name);
-        if (layout == null) {
-            repository = customLayoutRepository;
-            layout = customLayoutRepository.findLayout(name);
-        }
         if (layout == null) {
             return Response.status(Status.NOT_FOUND).entity(
                     "Layout " + name + " not found").build();

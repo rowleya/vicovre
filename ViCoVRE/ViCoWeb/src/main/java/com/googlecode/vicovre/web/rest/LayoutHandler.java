@@ -52,7 +52,6 @@ import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutExistsException;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
-import com.googlecode.vicovre.repositories.layout.LayoutRepository;
 import com.googlecode.vicovre.web.rest.response.LayoutsResponse;
 import com.sun.jersey.spi.inject.Inject;
 
@@ -64,9 +63,7 @@ import com.sun.jersey.spi.inject.Inject;
 @Path("layout")
 public class LayoutHandler {
 
-    private LayoutRepository layoutRepository = null;
-
-    private EditableLayoutRepository editableLayoutRepository = null;
+    private EditableLayoutRepository layoutRepository = null;
 
     /**
      * Creates a LayoutHandler.
@@ -74,11 +71,8 @@ public class LayoutHandler {
      * @param layoutRepository The layout repository
      */
     public LayoutHandler(
-            @Inject("layoutRepository") final LayoutRepository layoutRepository,
-            @Inject("editableLayoutRepository")
-                final EditableLayoutRepository editableLayoutRepository) {
+            @Inject final EditableLayoutRepository layoutRepository) {
         this.layoutRepository = layoutRepository;
-        this.editableLayoutRepository = editableLayoutRepository;
     }
 
     /**
@@ -92,11 +86,19 @@ public class LayoutHandler {
         return Response.ok(new LayoutsResponse(layouts)).build();
     }
 
+    @Path("fixed")
+    @GET
+    @Produces({"text/xml", "application/json"})
+    public Response getFixedLayouts() {
+        List<Layout> layouts = layoutRepository.findFixedLayouts();
+        return Response.ok(new LayoutsResponse(layouts)).build();
+    }
+
     @Path("custom")
     @GET
     @Produces({"text/xml", "application/json"})
     public Response getCustomLayouts() {
-        List<Layout> layouts = editableLayoutRepository.findLayouts();
+        List<Layout> layouts = layoutRepository.findEditableLayouts();
         return Response.ok(new LayoutsResponse(layouts)).build();
     }
 
@@ -135,7 +137,7 @@ public class LayoutHandler {
         }
         layout.setStreamPostions(positions);
         try {
-            editableLayoutRepository.addLayout(layout);
+            layoutRepository.addLayout(layout);
         } catch (LayoutExistsException e) {
             return Response.status(Status.CONFLICT).entity(
                     e.getMessage()).build();
