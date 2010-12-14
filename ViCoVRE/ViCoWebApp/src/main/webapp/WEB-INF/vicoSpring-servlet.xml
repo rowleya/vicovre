@@ -33,7 +33,6 @@
         <constructor-arg><ref bean="database"/></constructor-arg>
         <constructor-arg><ref bean="securityDatabase"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
-        <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
         <constructor-arg><ref bean="rtpTypeRepository"></ref></constructor-arg>
     </bean>
     <bean name="/**/preview.do" class="com.googlecode.vicovre.web.play.PreviewController">
@@ -44,7 +43,6 @@
     <bean name="/gwt.do" class="com.googlecode.vicovre.web.rest.GWTController">
         <constructor-arg><ref bean="securityDatabase"/></constructor-arg>
         <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
-        <constructor-arg><ref bean="editableLayoutRepository"/></constructor-arg>
     </bean>
 
     <bean name="/sitemapindex.xml" class="com.googlecode.vicovre.web.SitemapIndexController">

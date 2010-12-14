@@ -7,12 +7,12 @@
         <constructor-arg><value>/rtptypes.xml</value></constructor-arg>
     </bean>
 
-    <bean id="layoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.LayoutRepositoryXmlImpl">
+    <bean id="fixedLayoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.LayoutRepositoryXmlImpl">
         <constructor-arg><value>/layouts.xml</value></constructor-arg>
     </bean>
 
-    <bean id="editableLayoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.EditableLayoutRepositoryXmlImpl">
-        <constructor-arg><ref bean="layoutRepository"/></constructor-arg>
+    <bean id="layoutRepository" class="com.googlecode.vicovre.repositories.layout.impl.EditableLayoutRepositoryXmlImpl">
+        <constructor-arg><ref bean="fixedLayoutRepository"/></constructor-arg>
         <constructor-arg><value>${layout.location}</value></constructor-arg>
     </bean>
 
