@@ -54,9 +54,11 @@ import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.Stream;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.layout.Layout;
 import com.googlecode.vicovre.repositories.layout.LayoutPosition;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
+import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 import com.googlecode.vicovre.web.rest.response.FoldersResponse;
 import com.googlecode.vicovre.web.rest.response.StreamsMetadataResponse;
 import com.sun.jersey.spi.inject.Inject;
@@ -221,5 +223,69 @@ public class FolderHandler extends AbstractHandler {
     @Produces({"text/xml", "application/json"})
     public Response getFolderMetadata() {
         return getFolderMetadata("");
+    }
+
+    @Path("/{folder: .*}/acl/{type}")
+    @PUT
+    public Response setDefaultAcl(@PathParam("folder") String folder,
+            @PathParam("type") String acltype,
+            @QueryParam("public") boolean isPublic,
+            @QueryParam("exceptionType") List<String> exceptionTypes,
+            @QueryParam("exceptionName") List<String> exceptionNames)
+            throws IOException {
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            WriteOnlyEntity[] exceptions = new WriteOnlyEntity[0];
+            if ((exceptionTypes != null) && (exceptionNames != null)) {
+                if (exceptionTypes.size() != exceptionNames.size()) {
+                    return Response.status(Status.BAD_REQUEST).entity(
+                        "The number of exceptionType parameters must match"
+                        + " the number of exceptionName parameters").build();
+                }
+                exceptions = new WriteOnlyEntity[exceptionTypes.size()];
+                for (int i = 0; i < exceptionTypes.size(); i++) {
+                    String type = exceptionTypes.get(i);
+                    String name = exceptionNames.get(i);
+                    exceptions[i] = new WriteOnlyEntity(name, type);
+                }
+            }
+            if (acltype.equals("play")) {
+                secureDb.setRecordingDefaultPlayAcl(folder, isPublic,
+                        exceptions);
+            } else if (acltype.equals("read")) {
+                secureDb.setRecordingDefaultReadAcl(folder, isPublic,
+                        exceptions);
+            } else if (acltype.equals("annotate")) {
+                secureDb.setRecordingDefaultAnnotateAcl(folder, isPublic,
+                        exceptions);
+            }
+        }
+        return Response.ok().build();
+    }
+
+    @Path("/{folder: .*}/acl/{type}")
+    @GET
+    @Produces({"text/xml", "application/json"})
+    public Response getDefaultAcl(@PathParam("folder") String folder,
+            @PathParam("type") String acltype) {
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            if (acltype.equals("play")) {
+                return Response.ok(
+                        secureDb.getRecordingDefaultPlayAcl(folder)).build();
+            } else if (acltype.equals("read")) {
+                return Response.ok(
+                        secureDb.getRecordingDefaultReadAcl(folder)).build();
+            } else if (acltype.equals("annotate")) {
+                return Response.ok(
+                        secureDb.getRecordingDefaultAnnotateAcl(
+                                folder)).build();
+            }
+        }
+        return Response.ok().build();
     }
 }

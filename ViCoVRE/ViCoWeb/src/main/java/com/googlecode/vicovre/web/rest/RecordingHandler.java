@@ -383,6 +383,9 @@ public class RecordingHandler extends AbstractHandler {
                 secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
             } else if (acltype.equals("read")) {
                 secureDb.setRecordingReadAcl(recording, isPublic, exceptions);
+            } else if (acltype.equals("annotate")) {
+                secureDb.setRecordingAnnotateAcl(recording, isPublic,
+                        exceptions);
             }
         }
         return Response.ok().build();
@@ -411,6 +414,9 @@ public class RecordingHandler extends AbstractHandler {
             } else if (acltype.equals("read")) {
                 return Response.ok(
                         secureDb.getRecordingReadAcl(recording)).build();
+            } else if (acltype.equals("annotate")) {
+                return Response.ok(
+                        secureDb.getRecordingAnnotateAcl(recording)).build();
             }
         }
         return Response.ok().build();
