@@ -65,10 +65,10 @@ public class FolderFilter implements FileFilter {
                     RecordingConstants.RECORDING_INDEX);
             File recordingInProgress = new File(pathname,
                     RecordingConstants.RECORDING_INPROGRESS);
-            if (recording.exists() == isRecording) {
-                return true;
-            } else if (recordingInProgress.exists()) {
+            if (recordingInProgress.exists()) {
                 return false;
+            } else if (recording.exists() == isRecording) {
+                return true;
             }
         }
         return false;
