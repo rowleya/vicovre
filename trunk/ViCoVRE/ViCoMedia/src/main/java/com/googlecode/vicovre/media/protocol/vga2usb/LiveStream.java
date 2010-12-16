@@ -61,7 +61,7 @@ public class LiveStream implements Runnable, PushBufferStream,
 
     private static final int BLANK_HEIGHT = 768;
 
-    private static final int NO_FRAME_MAX = 10;
+    private static final int NO_FRAME_MAX = 25;
 
     private static final PixelFormat DEFAULT_FORMAT = PixelFormat.RGB24;
 
@@ -207,6 +207,9 @@ public class LiveStream implements Runnable, PushBufferStream,
                     data = emptyFrame.getData();
                     lastFrame = null;
                 }
+            } else if ((noFrameCount > 0) && (lastFrame != null)) {
+                data = lastFrame.getPixelBuffer();
+                noFrameCount = 0;
             } else {
                 data = frame.getPixelBuffer();
                 lastFrame = frame;
