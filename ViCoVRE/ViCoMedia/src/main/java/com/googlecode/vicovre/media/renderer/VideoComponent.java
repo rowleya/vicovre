@@ -33,6 +33,7 @@
 package com.googlecode.vicovre.media.renderer;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
@@ -44,7 +45,9 @@ import com.googlecode.vicovre.media.wiimote.PointsListener;
 
 public class VideoComponent extends JComponent implements PointsListener {
 
-    private Image image = null;
+    private Integer sync = new Integer(0);
+
+    private Image offscreenImage = null;
 
     private Point currentPoint = null;
 
@@ -53,24 +56,40 @@ public class VideoComponent extends JComponent implements PointsListener {
         setDoubleBuffered(false);
     }
 
+    private void checkOffscreen() {
+        Dimension size = getSize();
+        if ((offscreenImage == null)
+                || (offscreenImage.getWidth(null) != size.width)
+                || (offscreenImage.getHeight(null) != size.height)) {
+            offscreenImage = createImage(size.width, size.height);
+        }
+    }
+
     protected void setImage(Image image) {
-        this.image = image;
+        synchronized (sync) {
+            checkOffscreen();
+            Graphics g = offscreenImage.getGraphics();
+            g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
+                    image.getWidth(this), image.getHeight(this), null);
+            if (currentPoint != null) {
+                g.setColor(Color.BLUE);
+                double scaleX = (double) getWidth()
+                    / image.getWidth(this);
+                double scaleY = (double) getHeight()
+                    / image.getHeight(this);
+                int x = (int) (currentPoint.x * scaleX);
+                int y = (int) (currentPoint.y * scaleY);
+                g.fillOval(x, y, 10, 10);
+            }
+            g.dispose();
+        }
     }
 
     public void paint(Graphics g) {
         if (isVisible()) {
-            if (image != null) {
-                g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
-                        image.getWidth(this), image.getHeight(this), this);
-                if (currentPoint != null) {
-                    g.setColor(Color.BLUE);
-                    double scaleX = (double) getWidth()
-                        / image.getWidth(this);
-                    double scaleY = (double) getHeight()
-                        / image.getHeight(this);
-                    int x = (int) (currentPoint.x * scaleX);
-                    int y = (int) (currentPoint.y * scaleY);
-                    g.fillOval(x, y, 10, 10);
+            synchronized (sync) {
+                if (offscreenImage != null) {
+                    g.drawImage(offscreenImage, 0, 0, null);
                 }
             }
         }

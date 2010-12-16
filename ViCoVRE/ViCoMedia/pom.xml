@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.epiphan</groupId>
             <artifactId>vga2usb-jni</artifactId>
-            <version>3.23.7</version>
+            <version>3.24.10</version>
         </dependency>
         <dependency>
             <groupId>tablelayout</groupId>
