@@ -68,20 +68,22 @@ public class VideoComponent extends JComponent implements PointsListener {
     protected void setImage(Image image) {
         synchronized (sync) {
             checkOffscreen();
-            Graphics g = offscreenImage.getGraphics();
-            g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
-                    image.getWidth(this), image.getHeight(this), null);
-            if (currentPoint != null) {
-                g.setColor(Color.BLUE);
-                double scaleX = (double) getWidth()
-                    / image.getWidth(this);
-                double scaleY = (double) getHeight()
-                    / image.getHeight(this);
-                int x = (int) (currentPoint.x * scaleX);
-                int y = (int) (currentPoint.y * scaleY);
-                g.fillOval(x, y, 10, 10);
+            if (offscreenImage != null) {
+                Graphics g = offscreenImage.getGraphics();
+                g.drawImage(image, 0, 0, getWidth(), getHeight(), 0, 0,
+                        image.getWidth(this), image.getHeight(this), null);
+                if (currentPoint != null) {
+                    g.setColor(Color.BLUE);
+                    double scaleX = (double) getWidth()
+                        / image.getWidth(this);
+                    double scaleY = (double) getHeight()
+                        / image.getHeight(this);
+                    int x = (int) (currentPoint.x * scaleX);
+                    int y = (int) (currentPoint.y * scaleY);
+                    g.fillOval(x, y, 10, 10);
+                }
+                g.dispose();
             }
-            g.dispose();
         }
     }
 
