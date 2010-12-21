@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>ViCoVRE</artifactId>
+        <groupId>com.googlecode.vicovre</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>ViCoCodecs</artifactId>
+    <packaging>pom</packaging>
+    <name>ViCo Codecs</name>
+    <url>http://maven.apache.org</url>
+    <build>
+        <finalName>ViCoCodecs</finalName>
+    </build>
+    <modules>
+        <module>ViCoCodecsColourspace</module>
+        <module>ViCoCodecsCommons</module>
+        <module>ViCoCodecsFFMpeg</module>
+        <module>ViCoCodecsH261</module>
+        <module>ViCoCodecsH264</module>
+        <module>ViCoCodecsLinear</module>
+        <module>ViCoCodecsMultiplexers</module>
+        <module>ViCoCodecsULaw</module>
+        <module>ViCoCodecsVic</module>
+    </modules>
+    <dependencies>
+        <dependency>
+            <groupId>javax.media</groupId>
+            <artifactId>jmf-cross-platform</artifactId>
+            <version>2.1.1f</version>
+        </dependency>
+    </dependencies>
+</project>
