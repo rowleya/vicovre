@@ -45,17 +45,5 @@
             <artifactId>ViCoAnnotations</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>pag</groupId>
-            <artifactId>ag3</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ag3.bridge</groupId>
-            <artifactId>multicast</artifactId>
-            <version>1.0.3</version>
-        </dependency>
     </dependencies>
 </project>

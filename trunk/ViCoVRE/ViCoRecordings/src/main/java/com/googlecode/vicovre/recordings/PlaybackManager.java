@@ -46,14 +46,12 @@ import javax.media.rtp.RTPManager;
 import javax.media.rtp.SendStream;
 import javax.media.rtp.rtcp.SourceDescription;
 
-
-import ag3.interfaces.Venue;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.StreamDescription;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
+import com.googlecode.onevre.ag.types.StreamDescription;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.server.Venue;
 import com.googlecode.vicovre.media.protocol.memetic.DataSource;
 import com.googlecode.vicovre.media.protocol.memetic.StreamStartingListener;
 import com.googlecode.vicovre.media.protocol.memetic.StreamStoppingListener;

@@ -74,6 +74,13 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import org.xml.sax.SAXException;
 
+import com.googlecode.onevre.ag.agbridge.RegistryClient;
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
+import com.googlecode.onevre.ag.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.server.VenueServer;
+import com.googlecode.onevre.types.soap.exceptions.SoapException;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;
 import com.googlecode.vicovre.media.rtp.AGController;
 import com.googlecode.vicovre.media.rtp.RTCPPacketSink;
@@ -81,13 +88,6 @@ import com.googlecode.vicovre.media.rtp.RTPPacketSink;
 import com.googlecode.vicovre.media.rtp.StreamListener;
 import com.googlecode.vicovre.media.rtp.UnsupportedEncryptionException;
 import com.googlecode.vicovre.utils.Config;
-
-import ag3.bridge.RegistryClient;
-import ag3.interfaces.VenueServer;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-import ag3.interfaces.types.ConnectionDescription;
 
 /**
  * A panel for selecting an access grid venue
@@ -426,12 +426,12 @@ public class AccessGridPanel extends JPanel implements ActionListener,
      * @throws InvocationTargetException
      * @throws IllegalAccessException
      * @throws NoSuchMethodException
+     * @throws SoapException
      */
     public void startConnection(StreamListener streamListener)
-            throws NoSuchMethodException, IllegalAccessException,
-            InvocationTargetException, IOException, SAXException,
+            throws IllegalAccessException, IOException,
             ClassNotFoundException, InstantiationException,
-            UnsupportedEncryptionException {
+            UnsupportedEncryptionException, SoapException {
         stopConnection();
 
         ConnectionDescription venueDescription =

@@ -52,10 +52,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
-import ag3.interfaces.types.MulticastNetworkLocation;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.UnicastNetworkLocation;
-
+import com.googlecode.onevre.ag.types.network.MulticastNetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.UnfinishedRecordingController;

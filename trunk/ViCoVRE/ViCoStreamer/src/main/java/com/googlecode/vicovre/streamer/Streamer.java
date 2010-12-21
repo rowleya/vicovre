@@ -55,14 +55,14 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-import ag3.interfaces.types.ConnectionDescription;
-import ag3.interfaces.types.MulticastNetworkLocation;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.UnicastNetworkLocation;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
+import com.googlecode.onevre.ag.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.network.MulticastNetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
+import com.googlecode.onevre.types.soap.exceptions.SoapException;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.rtp.AGController;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
@@ -193,10 +193,10 @@ public class Streamer extends JFrame implements ActionListener {
         devicesButton.setEnabled(true);
     }
 
-    public void setVenue(String venue) throws NoSuchMethodException,
-            IllegalAccessException, InvocationTargetException, IOException,
-            SAXException, ClassNotFoundException, InstantiationException,
-            UnsupportedEncryptionException {
+    public void setVenue(String venue) throws
+            IllegalAccessException, IOException, ClassNotFoundException,
+            InstantiationException,
+            UnsupportedEncryptionException, SoapException {
         ConnectionDescription connection = new ConnectionDescription();
         connection.setUri(venue);
         agController.joinVenue(connection);

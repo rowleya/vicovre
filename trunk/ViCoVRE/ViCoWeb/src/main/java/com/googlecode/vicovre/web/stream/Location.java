@@ -37,9 +37,8 @@ import java.net.DatagramPacket;
 import java.util.HashMap;
 import java.util.Vector;
 
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.NetworkLocation;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.media.rtp.RTCPPacketSink;
 import com.googlecode.vicovre.media.rtp.RTPPacketSink;

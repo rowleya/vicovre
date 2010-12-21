@@ -35,7 +35,7 @@ package com.googlecode.vicovre.web.rest.response;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import ag3.interfaces.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.ConnectionDescription;
 
 @XmlRootElement(name="venue")
 public class VenueResponse {

@@ -74,8 +74,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import ag3.interfaces.types.ClientProfile;
-
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.processor.ClosestFormatComparator;
 import com.googlecode.vicovre.media.protocol.sound.JavaSoundStream;
 import com.googlecode.vicovre.media.renderer.RGBRenderer;

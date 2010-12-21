@@ -44,9 +44,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import ag3.interfaces.VenueServer;
-import ag3.interfaces.types.ConnectionDescription;
-
+import com.googlecode.onevre.ag.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.server.VenueServer;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.web.rest.response.VenueServersResponse;
 import com.googlecode.vicovre.web.rest.response.VenuesResponse;

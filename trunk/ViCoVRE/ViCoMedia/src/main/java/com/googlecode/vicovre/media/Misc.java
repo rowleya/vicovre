@@ -54,7 +54,7 @@ import javax.media.rtp.rtcp.SourceDescription;
 
 import org.xml.sax.SAXException;
 
-import ag3.interfaces.types.ClientProfile;
+import com.googlecode.onevre.ag.types.ClientProfile;
 
 /**
  * Miscellaneous utility functions

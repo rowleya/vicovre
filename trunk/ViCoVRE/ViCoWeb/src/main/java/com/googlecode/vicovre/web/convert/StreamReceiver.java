@@ -38,12 +38,11 @@ import javax.media.format.AudioFormat;
 import javax.media.format.VideoFormat;
 import javax.media.protocol.DataSource;
 
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-import ag3.interfaces.types.ConnectionDescription;
-import ag3.interfaces.types.UnicastNetworkLocation;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
+import com.googlecode.onevre.ag.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
 import com.googlecode.vicovre.media.rtp.AGController;
 import com.googlecode.vicovre.media.rtp.StreamListener;
 

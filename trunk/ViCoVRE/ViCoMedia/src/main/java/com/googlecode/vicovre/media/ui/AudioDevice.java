@@ -61,8 +61,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Port;
 
-import ag3.interfaces.types.ClientProfile;
-
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.effect.CloneEffect;
 import com.googlecode.vicovre.media.processor.SimpleProcessor;

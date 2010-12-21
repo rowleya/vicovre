@@ -43,10 +43,9 @@ import java.io.PrintWriter;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import ag3.interfaces.types.MulticastNetworkLocation;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.UnicastNetworkLocation;
-
+import com.googlecode.onevre.ag.types.network.MulticastNetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;

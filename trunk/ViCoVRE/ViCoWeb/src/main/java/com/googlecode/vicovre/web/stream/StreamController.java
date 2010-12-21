@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 
-import ag3.interfaces.types.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
 
 /**
  * A controller for streaming
