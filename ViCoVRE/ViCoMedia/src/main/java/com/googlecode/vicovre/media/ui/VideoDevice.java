@@ -52,8 +52,7 @@ import javax.media.rtp.RTPConnector;
 import javax.media.rtp.RTPManager;
 import javax.media.rtp.SendStream;
 
-import ag3.interfaces.types.ClientProfile;
-
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.media.controls.KeyFrameForceControl;
 import com.googlecode.vicovre.media.effect.CloneEffect;

@@ -1,6 +1,6 @@
 package com.googlecode.vicovre.recordings.event;
 
-import ag3.interfaces.types.EventDescription;
+import com.googlecode.onevre.ag.types.EventDescription;
 
 public interface EventListener {
 

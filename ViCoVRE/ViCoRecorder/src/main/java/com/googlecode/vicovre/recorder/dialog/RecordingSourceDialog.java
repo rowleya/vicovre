@@ -58,6 +58,9 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.rtp.LocalRTPConnector;
 import com.googlecode.vicovre.media.rtp.StreamListener;
 import com.googlecode.vicovre.media.ui.AccessGridPanel;
@@ -67,10 +70,6 @@ import com.googlecode.vicovre.recordings.RecordArchiveManager;
 import com.googlecode.vicovre.repositories.rtptype.RTPType;
 import com.googlecode.vicovre.repositories.rtptype.RtpTypeRepository;
 import com.googlecode.vicovre.utils.Config;
-
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
 
 /**
  * A Dialog box that allows the user to choose the source of the recorded

@@ -44,11 +44,10 @@ import java.util.Vector;
 
 import org.apache.commons.mail.EmailException;
 
-import ag3.interfaces.Venue;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.StreamDescription;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.StreamDescription;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.server.Venue;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
 import com.googlecode.vicovre.recordings.db.insecure.UnfinishedRecordingListener;

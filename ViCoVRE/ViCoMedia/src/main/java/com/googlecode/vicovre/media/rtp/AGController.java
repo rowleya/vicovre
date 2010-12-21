@@ -63,17 +63,16 @@ import javax.media.rtp.rtcp.SourceDescription;
 
 import org.xml.sax.SAXException;
 
+import com.googlecode.onevre.ag.agclient.ClientUpdateThread;
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
+import com.googlecode.onevre.ag.types.ConnectionDescription;
+import com.googlecode.onevre.ag.types.StreamDescription;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.server.Venue;
+import com.googlecode.onevre.types.soap.exceptions.SoapException;
 import com.googlecode.vicovre.media.Misc;
-
-
-import ag3.ClientUpdateThread;
-import ag3.interfaces.Venue;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-import ag3.interfaces.types.ConnectionDescription;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.StreamDescription;
 
 /**
  * @author Andrew G D Rowley
@@ -185,12 +184,12 @@ public class AGController {
      * @throws UnsupportedEncryptionException
      * @throws InstantiationException
      * @throws ClassNotFoundException
+     * @throws SoapException
      */
     public void joinVenue(final ConnectionDescription venueDescription)
-            throws NoSuchMethodException, IllegalAccessException,
-            InvocationTargetException, IOException, SAXException,
+            throws IllegalAccessException, IOException,
             ClassNotFoundException, InstantiationException,
-            UnsupportedEncryptionException {
+            UnsupportedEncryptionException, SoapException {
         leaveCurrentVenue();
         currentVenue = new Venue(
                 venueDescription.getUri());

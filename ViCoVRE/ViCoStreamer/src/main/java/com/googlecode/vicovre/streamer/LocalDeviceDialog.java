@@ -56,8 +56,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import ag3.interfaces.types.ClientProfile;
-
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.rtp.BridgedRTPConnector;
 import com.googlecode.vicovre.media.rtp.JoinListener;
 import com.googlecode.vicovre.media.rtp.SendOnlyRTPSocketAdapter;

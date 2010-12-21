@@ -34,8 +34,8 @@ package com.googlecode.vicovre.recordings;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import ag3.interfaces.types.MulticastNetworkLocation;
-import ag3.interfaces.types.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.MulticastNetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
 
 public class NetworkLocationAdapter
         extends XmlAdapter<XmlNetworkLocation, NetworkLocation> {

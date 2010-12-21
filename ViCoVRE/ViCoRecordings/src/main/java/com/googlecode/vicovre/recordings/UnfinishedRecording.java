@@ -41,8 +41,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import ag3.interfaces.types.NetworkLocation;
-
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 
 /**

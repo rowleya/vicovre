@@ -44,10 +44,9 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.Capability;
-import ag3.interfaces.types.ClientProfile;
-
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.Capability;
+import com.googlecode.onevre.ag.types.ClientProfile;
 import com.googlecode.vicovre.media.ui.AccessGridPanel;
 import com.googlecode.vicovre.utils.Config;
 

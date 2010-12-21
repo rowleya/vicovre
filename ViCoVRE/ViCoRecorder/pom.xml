@@ -152,20 +152,5 @@
             <artifactId>xmlrpc-client</artifactId>
             <version>3.1</version>
         </dependency>
-        <dependency>
-            <groupId>ag3.bridge</groupId>
-            <artifactId>multicast</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>ag3.bridge</groupId>
-            <artifactId>quickbridge</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>ag3.bridge</groupId>
-            <artifactId>tcpbridge</artifactId>
-            <version>1.0.1</version>
-       </dependency>
      </dependencies>
 </project>

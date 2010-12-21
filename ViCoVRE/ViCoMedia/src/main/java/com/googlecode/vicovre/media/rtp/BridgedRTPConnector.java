@@ -47,16 +47,15 @@ import javax.media.protocol.SourceTransferHandler;
 import javax.media.rtp.OutputDataStream;
 import javax.media.rtp.RTPConnector;
 
+import com.googlecode.onevre.ag.agbridge.BridgeClient;
+import com.googlecode.onevre.ag.agbridge.BridgeClientCreator;
+import com.googlecode.onevre.ag.types.BridgeDescription;
+import com.googlecode.onevre.ag.types.network.MulticastNetworkLocation;
+import com.googlecode.onevre.ag.types.network.NetworkLocation;
+import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
 import com.googlecode.vicovre.media.rtp.encryption.AESCrypt;
 import com.googlecode.vicovre.media.rtp.encryption.DESCrypt;
 import com.googlecode.vicovre.media.rtp.encryption.RTPCrypt;
-
-import ag3.bridge.BridgeClient;
-import ag3.bridge.BridgeClientCreator;
-import ag3.interfaces.types.BridgeDescription;
-import ag3.interfaces.types.MulticastNetworkLocation;
-import ag3.interfaces.types.NetworkLocation;
-import ag3.interfaces.types.UnicastNetworkLocation;
 
 /**
  * An RTP Connector that connects to a bridge implementation

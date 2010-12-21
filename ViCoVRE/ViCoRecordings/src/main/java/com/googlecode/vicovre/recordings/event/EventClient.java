@@ -19,9 +19,10 @@ import javax.net.ssl.TrustManager;
 
 import org.xml.sax.SAXException;
 
-import ag3.interfaces.types.EventDescription;
-import ag3.soap.AcceptAllTrustManager;
-import ag3.soap.SoapDeserializer;
+import com.googlecode.onevre.ag.types.EventDescription;
+import com.googlecode.onevre.protocols.soap.common.SoapDeserializer;
+import com.googlecode.onevre.security.AcceptAllTrustManager;
+import com.googlecode.onevre.types.soap.exceptions.SoapException;
 
 public class EventClient extends Thread {
 
@@ -112,6 +113,8 @@ public class EventClient extends Thread {
                 }
             } catch (IOException e) {
                  e.printStackTrace();
+            } catch (SoapException e) {
+                e.printStackTrace();
             }
         }
     }

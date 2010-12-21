@@ -32,12 +32,6 @@
             <artifactId>ViCoRepositories</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>pag</groupId>
-            <artifactId>ag3</artifactId>
-            <version>1.0.4</version>
-        </dependency>
         <dependency>
             <groupId>javax.media</groupId>
             <artifactId>jmf-cross-platform</artifactId>
@@ -62,6 +56,16 @@
            <groupId>wiiusej</groupId>
            <artifactId>wiiusej</artifactId>
            <version>0.12b</version>
+       </dependency>
+       <dependency>
+            <artifactId>AccessGridClient</artifactId>
+            <groupId>com.googlecode.onevre</groupId>
+            <version>0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+            <artifactId>MulticastBridgeConnector</artifactId>
+            <groupId>com.googlecode.onevre</groupId>
+            <version>0.1-SNAPSHOT</version>
        </dependency>
     </dependencies>
 </project>
