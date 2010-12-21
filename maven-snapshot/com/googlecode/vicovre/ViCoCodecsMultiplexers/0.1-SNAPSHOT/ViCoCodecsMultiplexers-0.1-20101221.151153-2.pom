@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <artifactId>ViCoCodecs</artifactId>
+        <groupId>com.googlecode.vicovre</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>ViCoCodecsMultiplexers</artifactId>
+    <packaging>jar</packaging>
+    <name>ViCo Multiplexers</name>
+    <url>http://maven.apache.org</url>
+    <build>
+        <finalName>ViCoCodecsMultiplexers</finalName>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoCodecsCommons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.vicovre</groupId>
+            <artifactId>ViCoMedia</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>
