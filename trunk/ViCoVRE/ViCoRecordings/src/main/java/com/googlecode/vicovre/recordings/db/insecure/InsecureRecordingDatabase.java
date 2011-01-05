@@ -627,5 +627,23 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         output.close();
     }
 
-
+    public void moveRecording(Recording recording, String newFolder)
+            throws IOException {
+        File path = recording.getDirectory();
+        File newFolderFile = getFile(newFolder);
+        if (!newFolderFile.exists()) {
+            throw new IOException("The destination folder does not exist!");
+        }
+        if (path.renameTo(new File(newFolderFile, recording.getId()))) {
+            InsecureFolder folder = getFolder(getFile(recording.getFolder()));
+            InsecureFolder folderTo = getFolder(newFolderFile);
+            folder.deleteRecording(recording.getId());
+            for (RecordingListener listener : recordingListeners) {
+                listener.recordingMoved(recording,
+                        folderTo.getRecording(recording.getId()));
+            }
+        } else {
+            throw new IOException("Unknown error moving recording");
+        }
+    }
 }

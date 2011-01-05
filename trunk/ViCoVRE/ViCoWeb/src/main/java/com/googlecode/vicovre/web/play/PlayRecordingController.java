@@ -489,9 +489,14 @@ public class PlayRecordingController implements Controller {
             }
         }
 
+        String autoGain = request.getParameter("agc");
+        if (autoGain == null) {
+            autoGain = "false";
+        }
+
         String url = server + "/" + folder + "/" + recordingId
             + "/downloadRecording.do?format=video%2Fx-flv&start=" + minStart
-            + "&x=0&y=0";
+            + "&x=0&y=0&agc=" + autoGain;
 
         HashMap<String, Object> values = new HashMap<String, Object>();
         Collections.sort(metadataAnnotationTypes);

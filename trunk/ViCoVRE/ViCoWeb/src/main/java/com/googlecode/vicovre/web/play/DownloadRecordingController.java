@@ -268,11 +268,17 @@ public class DownloadRecordingController implements Controller {
                 backgroundColour = Integer.parseInt(bgColour);
             }
 
+            String autoGain = request.getParameter("agc");
+            boolean agc = false;
+            if (autoGain != null) {
+                agc = autoGain.equals("true");
+            }
 
             try {
                 VideoExtractor extractor = new VideoExtractor(format,
                         videoStreams, rects, audioStreams, syncStreams,
                         backgroundColour, typeRepository, outSize);
+                extractor.setAutoGain(agc);
                 extractor.setGenerationSpeed(generationSpeed);
                 response.setContentType(format);
                 response.setStatus(HttpServletResponse.SC_OK);

@@ -108,6 +108,9 @@ public interface RecordingDatabase {
 
     public void deleteRecording(Recording recording) throws IOException;
 
+    public void moveRecording(Recording recording, String newFolder)
+        throws IOException;
+
     public Recording getRecording(String folder, String id);
 
     public List<Recording> getRecordings(String folder);

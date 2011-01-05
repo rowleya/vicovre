@@ -51,6 +51,8 @@ public class AudioMixer {
 
     private static final double GAIN = 0.1000;
 
+    private static final int NO_ROLLING_BUFFERS = 500;
+
     private static final int SAMPLES_PER_BUFFER = 882;
 
     private static final double SAMPLE_RATE = 44100.0;
@@ -82,6 +84,16 @@ public class AudioMixer {
     private AudioFormat[] resampleInFormat = null;
 
     private int[] sourceSamplesPerBuffer = null;
+
+    private boolean autoGain = true;
+
+    private double rollingEnergy = 0;
+
+    private double[] rollingBuffer = new double[NO_ROLLING_BUFFERS];
+
+    private int currentRollingBuffer = 0;
+
+    private int noBuffersFilled = 0;
 
     /**
      * Creates a new AudioMixer
@@ -119,6 +131,10 @@ public class AudioMixer {
                     / SAMPLE_RATE);
         }
 
+    }
+
+    public void setAutoGain(boolean autoGain) {
+        this.autoGain = autoGain;
     }
 
     public void streamSeek(long offset) throws IOException {
@@ -203,13 +219,24 @@ public class AudioMixer {
             }
         }
 
-        double energy = 0;
-        for (int i = 0; i < SAMPLES_PER_BUFFER; i++) {
-            energy += samples[i] * samples[i];
-        }
         double k = 1.0;
-        if (energy > 20) {
-            k = Math.sqrt(GAIN * SAMPLES_PER_BUFFER / energy);
+        if (autoGain) {
+            double energy = 0;
+            for (int i = 0; i < SAMPLES_PER_BUFFER; i++) {
+                energy += samples[i] * samples[i];
+            }
+            int firstBuffer = (currentRollingBuffer + 1) % NO_ROLLING_BUFFERS;
+            rollingBuffer[currentRollingBuffer] = energy;
+            currentRollingBuffer = (currentRollingBuffer + 1)
+                % NO_ROLLING_BUFFERS;
+            rollingEnergy += energy;
+            rollingEnergy -= rollingBuffer[firstBuffer];
+            noBuffersFilled += 1;
+            if (noBuffersFilled > NO_ROLLING_BUFFERS) {
+                noBuffersFilled = NO_ROLLING_BUFFERS;
+            }
+            k = Math.sqrt((GAIN * SAMPLES_PER_BUFFER * noBuffersFilled)
+                    / rollingEnergy);
         }
 
         for (int i = 0; i < SAMPLES_PER_BUFFER; i++) {

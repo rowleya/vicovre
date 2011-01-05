@@ -183,4 +183,9 @@ public class RecordingLifetimeHandler implements RecordingListener {
             stopTimer(recording);
         }
     }
+
+    public void recordingMoved(Recording oldRecording, Recording newRecording) {
+        stopTimer(oldRecording);
+        schedule(newRecording);
+    }
 }

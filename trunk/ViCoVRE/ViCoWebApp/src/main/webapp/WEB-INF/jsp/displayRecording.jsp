@@ -23,7 +23,8 @@
             canPlay: "${recording.playable}",
             acl: '${aclJSON}',
             readAcl: '${readAclJSON}',
-            startTime: '${startTime}'
+            startTime: '${startTime}',
+            agc: '${agc}'
         };
         </script>
         <script type="text/javascript" language="javascript" src="${pageContext.request.contextPath}/com.googlecode.vicovre.gwt.display.Application.nocache.js"></script>

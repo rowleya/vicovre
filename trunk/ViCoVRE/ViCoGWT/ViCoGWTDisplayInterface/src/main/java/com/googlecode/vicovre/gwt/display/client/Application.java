@@ -102,6 +102,14 @@ public class Application implements EntryPoint {
         return "0";
     }
 
+    protected String getAGC() {
+        String agc = parameters.get("agc");
+        if (agc != null) {
+            return agc;
+        }
+        return "false";
+    }
+
     protected JsArrayString getUsers() {
         JSONUsers users = JSONUsers.parse(parameters.get("users"));
         return users.getUsers();
@@ -133,11 +141,12 @@ public class Application implements EntryPoint {
         boolean canPlay = canPlay();
         String role = getRole();
         String startTime = getStartTime();
+        String agc = getAGC();
 
         if (canPlay) {
             player = new SWFWidget(GWT.getModuleBaseURL() + "Player.swf");
             String urlToPlay = playUrl + "?folder=" + folder + "%26recordingId="
-                + recordingId + "%26startTime=" + startTime;
+                + recordingId + "%26startTime=" + startTime + "%26agc=" + agc;
             GWT.log("Playing " + urlToPlay);
             player.addParam("wmode", "opaque");
             player.addFlashVar("uri", urlToPlay);
