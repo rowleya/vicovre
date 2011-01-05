@@ -40,6 +40,7 @@ import javax.media.Format;
 import javax.media.ResourceUnavailableException;
 import javax.media.format.AudioFormat;
 
+import com.googlecode.vicovre.codecs.ffmpeg.Lock;
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.media.format.BitRateAudioFormat;
 import com.googlecode.vicovre.utils.nativeloader.NativeLoader;
@@ -130,7 +131,10 @@ public abstract class FFMPEGAudioCodec implements Codec {
         if (data == null) {
             inputFormat = (AudioFormat) input.getFormat();
             AudioCodecContext context = getContext();
-            int dataSize = init(ref, context);
+            int dataSize = 0;
+            synchronized (Lock.AV_CODEC_INIT_CLOSE_LOCK) {
+                dataSize = init(ref, context);
+            }
             if (dataSize < 0) {
                 System.err.println("FFMPEGAudioCodec failed to initialize: "
                         + dataSize);
@@ -236,7 +240,9 @@ public abstract class FFMPEGAudioCodec implements Codec {
     }
 
     public void close() {
-        close(ref);
+        synchronized (Lock.AV_CODEC_INIT_CLOSE_LOCK) {
+            close(ref);
+        }
     }
 
     public String getName() {

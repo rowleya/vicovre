@@ -40,6 +40,7 @@ import javax.media.Format;
 import javax.media.ResourceUnavailableException;
 import javax.media.format.VideoFormat;
 
+import com.googlecode.vicovre.codecs.ffmpeg.Lock;
 import com.googlecode.vicovre.codecs.ffmpeg.Log;
 import com.googlecode.vicovre.codecs.ffmpeg.PixelFormat;
 import com.googlecode.vicovre.codecs.ffmpeg.Utils;
@@ -165,7 +166,10 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
         if (!inited) {
             inputFormat = (VideoFormat) input.getFormat();
             context = getContext();
-            int dataSize = init(ref, context);
+            int dataSize = 0;
+            synchronized (Lock.AV_CODEC_INIT_CLOSE_LOCK) {
+                dataSize = init(ref, context);
+            }
             if (dataSize < 0) {
                 System.err.println(getClass().getName()
                         + " failed to initialize: " + dataSize);
@@ -253,7 +257,9 @@ public abstract class FFMPEGVideoCodec implements Codec, KeyFrameForceControl {
     }
 
     public void close() {
-        close(ref);
+        synchronized (Lock.AV_CODEC_INIT_CLOSE_LOCK) {
+            close(ref);
+        }
     }
 
     public String getName() {

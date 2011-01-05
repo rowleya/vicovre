@@ -216,6 +216,10 @@ public class VideoExtractor {
         this.generationSpeed = generationSpeed;
     }
 
+    public void setAutoGain(boolean autoGain) {
+        audioMixer.setAutoGain(autoGain);
+    }
+
     private long waitForNext(long startTime, long firstTimestamp,
             long timestamp) {
         if (generationSpeed <= 0) {

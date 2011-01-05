@@ -45,4 +45,6 @@ public interface RecordingListener {
     void recordingLayoutsUpdated(Recording recording);
 
     void recordingDeleted(Recording recording);
+
+    void recordingMoved(Recording oldRecording, Recording newRecording);
 }

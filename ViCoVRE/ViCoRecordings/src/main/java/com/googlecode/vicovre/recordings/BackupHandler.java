@@ -286,4 +286,16 @@ public class BackupHandler extends Thread implements RecordingListener {
         finishOperation(recording);
     }
 
+    public void recordingMoved(Recording oldRecording, Recording newRecording) {
+        startOperation(oldRecording);
+        startOperation(newRecording);
+        if (!oldRecording.getDirectory().renameTo(
+                newRecording.getDirectory())) {
+            System.err.println(
+                    "Warning - unknown error moving backup recording");
+        }
+        finishOperation(oldRecording);
+        finishOperation(newRecording);
+    }
+
 }
