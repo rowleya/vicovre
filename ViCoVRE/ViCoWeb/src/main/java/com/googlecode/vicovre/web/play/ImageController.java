@@ -135,7 +135,11 @@ public class ImageController implements Controller {
             }
             xform = AffineTransform.getScaleInstance(scaleX, scaleY);
             oldImage = image;
-            image = new BufferedImage(width, height, image.getType());
+            int type = image.getType();
+            if (type == BufferedImage.TYPE_CUSTOM) {
+                type = BufferedImage.TYPE_3BYTE_BGR;
+            }
+            image = new BufferedImage(width, height, type);
             g = image.createGraphics();
             g.drawRenderedImage(oldImage, xform);
             g.dispose();
