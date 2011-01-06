@@ -120,15 +120,19 @@ public class PermissionPopup extends ModalPopup<VerticalPanel>
         allowPanel.add(new Label(" to play the recording except:"));
         panel.add(allowPanel);
 
-        for (int i = 0; i < users.length(); i++) {
-            userList.addItem(users.get(i));
+        if (users != null) {
+            for (int i = 0; i < users.length(); i++) {
+                userList.addItem(users.get(i));
+            }
         }
         panel.add(new HTML("<B>Users:</B>"));
         panel.add(createExceptionPanel(userList, userExceptionList,
                 addUserException, removeUserException, clearUserExceptions));
 
-        for (int i = 0; i < groups.length(); i++) {
-            groupList.addItem(groups.get(i));
+        if (groups != null) {
+            for (int i = 0; i < groups.length(); i++) {
+                groupList.addItem(groups.get(i));
+            }
         }
         panel.add(new HTML("<B>Groups:</B>"));
         panel.add(createExceptionPanel(groupList, groupExceptionList,
@@ -167,15 +171,20 @@ public class PermissionPopup extends ModalPopup<VerticalPanel>
             allowRequestList.setEnabled(true);
         }
         JsArray<JSONACLEntity> exceptions = acl.getExceptions();
-        for (int i = 0; i < exceptions.length(); i++) {
-            JSONACLEntity exception = exceptions.get(i);
-            String type = exception.getType();
-            if (type.equals("user")) {
-                moveItem(userList, userExceptionList, exception.getName());
-            } else if (type.equals("group")) {
-                moveItem(groupList, groupExceptionList, exception.getName());
-            } else if (type.equals("role")) {
-                moveItem(roleList, roleExceptionList, exception.getName());
+        if (exceptions != null) {
+            for (int i = 0; i < exceptions.length(); i++) {
+                JSONACLEntity exception = exceptions.get(i);
+                String type = exception.getType();
+                if (type.equals("user")) {
+                    moveItem(userList, userExceptionList,
+                            exception.getName());
+                } else if (type.equals("group")) {
+                    moveItem(groupList, groupExceptionList,
+                            exception.getName());
+                } else if (type.equals("role")) {
+                    moveItem(roleList, roleExceptionList,
+                            exception.getName());
+                }
             }
         }
         if (readAcl.isAllow()) {
