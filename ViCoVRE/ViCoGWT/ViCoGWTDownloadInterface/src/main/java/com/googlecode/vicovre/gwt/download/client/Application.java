@@ -96,7 +96,8 @@ public class Application implements EntryPoint, MessageResponseHandler {
 
     protected Layout[] getLayouts(String parameter) {
         String layoutsJSON = parameters.get(parameter);
-        if ((layoutsJSON != null) && !layoutsJSON.equals("")) {
+        if ((layoutsJSON != null) && !layoutsJSON.equals("")
+                && !layoutsJSON.equals("null")) {
             JSONLayouts jsonLayouts = JSONLayouts.parse(layoutsJSON);
             JsArray<JSONLayout> layoutArray = jsonLayouts.getLayouts();
             Layout[] layouts = new Layout[layoutArray.length()];
@@ -110,7 +111,8 @@ public class Application implements EntryPoint, MessageResponseHandler {
 
     protected JSONStream[] getStreams() {
         String streamsJSON = parameters.get("streams");
-        if ((streamsJSON != null) && !streamsJSON.equals("")) {
+        if ((streamsJSON != null) && !streamsJSON.equals("")
+                && !streamsJSON.equals("null")) {
             JSONStreams jsonStreams = JSONStreams.parse(streamsJSON);
             JsArray<JSONStream> streamArray = jsonStreams.getStreams();
             JSONStream[] streams = new JSONStream[streamArray.length()];
