@@ -110,12 +110,20 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
         DOM.setStyleAttribute(videoScroll.getElement(), "border",
                 "1px solid black");
         HorizontalPanel videoPanel = null;
-        String lastCname = "";
+        String lastCname = null;
         int maxVideoCount = 0;
         int videoCount = 0;
         for (JSONStream stream : streams) {
-            if (stream.getMediaType().equalsIgnoreCase("Video")) {
-                if (!stream.getCname().equals(lastCname)) {
+            String cname = stream.getCname();
+            if (cname == null) {
+                cname = "";
+            }
+            String mediatype = stream.getMediaType();
+            if (mediatype == null) {
+                mediatype = "";
+            }
+            if (mediatype.equalsIgnoreCase("Video")) {
+                if ((lastCname == null) || !cname.equals(lastCname)) {
                     if (videoPanel != null) {
                         videoPanels.add(videoPanel);
                         videoPanels.add(Space.getVerticalSpace(5));
@@ -125,7 +133,7 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
                     videoPanel = new HorizontalPanel();
                     videoPanel.add(Space.getHorizontalSpace(5));
                 }
-                lastCname = stream.getCname();
+                lastCname = cname;
                 videoCount++;
                 VideoPreviewPanel preview = new VideoPreviewPanel(
                         folder, recordingId, stream.getSsrc(), 160, 120);
