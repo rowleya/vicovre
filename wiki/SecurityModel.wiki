@@ -11,6 +11,8 @@ The root folder has read access to all users and write access to all users who h
 
 By default, new folders can be read by anyone but can only be written by the user that created it.  This means that only the creating user can add a new item, including new folders.  The read permission can be changed by the owner, but the write permission is fixed.  This avoids problems with mixed-ownership sub-folders.
 
+The owner of a folder can be changed by the current owner.  This changes the ownership of all items in the folder and all sub-folders (recursively).  Once the owner has been changed, only the new owner can control the folder.
+
 == Harvest Sources ==
 Harvest Sources can only be edited and controlled by the user who created the source.  A new harvest source can only be created by a Writer or Administrator user.
 
