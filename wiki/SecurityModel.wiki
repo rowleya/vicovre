@@ -24,3 +24,9 @@ When the read permission is set to everyone, but the play permission is restrict
 
 === Default Recording Permissions ===
 The default recording permissions can be edited at the Unfinished Recording or Harvest Source level.  When an Unfinished Recording is stopped successfully, the recording permissions are copied from the unfinished recording permissions.  Similarly, when a harvest source is harvested successfully, the unfinished recording permissions are copied from the harvest source recording permissions.
+
+== Proxying ==
+The permissions allow for proxying by certain items.  Proxying allows an item to act as if its owner is performing actions.  This allows the item to carry out tasks when the user is not logged into the interface.  These actions include:
+  * A Harvest Source can create an Unfinished Recording (i.e. write to a folder and create a new Unfinished Recording).
+  * An Unfinished Recording can create a Recording (i.e. write to a folder and create a new Recording).
+  * A Recording can delete itself (when its lifetime expires) (i.e. write to a folder and delete a Recording).
