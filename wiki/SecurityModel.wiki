@@ -14,18 +14,25 @@ By default, new folders can be read by anyone but can only be written by the use
 The owner of a folder can be changed by the current owner.  This changes the ownership of all items in the folder and all sub-folders (recursively).  Once the owner has been changed, only the new owner can control the folder.
 
 == Harvest Sources ==
-Harvest Sources can only be edited and controlled by the user who created the source.  A new harvest source can only be created by a Writer or Administrator user.
+Harvest Sources can only be edited, controlled or deleted by the user who created the source.  A new harvest source can only be created by a Writer or Administrator user.
 
 == Unfinished Recording ==
-Unfinished Recordings can only be edited and controlled by the user who created the recording.  A new recording can only be created by a Writer or Administrator user.
+Unfinished Recordings can only be edited, controlled or deleted by the user who created the recording.  A new recording can only be created by a Writer or Administrator user.
 
 == Recording ==
-Recordings can only be edited by the user who created the recording.  By default, any user can see the recording (i.e. read it), but no user can play or annotate the recording.  This can be edited by the owner of the recording.
+Recordings can only be edited or deleted by the user who created the recording.  By default, any user can see the recording (i.e. read it), but no user can play or annotate the recording.  This can be edited by the owner of the recording.
+
+A recording can only be created (i.e. imported) by a Writer or Administrator, or by an Unfinished Recording proxying for a Writer or Administrator (see below).
 
 When the read permission is set to everyone, but the play permission is restricted, users who cannot play the recording can still see it.  They therefore know of its existence and so can ask the owner for access.  Therefore, the read permission can only be set to everyone or no one i.e. you can't allow only certain people to request access to the recording.
 
 === Default Recording Permissions ===
 The default recording permissions can be edited at the Unfinished Recording or Harvest Source level.  When an Unfinished Recording is stopped successfully, the recording permissions are copied from the unfinished recording permissions.  Similarly, when a harvest source is harvested successfully, the unfinished recording permissions are copied from the harvest source recording permissions.
+
+== Annotation ==
+An annotation can be created by any AuthUser who has permission to annotate the recording.  Only the owner of an annotation can edit it or delete it.  The owner of an annotation cannot be changed, even when the owner of the recording changes.
+
+By default, the creator can choose if the annotation can be read by everyone or no one.  This can be changed by the creator.  <wiki:comment>The owner of the recording can also choose to hide an annotation, to allow moderation by the owner.  The owner of the recording may also override an annotation; a new annotation is created with the recording owner as owner.  If the original annotation is deleted, the overridden annotation is also deleted.</wiki:comment>
 
 == Proxying ==
 The permissions allow for proxying by certain items.  Proxying allows an item to act as if its owner is performing actions.  This allows the item to carry out tasks when the user is not logged into the interface.  These actions include:
