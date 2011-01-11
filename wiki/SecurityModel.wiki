@@ -20,5 +20,7 @@ Unfinished Recordings can only be edited and controlled by the user who created 
 == Recording ==
 Recordings can only be edited by the user who created the recording.  By default, any user can see the recording (i.e. read it), but no user can play or annotate the recording.  This can be edited by the owner of the recording.
 
+When the read permission is set to everyone, but the play permission is restricted, users who cannot play the recording can still see it.  They therefore know of its existence and so can ask the owner for access.  Therefore, the read permission can only be set to everyone or no one i.e. you can't allow only certain people to request access to the recording.
+
 === Default Recording Permissions ===
 The default recording permissions can be edited at the Unfinished Recording or Harvest Source level.  When an Unfinished Recording is stopped successfully, the recording permissions are copied from the unfinished recording permissions.  Similarly, when a harvest source is harvested successfully, the unfinished recording permissions are copied from the harvest source recording permissions.
