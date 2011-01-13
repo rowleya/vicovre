@@ -365,24 +365,17 @@ public class RecordingHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            WriteOnlyEntity[] exceptions = new WriteOnlyEntity[0];
-            if ((exceptionTypes != null) && (exceptionNames != null)) {
-                if (exceptionTypes.size() != exceptionNames.size()) {
-                    return Response.status(Status.BAD_REQUEST).entity(
-                        "The number of exceptionType parameters must match"
-                        + " the number of exceptionName parameters").build();
-                }
-                exceptions = new WriteOnlyEntity[exceptionTypes.size()];
-                for (int i = 0; i < exceptionTypes.size(); i++) {
-                    String type = exceptionTypes.get(i);
-                    String name = exceptionNames.get(i);
-                    exceptions[i] = new WriteOnlyEntity(name, type);
-                }
-            }
+            WriteOnlyEntity[] exceptions = getExceptions(exceptionNames,
+                    exceptionTypes);
             if (acltype.equals("play")) {
                 secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
             } else if (acltype.equals("read")) {
-                secureDb.setRecordingReadAcl(recording, isPublic, exceptions);
+                if (exceptions.length > 0) {
+                    return Response.status(Status.BAD_REQUEST).entity(
+                            "There can be no exceptions to the read ACL"
+                            ).build();
+                }
+                secureDb.setRecordingReadAcl(recording, isPublic);
             } else if (acltype.equals("annotate")) {
                 secureDb.setRecordingAnnotateAcl(recording, isPublic,
                         exceptions);
@@ -456,6 +449,22 @@ public class RecordingHandler extends AbstractHandler {
             + " please ignore this message.\n";
 
         emailer.send(email, subject, message);
+        return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/move")
+    @POST
+    public Response moveRecording(@Context UriInfo uriInfo,
+            @QueryParam("newFolder") String newFolder) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+
+        getDatabase().moveRecording(recording, newFolder);
         return Response.ok().build();
     }
 

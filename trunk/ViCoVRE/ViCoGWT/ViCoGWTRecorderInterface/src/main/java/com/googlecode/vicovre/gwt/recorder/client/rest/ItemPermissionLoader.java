@@ -37,10 +37,10 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.PermissionPopup;
+import com.googlecode.vicovre.gwt.recorder.client.ItemPermissionPopup;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
-public class PermissionLoader extends AbstractJSONRestCall {
+public class ItemPermissionLoader extends AbstractJSONRestCall {
 
     private String baseUrl = null;
 
@@ -48,7 +48,9 @@ public class PermissionLoader extends AbstractJSONRestCall {
 
     private String folder = null;
 
-    private String recordingId = null;
+    private String type = null;
+
+    private String id = null;
 
     private JsArrayString users = null;
 
@@ -61,24 +63,25 @@ public class PermissionLoader extends AbstractJSONRestCall {
     private WaitPopup waitPopup = new WaitPopup("Loading Existing Permissions",
             true);
 
-    public static void load(String url, String folder,
-            String recordingId, JsArrayString users, JsArrayString groups) {
-        PermissionLoader loader = new PermissionLoader(url, folder, recordingId,
-                users, groups);
+    public static void load(String url, String folder, String type,
+            String id, JsArrayString users, JsArrayString groups) {
+        ItemPermissionLoader loader = new ItemPermissionLoader(url, folder,
+                type, id, users, groups);
         loader.go();
     }
 
-    public PermissionLoader(String url, String folder,
-            String recordingId, JsArrayString users, JsArrayString groups) {
+    public ItemPermissionLoader(String url, String folder, String type,
+            String id, JsArrayString users, JsArrayString groups) {
         super(true);
         this.baseUrl = url;
-        this.url = url + "recording" + folder;
+        this.url = url + type + folder;
         if (!this.url.endsWith("/")) {
             this.url += "/";
         }
-        this.url += recordingId + "/acl/";
+        this.url += id + "/acl/";
         this.folder = folder;
-        this.recordingId = recordingId;
+        this.type = type;
+        this.id = id;
         this.users = users;
         this.groups = groups;
     }
@@ -104,8 +107,9 @@ public class PermissionLoader extends AbstractJSONRestCall {
             } else {
                 waitPopup.hide();
                 playAcl = JSONACL.parse(object.toString());
-                PermissionPopup popup = new PermissionPopup(baseUrl, folder,
-                        recordingId, users, groups, playAcl, readAcl);
+                ItemPermissionPopup popup = new ItemPermissionPopup(
+                        baseUrl, folder, type, id, users, groups,
+                        playAcl, readAcl);
                 popup.center();
             }
         }

@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.HarvestSource;
@@ -221,6 +222,23 @@ public class InsecureFolder {
      * @return The recording or null if doesn't exist
      */
     public Recording getRecording(String id) {
+        if (!recordings.containsKey(id)) {
+            File recordingFile = new File(file, id);
+            File index = new File(recordingFile,
+                    RecordingConstants.RECORDING_INDEX);
+            File inProgress = new File(recordingFile,
+                    RecordingConstants.RECORDING_INPROGRESS);
+            if (recordingFile.exists() && recordingFile.isDirectory()
+                    && index.exists() && !inProgress.exists()) {
+                try {
+                    readRecording(recordingFile);
+                } catch (Exception e) {
+                    System.err.println("Warning: error reading recording "
+                            + recordingFile);
+                    e.printStackTrace();
+                }
+            }
+        }
         return recordings.get(id);
     }
 
@@ -235,31 +253,37 @@ public class InsecureFolder {
         return recs;
     }
 
+    private void readRecording(File recordingFile)
+            throws SAXException, IOException {
+
+        File index = new File(recordingFile,
+                RecordingConstants.RECORDING_INDEX);
+        if (!recordingsLoaded.contains(recordingFile)
+                || recordingLastModified.get(recordingFile)
+                    < index.lastModified()) {
+            FileInputStream input = new FileInputStream(index);
+            Recording recording = RecordingReader.readRecording(input,
+                    folder, recordingFile, typeRepository,
+                    layoutRepository, defaultRecordingLifetime);
+            if (recording == null) {
+                throw new IOException("Recording "
+                        + recordingFile.getName()
+                        + " could not be read");
+            }
+            recordings.put(recording.getId(), recording);
+            recordingsLoaded.add(recordingFile);
+            recordingLastModified.put(recordingFile,
+                    index.lastModified());
+        }
+    }
+
     private void readRecordings() {
         File[] recordingFiles = file.listFiles(new FolderFilter(true));
         HashSet<File> recordingsSeen = new HashSet<File>();
         for (File recordingFile : recordingFiles) {
             try {
-                File index = new File(recordingFile,
-                        RecordingConstants.RECORDING_INDEX);
-                if (!recordingsLoaded.contains(recordingFile)
-                        || recordingLastModified.get(recordingFile)
-                            < index.lastModified()) {
-                    FileInputStream input = new FileInputStream(index);
-                    Recording recording = RecordingReader.readRecording(input,
-                            folder, recordingFile, typeRepository,
-                            layoutRepository, defaultRecordingLifetime);
-                    if (recording == null) {
-                        throw new Exception("Recording "
-                                + recordingFile.getName()
-                                + " could not be read");
-                    }
-                    recordings.put(recording.getId(), recording);
-                    recordingsLoaded.add(recordingFile);
-                    recordingLastModified.put(recordingFile,
-                            index.lastModified());
-                    recordingsSeen.add(recordingFile);
-                }
+                readRecording(recordingFile);
+                recordingsSeen.add(recordingFile);
             } catch (Exception e) {
                 System.err.println("Warning: error reading recording "
                         + recordingFile);

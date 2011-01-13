@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.ItemPermissionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemPauser;
@@ -58,6 +59,7 @@ import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemStopper;
 import com.googlecode.vicovre.gwt.recorder.client.rest.json.JSONUnfinishedRecording;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.TitledPushButton;
 
 public class RecordingItem extends SimplePanel implements ClickHandler,
         MessageResponseHandler, Comparable<RecordingItem> {
@@ -84,6 +86,8 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private final Image EDIT_META = new Image("images/edit_meta.gif");
 
+    private final Image SECURITY = new Image("images/security.gif");
+
     private Label name = new Label();
 
     private MetadataPopup metadataPopup = null;
@@ -104,13 +108,20 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private ToggleButton recordButton = new ToggleButton(RECORD, PAUSE);
 
-    private PushButton stopButton = new PushButton(STOP);
+    private PushButton stopButton = new TitledPushButton(STOP,
+            "Stop the Recording");
 
-    private PushButton deleteButton = new PushButton(DELETE);
+    private PushButton deleteButton = new TitledPushButton(DELETE,
+            "Delete the Recording");
 
-    private PushButton editButton = new PushButton(EDIT);
+    private PushButton editButton = new TitledPushButton(EDIT,
+            "Change the Recording Parameters");
 
-    private PushButton editMetadataButton = new PushButton(EDIT_META);
+    private PushButton editMetadataButton = new TitledPushButton(EDIT_META,
+            "Change the Recording Metadata");
+
+    private PushButton securityButton = new TitledPushButton(SECURITY,
+            "Set Access Permissions");
 
     private String id = null;
 
@@ -178,6 +189,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         buttons.add(stopButton);
         buttons.add(editButton);
         buttons.add(editMetadataButton);
+        buttons.add(securityButton);
         buttons.add(deleteButton);
         buttons.setWidth("100px");
 
@@ -199,6 +211,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         editButton.addClickHandler(this);
         editMetadataButton.addClickHandler(this);
         deleteButton.addClickHandler(this);
+        securityButton.addClickHandler(this);
 
         stopButton.setEnabled(false);
     }
@@ -279,6 +292,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
                 recordButton.setEnabled(false);
                 stopButton.setEnabled(false);
                 deleteButton.setEnabled(false);
+                securityButton.setEnabled(false);
                 editButton.setEnabled(false);
                 editMetadataButton.setEnabled(false);
             }
@@ -293,12 +307,14 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             editButton.setEnabled(false);
             editMetadataButton.setEnabled(false);
             deleteButton.setEnabled(false);
+            securityButton.setEnabled(false);
         } else {
             recordButton.setEnabled(true);
             stopButton.setEnabled(false);
             editButton.setEnabled(true);
             editMetadataButton.setEnabled(true);
             deleteButton.setEnabled(true);
+            securityButton.setEnabled(true);
         }
     }
 
@@ -307,6 +323,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         stopButton.setEnabled(false);
         editButton.setEnabled(false);
         editMetadataButton.setEnabled(false);
+        securityButton.setEnabled(false);
         deleteButton.setEnabled(true);
     }
 
@@ -333,6 +350,9 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             RecordingItemDeleter.deleteRecording(this, url);
         } else if (event.getSource().equals(editMetadataButton)) {
             metadataPopup.center();
+        } else if (event.getSource().equals(securityButton)) {
+            ItemPermissionLoader.load(url, getFolder(), "record", id,
+                    users, groups);
         }
     }
 

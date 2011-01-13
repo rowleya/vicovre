@@ -32,66 +32,75 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
-import com.google.gwt.json.client.JSONValue;
+import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
-import com.googlecode.vicovre.gwt.recorder.client.ActionLoader;
-import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
+import com.googlecode.vicovre.gwt.recorder.client.FolderPermissionPopup;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
-public class FolderLoader extends AbstractJSONRestCall {
+public class FolderPermissionLoader extends AbstractJSONRestCall {
 
-    private FolderPanel panel = null;
-
-    private ActionLoader loader = null;
+    private String baseUrl = null;
 
     private String url = null;
 
-    public static void load(FolderPanel panel, ActionLoader loader,
-            String url) {
-        FolderLoader fLoader = new FolderLoader(panel, loader, url);
-        fLoader.go();
+    private String folder = null;
+
+    private JsArrayString users = null;
+
+    private JsArrayString groups = null;
+
+    private JSONACL readAcl = null;
+
+    private WaitPopup waitPopup = new WaitPopup("Loading Existing Permissions",
+            true);
+
+    public static void load(String url, String folder,
+            JsArrayString users, JsArrayString groups) {
+        FolderPermissionLoader loader = new FolderPermissionLoader(url, folder,
+                users, groups);
+        loader.go();
     }
 
-    public FolderLoader(FolderPanel panel, ActionLoader loader, String url) {
+    public FolderPermissionLoader(String url, String folder,
+            JsArrayString users, JsArrayString groups) {
         super(true);
-        this.panel = panel;
-        this.loader = loader;
-        this.url = url + "folders/list";
+        this.baseUrl = url;
+        this.url = url + "folders" + folder;
+        if (!this.url.endsWith("/")) {
+            this.url += "/";
+        }
+        this.url += "acl";
+        this.folder = folder;
+        this.users = users;
+        this.groups = groups;
     }
 
     public void go() {
-        go(url);
-    }
-
-    protected void onError(String message) {
-        if (loader != null) {
-            loader.itemFailed("Error loading folders: " + message);
-        } else {
-            displayError("Error loading folders: " + message);
+        if (readAcl == null) {
+            waitPopup.center();
+            GWT.log("Permission load url = " + url);
+            go(url);
         }
     }
 
     protected void onSuccess(JSONObject object) {
-        JSONValue folderValue = object.get("folder");
-        if (folderValue != null) {
-            JSONArray folders = folderValue.isArray();
-            if (folders != null) {
-                for (int i = 0; i < folders.size(); i++) {
-                    JSONString folder = folders.get(i).isString();
-                    panel.addFolder(folder.stringValue());
-                }
-            } else {
-                onError("Folder is not an array");
-                return;
+        if (!waitPopup.wasCancelled()) {
+            if (readAcl == null) {
+                readAcl = JSONACL.parse(object.toString());
+                waitPopup.hide();
+                FolderPermissionPopup popup = new FolderPermissionPopup(
+                        baseUrl, folder, users, groups, readAcl);
+                popup.center();
             }
         }
+    }
 
-        if (loader != null) {
-            loader.itemLoaded();
-        }
-        panel.setFolder("");
+    protected void onError(String message) {
+        waitPopup.hide();
+        displayError("Error getting current permissions: " + message);
     }
 
 }

@@ -163,15 +163,4 @@ public abstract class Recording implements Comparable<Recording> {
     public abstract double getAnnotationProgress(long time);
 
     public abstract List<Annotation> getAnnotations();
-
-    public abstract void setAnnotations(List<Annotation> annotations);
-
-    public abstract void addAnnotation(Annotation annotation)
-        throws IOException;
-
-    public abstract void deleteAnnotation(Annotation annotation)
-        throws IOException;
-
-    public abstract void updateAnnotation(Annotation annotation)
-        throws IOException;
 }

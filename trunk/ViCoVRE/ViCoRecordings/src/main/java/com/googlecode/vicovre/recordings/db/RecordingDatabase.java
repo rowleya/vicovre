@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Metadata;
@@ -129,6 +130,15 @@ public interface RecordingDatabase {
     public void addRecordingListener(RecordingListener recordingListener);
 
     public void setDefaultLayout(String folder, DefaultLayout layout)
+        throws IOException;
+
+    public void addAnnotation(Recording recording, Annotation annotation)
+        throws IOException;
+
+    public void deleteAnnotation(Recording recording, Annotation annotation)
+        throws IOException;
+
+    public void updateAnnotation(Recording recording, Annotation annotation)
         throws IOException;
 
     public void shutdown();

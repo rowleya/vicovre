@@ -376,18 +376,18 @@ public class InsecureRecording extends Recording {
         return new Vector<Annotation>(annotations.values());
     }
 
-    public void setAnnotations(List<Annotation> annotations) {
+    protected void setAnnotations(List<Annotation> annotations) {
         this.annotations.clear();
         for (Annotation annotation : annotations) {
             this.annotations.put(annotation.getId(), annotation);
         }
     }
 
-    public void addAnnotation(Annotation annotation) throws IOException {
+    protected void addAnnotation(Annotation annotation) {
         annotations.put(annotation.getId(), annotation);
     }
 
-    public void deleteAnnotation(Annotation annotation) throws IOException {
+    protected void deleteAnnotation(Annotation annotation) {
         annotations.remove(annotation.getId());
     }
 
@@ -395,7 +395,7 @@ public class InsecureRecording extends Recording {
         return true;
     }
 
-    public void updateAnnotation(Annotation annotation) throws IOException {
+    protected void updateAnnotation(Annotation annotation) {
         annotations.put(annotation.getId(), annotation);
     }
 }

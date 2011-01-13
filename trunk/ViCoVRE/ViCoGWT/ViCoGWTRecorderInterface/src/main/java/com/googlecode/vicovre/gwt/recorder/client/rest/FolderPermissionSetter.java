@@ -32,11 +32,8 @@
 
 package com.googlecode.vicovre.gwt.recorder.client.rest;
 
-import java.util.LinkedList;
-
 import org.restlet.client.data.Method;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.rest.AbstractVoidRestCall;
@@ -45,7 +42,7 @@ import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.ModalPopup;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
-public class PermissionSetter extends AbstractVoidRestCall {
+public class FolderPermissionSetter extends AbstractVoidRestCall {
 
     private String url = null;
 
@@ -53,33 +50,27 @@ public class PermissionSetter extends AbstractVoidRestCall {
 
     private WaitPopup waitPopup = new WaitPopup("Setting Permissions", true);
 
-    private LinkedList<String> queries = new LinkedList<String>();
-
     public static void setPermissions(String url, String folder,
-            String recordingId, String[] aclTypes,
-            ModalPopup<? extends Widget> popup, boolean[] allow,
-            String[][] exceptionTypes, String[][] exceptions) {
-        PermissionSetter setter = new PermissionSetter(url, folder,
-            recordingId, aclTypes, popup, allow, exceptionTypes, exceptions);
+            ModalPopup<? extends Widget> popup, boolean allow,
+            String[] exceptionTypes, String[] exceptions) {
+        FolderPermissionSetter setter = new FolderPermissionSetter(url, folder,
+            popup, allow, exceptionTypes, exceptions);
         setter.go();
     }
 
-    public PermissionSetter(String url, String folder,
-            String recordingId, String[] aclTypes,
+    public FolderPermissionSetter(String url, String folder,
             ModalPopup<? extends Widget> popup,
-            boolean[] allow, String[][] exceptionTypes, String[][] exceptions) {
-        this.url = url + "recording" + folder + "/" + recordingId + "/acl/";
-        for (int i = 0; i < aclTypes.length; i++) {
-             String query = aclTypes[i] + "?public=" + allow[i];
-             if (exceptionTypes[i] != null && exceptions[i] != null) {
-                 for (int j = 0; j < exceptionTypes[i].length; j++) {
-                     query += "&exceptionType=" + URL.encodeComponent(
-                             exceptionTypes[i][j]);
-                     query += "&exceptionName=" + URL.encodeComponent(
-                             exceptions[i][j]);
-                 }
-             }
-             queries.addLast(query);
+            boolean allow, String[] exceptionTypes, String[] exceptions) {
+
+        this.url = url + "folders" + folder + "/acl/";
+        this.url += "?public=" + allow;
+        if (exceptionTypes != null && exceptions != null) {
+            for (int j = 0; j < exceptionTypes.length; j++) {
+                this.url += "&exceptionType=" + URL.encodeComponent(
+                        exceptionTypes[j]);
+                this.url += "&exceptionName=" + URL.encodeComponent(
+                        exceptions[j]);
+            }
         }
 
         this.popup = popup;
@@ -89,9 +80,7 @@ public class PermissionSetter extends AbstractVoidRestCall {
         if (!waitPopup.isShowing()) {
             waitPopup.center();
         }
-        String requestUrl = url + queries.removeFirst();
-        GWT.log("URL = " + requestUrl);
-        go(requestUrl, Method.PUT);
+        go(url, Method.PUT);
     }
 
     protected void onError(String message) {
@@ -103,13 +92,9 @@ public class PermissionSetter extends AbstractVoidRestCall {
     }
 
     protected void onSuccess() {
-        if (queries.isEmpty()) {
-            waitPopup.hide();
-            if (popup != null) {
-                popup.hide();
-            }
-        } else {
-            go();
+        waitPopup.hide();
+        if (popup != null) {
+            popup.hide();
         }
     }
 
