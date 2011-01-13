@@ -360,7 +360,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
             throws IOException {
         String folder = getFolderPath(uriInfo, 1, 3);
         String id = getId(uriInfo, 2);
-        String acltype = getId(uriInfo, 1);
+        String acltype = getId(uriInfo, 0);
 
         UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
                 folder, id);
@@ -377,17 +377,17 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
                         "The number of exceptionType parameters must match"
                         + " the number of exceptionName parameters").build();
             }
-            WriteOnlyEntity[] exceptions =
-                new WriteOnlyEntity[exceptionTypes.size()];
-            for (int i = 0; i < exceptionTypes.size(); i++) {
-                String type = exceptionTypes.get(i);
-                String name = exceptionNames.get(i);
-                exceptions[i] = new WriteOnlyEntity(name, type);
-            }
+            WriteOnlyEntity[] exceptions = getExceptions(exceptionNames,
+                    exceptionTypes);
             if (acltype.equals("play")) {
                 secureDb.setRecordingPlayAcl(recording, isPublic, exceptions);
             } else if (acltype.equals("read")) {
-                secureDb.setRecordingReadAcl(recording, isPublic, exceptions);
+                if (exceptions.length > 0) {
+                    return Response.status(Status.BAD_REQUEST).entity(
+                            "There can be no exceptions to the read ACL"
+                            ).build();
+                }
+                secureDb.setRecordingReadAcl(recording, isPublic);
             } else if (acltype.equals("annotate")) {
                 secureDb.setRecordingAnnotateAcl(recording, isPublic,
                         exceptions);
@@ -402,7 +402,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
     public Response getAcl(@Context UriInfo uriInfo) throws IOException {
         String folder = getFolderPath(uriInfo, 1, 3);
         String id = getId(uriInfo, 2);
-        String acltype = getId(uriInfo, 1);
+        String acltype = getId(uriInfo, 0);
 
         UnfinishedRecording recording = getDatabase().getUnfinishedRecording(
                 folder, id);

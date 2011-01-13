@@ -225,10 +225,9 @@ public class FolderHandler extends AbstractHandler {
         return getFolderMetadata("");
     }
 
-    @Path("/{folder: .*}/acl/{type}")
+    @Path("/{folder: .*}/acl")
     @PUT
-    public Response setDefaultAcl(@PathParam("folder") String folder,
-            @PathParam("type") String acltype,
+    public Response setAcl(@PathParam("folder") String folder,
             @QueryParam("public") boolean isPublic,
             @QueryParam("exceptionType") List<String> exceptionTypes,
             @QueryParam("exceptionName") List<String> exceptionNames)
@@ -237,54 +236,27 @@ public class FolderHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            WriteOnlyEntity[] exceptions = new WriteOnlyEntity[0];
-            if ((exceptionTypes != null) && (exceptionNames != null)) {
-                if (exceptionTypes.size() != exceptionNames.size()) {
-                    return Response.status(Status.BAD_REQUEST).entity(
+            WriteOnlyEntity[] exceptions = getExceptions(exceptionNames,
+                    exceptionTypes);
+            if (exceptions == null) {
+                Response.status(Status.BAD_REQUEST).entity(
                         "The number of exceptionType parameters must match"
                         + " the number of exceptionName parameters").build();
-                }
-                exceptions = new WriteOnlyEntity[exceptionTypes.size()];
-                for (int i = 0; i < exceptionTypes.size(); i++) {
-                    String type = exceptionTypes.get(i);
-                    String name = exceptionNames.get(i);
-                    exceptions[i] = new WriteOnlyEntity(name, type);
-                }
             }
-            if (acltype.equals("play")) {
-                secureDb.setRecordingDefaultPlayAcl(folder, isPublic,
-                        exceptions);
-            } else if (acltype.equals("read")) {
-                secureDb.setRecordingDefaultReadAcl(folder, isPublic,
-                        exceptions);
-            } else if (acltype.equals("annotate")) {
-                secureDb.setRecordingDefaultAnnotateAcl(folder, isPublic,
-                        exceptions);
-            }
+            secureDb.setFolderReadAcl(folder, isPublic, exceptions);
         }
         return Response.ok().build();
     }
 
-    @Path("/{folder: .*}/acl/{type}")
+    @Path("/{folder: .*}/acl")
     @GET
     @Produces({"text/xml", "application/json"})
-    public Response getDefaultAcl(@PathParam("folder") String folder,
-            @PathParam("type") String acltype) {
+    public Response getAcl(@PathParam("folder") String folder) {
         RecordingDatabase database = getDatabase();
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            if (acltype.equals("play")) {
-                return Response.ok(
-                        secureDb.getRecordingDefaultPlayAcl(folder)).build();
-            } else if (acltype.equals("read")) {
-                return Response.ok(
-                        secureDb.getRecordingDefaultReadAcl(folder)).build();
-            } else if (acltype.equals("annotate")) {
-                return Response.ok(
-                        secureDb.getRecordingDefaultAnnotateAcl(
-                                folder)).build();
-            }
+            return Response.ok(secureDb.getFolderReadAcl(folder)).build();
         }
         return Response.ok().build();
     }

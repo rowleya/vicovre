@@ -37,10 +37,13 @@ import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 
 public abstract class AbstractHandler {
 
@@ -112,5 +115,22 @@ public abstract class AbstractHandler {
             }
         }
         return metadata;
+    }
+
+    protected WriteOnlyEntity[] getExceptions(List<String> exceptionNames,
+            List<String> exceptionTypes) {
+        WriteOnlyEntity[] exceptions = new WriteOnlyEntity[0];
+        if ((exceptionTypes != null) && (exceptionNames != null)) {
+            if (exceptionTypes.size() != exceptionNames.size()) {
+                return null;
+            }
+            exceptions = new WriteOnlyEntity[exceptionTypes.size()];
+            for (int i = 0; i < exceptionTypes.size(); i++) {
+                String type = exceptionTypes.get(i);
+                String name = exceptionNames.get(i);
+                exceptions[i] = new WriteOnlyEntity(name, type);
+            }
+        }
+        return exceptions;
     }
 }

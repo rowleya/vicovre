@@ -32,6 +32,7 @@
 
 package com.googlecode.vicovre.web.rest;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +44,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -54,10 +56,13 @@ import com.googlecode.onevre.ag.types.network.NetworkLocation;
 import com.googlecode.onevre.ag.types.network.UnicastNetworkLocation;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Harvester;
+import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
+import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormat;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
+import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 import com.googlecode.vicovre.web.rest.response.HarvestSourcesResponse;
 import com.googlecode.vicovre.web.rest.response.UnfinishedRecordingsResponse;
 import com.sun.jersey.spi.inject.Inject;
@@ -272,4 +277,75 @@ public class HarvestHandler extends AbstractHandler {
                 harvestSource.getStatus()).build();
     }
 
+    @Path("{folder:.*}/acl/{type}")
+    @PUT
+    public Response setAcl(@Context UriInfo uriInfo,
+            @QueryParam("public") boolean isPublic,
+            @QueryParam("exceptionType") List<String> exceptionTypes,
+            @QueryParam("exceptionName") List<String> exceptionNames)
+            throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 0);
+
+        HarvestSource source = getDatabase().getHarvestSource(folder, id);
+        if (source == null) {
+            throw new FileNotFoundException("Harvest Source " + id
+                    + " not found");
+        }
+
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            WriteOnlyEntity[] exceptions = getExceptions(exceptionNames,
+                    exceptionTypes);
+            if (acltype.equals("play")) {
+                secureDb.setRecordingPlayAcl(source, isPublic, exceptions);
+            } else if (acltype.equals("read")) {
+                if (exceptions.length > 0) {
+                    return Response.status(Status.BAD_REQUEST).entity(
+                            "There can be no exceptions to the read ACL"
+                            ).build();
+                }
+                secureDb.setRecordingReadAcl(source, isPublic);
+            } else if (acltype.equals("annotate")) {
+                secureDb.setRecordingAnnotateAcl(source, isPublic,
+                        exceptions);
+            }
+        }
+        return Response.ok().build();
+    }
+
+    @Path("{folder:.*}/acl/{type}")
+    @GET
+    @Produces({"application/json", "text/xml"})
+    public Response getAcl(@Context UriInfo uriInfo) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 3);
+        String id = getId(uriInfo, 2);
+        String acltype = getId(uriInfo, 0);
+
+        HarvestSource source = getDatabase().getHarvestSource(folder, id);
+        if (source == null) {
+            throw new FileNotFoundException("Harvest Source " + id
+                    + " not found");
+        }
+
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            if (acltype.equals("play")) {
+                return Response.ok(
+                        secureDb.getRecordingPlayAcl(source)).build();
+            } else if (acltype.equals("read")) {
+                return Response.ok(
+                        secureDb.getRecordingReadAcl(source)).build();
+            } else if (acltype.equals("annotate")) {
+                return Response.ok(
+                        secureDb.getRecordingAnnotateAcl(source)).build();
+            }
+        }
+        return Response.ok().build();
+    }
 }

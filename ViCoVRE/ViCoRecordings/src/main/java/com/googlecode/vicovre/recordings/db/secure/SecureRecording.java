@@ -90,13 +90,6 @@ public class SecureRecording extends Recording {
         }
     }
 
-    private void checkAnnotate() {
-        if (!database.canAnnotateRecording(folder, id)) {
-            throw new UnauthorizedException(
-                    "Only someone who can annotate the recording can do this");
-        }
-    }
-
     public File getDirectory() {
         checkPlayOrEdit();
         return recording.getDirectory();
@@ -221,31 +214,9 @@ public class SecureRecording extends Recording {
         return recording.getAnnotations();
     }
 
-    public void setAnnotations(List<Annotation> annotations) {
-        checkEdit();
-        recording.setAnnotations(annotations);
-    }
-
-    public void addAnnotation(Annotation annotation) throws IOException {
-        checkAnnotate();
-        database.addAnnotation(recording, annotation);
-        recording.addAnnotation(annotation);
-
-    }
-
-    public void deleteAnnotation(Annotation annotation) throws IOException {
-        database.deleteAnnotation(recording, annotation);
-        recording.deleteAnnotation(annotation);
-    }
-
     public boolean isAnnotatable() {
         checkRead();
         return database.canAnnotateRecording(folder, id);
-    }
-
-    public void updateAnnotation(Annotation annotation) throws IOException {
-        database.updateAnnotation(recording, annotation);
-        recording.updateAnnotation(annotation);
     }
 
 }

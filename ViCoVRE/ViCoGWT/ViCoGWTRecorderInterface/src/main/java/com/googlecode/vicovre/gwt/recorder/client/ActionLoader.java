@@ -80,6 +80,7 @@ public class ActionLoader {
         if (errorMsg == null) {
             errorMsg = error;
         }
+        GWT.log("Error: " + error);
         if (fatal) {
             MessagePopup errorPopup = new MessagePopup(errorMsg, null,
                     MessagePopup.ERROR);

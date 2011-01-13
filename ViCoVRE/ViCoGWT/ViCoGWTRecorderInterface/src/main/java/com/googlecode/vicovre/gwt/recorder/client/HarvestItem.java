@@ -50,8 +50,10 @@ import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemUpdater;
+import com.googlecode.vicovre.gwt.recorder.client.rest.ItemPermissionLoader;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.TitledPushButton;
 
 public class HarvestItem extends HorizontalPanel implements ClickHandler,
         MessageResponseHandler, Comparable<HarvestItem> {
@@ -61,6 +63,8 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
     private final Image EDIT = new Image("images/edit.gif");
 
     private final Image DELETE = new Image("images/delete.gif");
+
+    private final Image SECURITY = new Image("images/security.gif");
 
     private String id = null;
 
@@ -90,11 +94,17 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
 
     private Label status = new Label("OK");
 
-    private PushButton harvestButton = new PushButton(HARVEST);
+    private PushButton harvestButton = new TitledPushButton(HARVEST,
+            "Harvest Now");
 
-    private PushButton editButton = new PushButton(EDIT);
+    private PushButton editButton = new TitledPushButton(EDIT,
+            "Change the Harvest Parameters");
 
-    private PushButton deleteButton = new PushButton(DELETE);
+    private PushButton deleteButton = new TitledPushButton(DELETE,
+            "Delete this Harvest Source");
+
+    private PushButton securityButton = new TitledPushButton(SECURITY,
+        "Set Access Permissions");
 
     private FolderPanel folderPanel = null;
 
@@ -137,6 +147,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(harvestButton);
         buttons.add(editButton);
+        buttons.add(securityButton);
         buttons.add(deleteButton);
 
         add(name);
@@ -150,6 +161,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         harvestButton.addClickHandler(this);
         editButton.addClickHandler(this);
         deleteButton.addClickHandler(this);
+        securityButton.addClickHandler(this);
     }
 
     public String getFolder() {
@@ -268,6 +280,9 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
                     users, groups);
         } else if (event.getSource().equals(deleteButton)) {
             HarvestItemDeleter.deleteItem(this, baseUrl);
+        } else if (event.getSource().equals(securityButton)) {
+            ItemPermissionLoader.load(baseUrl, getFolder(), "harvest", id,
+                    users, groups);
         }
     }
 
@@ -295,16 +310,19 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
             harvestButton.setEnabled(false);
             editButton.setEnabled(false);
             deleteButton.setEnabled(false);
+            securityButton.setEnabled(false);
         } else {
             harvestButton.setEnabled(true);
             editButton.setEnabled(true);
             deleteButton.setEnabled(true);
+            securityButton.setEnabled(true);
         }
     }
 
     public void setFailedToCreate() {
         harvestButton.setEnabled(false);
         editButton.setEnabled(false);
+        securityButton.setEnabled(false);
         deleteButton.setEnabled(true);
     }
 

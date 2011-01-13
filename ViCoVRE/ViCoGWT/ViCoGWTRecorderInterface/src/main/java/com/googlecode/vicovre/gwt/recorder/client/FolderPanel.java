@@ -34,6 +34,7 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import java.util.HashMap;
 
+import com.allen_sauer.gwt.dnd.client.PickupDragController;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -41,6 +42,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -54,20 +56,27 @@ import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderCreator;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderEditor;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.FolderMetadataLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.FolderPermissionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.HarvestItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.RecordingItemLoader;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
+import com.googlecode.vicovre.gwt.utils.client.Space;
 
-public class FolderPanel extends HorizontalPanel
+public class FolderPanel extends AbsolutePanel
         implements SelectionHandler<TreeItem>, ClickHandler,
         MessageResponseHandler {
 
     private Button createButton = new Button("New Folder");
 
     private Button editMetadataButton = new Button("Edit Metadata");
+
+    private Button setPermissionsButton = new Button("Set Security");
+
+    private HorizontalPanel topPanel = new HorizontalPanel();
 
     private TabPanel panel = new TabPanel();
 
@@ -98,6 +107,9 @@ public class FolderPanel extends HorizontalPanel
 
     private JsArrayString groups = null;
 
+    private PickupDragController dragController = new PickupDragController(
+            this, false);
+
     public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts,
             JsArrayString users, JsArrayString groups) {
         this.url = url;
@@ -106,7 +118,10 @@ public class FolderPanel extends HorizontalPanel
         this.users = users;
         this.groups = groups;
 
-        playPanel = new PlayPanel(this, url, layouts, customLayouts);
+        dragController.setBehaviorDragProxy(true);
+
+        playPanel = new PlayPanel(this, url, layouts, customLayouts,
+                dragController);
         recordPanel = new RecordPanel(this, playPanel, url, layouts,
                 customLayouts, users, groups);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
@@ -116,6 +131,9 @@ public class FolderPanel extends HorizontalPanel
 
         setWidth("95%");
         setHeight("100%");
+        topPanel.setWidth("100%");
+        topPanel.setHeight("100%");
+        add(topPanel);
 
         panel.setWidth("100%");
         panel.setHeight("95%");
@@ -123,6 +141,11 @@ public class FolderPanel extends HorizontalPanel
         panel.add(playPanel, "Play");
         panel.selectTab(0);
         panel.setAnimationEnabled(true);
+
+        HorizontalPanel buttonPanel = new HorizontalPanel();
+        buttonPanel.add(editMetadataButton);
+        buttonPanel.add(Space.getHorizontalSpace(5));
+        buttonPanel.add(setPermissionsButton);
 
         VerticalPanel folderTree = new VerticalPanel();
         folderTree.setWidth("100%");
@@ -137,23 +160,30 @@ public class FolderPanel extends HorizontalPanel
         folderTree.add(folderTitle);
         folderTree.add(createButton);
         folderTree.add(folderScroller);
-        folderTree.add(editMetadataButton);
+        folderTree.add(buttonPanel);
 
-        add(folderTree);
-        add(panel);
-        setCellWidth(folderTree, "20%");
-        setCellWidth(panel, "80%");
-        setCellHeight(panel, "100%");
+        topPanel.add(folderTree);
+        topPanel.add(panel);
+        topPanel.setCellWidth(folderTree, "20%");
+        topPanel.setCellWidth(panel, "80%");
+        topPanel.setCellHeight(panel, "100%");
 
-        TreeItem rootItem = new TreeItem("Root");
-        rootItem.setUserObject("");
-        folderTreeItems.put("", rootItem);
-        folders.addItem(rootItem);
-        folders.setSelectedItem(rootItem);
+        createTreeRoot();
 
         folders.addSelectionHandler(this);
         createButton.addClickHandler(this);
         editMetadataButton.addClickHandler(this);
+        setPermissionsButton.addClickHandler(this);
+    }
+
+    private void createTreeRoot() {
+        TreeItem rootItem = new TreeItem(new HTML("Root"));
+        rootItem.setUserObject("");
+        folderTreeItems.put("", rootItem);
+        folders.addItem(rootItem);
+        folders.setSelectedItem(rootItem);
+        dragController.registerDropController(
+                new FolderDropController(rootItem, url));
     }
 
     public void addFolder(String path) {
@@ -167,7 +197,7 @@ public class FolderPanel extends HorizontalPanel
                 folderPath += folder;
                 folderItem = folderTreeItems.get(folderPath);
                 if (folderItem == null) {
-                    folderItem = new TreeItem(folder);
+                    folderItem = new TreeItem(new HTML(folder));
                     folderItem.setUserObject(folderPath);
                     folderTreeItems.put(folderPath, folderItem);
                     if (parent == null) {
@@ -175,6 +205,8 @@ public class FolderPanel extends HorizontalPanel
                     } else {
                         parent.addItem(folderItem);
                     }
+                    dragController.registerDropController(
+                            new FolderDropController(folderItem, url));
                 }
                 parent = folderTreeItems.get(folderPath);
                 folderPath += "/";
@@ -210,8 +242,10 @@ public class FolderPanel extends HorizontalPanel
         FolderMetadataLoader.loadMetadata(path, this, loader, url);
         if (path.equals("") || path.equals("/") || !userIsWriter) {
             editMetadataButton.setEnabled(false);
+            setPermissionsButton.setEnabled(false);
         } else {
             editMetadataButton.setEnabled(true);
+            setPermissionsButton.setEnabled(true);
         }
     }
 
@@ -221,10 +255,12 @@ public class FolderPanel extends HorizontalPanel
 
     public void reload() {
         currentPath = null;
-        TreeItem folderItem = folders.getSelectedItem();
-        if (folderItem != null) {
-            setFolder((String) folderItem.getUserObject());
-        }
+        folders.clear();
+        folderTreeItems.clear();
+        dragController.unregisterDropControllers();
+        createTreeRoot();
+        FolderLoader.load(this, null, url);
+        setFolder("");
     }
 
     public void onSelection(SelectionEvent<TreeItem> event) {
@@ -241,6 +277,9 @@ public class FolderPanel extends HorizontalPanel
             FolderCreator.createFolder(this, url);
         } else if (event.getSource().equals(editMetadataButton)) {
             metadataPopup.center();
+        } else if (event.getSource().equals(setPermissionsButton)) {
+            FolderPermissionLoader.load(url, getCurrentFolder(),
+                    users, groups);
         }
     }
 

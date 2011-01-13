@@ -49,10 +49,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.ChangesAnnotator;
-import com.googlecode.vicovre.gwt.recorder.client.rest.PermissionLoader;
+import com.googlecode.vicovre.gwt.recorder.client.rest.ItemPermissionLoader;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemDeleter;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemEditor;
 import com.googlecode.vicovre.gwt.recorder.client.rest.PlayItemLayoutLoader;
@@ -84,6 +85,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private final Image ANNOTATE = new Image("images/annotate.gif");
 
     private final Image SECURITY = new Image("images/security.gif");
+
+    private final Image MOVE = new Image("images/move.gif");
 
     private FolderPanel folderPanel = null;
 
@@ -120,6 +123,9 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private PushButton securityButton = new TitledPushButton(SECURITY,
             "Set Access Permissions");
+
+    private PushButton moveButton = new DragButton(MOVE,
+            "Drag to a new Folder", this);
 
     private MetadataPopup metadataPopup = null;
 
@@ -165,12 +171,14 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         buttons.setWidth("120px");
 
         DockPanel topLine = new DockPanel();
+        topLine.add(moveButton, DockPanel.WEST);
         topLine.add(startDate, DockPanel.WEST);
         topLine.add(this.name, DockPanel.CENTER);
         topLine.add(buttons, DockPanel.EAST);
         topLine.add(duration, DockPanel.EAST);
         topLine.setWidth("100%");
 
+        topLine.setCellWidth(moveButton, "20px");
         topLine.setCellWidth(duration, "100px");
         topLine.setCellWidth(buttons, "120px");
         topLine.setCellWidth(startDate, "160px");
@@ -186,6 +194,10 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         playButton.addClickHandler(this);
         annotateButton.addClickHandler(this);
         securityButton.addClickHandler(this);
+    }
+
+    protected Widget getDraggable() {
+        return moveButton;
     }
 
     public String getFolder() {
@@ -251,7 +263,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         } else if (event.getSource().equals(annotateButton)) {
             ChangesAnnotator.annotate(url, this, name.getText());
         } else if (event.getSource().equals(securityButton)) {
-            PermissionLoader.load(url, getFolder(), id, users, groups);
+            ItemPermissionLoader.load(url, getFolder(), "recording", id,
+                    users, groups);
         }
     }
 
@@ -317,5 +330,6 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         editLayoutButton.setEnabled(editable);
         annotateButton.setEnabled(editable);
         securityButton.setEnabled(editable);
+        moveButton.setEnabled(editable);
     }
 }

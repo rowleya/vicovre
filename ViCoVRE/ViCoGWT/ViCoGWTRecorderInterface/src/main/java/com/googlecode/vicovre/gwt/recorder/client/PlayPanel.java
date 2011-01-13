@@ -32,13 +32,16 @@
 
 package com.googlecode.vicovre.gwt.recorder.client;
 
+import com.allen_sauer.gwt.dnd.client.PickupDragController;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.recorder.client.rest.DefaultLayoutLoader;
 
@@ -49,6 +52,8 @@ public class PlayPanel extends VerticalPanel implements ClickHandler {
     private Button layoutButton = new Button(
             "Set default layout for all items in this folder");
 
+    private HorizontalPanel buttonPanel = new HorizontalPanel();
+
     private String url = null;
 
     private FolderPanel folderPanel = null;
@@ -57,12 +62,17 @@ public class PlayPanel extends VerticalPanel implements ClickHandler {
 
     private Layout[] customLayouts = null;
 
+    private PickupDragController dragController = null;
+
+    private boolean isAdministrator = false;
+
     public PlayPanel(FolderPanel folderPanel, String url, Layout[] layouts,
-            Layout[] customLayouts) {
+            Layout[] customLayouts, PickupDragController dragController) {
         this.folderPanel = folderPanel;
         this.url = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
+        this.dragController = dragController;
 
         setWidth("100%");
         setHeight("100%");
@@ -73,17 +83,25 @@ public class PlayPanel extends VerticalPanel implements ClickHandler {
         items.setWidth("100%");
         scroller.setHeight("100%");
 
-        add(layoutButton);
+        buttonPanel.setWidth("100%");
+        buttonPanel.setHorizontalAlignment(
+                HasHorizontalAlignment.ALIGN_CENTER);
+        buttonPanel.add(layoutButton);
+
+        add(buttonPanel);
         add(scroller);
         setCellWidth(scroller, "100%");
         setCellHeight(scroller, "100%");
 
         layoutButton.addClickHandler(this);
-        layoutButton.setVisible(false);
+        buttonPanel.setVisible(false);
     }
 
     public void addItem(PlayItem item) {
         this.items.add(item);
+        if (isAdministrator) {
+            dragController.makeDraggable(item.getDraggable());
+        }
     }
 
     public void clear() {
@@ -91,14 +109,23 @@ public class PlayPanel extends VerticalPanel implements ClickHandler {
     }
 
     public void onClick(ClickEvent event) {
-        DefaultLayoutPopup popup =
-            new DefaultLayoutPopup(layouts, customLayouts, url,
-                    folderPanel.getCurrentFolder());
-        DefaultLayoutLoader.loadLayouts(folderPanel.getCurrentFolder(),
-                popup, url);
+        if (event.getSource() == layoutButton) {
+            DefaultLayoutPopup popup =
+                new DefaultLayoutPopup(layouts, customLayouts, url,
+                        folderPanel.getCurrentFolder());
+            DefaultLayoutLoader.loadLayouts(folderPanel.getCurrentFolder(),
+                    popup, url);
+        }
     }
 
     public void setUserIsAdministrator(boolean isAdministrator) {
-        layoutButton.setVisible(isAdministrator);
+        this.isAdministrator = isAdministrator;
+        buttonPanel.setVisible(isAdministrator);
+        if (isAdministrator) {
+            for (Widget item : items) {
+                PlayItem playItem = (PlayItem) item;
+                dragController.makeDraggable(playItem.getDraggable());
+            }
+        }
     }
 }

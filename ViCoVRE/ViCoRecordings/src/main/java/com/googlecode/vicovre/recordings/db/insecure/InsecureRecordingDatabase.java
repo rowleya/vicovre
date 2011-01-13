@@ -42,6 +42,7 @@ import java.util.Vector;
 
 import org.xml.sax.SAXException;
 
+import com.googlecode.vicovre.annotations.Annotation;
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.DefaultLayout;
 import com.googlecode.vicovre.recordings.HarvestSource;
@@ -645,5 +646,39 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         } else {
             throw new IOException("Unknown error moving recording");
         }
+    }
+
+    private void updateAnnotations(Recording recording) throws IOException {
+        List<Annotation> annotations = recording.getAnnotations();
+        File annotationFile = new File(recording.getDirectory(),
+                 RecordingConstants.ANNOTATIONS);
+        FileOutputStream outputStream = new FileOutputStream(
+                annotationFile);
+        AnnotationsReader.writeAnnotations(outputStream, annotations);
+        outputStream.close();
+    }
+
+    public void addAnnotation(Recording recording, Annotation annotation)
+            throws IOException {
+        InsecureRecording insecureRecording = (InsecureRecording) getRecording(
+                recording.getFolder(), recording.getId());
+        insecureRecording.addAnnotation(annotation);
+        updateAnnotations(recording);
+    }
+
+    public void deleteAnnotation(Recording recording, Annotation annotation)
+            throws IOException {
+        InsecureRecording insecureRecording = (InsecureRecording) getRecording(
+                recording.getFolder(), recording.getId());
+        insecureRecording.deleteAnnotation(annotation);
+        updateAnnotations(recording);
+    }
+
+    public void updateAnnotation(Recording recording, Annotation annotation)
+            throws IOException {
+        InsecureRecording insecureRecording = (InsecureRecording) getRecording(
+                recording.getFolder(), recording.getId());
+        insecureRecording.updateAnnotation(annotation);
+        updateAnnotations(recording);
     }
 }
