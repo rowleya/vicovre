@@ -121,6 +121,10 @@ public class LayoutHandler {
                     params.getFirst(name + "Width")));
             position.setHeight(Integer.parseInt(
                     params.getFirst(name + "Height")));
+            String opacity = params.getFirst(name + "Opacity");
+            if (opacity != null) {
+                position.setOpacity(Double.parseDouble(opacity));
+            }
             String assignable = params.getFirst(name + "IsAssignable");
             if (assignable != null) {
                 position.setAssignable(Boolean.parseBoolean(assignable));

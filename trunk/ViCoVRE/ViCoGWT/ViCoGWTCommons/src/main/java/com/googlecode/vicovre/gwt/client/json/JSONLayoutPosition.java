@@ -60,6 +60,10 @@ public class JSONLayoutPosition extends JavaScriptObject {
         return this.height;
     }-*/;
 
+    public final native double getOpacity() /*-{
+        return this.opacity;
+    }-*/;
+
     public final native boolean isAssignable() /*-{
         return this.assignable;
     }-*/;

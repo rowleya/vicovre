@@ -496,7 +496,7 @@ public class PlayRecordingController implements Controller {
 
         String url = server + "/" + folder + "/" + recordingId
             + "/downloadRecording.do?format=video%2Fx-flv&start=" + minStart
-            + "&x=0&y=0&agc=" + autoGain;
+            + "&x=0&y=0&opacity=1.0&agc=" + autoGain;
 
         HashMap<String, Object> values = new HashMap<String, Object>();
         Collections.sort(metadataAnnotationTypes);

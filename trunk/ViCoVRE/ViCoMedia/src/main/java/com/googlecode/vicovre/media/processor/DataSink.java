@@ -330,6 +330,7 @@ public abstract class DataSink extends Thread implements SourceTransferHandler,
      *
      */
     public void close() {
+        System.err.println("DataSink closing");
         synchronized (this) {
             done = true;
             thread.close();

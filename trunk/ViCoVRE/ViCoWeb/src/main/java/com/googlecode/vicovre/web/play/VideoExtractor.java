@@ -98,7 +98,7 @@ public class VideoExtractor {
      * @throws ResourceUnavailableException
      */
     public VideoExtractor(String contentType, String[] videoFilenames,
-            Rectangle[] positions,
+            Rectangle[] positions, double[] opacities,
             String[] audioFilenames, String[] syncFilenames,
             int backgroundColour, RtpTypeRepository rtpTypeRepository,
             Dimension outputSize)
@@ -150,7 +150,7 @@ public class VideoExtractor {
         multiplexer.setNumTracks(numTracks);
 
         if (videoReaders != null) {
-            videoMixer = new VideoMixer(videoReaders, positions,
+            videoMixer = new VideoMixer(videoReaders, positions, opacities,
                     backgroundColour, true, outputSize);
             videoSource = new VideoMediaSource(videoMixer, multiplexer,
                     videoTrack);
@@ -355,6 +355,13 @@ public class VideoExtractor {
             audioSource.close();
         }
         multiplexer.close();
+        while (!dataSink.isDone()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // Do Nothing
+            }
+        }
         System.err.println("Extractor finished");
     }
 
@@ -411,6 +418,8 @@ public class VideoExtractor {
                 //new Rectangle(505, 0, 500, 376),
                 //new Rectangle(0, 380, 240, 196),
             },
+
+            new double[]{1.0, 1.0, 1.0, 1.0},
 
             // Audio
             /*new String[]{

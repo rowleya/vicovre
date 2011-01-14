@@ -415,6 +415,7 @@ public class LayoutCreatorPopup extends ModalPopup<LayoutPositionBox>
                     LayoutPosition position = new LayoutPosition(
                             panel.getName(), panel.getX(), panel.getY(),
                             panel.getWidth(), panel.getHeight(),
+                            panel.getOpacity(),
                             panel.isAssignable(), panel.hasChanges(),
                             panel.hasAudio());
                     positions.add(position);

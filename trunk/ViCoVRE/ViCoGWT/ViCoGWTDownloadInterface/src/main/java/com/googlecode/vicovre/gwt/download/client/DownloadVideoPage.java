@@ -57,6 +57,14 @@ import com.googlecode.vicovre.gwt.utils.client.StringDateTimeFormat;
 
 public class DownloadVideoPage extends WizardPage implements ClickHandler {
 
+    private static final double[] SCALES = new double[]{
+       0.5, 1, 2, 4
+    };
+
+    private static final String[] SCALE_LABEL = new String[]{
+        "Small", "Medium", "Large", "Huge"
+    };
+
     private static final StringDateTimeFormat DATE_FORMAT =
         new StringDateTimeFormat("yyyy-MM-dd'T'HH:mm:ss");
 
@@ -101,6 +109,8 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
 
     private ListBox format = new ListBox(false);
 
+    private ListBox size = new ListBox(false);
+
     public DownloadVideoPage(String folder,
             String recordingId, JSONStream[] streams) {
         this.folder = folder;
@@ -122,7 +132,9 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
         controlPanel.getFlexCellFormatter().setRowSpan(0, 3, 2);
         controlPanel.setWidget(2, 0, new Label("Format:"));
         controlPanel.setWidget(2, 1, format);
-        controlPanel.setWidget(2, 2, downloadButton);
+        controlPanel.setWidget(3, 0, new Label("Size:"));
+        controlPanel.setWidget(3, 1, size);
+        controlPanel.setWidget(3, 2, downloadButton);
         setStartButton.addClickHandler(this);
         setEndButton.addClickHandler(this);
         updatePreviewButton.addClickHandler(this);
@@ -181,6 +193,7 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
                     url += "&height=" + position.getHeight();
                     url += "&x=" + position.getX();
                     url += "&y=" + position.getY();
+                    url += "&opacity=" + position.getOpacity();
                 }
             }
         }
@@ -237,6 +250,21 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
         setTimeLabel(startTime, startTimeLabel);
         setTimeLabel(endTime, endTimeLabel);
 
+        size.clear();
+        for (int i = 0; i < SCALES.length; i++) {
+            int w = (int) (SCALES[i] * layout.getWidth());
+            int h = (int) (SCALES[i] * layout.getHeight());
+            if (w % 16 != 0) {
+                w = w + (16 - (w % 16));
+            }
+            if (h % 16 != 0) {
+                h = h + (16 - (h % 16));
+            }
+            size.addItem(SCALE_LABEL[i] + "(" + w + "x" + h + ")",
+                    String.valueOf(SCALES[i]));
+        }
+        size.setSelectedIndex((int) ((SCALES.length + 0.5) / 2));
+
         playerPanel.clear();
         String url = getUrl("video/x-flv") + "&genspeed=1.5";
         GWT.log("URL = " + url);
@@ -276,10 +304,21 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
             previewStartTime = startTime;
         } else if (event.getSource().equals(downloadButton)) {
             player.stop();
+            double scale = SCALES[size.getSelectedIndex()];
+            int width = (int) (layout.getWidth() * scale);
+            int height = (int) (layout.getHeight() * scale);
+            if (width % 16 != 0) {
+                width += (16 - (width % 16));
+            }
+            if (height % 16 != 0) {
+                height += (16 - (height % 16));
+            }
             String url = getUrl(format.getValue(format.getSelectedIndex()));
             url += "&start=" + (startTime * 1000);
             url += "&duration=" + ((endTime - startTime) * 1000);
             url += "&genspeed=0";
+            url += "&outwidth=" + width;
+            url += "&outheight=" + height;
             GWT.log("URL = " + url);
             Location.replace(url);
         }

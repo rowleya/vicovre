@@ -43,6 +43,7 @@ import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
@@ -65,6 +66,8 @@ public class LayoutPositionPanel extends AbsolutePanel
     public static final int HALF_BOX_WIDTH = 5;
 
     public static final int HALF_BOX_HEIGHT = 5;
+
+    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.0");
 
     private static final int BOX_WIDTH = 9;
 
@@ -91,6 +94,8 @@ public class LayoutPositionPanel extends AbsolutePanel
     private Label position = new Label();
 
     private Label order = new Label();
+
+    private Label opacity = new Label("1.0");
 
     private boolean selected = false;
 
@@ -127,6 +132,10 @@ public class LayoutPositionPanel extends AbsolutePanel
     private Button increaseOrderButton = new Button("+");
 
     private Button decreaseOrderButton = new Button("-");
+
+    private Button increaseOpacityButton = new Button("+");
+
+    private Button decreaseOpacityButton = new Button("-");
 
     private Button editNameButton = new Button("Edit Name");
 
@@ -245,6 +254,28 @@ public class LayoutPositionPanel extends AbsolutePanel
         controlPanel.setText(3, 0, "Order: ");
         controlPanel.setWidget(3, 1, orderPanel);
 
+        HorizontalPanel opacityPanel = new HorizontalPanel();
+        opacityPanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+        opacityPanel.add(decreaseOpacityButton);
+        opacityPanel.add(this.opacity);
+        opacityPanel.add(increaseOpacityButton);
+        opacityPanel.setCellWidth(this.opacity, "25px");
+        opacityPanel.setCellHorizontalAlignment(this.opacity,
+                HorizontalPanel.ALIGN_CENTER);
+        DOM.setStyleAttribute(this.opacity.getElement(), "color", "white");
+        decreaseOpacityButton.setWidth("10px");
+        increaseOpacityButton.setWidth("10px");
+        decreaseOpacityButton.setHeight("17px");
+        increaseOpacityButton.setHeight("17px");
+        decreaseOpacityButton.addClickHandler(this);
+        increaseOpacityButton.addClickHandler(this);
+        DOM.setStyleAttribute(decreaseOpacityButton.getElement(), "padding",
+                "0");
+        DOM.setStyleAttribute(increaseOpacityButton.getElement(), "padding",
+                "0");
+        controlPanel.setText(7, 0, "Opacity: ");
+        controlPanel.setWidget(7, 1, opacityPanel);
+
         aspectRatio.addItem("None", "0");
         aspectRatio.addItem("Normal", String.valueOf(ASPECT_CIF));
         aspectRatio.addItem("TV (4:3)", String.valueOf(ASPECT_43));
@@ -252,9 +283,12 @@ public class LayoutPositionPanel extends AbsolutePanel
         aspectRatio.setSelectedIndex(1);
         controlPanel.setText(4, 0, "Ratio: ");
         controlPanel.setWidget(4, 1, aspectRatio);
+        DOM.setStyleAttribute(aspectRatio.getElement(), "fontSize", "10px");
 
         DOM.setStyleAttribute(hasChanges.getElement(), "color", "white");
         DOM.setStyleAttribute(hasAudio.getElement(), "color", "white");
+        DOM.setStyleAttribute(hasChanges.getElement(), "fontSize", "10px");
+        DOM.setStyleAttribute(hasAudio.getElement(), "fontSize", "10px");
         controlPanel.setWidget(5, 0, hasChanges);
         controlPanel.setWidget(6, 0, hasAudio);
         controlPanel.getFlexCellFormatter().setColSpan(5, 0, 2);
@@ -443,6 +477,28 @@ public class LayoutPositionPanel extends AbsolutePanel
                 hasAudio.setValue(false);
             }
             lastHasAudio = hasAudio.getValue();
+        } else if (event.getSource() == increaseOpacityButton) {
+            double currentOpacity = getOpacity();
+            if (currentOpacity < 1.0) {
+                currentOpacity += 0.1;
+                opacity.setText(FORMAT.format(currentOpacity));
+                DOM.setStyleAttribute(panel.getElement(), "opacity",
+                        String.valueOf(currentOpacity));
+                DOM.setStyleAttribute(panel.getElement(), "filter",
+                        " alpha(opacity=" + String.valueOf(
+                                Math.round(currentOpacity * 100)) + ")");
+            }
+        } else if (event.getSource() == decreaseOpacityButton) {
+            double currentOpacity = getOpacity();
+            if (currentOpacity > 0) {
+                currentOpacity -= 0.1;
+                opacity.setText(FORMAT.format(currentOpacity));
+                DOM.setStyleAttribute(panel.getElement(), "opacity",
+                        String.valueOf(currentOpacity));
+                DOM.setStyleAttribute(panel.getElement(), "filter",
+                        " alpha(opacity=" + String.valueOf(
+                                Math.round(currentOpacity * 100)) + ")");
+            }
         }
     }
 
@@ -478,6 +534,10 @@ public class LayoutPositionPanel extends AbsolutePanel
 
     public int getY() {
         return y;
+    }
+
+    public double getOpacity() {
+        return Double.parseDouble(opacity.getText());
     }
 
     public void onChange(ChangeEvent event) {

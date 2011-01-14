@@ -120,11 +120,14 @@ public class FlvController implements Controller {
         String[] heights = request.getParameterValues("height");
         String[] xs = request.getParameterValues("x");
         String[] ys = request.getParameterValues("y");
+        String[] opacity = request.getParameterValues("opacity");
+        double[] opacities = new double[videoStreams.length];
         for (int i = 0; i < videoStreams.length; i++) {
             videoStreams[i] = new File(path, videoStreams[i]).getAbsolutePath();
             rects[i] = new Rectangle(
                     Integer.parseInt(xs[i]), Integer.parseInt(ys[i]),
                     Integer.parseInt(widths[i]), Integer.parseInt(heights[i]));
+            opacities[i] = Double.parseDouble(opacity[i]);
         }
         for (int i = 0; i < audioStreams.length; i++) {
             audioStreams[i] = new File(path, audioStreams[i]).getAbsolutePath();
@@ -166,7 +169,7 @@ public class FlvController implements Controller {
 
         try {
             VideoExtractor extractor = new VideoExtractor(contentType,
-                    videoStreams, rects, audioStreams, syncStreams,
+                    videoStreams, rects, opacities, audioStreams, syncStreams,
                     backgroundColour, rtpTypeRepository, outSize);
             extractor.setGenerationSpeed(generationSpeed);
             response.setContentType(contentType);
