@@ -80,6 +80,10 @@ public class LayoutReader {
                     "width", null)));
             pos.setHeight(Integer.parseInt(XmlIo.readAttr(element,
                     "height", null)));
+            String opacity = XmlIo.readAttr(element, "opacity", null);
+            if (opacity != null) {
+                pos.setOpacity(Double.parseDouble(opacity));
+            }
             String assignable = XmlIo.readAttr(element, "assignable", null);
             if (assignable != null) {
                 pos.setAssignable(Boolean.parseBoolean(assignable));
@@ -112,6 +116,7 @@ public class LayoutReader {
             writer.print(" y=\"" + position.getY() + "\"");
             writer.print(" width=\"" + position.getWidth() + "\"");
             writer.print(" height=\"" + position.getHeight() + "\"");
+            writer.print(" opacity=\"" + position.getOpacity() + "\"");
             if (position.isAssignable()) {
                 writer.print(" assignable=\"true\"");
             }

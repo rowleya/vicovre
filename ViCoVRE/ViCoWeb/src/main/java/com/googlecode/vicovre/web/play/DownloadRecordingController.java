@@ -150,6 +150,7 @@ public class DownloadRecordingController implements Controller {
             String[] heights = request.getParameterValues("height");
             String[] xs = request.getParameterValues("x");
             String[] ys = request.getParameterValues("y");
+            String[] opacity = request.getParameterValues("opacity");
 
             String off = request.getParameter("offset");
             String strt = request.getParameter("start");
@@ -169,6 +170,7 @@ public class DownloadRecordingController implements Controller {
                     heights = new String[positions.size()];
                     xs = new String[positions.size()];
                     ys = new String[positions.size()];
+                    opacity = new String[positions.size()];
                     Layout layout = layoutRepository.findLayout(
                             replayLayout.getName());
                     for (int i = 0; i < positions.size(); i++) {
@@ -180,6 +182,7 @@ public class DownloadRecordingController implements Controller {
                         heights[i] = String.valueOf(layoutPos.getHeight());
                         xs[i] = String.valueOf(layoutPos.getX());
                         ys[i] = String.valueOf(layoutPos.getY());
+                        opacity[i] = String.valueOf(layoutPos.getOpacity());
                     }
                     strt = String.valueOf(replayLayout.getTime());
                     dur = String.valueOf(replayLayout.getEndTime()
@@ -223,6 +226,7 @@ public class DownloadRecordingController implements Controller {
             System.err.println("Downloading, duration = " + duration + " start = " + start + " offset = " + offset);
 
             Rectangle[] rects = new Rectangle[videoStreams.length];
+            double[] opacities = new double[videoStreams.length];
             for (int i = 0; i < videoStreams.length; i++) {
                 videoStreams[i] = new File(recording.getDirectory(),
                         videoStreams[i]).getAbsolutePath();
@@ -230,6 +234,7 @@ public class DownloadRecordingController implements Controller {
                         Integer.parseInt(xs[i]), Integer.parseInt(ys[i]),
                         Integer.parseInt(widths[i]),
                         Integer.parseInt(heights[i]));
+                opacities[i] = Double.parseDouble(opacity[i]);
             }
             for (int i = 0; i < audioStreams.length; i++) {
                 audioStreams[i] = new File(recording.getDirectory(),
@@ -276,8 +281,8 @@ public class DownloadRecordingController implements Controller {
 
             try {
                 VideoExtractor extractor = new VideoExtractor(format,
-                        videoStreams, rects, audioStreams, syncStreams,
-                        backgroundColour, typeRepository, outSize);
+                        videoStreams, rects, opacities, audioStreams,
+                        syncStreams, backgroundColour, typeRepository, outSize);
                 extractor.setAutoGain(agc);
                 extractor.setGenerationSpeed(generationSpeed);
                 response.setContentType(format);

@@ -43,6 +43,7 @@ public class LayoutPosition {
 
     private int x = 0;
     private int y = 0;
+    private double opacity = 1.0;
     private int width = 0;
     private int height = 0;
     private String name;
@@ -83,6 +84,15 @@ public class LayoutPosition {
     @XmlElement
     public int getY() {
         return y;
+    }
+
+    public void setOpacity(double opacity) {
+        this.opacity = opacity;
+    }
+
+    @XmlElement
+    public double getOpacity() {
+        return opacity;
     }
 
     public void setWidth(int width) {

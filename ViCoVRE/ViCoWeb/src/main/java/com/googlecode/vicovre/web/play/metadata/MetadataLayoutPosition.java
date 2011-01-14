@@ -17,6 +17,7 @@ public class MetadataLayoutPosition {
     private int height = 0;
     private int x = 0;
     private int y = 0;
+    private double opacity = 0;
     private boolean changes = false;
     private Vector<MetadataStream> audioStreams = new Vector<MetadataStream>();
 
@@ -34,6 +35,7 @@ public class MetadataLayoutPosition {
         if (layoutPosition != null) {
             x = layoutPosition.getX();
             y = layoutPosition.getY();
+            opacity = layoutPosition.getOpacity();
             width = layoutPosition.getWidth();
             height = layoutPosition.getHeight();
             changes = layoutPosition.hasChanges();
@@ -51,6 +53,7 @@ public class MetadataLayoutPosition {
         type = layoutPosition.getName();
         x = layoutPosition.getX();
         y = layoutPosition.getY();
+        opacity = layoutPosition.getOpacity();
         width = layoutPosition.getWidth();
         height = layoutPosition.getHeight();
     }
@@ -81,6 +84,10 @@ public class MetadataLayoutPosition {
 
     public int getY() {
         return y;
+    }
+
+    public double getOpacity() {
+        return opacity;
     }
 
     public boolean isChanges() {

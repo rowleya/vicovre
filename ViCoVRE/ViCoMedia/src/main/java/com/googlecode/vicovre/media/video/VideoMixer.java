@@ -73,7 +73,7 @@ public class VideoMixer {
     private boolean firstFrameRead = false;
 
     public VideoMixer(MemeticFileReader[] sources, Rectangle[] positions,
-            int backgroundColour, boolean forceFillFirstFrame,
+            double[] opacity, int backgroundColour, boolean forceFillFirstFrame,
             Dimension outputSize)
             throws UnsupportedFormatException {
         this.sources = new VideoSource[sources.length];
@@ -134,7 +134,7 @@ public class VideoMixer {
                     0, ysize, ysize + csize);
             this.sources[i] = new VideoSource(sources[i], convertFormat,
                     minStartTime, (int) (positions[i].x * scaleWidth),
-                    (int) (positions[i].y * scaleHeight));
+                    (int) (positions[i].y * scaleHeight), opacity[i]);
             sourceFinished[i] = false;
         }
 

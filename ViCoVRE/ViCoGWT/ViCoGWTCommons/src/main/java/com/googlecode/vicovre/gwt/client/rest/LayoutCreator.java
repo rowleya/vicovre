@@ -63,7 +63,7 @@ public class LayoutCreator extends AbstractVoidRestCall {
         this.layout = layout;
         this.popup = popup;
         this.url = url + "layout/custom/"
-            + URL.encodeComponent(layout.getName()).replaceAll("+", "%20");
+        + URL.encodeQueryString(layout.getName());
     }
 
     public void go() {
@@ -76,8 +76,7 @@ public class LayoutCreator extends AbstractVoidRestCall {
             } else {
                 layoutUrl += "&";
             }
-            String name = URL.encodeComponent(
-                    position.getName()).replaceAll("+", "%20");
+            String name = URL.encodeQueryString(position.getName());
             layoutUrl += "position=" + name;
             layoutUrl += "&" + name + "X=" + position.getX();
             layoutUrl += "&" + name + "Y=" + position.getY();
@@ -86,6 +85,7 @@ public class LayoutCreator extends AbstractVoidRestCall {
             layoutUrl += "&" + name + "Assignable=" + position.isAssignable();
             layoutUrl += "&" + name + "HasChanges=" + position.hasChanges();
             layoutUrl += "&" + name + "HasAudio=" + position.hasAudio();
+            layoutUrl += "&" + name + "Opacity=" + position.getOpacity();
         }
         go(layoutUrl, Method.PUT);
     }

@@ -85,8 +85,10 @@ public class VideoSource {
 
     private int y = 0;
 
+    private double opacity = 1.0;
+
     public VideoSource(MemeticFileReader source, VideoFormat convertFormat,
-            long minStartTime, int x, int y)
+            long minStartTime, int x, int y, double opacity)
     throws UnsupportedFormatException {
         this.source = source;
         this.startTime = source.getStartTime();
@@ -94,6 +96,7 @@ public class VideoSource {
         this.x = x;
         this.y = y;
         this.convertFormat = convertFormat;
+        this.opacity = opacity;
         inputProcessor = new SimpleProcessor(source.getFormat(),
                 (VideoFormat) null);
         format = (VideoFormat) inputProcessor.getOutputFormat();
@@ -183,6 +186,7 @@ public class VideoSource {
             readBuffer();
             frameCopied = false;
         }
+        frameCopied = false;
 
         if (!force && ((buffer == null)
                 || (currentOffset < bufferStartOffset)
@@ -220,11 +224,27 @@ public class VideoSource {
                 int srcPos = offset
                     + (size.width * i * rgb.getPixelStride());
                 int destPos = bufferToFill.getOffset()
-                    + (targetSize.width * (x + i) * targetRgb.getPixelStride())
+                    + (targetSize.width * (x + i)
+                            * targetRgb.getPixelStride())
                     + (y * targetRgb.getPixelStride());
-                int length = size.width * rgb.getPixelStride();
-                System.arraycopy(data, srcPos,
-                    targetData, destPos, length);
+                if (opacity == 1.0) {
+                    int length = size.width * rgb.getPixelStride();
+                    System.arraycopy(data, srcPos,
+                        targetData, destPos, length);
+                } else {
+                    if (data instanceof byte[]) {
+                        byte[] bData = (byte[]) data;
+                        byte[] bTargetData = (byte[]) targetData;
+                        for (int j = 0; j < (size.width * rgb.getPixelStride());
+                                j++) {
+                            bTargetData[destPos + j] = (byte)
+                                (bTargetData[destPos + j]
+                                            * (1.0 - opacity));
+                            bTargetData[destPos + j] += (byte)
+                                (bData[srcPos + j] * opacity);
+                        }
+                    }
+                }
             }
         } else if (bufferFormat instanceof YUVFormat) {
             YUVFormat yuv = (YUVFormat) format;
@@ -269,8 +289,20 @@ public class VideoSource {
                         int destPos = targetOff
                             + (((y / ratios[j]) + i) * targetStride)
                             + (x / ratios[j]);
-                        System.arraycopy(data, srcPos,
-                            targetData, destPos, stride);
+                        if (opacity == 1.0) {
+                            System.arraycopy(data, srcPos,
+                                targetData, destPos, stride);
+                        } else {
+                            byte[] bData = (byte[]) data;
+                            byte[] bTargetData = (byte[]) targetData;
+                            for (int k = 0; k < stride; k++) {
+                                int val = bTargetData[destPos + k] & 0xFF;
+                                int sVal = bData[srcPos + k] & 0xFF;
+                                val = (int) ((val * (1 - opacity))
+                                        + (sVal * opacity));
+                                bTargetData[destPos + k] = (byte) (val & 0xFF);
+                            }
+                        }
                     }
                 }
             }

@@ -46,6 +46,8 @@ public class LayoutPosition {
 
     private int height = 0;
 
+    private double opacity = 1.0;
+
     private boolean assignable = false;
 
     private boolean hasChanges = false;
@@ -54,12 +56,14 @@ public class LayoutPosition {
 
     public LayoutPosition(JSONLayoutPosition position) {
         this(position.getName(), position.getX(), position.getY(),
-            position.getWidth(), position.getHeight(), position.isAssignable(),
-            position.hasChanges(), position.hasAudio());
+            position.getWidth(), position.getHeight(), position.getOpacity(),
+            position.isAssignable(), position.hasChanges(),
+            position.hasAudio());
     }
 
     public LayoutPosition(String name, int x, int y, int width, int height,
-            boolean assignable, boolean hasChanges, boolean hasAudio) {
+            double opacity, boolean assignable, boolean hasChanges,
+            boolean hasAudio) {
         this.name = name;
         this.x = x;
         this.y = y;
@@ -68,6 +72,7 @@ public class LayoutPosition {
         this.assignable = assignable;
         this.hasChanges = hasChanges;
         this.hasAudio = hasAudio;
+        this.opacity = opacity;
     }
 
     public String getName() {
@@ -100,5 +105,9 @@ public class LayoutPosition {
 
     public boolean hasAudio() {
         return hasAudio;
+    }
+
+    public double getOpacity() {
+        return opacity;
     }
 }
