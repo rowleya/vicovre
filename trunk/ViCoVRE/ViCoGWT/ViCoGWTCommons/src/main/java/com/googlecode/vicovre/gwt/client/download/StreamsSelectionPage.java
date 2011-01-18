@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
 import java.util.Vector;
 
@@ -48,12 +48,16 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.videolayout.VideoPreviewPanel;
+import com.googlecode.vicovre.gwt.client.wizard.Wizard;
+import com.googlecode.vicovre.gwt.client.wizard.WizardPage;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.Space;
 
 
 public class StreamsSelectionPage extends WizardPage implements ClickHandler {
+
+    public static final int INDEX = 4;
 
     private Vector<CheckBox> streamBoxes = new Vector<CheckBox>();
 
@@ -176,7 +180,7 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
     }
 
     public int back(Wizard wizard) {
-        return Application.FORMAT_SELECTION;
+        return FormatSelectionPage.INDEX;
     }
 
     public boolean isFirst() {
@@ -234,6 +238,10 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
                     "status=0,toolbar=0,menubar=0,location=0,resizable=0");
             }
         }
+    }
+
+    public int getIndex() {
+        return INDEX;
     }
 
 }

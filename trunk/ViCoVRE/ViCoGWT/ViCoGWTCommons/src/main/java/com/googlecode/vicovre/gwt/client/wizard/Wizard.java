@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.wizard;
 
 import java.util.HashMap;
 
@@ -49,11 +49,13 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
 
     private Button backButton = new Button("Back");
 
+    private Button cancelButton = new Button("Cancel");
+
     private DeckPanel wizardPanel = new DeckPanel();
 
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
 
-    public Wizard() {
+    public Wizard(boolean cancelable) {
         super(new VerticalPanel());
 
         VerticalPanel panel = getWidget();
@@ -62,6 +64,11 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
 
         HorizontalPanel buttonPanel = new HorizontalPanel();
         buttonPanel.setWidth("100%");
+        if (cancelable) {
+            buttonPanel.add(cancelButton);
+            buttonPanel.setCellHorizontalAlignment(cancelButton,
+                    HorizontalPanel.ALIGN_LEFT);
+        }
         buttonPanel.add(backButton);
         buttonPanel.add(nextButton);
         buttonPanel.setCellHorizontalAlignment(backButton,
@@ -74,10 +81,11 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
 
         backButton.addClickHandler(this);
         nextButton.addClickHandler(this);
+        cancelButton.addClickHandler(this);
     }
 
-    public void addPage(WizardPage page, int index) {
-        wizardPanel.insert(page, index);
+    public void addPage(WizardPage page) {
+        wizardPanel.insert(page, page.getIndex());
     }
 
     private void selectPage(int index, boolean back) {
@@ -96,6 +104,11 @@ public class Wizard extends ModalPopup<VerticalPanel> implements ClickHandler {
     }
 
     public void onClick(ClickEvent event) {
+        if (event.getSource().equals(cancelButton)) {
+            hide();
+            return;
+        }
+
         WizardPage page = (WizardPage) wizardPanel.getWidget(
                 wizardPanel.getVisibleWidget());
 

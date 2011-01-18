@@ -53,11 +53,13 @@
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoGWTCommons</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoGWTUtils</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>

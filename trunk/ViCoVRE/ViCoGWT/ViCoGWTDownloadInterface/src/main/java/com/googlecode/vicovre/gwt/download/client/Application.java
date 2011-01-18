@@ -42,6 +42,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.auth.LoginPopup;
 import com.googlecode.vicovre.gwt.client.auth.Logout;
+import com.googlecode.vicovre.gwt.client.download.DownloadWizard;
+import com.googlecode.vicovre.gwt.client.download.StreamComparator;
 import com.googlecode.vicovre.gwt.client.json.JSONLayout;
 import com.googlecode.vicovre.gwt.client.json.JSONLayouts;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
@@ -52,20 +54,6 @@ import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponseHandler;
 
 public class Application implements EntryPoint, MessageResponseHandler {
-
-    protected static final int FORMAT_SELECTION = 0;
-
-    protected static final int LAYOUT_SELECTION = 1;
-
-    protected static final int VIDEO_SELECTION = 2;
-
-    protected static final int AUDIO_SELECTION = 3;
-
-    protected static final int STREAM_SELECTION = 4;
-
-    protected static final int DOWNLOAD_AUDIO = 5;
-
-    protected static final int DOWNLOAD_VIDEO = 6;
 
     private Dictionary parameters = Dictionary.getDictionary("Parameters");
 
@@ -151,22 +139,9 @@ public class Application implements EntryPoint, MessageResponseHandler {
 
         if (canPlay) {
             JSONStream[] streams = getStreams();
-
-            Wizard wizard = new Wizard();
-            wizard.addPage(new FormatSelectionPage(), FORMAT_SELECTION);
-            wizard.addPage(new LayoutSelectionPage(getLayouts("layouts"),
-                    getLayouts("customLayouts"), url), LAYOUT_SELECTION);
-            wizard.addPage(new VideoStreamSelectionPage(folder,
-                    recordingId, streams), VIDEO_SELECTION);
-            wizard.addPage(new AudioSelectionPage(streams),
-                    AUDIO_SELECTION);
-            wizard.addPage(new StreamsSelectionPage(streams,
-                    folder, recordingId), STREAM_SELECTION);
-            wizard.addPage(new DownloadAudioPage(folder, recordingId,
-                    streams), DOWNLOAD_AUDIO);
-            wizard.addPage(new DownloadVideoPage(folder, recordingId,
-                    streams), DOWNLOAD_VIDEO);
-            wizard.selectPage(FORMAT_SELECTION);
+            DownloadWizard wizard = new DownloadWizard(url, folder, recordingId,
+                    streams, getLayouts("layouts"),
+                    getLayouts("customLayouts"));
             wizard.center();
         } else if (role.equals("User")) {
             LoginPopup popup = new LoginPopup(url);

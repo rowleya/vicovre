@@ -71,23 +71,19 @@
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoGWTCommons</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoGWTUtils</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.googlecode.vicovre</groupId>
             <artifactId>ViCoPlayerSimple</artifactId>
             <version>${project.version}</version>
             <type>swf</type>
-        </dependency>
-        <dependency>
-            <groupId>pl.rmalinowski.gwt2swf</groupId>
-            <artifactId>gwt2swf</artifactId>
-            <version>0.6.0</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

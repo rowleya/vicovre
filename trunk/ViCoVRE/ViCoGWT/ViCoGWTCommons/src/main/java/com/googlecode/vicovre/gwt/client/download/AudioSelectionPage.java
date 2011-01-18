@@ -30,18 +30,22 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
 import java.util.Vector;
 
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.googlecode.vicovre.gwt.client.json.JSONStream;
+import com.googlecode.vicovre.gwt.client.wizard.Wizard;
+import com.googlecode.vicovre.gwt.client.wizard.WizardPage;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 
 public class AudioSelectionPage extends WizardPage {
+
+    public static final int INDEX = 3;
 
     private Vector<CheckBox> streamBoxes = new Vector<CheckBox>();
 
@@ -71,9 +75,9 @@ public class AudioSelectionPage extends WizardPage {
     public int back(Wizard wizard) {
         String format = (String) wizard.getAttribute("format");
         if (format.startsWith("video")) {
-            return Application.VIDEO_SELECTION;
+            return VideoStreamSelectionPage.INDEX;
         }
-        return Application.FORMAT_SELECTION;
+        return FormatSelectionPage.INDEX;
     }
 
     public boolean isFirst() {
@@ -101,15 +105,19 @@ public class AudioSelectionPage extends WizardPage {
         }
         wizard.setAttribute("audioStreams", audioStreams);
         if (format.startsWith("video")) {
-            return Application.DOWNLOAD_VIDEO;
+            return DownloadVideoPage.INDEX;
         }
-        return Application.DOWNLOAD_AUDIO;
+        return DownloadAudioPage.INDEX;
     }
 
     public void show(Wizard wizard) {
         for (CheckBox box : streamBoxes) {
             box.setValue(true);
         }
+    }
+
+    public int getIndex() {
+        return INDEX;
     }
 
 }

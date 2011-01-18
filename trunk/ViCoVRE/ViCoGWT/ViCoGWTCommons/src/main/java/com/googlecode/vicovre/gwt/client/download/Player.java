@@ -30,7 +30,7 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
