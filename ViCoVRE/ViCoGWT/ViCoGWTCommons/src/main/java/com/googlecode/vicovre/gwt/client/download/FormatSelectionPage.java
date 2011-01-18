@@ -30,17 +30,21 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.googlecode.vicovre.gwt.client.wizard.Wizard;
+import com.googlecode.vicovre.gwt.client.wizard.WizardPage;
 import com.googlecode.vicovre.gwt.utils.client.FormRadioButton;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
 public class FormatSelectionPage extends WizardPage implements ClickHandler {
+
+    public static final int INDEX = 0;
 
     private String format = null;
 
@@ -100,14 +104,18 @@ public class FormatSelectionPage extends WizardPage implements ClickHandler {
         wizard.setAttribute("format", format);
 
         if (format.startsWith("video")) {
-            return Application.LAYOUT_SELECTION;
+            return LayoutSelectionPage.INDEX;
         }
 
         if (format.startsWith("audio")) {
-            return Application.AUDIO_SELECTION;
+            return AudioSelectionPage.INDEX;
         }
 
-        return Application.STREAM_SELECTION;
+        return StreamsSelectionPage.INDEX;
+    }
+
+    public int getIndex() {
+        return INDEX;
     }
 
 }

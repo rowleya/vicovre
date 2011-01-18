@@ -30,19 +30,33 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
-import com.google.gwt.user.client.ui.VerticalPanel;
+import java.util.Comparator;
 
-public abstract class WizardPage extends VerticalPanel {
+import com.googlecode.vicovre.gwt.client.json.JSONStream;
 
-    public abstract void show(Wizard wizard);
+public class StreamComparator implements Comparator<JSONStream> {
 
-    public abstract int next(Wizard wizard);
+    private final int compare(String v1, String v2) {
+        if ((v1 != null) && (v2 != null)) {
+            return v1.compareTo(v2);
+        } else if (v1 != null) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
 
-    public abstract int back(Wizard wizard);
+    public int compare(JSONStream s1, JSONStream s2) {
+        int value = compare(s1.getCname(), s2.getCname());
+        if (value == 0) {
+            value = compare(s1.getName(), s2.getName());
+            if (value == 0) {
+                value = compare(s1.getNote(), s2.getNote());
+            }
+        }
+        return value;
+    }
 
-    public abstract boolean isFirst();
-
-    public abstract boolean isLast();
 }

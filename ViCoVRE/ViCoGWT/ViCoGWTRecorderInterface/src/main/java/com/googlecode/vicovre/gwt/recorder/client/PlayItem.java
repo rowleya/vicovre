@@ -88,6 +88,8 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private final Image MOVE = new Image("images/move.gif");
 
+    private final Image DOWNLOAD = new Image("images/download.gif");
+
     private FolderPanel folderPanel = null;
 
     private String id = null;
@@ -127,6 +129,9 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     private PushButton moveButton = new DragButton(MOVE,
             "Drag to a new Folder", this);
 
+    private PushButton downloadButton = new TitledPushButton(DOWNLOAD,
+            "Download");
+
     private MetadataPopup metadataPopup = null;
 
     private String url = null;
@@ -163,6 +168,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(playButton);
         buttons.add(playToVenueButton);
+        buttons.add(downloadButton);
         buttons.add(securityButton);
         buttons.add(editButton);
         buttons.add(editLayoutButton);
@@ -192,6 +198,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         playToVenueButton.addClickHandler(this);
         editLayoutButton.addClickHandler(this);
         playButton.addClickHandler(this);
+        downloadButton.addClickHandler(this);
         annotateButton.addClickHandler(this);
         securityButton.addClickHandler(this);
     }
@@ -265,6 +272,12 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         } else if (event.getSource().equals(securityButton)) {
             ItemPermissionLoader.load(url, getFolder(), "recording", id,
                     users, groups);
+        } else if (event.getSource().equals(downloadButton)) {
+            PlayItemDownloadWizard wizard = new PlayItemDownloadWizard(this,
+                    url, layouts, customLayouts);
+            ActionLoader loader = new ActionLoader(wizard, 1,
+                    "Loading recording details...", null, true, false);
+            PlayItemStreamLoader.loadStreams(this, loader, url);
         }
     }
 
@@ -322,6 +335,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
     public void setPlayable(boolean playable) {
         playToVenueButton.setEnabled(playable);
         playButton.setEnabled(playable);
+        downloadButton.setEnabled(playable);
     }
 
     public void setEditable(boolean editable) {

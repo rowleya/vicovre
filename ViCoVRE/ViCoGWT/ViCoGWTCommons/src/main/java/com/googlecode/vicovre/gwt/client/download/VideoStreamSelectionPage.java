@@ -30,25 +30,33 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
+import java.util.HashMap;
+
+import com.google.gwt.user.client.Window;
+import com.googlecode.vicovre.gwt.client.json.JSONStream;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
-import com.googlecode.vicovre.gwt.client.layout.LayoutSelectionPanel;
+import com.googlecode.vicovre.gwt.client.videolayout.VideoStreamSelectionPanel;
+import com.googlecode.vicovre.gwt.client.wizard.Wizard;
+import com.googlecode.vicovre.gwt.client.wizard.WizardPage;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
-public class LayoutSelectionPage extends WizardPage {
+public class VideoStreamSelectionPage extends WizardPage {
 
-    private LayoutSelectionPanel panel = null;
+    public static final int INDEX = 2;
 
-    public LayoutSelectionPage(Layout[] predefinedLayouts,
-            Layout[] customLayouts, String url) {
-        panel = new LayoutSelectionPanel(predefinedLayouts, customLayouts, url);
+    private VideoStreamSelectionPanel panel = null;
+
+    public VideoStreamSelectionPage(String folder,
+            String recordingId, JSONStream[] streams) {
+        panel = new VideoStreamSelectionPanel(folder, recordingId, streams);
         add(panel);
     }
 
     public int back(Wizard wizard) {
-        return Application.FORMAT_SELECTION;
+        return LayoutSelectionPage.INDEX;
     }
 
     public boolean isFirst() {
@@ -60,21 +68,35 @@ public class LayoutSelectionPage extends WizardPage {
     }
 
     public int next(Wizard wizard) {
-        Layout selection = panel.getSelection();
-        if (selection == null) {
-            MessagePopup error = new MessagePopup("Please select a layout",
-                    null, MessagePopup.ERROR,
-                    MessageResponse.OK);
-            error.center();
-            return -1;
+        String error = panel.verify();
+        if (error == null) {
+            HashMap<String, String> positionStream =
+                panel.getPositionToStreamMap();
+            wizard.setAttribute("videoStreams", positionStream);
+            return AudioSelectionPage.INDEX;
         }
-        wizard.setAttribute("layout", selection);
-
-        return Application.VIDEO_SELECTION;
+        MessagePopup errorPopup = new MessagePopup(error, null,
+                MessagePopup.ERROR, MessageResponse.OK);
+        errorPopup.center();
+        return -1;
     }
 
     public void show(Wizard wizard) {
-        panel.setLayout(null);
+        Layout layout = (Layout) wizard.getAttribute("layout");
+        int maxWidth = layout.getWidth();
+        int maxHeight = layout.getHeight() + 280;
+        if (maxWidth > Window.getClientWidth()) {
+            maxWidth = Window.getClientWidth();
+        }
+        if (maxHeight > Window.getClientHeight()) {
+            maxHeight = Window.getClientHeight();
+        }
+        panel.setWidth(maxWidth);
+        panel.setHeight(maxHeight - 180);
+        panel.setLayout(layout);
     }
 
+    public int getIndex() {
+        return INDEX;
+    }
 }

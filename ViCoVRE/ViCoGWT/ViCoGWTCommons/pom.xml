@@ -47,5 +47,10 @@
             <artifactId>dnd</artifactId>
             <version>3.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>pl.rmalinowski.gwt2swf</groupId>
+            <artifactId>gwt2swf</artifactId>
+            <version>0.6.0</version>
+        </dependency>
     </dependencies>
 </project>

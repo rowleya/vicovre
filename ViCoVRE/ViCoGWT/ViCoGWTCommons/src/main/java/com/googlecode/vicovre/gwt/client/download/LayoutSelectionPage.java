@@ -30,52 +30,59 @@
  *
  */
 
-package com.googlecode.vicovre.gwt.download.client;
+package com.googlecode.vicovre.gwt.client.download;
 
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.user.client.ui.TextBox;
+import com.googlecode.vicovre.gwt.client.layout.Layout;
+import com.googlecode.vicovre.gwt.client.layout.LayoutSelectionPanel;
+import com.googlecode.vicovre.gwt.client.wizard.Wizard;
+import com.googlecode.vicovre.gwt.client.wizard.WizardPage;
+import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
+import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
 
-public class NumberBox extends TextBox implements KeyPressHandler {
+public class LayoutSelectionPage extends WizardPage {
 
-    public NumberBox(Integer number) {
-        if (number != null) {
-            setText("" + number);
-        }
-        addKeyPressHandler(this);
+    public static final int INDEX = 1;
+
+    private LayoutSelectionPanel panel = null;
+
+    public LayoutSelectionPage(Layout[] predefinedLayouts,
+            Layout[] customLayouts, String url) {
+        panel = new LayoutSelectionPanel(predefinedLayouts, customLayouts, url);
+        add(panel);
     }
 
-    public void onKeyPress(KeyPressEvent event) {
-        char keyCode = event.getCharCode();
-        if (!Character.isDigit(keyCode)
-                && (keyCode != (char) KeyCodes.KEY_TAB)
-                && (keyCode != (char) KeyCodes.KEY_BACKSPACE)
-                && (keyCode != (char) KeyCodes.KEY_DELETE)
-                && (keyCode != (char) KeyCodes.KEY_ENTER)
-                && (keyCode != (char) KeyCodes.KEY_HOME)
-                && (keyCode != (char) KeyCodes.KEY_END)
-                && (keyCode != (char) KeyCodes.KEY_LEFT)
-                && (keyCode != (char) KeyCodes.KEY_UP)
-                && (keyCode != (char) KeyCodes.KEY_RIGHT)
-                && (keyCode != (char) KeyCodes.KEY_DOWN)) {
-            cancelKey();
-        }
+    public int back(Wizard wizard) {
+        return FormatSelectionPage.INDEX;
     }
 
-    public Integer getNumber() {
-        String number = getText();
-        if (number.equals("")) {
-            return null;
-        }
-        return Integer.valueOf(number);
+    public boolean isFirst() {
+        return false;
     }
 
-    public void setNumber(Integer number) {
-        if (number == null) {
-            setText("");
-        } else {
-            setText("" + number);
-        }
+    public boolean isLast() {
+        return false;
     }
+
+    public int next(Wizard wizard) {
+        Layout selection = panel.getSelection();
+        if (selection == null) {
+            MessagePopup error = new MessagePopup("Please select a layout",
+                    null, MessagePopup.ERROR,
+                    MessageResponse.OK);
+            error.center();
+            return -1;
+        }
+        wizard.setAttribute("layout", selection);
+
+        return VideoStreamSelectionPage.INDEX;
+    }
+
+    public void show(Wizard wizard) {
+        panel.setLayout(null);
+    }
+
+    public int getIndex() {
+        return INDEX;
+    }
+
 }
