@@ -36,7 +36,6 @@ import org.restlet.client.data.Method;
 import org.restlet.client.data.Reference;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.rest.AbstractPlainRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.FolderPanel;
@@ -71,24 +70,17 @@ public class HarvestItemCreator extends AbstractPlainRestCall
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void createHarvestItem(FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
-            String url, Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            String url, Layout[] layouts, Layout[] customLayouts) {
         HarvestItemCreator creator = new HarvestItemCreator(folderPanel,
-                recordPanel, playPanel, panel, url, layouts, customLayouts,
-                users, groups);
+                recordPanel, playPanel, panel, url, layouts, customLayouts);
         creator.go();
     }
 
     public HarvestItemCreator(FolderPanel folderPanel, RecordPanel recordPanel,
             PlayPanel playPanel, HarvestPanel panel, String url,
-            Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         this.folderPanel = folderPanel;
         this.recordPanel = recordPanel;
         this.playPanel = playPanel;
@@ -97,8 +89,6 @@ public class HarvestItemCreator extends AbstractPlainRestCall
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
@@ -124,7 +114,7 @@ public class HarvestItemCreator extends AbstractPlainRestCall
         if (response.getResponseCode() == MessageResponse.OK) {
             item = new HarvestItem(baseUrl, folderPanel, recordPanel,
                     playPanel, null, popup.getName(), popup,
-                    layouts, customLayouts, users, groups);
+                    layouts, customLayouts);
             item.handleResponse(response);
             item.setCreated(false);
             item.setStatus("Creating...");

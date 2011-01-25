@@ -36,6 +36,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
+import com.googlecode.vicovre.gwt.client.json.JSONGroups;
+import com.googlecode.vicovre.gwt.client.json.JSONUsers;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
 import com.googlecode.vicovre.gwt.recorder.client.ItemPermissionPopup;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
@@ -56,6 +58,10 @@ public class ItemPermissionLoader extends AbstractJSONRestCall {
 
     private JsArrayString groups = null;
 
+    private boolean usersLoaded = false;
+
+    private boolean groupsLoaded = false;
+
     private JSONACL readAcl = null;
 
     private JSONACL playAcl = null;
@@ -64,15 +70,15 @@ public class ItemPermissionLoader extends AbstractJSONRestCall {
             true);
 
     public static void load(String url, String folder, String type,
-            String id, JsArrayString users, JsArrayString groups) {
+            String id) {
         ItemPermissionLoader loader = new ItemPermissionLoader(url, folder,
-                type, id, users, groups);
+                type, id);
         loader.go();
     }
 
     public ItemPermissionLoader(String url, String folder, String type,
-            String id, JsArrayString users, JsArrayString groups) {
-        super(true);
+            String id) {
+        super(false);
         this.baseUrl = url;
         this.url = url + type + folder;
         if (!this.url.endsWith("/")) {
@@ -82,13 +88,15 @@ public class ItemPermissionLoader extends AbstractJSONRestCall {
         this.folder = folder;
         this.type = type;
         this.id = id;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
-        if (readAcl == null) {
+        if (!usersLoaded) {
             waitPopup.center();
+            go(baseUrl + "user");
+        } else if (!groupsLoaded) {
+            go(baseUrl + "group");
+        } else if (readAcl == null) {
             String url = this.url + "read";
             GWT.log("Permission load url = " + url);
             go(url);
@@ -101,10 +109,32 @@ public class ItemPermissionLoader extends AbstractJSONRestCall {
 
     protected void onSuccess(JSONObject object) {
         if (!waitPopup.wasCancelled()) {
-            if (readAcl == null) {
+            if (!usersLoaded) {
+                if (object != null) {
+                    JSONUsers usersResponse = JSONUsers.parse(object.toString());
+                    users = usersResponse.getUsers();
+                }
+                usersLoaded = true;
+                go();
+            } else if (!groupsLoaded) {
+                if (object != null) {
+                    JSONGroups groupsResponse = JSONGroups.parse(object.toString());
+                    groups = groupsResponse.getGroups();
+                }
+                groupsLoaded = true;
+                go();
+            } else if (readAcl == null) {
+                if (object == null) {
+                    onError("Error reading read ACL!");
+                    return;
+                }
                 readAcl = JSONACL.parse(object.toString());
                 go();
             } else {
+                if (object == null) {
+                    onError("Error reading play ACL!");
+                    return;
+                }
                 waitPopup.hide();
                 playAcl = JSONACL.parse(object.toString());
                 ItemPermissionPopup popup = new ItemPermissionPopup(

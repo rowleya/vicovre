@@ -37,7 +37,6 @@ import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
@@ -70,26 +69,20 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void loadRecordingItems(String folder,
             FolderPanel folderPanel, PlayPanel playPanel,
             RecordPanel panel, ActionLoader loader, String url,
-            Layout[] layouts, Layout[] customLayouts, JsArrayString users,
-            JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         RecordingItemLoader riLoader = new RecordingItemLoader(folder,
                folderPanel, playPanel, panel, loader, url, layouts,
-               customLayouts, users, groups);
+               customLayouts);
         riLoader.go();
     }
 
     public RecordingItemLoader(String folder,
             FolderPanel folderPanel, PlayPanel playPanel,
             RecordPanel panel, ActionLoader loader, String url,
-            Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         super(false);
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
@@ -99,8 +92,6 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
@@ -116,8 +107,7 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
     public static RecordingItem buildRecordingItem(
             JSONUnfinishedRecording recording, FolderPanel folderPanel,
             PlayPanel playPanel, String baseUrl, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users,
-            JsArrayString groups) {
+            Layout[] customLayouts) {
 
         String id = recording.getId();
         if (id == null) {
@@ -134,8 +124,7 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
                 metadata.getPrimaryKey());
         metadataPopup.setMetadata(metadata);
         RecordingItem recordingItem = new RecordingItem(folderPanel, playPanel,
-                id, baseUrl, metadataPopup, null, layouts, customLayouts,
-                users, groups);
+                id, baseUrl, metadataPopup, null, layouts, customLayouts);
 
         if (recording.getStartDate() != null) {
             recordingItem.setStartDate(
@@ -192,7 +181,7 @@ public class RecordingItemLoader extends AbstractJSONRestCall {
                 for (int i = 0; i < recordings.length(); i++) {
                     RecordingItem item = buildRecordingItem(recordings.get(i),
                             folderPanel, playPanel, baseUrl, layouts,
-                            customLayouts, users, groups);
+                            customLayouts);
                     if (item != null) {
                         recordingItems.add(item);
                     }

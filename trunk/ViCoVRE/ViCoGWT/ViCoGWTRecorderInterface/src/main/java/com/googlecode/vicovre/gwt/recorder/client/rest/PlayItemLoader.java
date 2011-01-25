@@ -37,7 +37,6 @@ import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.json.JSONRecording;
 import com.googlecode.vicovre.gwt.client.json.JSONMetadata;
@@ -66,22 +65,18 @@ public class PlayItemLoader extends AbstractJSONRestCall {
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void loadPlayItems(String folder, FolderPanel folderPanel,
             PlayPanel panel, ActionLoader loader, String url, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         PlayItemLoader itemLoader =
             new PlayItemLoader(folder, folderPanel, panel, loader, url,
-                    layouts, customLayouts, users, groups);
+                    layouts, customLayouts);
         itemLoader.go();
     }
 
     public PlayItemLoader(String folder, FolderPanel folderPanel,
             PlayPanel panel, ActionLoader loader, String url, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         super(false);
         this.folderPanel = folderPanel;
         this.panel = panel;
@@ -90,8 +85,6 @@ public class PlayItemLoader extends AbstractJSONRestCall {
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
@@ -106,7 +99,7 @@ public class PlayItemLoader extends AbstractJSONRestCall {
 
     public static PlayItem buildPlayItem(JSONRecording recording,
             FolderPanel folderPanel, String baseUrl, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         String id = recording.getId();
         JSONMetadata metadata = recording.getMetadata();
         if (metadata == null) {
@@ -117,7 +110,7 @@ public class PlayItemLoader extends AbstractJSONRestCall {
         MetadataPopup popup = new MetadataPopup(primaryKey);
         popup.setMetadata(metadata);
         PlayItem playItem = new PlayItem(baseUrl, folderPanel, id, popup,
-                layouts, customLayouts, users, groups);
+                layouts, customLayouts);
         playItem.setStartDate(JSONRecording.DATE_FORMAT.parse(
                 recording.getStartTime()));
         playItem.setDuration((long) recording.getDuration());
@@ -135,8 +128,7 @@ public class PlayItemLoader extends AbstractJSONRestCall {
                 Vector<PlayItem> playItems = new Vector<PlayItem>();
                 for (int i = 0; i < recordings.length(); i++) {
                     PlayItem item = buildPlayItem(recordings.get(i),
-                            folderPanel, baseUrl, layouts, customLayouts,
-                            users, groups);
+                            folderPanel, baseUrl, layouts, customLayouts);
                     if (item != null) {
                         playItems.add(item);
                     }

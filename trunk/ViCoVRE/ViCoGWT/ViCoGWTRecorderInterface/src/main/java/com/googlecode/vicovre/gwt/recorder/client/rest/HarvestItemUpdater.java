@@ -37,7 +37,6 @@ import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
@@ -65,24 +64,17 @@ public class HarvestItemUpdater extends AbstractJSONRestCall {
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void harvest(HarvestItem item, FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, String url,
-            Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         HarvestItemUpdater updater = new HarvestItemUpdater(item, folderPanel,
-                recordPanel, playPanel, url, layouts, customLayouts,
-                users, groups);
+                recordPanel, playPanel, url, layouts, customLayouts);
         updater.go();
     }
 
     public HarvestItemUpdater(HarvestItem item, FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, String url,
-            Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         super(false);
         this.item = item;
         this.folderPanel = folderPanel;
@@ -90,8 +82,6 @@ public class HarvestItemUpdater extends AbstractJSONRestCall {
         this.playPanel = playPanel;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
         this.url = url + "harvest" + item.getFolder();
         if (!this.url.endsWith("/")) {
             this.url += "/";
@@ -124,7 +114,7 @@ public class HarvestItemUpdater extends AbstractJSONRestCall {
                         RecordingItem item =
                             RecordingItemLoader.buildRecordingItem(
                                 recordings.get(i), folderPanel, playPanel, url,
-                                layouts, customLayouts, users, groups);
+                                layouts, customLayouts);
                         if (item != null) {
                             recordingItems.add(item);
                         }

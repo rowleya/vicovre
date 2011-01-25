@@ -468,4 +468,34 @@ public class RecordingHandler extends AbstractHandler {
         return Response.ok().build();
     }
 
+    @Path("/{folder: .*}/lifetime")
+    @GET
+    @Produces("text/plain")
+    public Response getLifetime(@Context UriInfo uriInfo) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+        return Response.ok(String.valueOf(recording.getLifetime())).build();
+    }
+
+    @Path("/{folder: .*}/lifetime")
+    @PUT
+    public Response setLifetime(@Context UriInfo uriInfo,
+            @QueryParam("lifetime") long lifetime) throws IOException {
+        String folder = getFolderPath(uriInfo, 1, 2);
+        String id = getId(uriInfo, 1);
+
+        Recording recording = getDatabase().getRecording(folder, id);
+        if (recording == null) {
+            throw new FileNotFoundException("Recording " + id + " not found");
+        }
+        recording.setLifetime(lifetime);
+        getDatabase().updateRecordingLifetime(recording);
+        return Response.ok().build();
+    }
+
 }

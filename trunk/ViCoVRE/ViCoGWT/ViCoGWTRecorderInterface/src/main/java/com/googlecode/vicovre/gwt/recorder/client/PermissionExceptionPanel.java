@@ -14,6 +14,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.vicovre.gwt.client.json.JSONACL;
 import com.googlecode.vicovre.gwt.client.json.JSONACLEntity;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
+import com.googlecode.vicovre.gwt.recorder.client.rest.GroupDeleter;
+import com.googlecode.vicovre.gwt.recorder.client.rest.GroupLoader;
 
 public class PermissionExceptionPanel extends VerticalPanel
         implements ClickHandler {
@@ -34,9 +36,21 @@ public class PermissionExceptionPanel extends VerticalPanel
 
     private Button removeUserException = new Button("Remove -->");
 
+    private Button createUser = new Button("Create User");
+
     private Button addGroupException = new Button("<-- Add");
 
     private Button removeGroupException = new Button("Remove -->");
+
+    private Button createGroup = new Button("Create Group");
+
+    private Button editAddedGroup = new Button("Edit");
+
+    private Button deleteAddedGroup = new Button("Delete");
+
+    private Button editGroup = new Button("Edit");
+
+    private Button deleteGroup = new Button("Delete");
 
     private Button addRoleException = new Button("<-- Add");
 
@@ -48,8 +62,14 @@ public class PermissionExceptionPanel extends VerticalPanel
 
     private Button clearRoleExceptions = new Button("Clear");
 
+    private JsArrayString users = null;
+
+    private String url = null;
+
     public PermissionExceptionPanel(JsArrayString users, JsArrayString groups,
-            JSONACL acl) {
+            JSONACL acl, String url) {
+        this.users = users;
+        this.url = url;
         if (users != null) {
             for (int i = 0; i < users.length(); i++) {
                 userList.addItem(users.get(i));
@@ -57,7 +77,8 @@ public class PermissionExceptionPanel extends VerticalPanel
         }
         add(new HTML("<B>Users:</B>"));
         add(createExceptionPanel(userList, userExceptionList,
-                addUserException, removeUserException, clearUserExceptions));
+                addUserException, removeUserException, clearUserExceptions,
+                createUser, null, null, null, null));
 
         if (groups != null) {
             for (int i = 0; i < groups.length(); i++) {
@@ -66,7 +87,9 @@ public class PermissionExceptionPanel extends VerticalPanel
         }
         add(new HTML("<B>Groups:</B>"));
         add(createExceptionPanel(groupList, groupExceptionList,
-                addGroupException, removeGroupException, clearGroupExceptions));
+                addGroupException, removeGroupException, clearGroupExceptions,
+                createGroup, editAddedGroup, deleteAddedGroup, editGroup,
+                deleteGroup));
 
         roleList.addItem("Administrator", JSONUser.ROLE_ADMINISTRATOR);
         roleList.addItem("Writer", JSONUser.ROLE_WRITER);
@@ -74,7 +97,8 @@ public class PermissionExceptionPanel extends VerticalPanel
         roleList.addItem("Guest", JSONUser.ROLE_GUEST);
         add(new HTML("<B>Roles:</B>"));
         add(createExceptionPanel(roleList, roleExceptionList,
-                addRoleException, removeRoleException, clearRoleExceptions));
+                addRoleException, removeRoleException, clearRoleExceptions,
+                null, null, null, null, null));
 
         JsArray<JSONACLEntity> exceptions = acl.getExceptions();
         if (exceptions != null) {
@@ -97,7 +121,48 @@ public class PermissionExceptionPanel extends VerticalPanel
 
     private HorizontalPanel createExceptionPanel(ListBox list,
             ListBox exceptionList, Button addButton, Button removeButton,
-            Button clearButton) {
+            Button clearButton, Button createButton,
+            Button editAddedButton, Button deleteAddedButton,
+            Button editButton, Button deleteButton) {
+        VerticalPanel listPanel = new VerticalPanel();
+        listPanel.setWidth("100%");
+        listPanel.setHeight("100%");
+        listPanel.add(list);
+        if ((editButton != null) || (deleteButton != null)) {
+            HorizontalPanel buttonPanel = new HorizontalPanel();
+            buttonPanel.setWidth("100%");
+            if (editButton != null) {
+                buttonPanel.add(editButton);
+                editButton.addClickHandler(this);
+                editButton.setWidth("100%");
+            }
+            if (deleteButton != null) {
+                buttonPanel.add(deleteButton);
+                deleteButton.addClickHandler(this);
+                deleteButton.setWidth("100%");
+            }
+            listPanel.add(buttonPanel);
+        }
+        VerticalPanel exceptionListPanel = new VerticalPanel();
+        exceptionListPanel.setWidth("100%");
+        exceptionListPanel.setHeight("100%");
+        exceptionListPanel.add(exceptionList);
+        if ((editAddedButton != null) || (deleteAddedButton != null)) {
+            HorizontalPanel buttonPanel = new HorizontalPanel();
+            buttonPanel.setWidth("100%");
+            if (editAddedButton != null) {
+                buttonPanel.add(editAddedButton);
+                editAddedButton.addClickHandler(this);
+                editAddedButton.setWidth("100%");
+            }
+            if (deleteAddedButton != null) {
+                buttonPanel.add(deleteAddedButton);
+                deleteAddedButton.addClickHandler(this);
+                deleteAddedButton.setWidth("100%");
+            }
+            exceptionListPanel.add(buttonPanel);
+        }
+
         list.setWidth("100%");
         list.setHeight("100%");
         exceptionList.setWidth("100%");
@@ -111,17 +176,23 @@ public class PermissionExceptionPanel extends VerticalPanel
         buttonPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
+        if (createButton != null) {
+            buttonPanel.add(createButton);
+        }
         buttonPanel.add(clearButton);
-        panel.add(exceptionList);
+        panel.add(exceptionListPanel);
         panel.add(buttonPanel);
-        panel.add(list);
-        panel.setCellWidth(exceptionList, "150px");
+        panel.add(listPanel);
+        panel.setCellWidth(exceptionListPanel, "300px");
         panel.setCellWidth(buttonPanel, "100px");
-        panel.setCellWidth(list, "150px");
+        panel.setCellWidth(listPanel, "300px");
 
         addButton.addClickHandler(this);
         removeButton.addClickHandler(this);
         clearButton.addClickHandler(this);
+        if (createButton != null) {
+            createButton.addClickHandler(this);
+        }
         return panel;
     }
 
@@ -171,6 +242,36 @@ public class PermissionExceptionPanel extends VerticalPanel
             moveSelectedItems(roleExceptionList, roleList);
         } else if (event.getSource() == clearRoleExceptions) {
             clearItems(roleExceptionList, roleList);
+        } else if (event.getSource() == createUser) {
+            CreateUserPopup popup = new CreateUserPopup(this, url);
+            popup.center();
+        } else if (event.getSource() == createGroup) {
+            CreateGroupPopup popup = new CreateGroupPopup(this, url);
+            popup.center();
+        } else if (event.getSource() == editAddedGroup) {
+            if (groupExceptionList.getSelectedIndex() >= 0) {
+                String group = groupExceptionList.getValue(
+                        groupExceptionList.getSelectedIndex());
+                GroupLoader.load(url, group, users);
+            }
+        } else if (event.getSource() == deleteAddedGroup) {
+            if (groupExceptionList.getSelectedIndex() >= 0) {
+                String group = groupExceptionList.getValue(
+                        groupExceptionList.getSelectedIndex());
+                GroupDeleter.delete(this, group, url);
+            }
+        } else if (event.getSource() == editGroup) {
+            if (groupList.getSelectedIndex() >= 0) {
+                String group = groupList.getValue(
+                        groupList.getSelectedIndex());
+                GroupLoader.load(url, group, users);
+            }
+        } else if (event.getSource() == deleteGroup) {
+            if (groupList.getSelectedIndex() >= 0) {
+                String group = groupList.getValue(
+                        groupList.getSelectedIndex());
+                GroupDeleter.delete(this, group, url);
+            }
         }
     }
 
@@ -200,6 +301,28 @@ public class PermissionExceptionPanel extends VerticalPanel
             exceptions.add(roleExceptionList.getValue(i));
         }
         return exceptions.toArray(new String[0]);
+    }
+
+    public void addUser(String username) {
+        userExceptionList.addItem(username);
+        users.push(username);
+    }
+
+    public void addGroup(String group) {
+        groupExceptionList.addItem(group);
+    }
+
+    public void deleteGroup(String group) {
+        for (int i = 0; i < groupExceptionList.getItemCount(); i++) {
+            if (groupExceptionList.getValue(i).equals(group)) {
+                groupExceptionList.removeItem(i);
+            }
+        }
+        for (int i = 0; i < groupList.getItemCount(); i++) {
+            if (groupList.getValue(i).equals(group)) {
+                groupList.removeItem(i);
+            }
+        }
     }
 
 }

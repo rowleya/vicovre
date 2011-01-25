@@ -38,7 +38,7 @@ public class JSONUser extends JavaScriptObject {
 
     public static final String ROLE_GUEST = "User";
 
-    public static final String ROLE_USER = "AuthUser";
+    public static final String ROLE_USER = "AuthorizedUser";
 
     public static final String ROLE_WRITER = "Writer";
 

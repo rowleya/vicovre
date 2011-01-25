@@ -69,6 +69,11 @@ public interface RecordingDatabase {
     public void setFolderMetadata(String folder, Metadata metadata)
         throws IOException;
 
+    public long getFolderLifetime(String folder);
+
+    public void setFolderLifetime(String folder, long lifetime)
+        throws IOException;
+
     public void addHarvestSource(HarvestSource harvestSource)
             throws IOException;
 

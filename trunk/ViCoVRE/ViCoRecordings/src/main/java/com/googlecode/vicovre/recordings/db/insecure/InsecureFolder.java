@@ -424,4 +424,12 @@ public class InsecureFolder {
     public int compareTo(InsecureFolder f) {
         return getName().compareTo(f.getName());
     }
+
+    protected long getDefaultRecordingLifetime() {
+        return defaultRecordingLifetime;
+    }
+
+    protected void setDefaultRecordingLifetime(long defaultRecordingLifetime) {
+        this.defaultRecordingLifetime = defaultRecordingLifetime;
+    }
 }

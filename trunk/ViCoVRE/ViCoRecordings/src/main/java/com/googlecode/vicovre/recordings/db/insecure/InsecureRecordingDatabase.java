@@ -404,6 +404,7 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
     public void addRecording(Recording recording, UnfinishedRecording creator)
             throws IOException {
         editRecording(recording, creator);
+        recording.setLifetime(defaultRecordingLifetime);
         for (RecordingListener listener : recordingListeners) {
             listener.recordingAdded(recording);
         }
@@ -616,6 +617,51 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
                     new File(file, RecordingConstants.FOLDER_METADATA));
             MetadataReader.writeMetadata(metadata, output);
             output.close();
+        }
+    }
+
+    public long getFolderLifetime(String folderPath) {
+        File file = getFile(folderPath);
+        InsecureFolder folder = getFolder(file);
+        if (folder != null) {
+            return folder.getDefaultRecordingLifetime();
+        }
+        return 0;
+    }
+
+    private void propagateFolderLifetime(InsecureFolder folder, long lifetime) {
+        for (Recording recording : folder.getRecordings()) {
+            File lifetimeFile = new File(recording.getDirectory(),
+                    RecordingConstants.LIFETIME);
+            if (!lifetimeFile.exists()) {
+                recording.setLifetime(lifetime);
+                for (RecordingListener listener : recordingListeners) {
+                    listener.recordingLifetimeUpdated(recording);
+                }
+            }
+        }
+        for (String subFolderName : folder.getFolders()) {
+            File subFolderFile = new File(folder.getFile(), subFolderName);
+            File subFolderLifetimeFile = new File(subFolderFile,
+                    RecordingConstants.LIFETIME);
+            if (!subFolderLifetimeFile.exists()) {
+                InsecureFolder subFolder = getFolder(subFolderFile);
+                if (subFolder != null) {
+                    subFolder.setDefaultRecordingLifetime(lifetime);
+                    propagateFolderLifetime(subFolder, lifetime);
+                }
+            }
+        }
+    }
+
+    public void setFolderLifetime(String folderPath, long lifetime)
+            throws IOException {
+        File file = getFile(folderPath);
+        InsecureFolder folder = getFolder(file);
+        if (folder != null) {
+            folder.setDefaultRecordingLifetime(lifetime);
+            LifetimeReader.writeLifetime(file, lifetime);
+            propagateFolderLifetime(folder, lifetime);
         }
     }
 

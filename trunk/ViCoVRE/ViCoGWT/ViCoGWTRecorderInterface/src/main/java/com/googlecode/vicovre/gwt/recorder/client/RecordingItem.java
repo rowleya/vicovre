@@ -34,8 +34,6 @@ package com.googlecode.vicovre.gwt.recorder.client;
 
 import java.util.Date;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.URL;
@@ -135,10 +133,6 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     private String emailAddress = null;
 
     private String repeatFrequency = RecordingItemPopup.NO_REPEAT;
@@ -164,7 +158,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
     public RecordingItem(FolderPanel folderPanel, PlayPanel playPanel,
             String id, String url, MetadataPopup metadataPopup,
             RecordingItemPopup popup, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
         this.id = id;
@@ -173,8 +167,6 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         this.popup = popup;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
         metadataPopup.setHandler(this);
         name.setText(metadataPopup.getPrimaryValue());
         setWidth("100%");
@@ -340,7 +332,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
             }
         } else if (event.getSource().equals(stopButton)) {
             RecordingItemStopper.stop(folderPanel, playPanel, this, url,
-                    layouts, customLayouts, users, groups);
+                    layouts, customLayouts);
         } else if (event.getSource().equals(editButton)) {
             if (popup == null) {
                 popup = new RecordingItemPopup(this, url, metadataPopup);
@@ -351,8 +343,7 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         } else if (event.getSource().equals(editMetadataButton)) {
             metadataPopup.center();
         } else if (event.getSource().equals(securityButton)) {
-            ItemPermissionLoader.load(url, getFolder(), "record", id,
-                    users, groups);
+            ItemPermissionLoader.load(url, getFolder(), "record", id);
         }
     }
 
