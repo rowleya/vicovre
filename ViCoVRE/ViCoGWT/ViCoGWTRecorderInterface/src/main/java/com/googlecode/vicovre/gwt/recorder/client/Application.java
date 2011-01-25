@@ -80,26 +80,6 @@ public class Application implements EntryPoint {
         return new Layout[0];
     }
 
-    protected JsArrayString getUsers() {
-        String usersJSON = parameters.get("users");
-        if ((usersJSON != null) && !usersJSON.equals("null")
-                && !usersJSON.equals("")) {
-            JSONUsers users = JSONUsers.parse(usersJSON);
-            return users.getUsers();
-        }
-        return null;
-    }
-
-    protected JsArrayString getGroups() {
-        String groupsJSON = parameters.get("groups");
-        if ((groupsJSON != null) && !groupsJSON.equals("null")
-                && !groupsJSON.equals("")) {
-            JSONGroups groups = JSONGroups.parse(groupsJSON);
-            return groups.getGroups();
-        }
-        return null;
-    }
-
     public static String getParam(String name) {
         return parameters.get(name);
     }
@@ -116,11 +96,8 @@ public class Application implements EntryPoint {
         String restUrl = getUrl();
         Layout[] layouts = getLayouts("layouts");
         Layout[] customLayouts = getLayouts("customLayouts");
-        JsArrayString users = getUsers();
-        JsArrayString groups = getGroups();
 
-        FolderPanel panel = new FolderPanel(restUrl, layouts, customLayouts,
-                users, groups);
+        FolderPanel panel = new FolderPanel(restUrl, layouts, customLayouts);
         StatusPanel status = new StatusPanel(restUrl, panel);
         status.setWidth("95%");
 

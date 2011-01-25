@@ -103,29 +103,24 @@ public class FolderPanel extends AbsolutePanel
 
     private boolean userIsWriter = false;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
+    private String username = null;
 
     private PickupDragController dragController = new PickupDragController(
             this, false);
 
-    public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+    public FolderPanel(String url, Layout[] layouts, Layout[] customLayouts) {
         this.url = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
 
         dragController.setBehaviorDragProxy(true);
 
         playPanel = new PlayPanel(this, url, layouts, customLayouts,
                 dragController);
         recordPanel = new RecordPanel(this, playPanel, url, layouts,
-                customLayouts, users, groups);
+                customLayouts);
         harvestPanel = new HarvestPanel(this, recordPanel, playPanel, url,
-                layouts, customLayouts, users, groups);
+                layouts, customLayouts);
         metadataPopup = new MetadataPopup("name");
         metadataPopup.setHandler(this);
 
@@ -186,6 +181,19 @@ public class FolderPanel extends AbsolutePanel
                 new FolderDropController(rootItem, url));
     }
 
+    private void createTreeHome() {
+        if ((username != null) && userIsWriter) {
+            TreeItem homeItem = new TreeItem(new HTML("Home"));
+            String path = "/home/"
+                + username.replaceAll("[^a-zA-Z\\.0-9_]", "_");
+            homeItem.setUserObject(path);
+            folderTreeItems.put(path, homeItem);
+            folders.insertItem(0, homeItem);
+            dragController.registerDropController(
+                    new FolderDropController(homeItem, url));
+        }
+    }
+
     public void addFolder(String path) {
         GWT.log("Adding folder " + path, null);
         String[] foldersInPath = path.split("/");
@@ -219,7 +227,15 @@ public class FolderPanel extends AbsolutePanel
         if (currentPath != null && currentPath.equals(path)) {
             return;
         }
+        if (currentPath != null) {
+            TreeItem currentItem = folderTreeItems.get(currentPath);
+            setStyleName(currentItem.getWidget().getElement(),
+                    "gwt-TreeItem-selected", false);
+        }
         currentPath = path;
+        TreeItem item = folderTreeItems.get(path);
+        setStyleName(item.getWidget().getElement(),
+                "gwt-TreeItem-selected", true);
 
         ActionLoader loader = new ActionLoader(null, 4,
                 "Loading Folder",
@@ -232,13 +248,11 @@ public class FolderPanel extends AbsolutePanel
         harvestPanel.clear();
 
         PlayItemLoader.loadPlayItems(path, this, playPanel, loader, url,
-                layouts, customLayouts, users, groups);
+                layouts, customLayouts);
         RecordingItemLoader.loadRecordingItems(path, this, playPanel,
-                recordPanel, loader, url, layouts, customLayouts, users,
-                groups);
+                recordPanel, loader, url, layouts, customLayouts);
         HarvestItemLoader.loadHarvestItems(path, this, recordPanel, playPanel,
-                harvestPanel, loader, url, layouts, customLayouts, users,
-                groups);
+                harvestPanel, loader, url, layouts, customLayouts);
         FolderMetadataLoader.loadMetadata(path, this, loader, url);
         if (path.equals("") || path.equals("/") || !userIsWriter) {
             editMetadataButton.setEnabled(false);
@@ -259,8 +273,8 @@ public class FolderPanel extends AbsolutePanel
         folderTreeItems.clear();
         dragController.unregisterDropControllers();
         createTreeRoot();
+        createTreeHome();
         FolderLoader.load(this, null, url);
-        setFolder("");
     }
 
     public void onSelection(SelectionEvent<TreeItem> event) {
@@ -278,8 +292,7 @@ public class FolderPanel extends AbsolutePanel
         } else if (event.getSource().equals(editMetadataButton)) {
             metadataPopup.center();
         } else if (event.getSource().equals(setPermissionsButton)) {
-            FolderPermissionLoader.load(url, getCurrentFolder(),
-                    users, groups);
+            FolderPermissionLoader.load(url, getCurrentFolder());
         }
     }
 
@@ -296,6 +309,11 @@ public class FolderPanel extends AbsolutePanel
             panel.remove(recordPanel);
             panel.remove(harvestPanel);
         }
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+        createTreeHome();
     }
 
     public void handleResponse(MessageResponse response) {

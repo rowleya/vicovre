@@ -47,6 +47,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.googlecode.vicovre.gwt.client.json.JSONUser;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Login;
 import com.googlecode.vicovre.gwt.recorder.client.rest.Logout;
+import com.googlecode.vicovre.gwt.recorder.client.rest.PasswordResetter;
+import com.googlecode.vicovre.gwt.recorder.client.rest.UserLoader;
 import com.googlecode.vicovre.gwt.utils.client.Space;
 import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
@@ -87,6 +89,10 @@ public class StatusPanel extends DockPanel implements ClickHandler,
 
     private Button changePasswordButton = new Button("Change Password");
 
+    private Button editUsersButton = new Button("Edit Users");
+
+    private Button resetPasswordButton = new Button("Reset Password");
+
     private WaitPopup loginPopup = new WaitPopup("Logging in...", true);
 
     private String url = null;
@@ -108,14 +114,19 @@ public class StatusPanel extends DockPanel implements ClickHandler,
         loginPanel.add(passwordLabel);
         loginPanel.add(password);
         loginPanel.add(loginButton);
+        loginPanel.add(resetPasswordButton);
         username.addKeyPressHandler(this);
         password.addKeyPressHandler(this);
         loginButton.addClickHandler(this);
+        resetPasswordButton.addClickHandler(this);
 
         logoutPanel.setVerticalAlignment(ALIGN_MIDDLE);
+        logoutPanel.add(editUsersButton);
+        logoutPanel.add(Space.getHorizontalSpace(5));
         logoutPanel.add(changePasswordButton);
         logoutPanel.add(Space.getHorizontalSpace(5));
         logoutPanel.add(logoutButton);
+        editUsersButton.addClickHandler(this);
         changePasswordButton.addClickHandler(this);
         logoutButton.addClickHandler(this);
 
@@ -151,6 +162,10 @@ public class StatusPanel extends DockPanel implements ClickHandler,
         } else if (event.getSource() == changePasswordButton) {
             ChangePasswordPopup popup = new ChangePasswordPopup(url);
             popup.center();
+        } else if (event.getSource() == editUsersButton) {
+            UserLoader.load(url);
+        } else if (event.getSource() == resetPasswordButton) {
+            PasswordResetter.reset(url, username.getText());
         }
     }
 
@@ -168,9 +183,12 @@ public class StatusPanel extends DockPanel implements ClickHandler,
         }
         if (role.equals(JSONUser.ROLE_ADMINISTRATOR)) {
             folderPanel.setUserIsAdministrator(true);
+            editUsersButton.setVisible(true);
         } else {
             folderPanel.setUserIsAdministrator(false);
+            editUsersButton.setVisible(false);
         }
+        folderPanel.setUsername(username);
         DOM.setStyleAttribute(status.getElement(), "color",
                 "black");
     }
@@ -203,6 +221,7 @@ public class StatusPanel extends DockPanel implements ClickHandler,
         DOM.setStyleAttribute(status.getElement(), "color", "black");
         folderPanel.setUserIsWriter(false);
         folderPanel.setUserIsAdministrator(false);
+        folderPanel.setUsername(null);
         folderPanel.reload();
     }
 

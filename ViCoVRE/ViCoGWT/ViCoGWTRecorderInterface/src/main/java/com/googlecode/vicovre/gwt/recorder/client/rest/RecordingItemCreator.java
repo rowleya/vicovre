@@ -71,23 +71,18 @@ public class RecordingItemCreator extends AbstractPlainRestCall
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void createRecordingItem(FolderPanel folderPanel,
             PlayPanel playPanel, RecordPanel panel, String url,
-            Layout[] layouts, Layout[] customLayouts,
-            JsArrayString users, JsArrayString groups) {
+            Layout[] layouts, Layout[] customLayouts) {
         RecordingItemCreator creator =
             new RecordingItemCreator(folderPanel, playPanel, panel, url,
-                    layouts, customLayouts, users, groups);
+                    layouts, customLayouts);
         creator.go();
     }
 
     private RecordingItemCreator(FolderPanel folderPanel, PlayPanel playPanel,
             RecordPanel panel, String url, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         this.folderPanel = folderPanel;
         this.playPanel = playPanel;
         this.panel = panel;
@@ -96,8 +91,6 @@ public class RecordingItemCreator extends AbstractPlainRestCall
         this.metadataPopup = new MetadataPopup("Name");
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
@@ -122,7 +115,7 @@ public class RecordingItemCreator extends AbstractPlainRestCall
         if (response.getResponseCode() == MessageResponse.OK) {
             item = new RecordingItem(folderPanel, playPanel, null,
                     baseUrl, metadataPopup, popup, layouts,
-                    customLayouts, users, groups);
+                    customLayouts);
             popup.setRecordingItem(item);
             item.handleResponse(response);
             item.setCreated(false);

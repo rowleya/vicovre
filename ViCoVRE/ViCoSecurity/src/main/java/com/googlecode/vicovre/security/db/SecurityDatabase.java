@@ -32,12 +32,14 @@
 
 package com.googlecode.vicovre.security.db;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -70,11 +72,18 @@ public class SecurityDatabase {
     private static final String VALID_USERNAME =
         "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
 
+    private static final String VALID_GROUP =
+        "[A-Za-z0-9-_]{4,50}";
+
     private static final long VERIFICATION_TIMEOUT = 24 * 60 * 60 * 1000;
 
     private HashMap<String, User> unverifiedUsers = new HashMap<String, User>();
 
-    private HashSet<String> unverifiedUsernames = new HashSet<String>();
+    private HashMap<String, String> unverifiedUsernames =
+        new HashMap<String, String>();
+
+    private HashMap<String, User> passwordResets =
+        new HashMap<String, User>();
 
     private HashMap<String, User> users = new HashMap<String, User>();
 
@@ -84,6 +93,12 @@ public class SecurityDatabase {
         new HashMap<File, HashMap<String,ACL>>();
 
     private Vector<ACLListener> aclListeners = new Vector<ACLListener>();
+
+    private Vector<UserListener> userListeners = new Vector<UserListener>();
+
+    private String userHomeFolderPath = null;
+
+    private String[] userHomeIds = null;
 
     private File topLevelFolder = null;
 
@@ -115,6 +130,24 @@ public class SecurityDatabase {
         }
     }
 
+    private class PasswordResetTimeOut extends TimerTask {
+
+        private String hash = null;
+
+        private PasswordResetTimeOut(String hash) {
+            this.hash = hash;
+        }
+
+        public void run() {
+            User user = passwordResets.remove(hash);
+            if (user != null) {
+                File resetFile = new File(topLevelFolder,
+                        hash + ".passwordReset");
+                resetFile.delete();
+            }
+        }
+    }
+
     public SecurityDatabase(String directory, Emailer emailer)
             throws SAXException, IOException {
         this(directory, emailer, new String[0]);
@@ -137,6 +170,7 @@ public class SecurityDatabase {
                 adminUser = user;
             }
             users.put(user.getUsername(), user);
+            createUserHome(user);
             input.close();
         }
         if (adminUser == null) {
@@ -144,6 +178,7 @@ public class SecurityDatabase {
             adminUser.setPasswordHash(
                     "7b902e6ff1db9f560443f2048974fd7d386975b0");
             users.put(adminUser.getUsername(), adminUser);
+            createUserHome(adminUser);
         }
 
         File[] unverifiedUserFiles =
@@ -155,7 +190,22 @@ public class SecurityDatabase {
             String hash = unverifiedUserFile.getName();
             hash = hash.substring(0, hash.length() - 15);
             unverifiedUsers.put(hash, user);
-            unverifiedUsernames.add(user.getUsername());
+            unverifiedUsernames.put(user.getUsername(), hash);
+        }
+
+        File[] passwordResetFiles =
+            topLevelFolder.listFiles(new ExtensionFilter(".passwordReset"));
+        for (File passwordResetFile : passwordResetFiles) {
+            BufferedReader reader = new BufferedReader(
+                    new FileReader(passwordResetFile));
+            String username = reader.readLine();
+            reader.close();
+            User user = users.get(username);
+            if (user != null) {
+                String hash = passwordResetFile.getName();
+                hash = hash.substring(0, hash.length() - 14);
+                passwordResets.put(hash, user);
+            }
         }
 
         File[] groupFiles =
@@ -195,6 +245,38 @@ public class SecurityDatabase {
                 deleteUser(user);
             }
         }
+
+        for (String hash : passwordResets.keySet()) {
+            File passwordResetFile = new File(topLevelFolder,
+                    hash + ".passwordReset");
+            Timer timer = new Timer();
+            long timeout = (passwordResetFile.lastModified()
+                    + VERIFICATION_TIMEOUT) - System.currentTimeMillis();
+            if (timeout > 0) {
+                timer.schedule(new PasswordResetTimeOut(hash), timeout);
+            } else {
+                passwordResetFile.delete();
+                passwordResets.remove(hash);
+            }
+        }
+    }
+
+    public void setUserHome(String userHomeFolderPath,
+            String... userHomeIds) throws IOException {
+        this.userHomeFolderPath = userHomeFolderPath;
+        this.userHomeIds = userHomeIds;
+        File home = getFile(userHomeFolderPath);
+        for (String id : userHomeIds) {
+            File aclFile = new File(home, id);
+            if (!aclFile.exists()) {
+                ACL acl = new ACL(userHomeFolderPath, id, adminUser,
+                        false, false);
+                writeAcl(home, acl);
+            }
+        }
+        for (User user : users.values()) {
+            createUserHome(user);
+        }
     }
 
     public void addACLListener(ACLListener listener) {
@@ -203,6 +285,14 @@ public class SecurityDatabase {
             for (ACL acl : folder.values()) {
                 listener.ACLCreated(acl.getFolder(), acl.getId());
             }
+        }
+    }
+
+    public void addUserListener(UserListener listener) {
+        userListeners.add(listener);
+        for (User user : users.values()) {
+            listener.addUser(user.getUsername(), user.getRole(),
+                    user.getHomeFolder());
         }
     }
 
@@ -251,6 +341,11 @@ public class SecurityDatabase {
             throw new InvalidOperationException(
                     "The user still owns some items");
         }
+        if (user.getRole().equals(Role.ADMINISTRATOR)
+                && !user.equals(getCurrentUser(null, null))) {
+            throw new InvalidOperationException(
+                    "An administrator can only delete themselves");
+        }
         deleteEntity(user);
         List<Group> groups = user.getGroups();
         for (Group group : groups) {
@@ -276,8 +371,12 @@ public class SecurityDatabase {
     }
 
     private void writeUser(User user) throws IOException {
+        String extension = ".user";
+        if (!users.containsKey(user.getUsername())) {
+            extension = ".unverifiedUser";
+        }
         FileOutputStream output = new FileOutputStream(
-                new File(topLevelFolder, user.getUsername() + ".user"));
+                new File(topLevelFolder, user.getUsername() + extension));
         UserReader.writeUser(output, user);
         output.close();
     }
@@ -296,17 +395,43 @@ public class SecurityDatabase {
         }
     }
 
+    private void createUserHome(User user) throws IOException {
+        if (user.getRole().is(Role.WRITER)) {
+            if (userHomeFolderPath != null) {
+                String path = user.getUsername().replaceAll(
+                        "[^a-zA-Z\\.0-9_]", "_");
+                File home = new File(getFile(userHomeFolderPath), path);
+                if (!home.exists()) {
+                    home.mkdirs();
+                }
+                String homeFolder = userHomeFolderPath + "/" + path;
+                user.setHomeFolder(homeFolder);
+                for (String id : userHomeIds) {
+                    File aclFile = new File(home, id);
+                    if (!aclFile.exists()) {
+                        ACL acl = new ACL(homeFolder, id, user, false, false);
+                        writeAcl(home, acl);
+                    }
+                }
+            }
+        }
+    }
+
     private void addUser(String username, String password, Role role)
             throws IOException {
         checkUsername(username);
         checkPassword(password);
         if (!users.containsKey(username)
-                && !unverifiedUsernames.contains(username)) {
+                && !unverifiedUsernames.containsKey(username)) {
             User user = new User(username, role);
             synchronized (user) {
                 Password.setPassword(password, user);
                 users.put(username, user);
                 writeUser(user);
+            }
+            createUserHome(user);
+            for (UserListener listener : userListeners) {
+                listener.addUser(username, role, user.getHomeFolder());
             }
         } else {
             throw new AlreadyExistsException(
@@ -325,7 +450,7 @@ public class SecurityDatabase {
             checkUsername(username);
             checkPassword(password);
             if (!users.containsKey(username)
-                    && !unverifiedUsernames.contains(username)) {
+                    && !unverifiedUsernames.containsKey(username)) {
                 User user = new User(username, Role.AUTHUSER);
                 Password.setPassword(password, user);
                 String hash = UUID.randomUUID().toString();
@@ -356,7 +481,7 @@ public class SecurityDatabase {
                 }
                 emailer.send(username, "New User Verification", message);
                 unverifiedUsers.put(hash, user);
-                unverifiedUsernames.add(username);
+                unverifiedUsernames.put(username, hash);
                 Timer timer = new Timer();
                 timer.schedule(new VerificationTimeOut(hash),
                         VERIFICATION_TIMEOUT);
@@ -371,7 +496,51 @@ public class SecurityDatabase {
         }
     }
 
-    public void verifyUser(String hash) {
+    public void resetPasswordRequest(String username, String passwordUrl)
+            throws EmailException, IOException {
+        String hash = UUID.randomUUID().toString();
+        User user = users.get(username);
+        if (user == null) {
+            user = unverifiedUsers.get(username);
+        }
+        if (user == null) {
+            throw new UnknownException("User " + username + " unknown");
+        }
+
+        passwordResets.put(hash, user);
+        File file = new File(topLevelFolder, hash + ".passwordReset");
+        PrintWriter writer = new PrintWriter(file);
+        writer.println(user.getUsername());
+        writer.close();
+        Timer timer = new Timer();
+        timer.schedule(new PasswordResetTimeOut(hash), VERIFICATION_TIMEOUT);
+
+        String message = "A request has been made to reset your password.\n";
+        message += "To do this, please go to the following url:\n";
+        message += "    " + passwordUrl.replaceAll("$hash", hash) + "\n\n";
+        message += "If you did not request for your password to be reset, ";
+        message += "please ignore this message.";
+        emailer.send(username, "Password Reset Request", message);
+    }
+
+    public void resetPassword(String hash, String successUrl)
+            throws EmailException {
+        User user = passwordResets.remove(hash);
+        if (user == null) {
+            throw new UnknownException("The hash specified is invalid");
+        }
+        File resetFile = new File(topLevelFolder, hash + ".passwordReset");
+        resetFile.delete();
+        String password = UUID.randomUUID().toString();
+        String message = "Here is your new password:";
+        message += "    " + password + "\n\n";
+        message += "Please log in at:\n";
+        message += "    " + successUrl + "\n\n";
+        message += "and change your password as soon as possible.";
+        emailer.send(user.getUsername(), "Password Reset", message);
+    }
+
+    public void verifyUser(String hash) throws IOException {
         synchronized (users) {
             User user = unverifiedUsers.remove(hash);
             if (user == null) {
@@ -383,6 +552,11 @@ public class SecurityDatabase {
             unverifiedFile.renameTo(new File(topLevelFolder,
                     user.getUsername() + ".user"));
             users.put(user.getUsername(), user);
+            createUserHome(user);
+            for (UserListener listener : userListeners) {
+                listener.addUser(user.getUsername(), user.getRole(),
+                        user.getHomeFolder());
+            }
         }
     }
 
@@ -410,6 +584,9 @@ public class SecurityDatabase {
             throws IOException {
         synchronized (users) {
             User user = users.get(username);
+            if (user == null) {
+                user = unverifiedUsers.get(unverifiedUsernames.get(username));
+            }
             if (user == null) {
                 throw new UnknownException("Unknown user " + username);
             }
@@ -453,6 +630,9 @@ public class SecurityDatabase {
         synchronized (users) {
             User user = users.get(username);
             if (user == null) {
+                user = unverifiedUsers.get(unverifiedUsernames.get(username));
+            }
+            if (user == null) {
                 throw new UnknownException("Unknown user " + username);
             }
             Role role = Role.ROLES.get(roleName);
@@ -463,16 +643,30 @@ public class SecurityDatabase {
                 throw new InvalidOperationException(
                         "Cannot create a guest user!");
             }
+            if (user.getRole().equals(Role.ADMINISTRATOR)
+                    && !user.equals(getCurrentUser(null, null))) {
+                throw new InvalidOperationException(
+                        "An administrator can only demote themselves");
+            }
             synchronized (user) {
                 user.setRole(role);
                 writeUser(user);
+            }
+            createUserHome(user);
+            for (UserListener listener : userListeners) {
+                listener.changeRole(username, role, user.getHomeFolder());
             }
         }
     }
 
     public void deleteUser(String username) throws IOException {
         synchronized (users) {
+            boolean unverified = false;
             User user = users.get(username);
+            if (user == null) {
+                user = unverifiedUsers.get(unverifiedUsernames.get(username));
+                unverified = true;
+            }
             if (user == null) {
                 throw new UnknownException("Unknown user " + username);
             }
@@ -487,10 +681,20 @@ public class SecurityDatabase {
 
             synchronized (user) {
                 deleteUser(user);
+                String extension = ".user";
+                if (unverified) {
+                    extension = ".unverifiedUser";
+                }
                 users.remove(username);
+                String hash = unverifiedUsernames.remove(username);
+                unverifiedUsers.remove(hash);
                 File userFile = new File(topLevelFolder,
-                        user.getUsername() + ".user");
+                        user.getUsername() + extension);
                 userFile.delete();
+            }
+            for (UserListener listener : userListeners) {
+                listener.deleteUser(username, user.getRole(),
+                        user.getHomeFolder());
             }
         }
     }
@@ -500,18 +704,20 @@ public class SecurityDatabase {
             throw new UnauthorizedException(
                     "You must have write permission to see the user list");
         }
-        return new Vector<String>(users.keySet());
+        Vector<String> userList = new Vector<String>(users.keySet());
+        userList.addAll(unverifiedUsernames.keySet());
+        return userList;
     }
 
     private void writeGroup(Group group) throws IOException {
-        FileOutputStream output = new FileOutputStream(group.getName()
-                + ".group");
+        FileOutputStream output = new FileOutputStream(
+                new File(topLevelFolder, group.getName() + ".group"));
         GroupReader.writeGroup(output, group);
         output.close();
     }
 
     private void checkGroupName(String groupname) {
-        if (!groupname.matches(VALID_USERNAME)) {
+        if (!groupname.matches(VALID_GROUP)) {
             throw new InvalidOperationException(
                     "A group name must be between 4 and 50 characters and"
                     + " only contain the characters"
@@ -582,6 +788,10 @@ public class SecurityDatabase {
                     List<User> usersToSet = new Vector<User>();
                     for (String username : usernames) {
                         User user = users.get(username);
+                        if (user == null) {
+                            user = unverifiedUsers.get(
+                                    unverifiedUsernames.get(username));
+                        }
                         if (user == null) {
                             throw new UnknownException(
                                     "Unknown user " + username);
@@ -682,9 +892,12 @@ public class SecurityDatabase {
     public String getRole(String username) {
         User user = users.get(username);
         if (user == null) {
+            user = unverifiedUsers.get(unverifiedUsernames.get(username));
+        }
+        if (user == null) {
             throw new UnknownException("Unknown user " + username);
         }
-        if (getCurrentUser(null, null).getRole().equals(Role.ADMINISTRATOR)) {
+        if (!getCurrentUser(null, null).getRole().equals(Role.ADMINISTRATOR)) {
             throw new UnauthorizedException(
                     "You must be an adminstrator to get the role of a user");
         }
@@ -741,6 +954,9 @@ public class SecurityDatabase {
             String type = entity.getType();
             if (type.equals(TYPE_USER)) {
                 User user = users.get(name);
+                if (user == null) {
+                    user = unverifiedUsers.get(unverifiedUsernames.get(name));
+                }
                 if (user == null) {
                     throw new UnknownException("Unknown user " + name);
                 }
@@ -950,6 +1166,10 @@ public class SecurityDatabase {
 
     public boolean isAllowed(String creatorFolder, String creatorId,
             String folder, String id, boolean def) {
+        User user = getCurrentUser(creatorFolder, creatorId);
+        if (user.getRole().is(Role.ADMINISTRATOR)) {
+            return true;
+        }
         File folderFile = getFile(folder);
         synchronized (acls) {
             try {
@@ -972,5 +1192,15 @@ public class SecurityDatabase {
 
     public boolean hasRole(Role role) {
         return getCurrentUser(null, null).getRole().is(role);
+    }
+
+    public String getOwner(String folder, String id) {
+        File folderFile = getFile(folder);
+        synchronized (acls) {
+            ACL acl = obtainAcl(folderFile, folder, id, false, true);
+            synchronized (acl) {
+                return acl.getOwner().getUsername();
+            }
+        }
     }
 }

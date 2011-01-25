@@ -37,7 +37,6 @@ import java.util.Vector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.layout.Layout;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
@@ -72,24 +71,20 @@ public class HarvestItemLoader extends AbstractJSONRestCall {
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public static void loadHarvestItems(String folder, FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
             ActionLoader loader, String url, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         HarvestItemLoader itemLoader = new HarvestItemLoader(folder,
                 folderPanel, recordPanel, playPanel, panel, loader, url,
-                layouts, customLayouts, users, groups);
+                layouts, customLayouts);
         itemLoader.go();
     }
 
     public HarvestItemLoader(String folder, FolderPanel folderPanel,
             RecordPanel recordPanel, PlayPanel playPanel, HarvestPanel panel,
             ActionLoader loader, String url, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         super(false);
         this.folderPanel = folderPanel;
         this.recordPanel = recordPanel;
@@ -100,8 +95,6 @@ public class HarvestItemLoader extends AbstractJSONRestCall {
         this.baseUrl = url;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
     }
 
     public void go() {
@@ -118,8 +111,7 @@ public class HarvestItemLoader extends AbstractJSONRestCall {
         String id = harvestSource.getId();
         String name = harvestSource.getName();
         HarvestItem harvestItem = new HarvestItem(baseUrl, folderPanel,
-                recordPanel, playPanel, id, name, null, layouts, customLayouts,
-                users, groups);
+                recordPanel, playPanel, id, name, null, layouts, customLayouts);
         harvestItem.setUrl(harvestSource.getUrl());
         harvestItem.setFormat(harvestSource.getFormat());
         String frequency = harvestSource.getUpdateFrequency();

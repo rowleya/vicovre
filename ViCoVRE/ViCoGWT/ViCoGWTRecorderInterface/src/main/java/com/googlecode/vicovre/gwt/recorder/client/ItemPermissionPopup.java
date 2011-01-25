@@ -77,8 +77,6 @@ public class ItemPermissionPopup extends ModalPopup<VerticalPanel>
         this.id = id;
 
         VerticalPanel panel = getWidget();
-        panel.setWidth("400px");
-        panel.setHeight("320px");
 
         allowList.addChangeHandler(this);
         allowList.addItem("Allow everybody", "true");
@@ -89,7 +87,7 @@ public class ItemPermissionPopup extends ModalPopup<VerticalPanel>
         allowPanel.add(new Label(" to play the recording except:"));
         panel.add(allowPanel);
 
-        exceptionPanel = new PermissionExceptionPanel(users, groups, acl);
+        exceptionPanel = new PermissionExceptionPanel(users, groups, acl, url);
         panel.add(exceptionPanel);
 
         allowRequestList.setEnabled(false);
@@ -126,8 +124,6 @@ public class ItemPermissionPopup extends ModalPopup<VerticalPanel>
         ok.addClickHandler(this);
         cancel.addClickHandler(this);
     }
-
-
 
     public void onClick(ClickEvent event) {
         if (event.getSource() == cancel) {

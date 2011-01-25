@@ -25,6 +25,9 @@
         <constructor-arg><value>${email.server.port}</value></constructor-arg>
         <constructor-arg><value>${email.from}</value></constructor-arg>
         <constructor-arg><value>${admin}</value></constructor-arg>
+        <constructor-arg><value>${email.server.username}</value></constructor-arg>
+        <constructor-arg><value>${email.server.password}</value></constructor-arg>
+        <constructor-arg><value>${email.server.tls}</value></constructor-arg>
     </bean>
 
     <bean id="insecureDatabase" class="com.googlecode.vicovre.recordings.db.insecure.InsecureRecordingDatabase">

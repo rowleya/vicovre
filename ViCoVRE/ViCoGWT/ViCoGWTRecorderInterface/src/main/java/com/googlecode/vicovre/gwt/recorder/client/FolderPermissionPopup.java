@@ -66,8 +66,6 @@ public class FolderPermissionPopup extends ModalPopup<VerticalPanel>
         this.folder = folder;
 
         VerticalPanel panel = getWidget();
-        panel.setWidth("400px");
-        panel.setHeight("320px");
 
         allowList.addItem("Allow everybody", "true");
         allowList.addItem("Allow nobody", "false");
@@ -77,7 +75,7 @@ public class FolderPermissionPopup extends ModalPopup<VerticalPanel>
         allowPanel.add(new Label(" to see the folder except:"));
         panel.add(allowPanel);
 
-        exceptionPanel = new PermissionExceptionPanel(users, groups, acl);
+        exceptionPanel = new PermissionExceptionPanel(users, groups, acl, url);
         panel.add(exceptionPanel);
 
         HorizontalPanel buttonPanel = new HorizontalPanel();

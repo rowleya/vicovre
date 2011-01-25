@@ -97,7 +97,7 @@ public class User {
     @GET
     public Response verifyUser(@PathParam("hash") String hash,
             @QueryParam("successUrl") String successUrl)
-            throws URISyntaxException {
+            throws URISyntaxException, IOException {
         database.verifyUser(hash);
         return Response.status(302).location(new URI(successUrl)).build();
     }
@@ -123,6 +123,29 @@ public class User {
             @QueryParam("password") String password) throws IOException {
         database.setPassword(oldPassword, password);
         return Response.ok().build();
+    }
+
+    @Path("{username}/resetPassword")
+    @PUT
+    public Response resetPasswordRequest(@Context UriInfo uriInfo,
+            @PathParam("username") String username,
+            @QueryParam("successUrl") String successUrl)
+            throws EmailException, IOException {
+        String passwordUri = uriInfo.getBaseUriBuilder().path("user").path(
+            "resetPassword").path("$hash").queryParam(
+            "successUrl", successUrl).build().toString();
+        database.resetPasswordRequest(username, passwordUri);
+        return Response.ok().build();
+    }
+
+    @Path("resetPassword/{hash}")
+    @GET
+    public Response resetPassword(@PathParam("hash") String hash,
+            @QueryParam("successUrl") String successUrl)
+            throws EmailException, URISyntaxException {
+        database.resetPassword(hash, successUrl);
+        return Response.status(302).location(new URI(successUrl)).build();
+
     }
 
     @Path("{username}/role")

@@ -218,5 +218,4 @@ public class SecureRecording extends Recording {
         checkRead();
         return database.canAnnotateRecording(folder, id);
     }
-
 }

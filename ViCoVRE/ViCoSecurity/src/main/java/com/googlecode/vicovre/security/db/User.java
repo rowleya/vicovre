@@ -51,6 +51,8 @@ public class User extends Entity {
 
     private Role role = null;
 
+    private String homeFolder = null;
+
     protected User(String username, Role role) {
         this.username = username;
         this.role = role;
@@ -113,5 +115,13 @@ public class User extends Entity {
 
     protected boolean isOwner() {
         return !owned.isEmpty();
+    }
+
+    protected void setHomeFolder(String homeFolder) {
+        this.homeFolder = homeFolder;
+    }
+
+    protected String getHomeFolder() {
+        return homeFolder;
     }
 }

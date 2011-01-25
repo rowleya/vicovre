@@ -44,11 +44,15 @@ import org.restlet.client.data.Method;
 import org.restlet.client.data.Preference;
 import org.restlet.client.data.Protocol;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Cookies;
 import com.googlecode.vicovre.gwt.utils.client.MessagePopup;
 import com.googlecode.vicovre.gwt.utils.client.MessageResponse;
+import com.googlecode.vicovre.gwt.utils.client.WaitPopup;
 
 public abstract class AbstractRestCall implements Uniform {
+
+    private WaitPopup waitPopup = null;
 
     protected void go(String url, Method method, MediaType mediaType) {
         Client client = new Client(Protocol.HTTP);
@@ -63,21 +67,31 @@ public abstract class AbstractRestCall implements Uniform {
     }
 
     public void handle(Request request, Response response) {
-        if (response.getStatus().isSuccess()) {
-            onSuccess(response);
-        } else {
-            String message = null;
-            try {
-                if (response.getEntity().getMediaType().equals(
-                        MediaType.TEXT_PLAIN)) {
-                    message = response.getEntity().getText();
-                } else {
+        try {
+            if (waitPopup != null) {
+                waitPopup.hide();
+            }
+            if (response.getStatus().isSuccess()) {
+                onSuccess(response);
+            } else {
+                String message = null;
+                try {
+                    if ((response.getEntity() != null)
+                            && (response.getEntity().getMediaType() != null)
+                            && response.getEntity().getMediaType().equals(
+                                MediaType.TEXT_PLAIN)) {
+                        message = response.getEntity().getText();
+                    } else {
+                        message = response.getStatus().getDescription();
+                    }
+                } catch (IOException e) {
                     message = response.getStatus().getDescription();
                 }
-            } catch (IOException e) {
-                message = response.getStatus().getDescription();
+                onError(response.getStatus().getCode() + ": " + message);
             }
-            onError(response.getStatus().getCode() + ": " + message);
+        } catch (Throwable e) {
+            GWT.log("Error", e);
+            onError("Error: " + e.getMessage());
         }
     }
 
@@ -89,5 +103,17 @@ public abstract class AbstractRestCall implements Uniform {
         MessagePopup popup = new MessagePopup(error, null, MessagePopup.ERROR,
                 MessageResponse.OK);
         popup.center();
+    }
+
+    protected void displayWaitMessage(String message, boolean cancellable) {
+        waitPopup = new WaitPopup(message, cancellable);
+        waitPopup.center();
+    }
+
+    protected boolean wasCancelled() {
+        if (waitPopup != null) {
+            return waitPopup.wasCancelled();
+        }
+        return false;
     }
 }

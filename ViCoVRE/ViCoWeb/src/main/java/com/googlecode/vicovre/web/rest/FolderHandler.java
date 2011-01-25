@@ -260,4 +260,48 @@ public class FolderHandler extends AbstractHandler {
         }
         return Response.ok().build();
     }
+
+    @Path("/{folder: .*}/lifetime")
+    @GET
+    @Produces("text/plain")
+    public Response getLifetime(@PathParam("folder") String folder) {
+        RecordingDatabase database = getDatabase();
+        long lifetime = database.getFolderLifetime(folder);
+        return Response.ok(String.valueOf(lifetime)).build();
+    }
+
+    @Path("/{folder: .*}/lifetime")
+    @PUT
+    public Response setLifetime(@PathParam("folder") String folder,
+            @QueryParam("lifetime") long lifetime) throws IOException {
+        RecordingDatabase database = getDatabase();
+        database.setFolderLifetime(folder, lifetime);
+        return Response.ok().build();
+    }
+
+    @Path("/{folder: .*}/owner")
+    @GET
+    @Produces("text/plain")
+    public Response getOwner(@PathParam("folder") String folder) {
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            return Response.ok(secureDb.getFolderOwner(folder)).build();
+        }
+        return Response.ok().build();
+    }
+
+    @Path("/{folder: .*}/owner")
+    @PUT
+    public Response setOwner(@PathParam("folder") String folder,
+            @QueryParam("owner") String owner) throws IOException {
+        RecordingDatabase database = getDatabase();
+        if (database instanceof SecureRecordingDatabase) {
+            SecureRecordingDatabase secureDb =
+                (SecureRecordingDatabase) database;
+            secureDb.setFolderOwner(folder, owner);
+        }
+        return Response.ok().build();
+    }
 }

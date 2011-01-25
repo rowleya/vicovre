@@ -45,6 +45,12 @@ public class Emailer {
 
     private String adminEmailAddress = null;
 
+    private String username = null;
+
+    private String password = null;
+
+    private boolean tls = false;
+
     public Emailer(String server, int port, String fromAddress,
             String adminEmailAddress) {
         this.server = server;
@@ -53,12 +59,26 @@ public class Emailer {
         this.adminEmailAddress = adminEmailAddress;
     }
 
+    public Emailer(String server, int port, String fromAddress,
+            String adminEmailAddress, String username, String password,
+            boolean tls) {
+        this(server, port, fromAddress, adminEmailAddress);
+        this.username = username;
+        this.password = password;
+        this.tls = tls;
+    }
+
     public void send(String to, String subject, String message)
             throws EmailException {
         SimpleEmail email = new SimpleEmail();
         email.setHostName(server);
         email.setSmtpPort(port);
         email.setFrom(fromAddress);
+        email.setTLS(tls);
+        if ((username != null) && !username.equals("")
+                && (password != null) && !password.equals("")) {
+            email.setAuthentication(username, password);
+        }
         email.addTo(to);
         email.setSubject(subject);
         email.setMsg(message);

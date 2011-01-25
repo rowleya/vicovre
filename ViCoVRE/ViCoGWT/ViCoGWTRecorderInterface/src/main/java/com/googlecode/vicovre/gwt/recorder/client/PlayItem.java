@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -140,21 +139,15 @@ public class PlayItem extends SimplePanel implements ClickHandler,
 
     private Layout[] customLayouts = null;
 
-    private JsArrayString users = null;
-
-    private JsArrayString groups = null;
-
     public PlayItem(String url, FolderPanel folderPanel, String id,
             MetadataPopup metadataPopup, Layout[] layouts,
-            Layout[] customLayouts, JsArrayString users, JsArrayString groups) {
+            Layout[] customLayouts) {
         this.url = url;
         this.folderPanel = folderPanel;
         this.id = id;
         this.metadataPopup = metadataPopup;
         this.layouts = layouts;
         this.customLayouts = customLayouts;
-        this.users = users;
-        this.groups = groups;
         metadataPopup.setHandler(this);
         name.setText(metadataPopup.getPrimaryValue());
 
@@ -270,8 +263,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         } else if (event.getSource().equals(annotateButton)) {
             ChangesAnnotator.annotate(url, this, name.getText());
         } else if (event.getSource().equals(securityButton)) {
-            ItemPermissionLoader.load(url, getFolder(), "recording", id,
-                    users, groups);
+            ItemPermissionLoader.load(url, getFolder(), "recording", id);
         } else if (event.getSource().equals(downloadButton)) {
             PlayItemDownloadWizard wizard = new PlayItemDownloadWizard(this,
                     url, layouts, customLayouts);
