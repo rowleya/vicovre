@@ -266,6 +266,7 @@ public class SecurityDatabase {
         this.userHomeFolderPath = userHomeFolderPath;
         this.userHomeIds = userHomeIds;
         File home = getFile(userHomeFolderPath);
+        home.mkdirs();
         for (String id : userHomeIds) {
             File aclFile = new File(home, id);
             if (!aclFile.exists()) {
