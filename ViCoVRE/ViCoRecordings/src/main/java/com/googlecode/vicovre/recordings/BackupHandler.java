@@ -38,6 +38,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -47,6 +49,20 @@ import com.googlecode.vicovre.recordings.db.insecure.MetadataReader;
 import com.googlecode.vicovre.utils.ExtensionFilter;
 
 public class BackupHandler extends Thread implements RecordingListener {
+
+    private static final long RETRY_INTERVAL = 5 * 60 * 1000;
+
+    private static final int ADD = 0;
+
+    private static final int DELETE = 1;
+
+    private static final int UPDATE_LAYOUT = 2;
+
+    private static final int UPDATE_LIFETIME = 3;
+
+    private static final int UPDATE_METADATA = 4;
+
+    private static final int MOVE = 5;
 
     private File backupDirectory = null;
 
@@ -58,6 +74,50 @@ public class BackupHandler extends Thread implements RecordingListener {
     private boolean done = false;
 
     private byte[] buffer = new byte[8096];
+
+    private class BackupRetryTask extends TimerTask {
+
+        private Recording recording = null;
+
+        private Recording secondRecording = null;
+
+        private int operation = 0;
+
+        private BackupRetryTask(Recording recording, int operation) {
+            this.recording = recording;
+            this.operation = operation;
+        }
+
+        private BackupRetryTask(Recording recording, Recording secondRecording,
+                int operation) {
+            this.recording = recording;
+            this.secondRecording = secondRecording;
+            this.operation = operation;
+        }
+
+        public void run() {
+            switch (operation) {
+            case ADD:
+                recordingAdded(recording);
+                break;
+            case DELETE:
+                recordingDeleted(recording);
+                break;
+            case UPDATE_METADATA:
+                recordingMetadataUpdated(recording);
+                break;
+            case UPDATE_LIFETIME:
+                recordingLifetimeUpdated(recording);
+                break;
+            case UPDATE_LAYOUT:
+                recordingLayoutsUpdated(recording);
+                break;
+            case MOVE:
+                recordingMoved(recording, secondRecording);
+                break;
+            }
+        }
+    }
 
     public BackupHandler(String backupDir, RecordingDatabase database,
             boolean enabled) {
@@ -183,6 +243,9 @@ public class BackupHandler extends Thread implements RecordingListener {
                     System.err.println("Warning - error backing up recording "
                             + currentRecording.getDirectory()
                             + ": " + e.getMessage());
+                    Timer retryTimer = new Timer();
+                    retryTimer.schedule(new BackupRetryTask(currentRecording,
+                            null, ADD), RETRY_INTERVAL);
                 }
 
                 finishOperation(currentRecording);
@@ -254,6 +317,9 @@ public class BackupHandler extends Thread implements RecordingListener {
                 System.err.println(
                     "Warning - error updating backup layouts for recording "
                         + backupDirectory + ": " + e.getMessage());
+                Timer retryTimer = new Timer();
+                retryTimer.schedule(new BackupRetryTask(recording,
+                        null, UPDATE_LAYOUT), RETRY_INTERVAL);
             }
         }
         finishOperation(recording);
@@ -282,6 +348,9 @@ public class BackupHandler extends Thread implements RecordingListener {
             System.err.println(
                 "Warning - error updating backup metadata for recording"
                     + backupDirectory + ": " + e.getMessage());
+            Timer retryTimer = new Timer();
+            retryTimer.schedule(new BackupRetryTask(recording,
+                    null, UPDATE_METADATA), RETRY_INTERVAL);
         }
         finishOperation(recording);
     }
@@ -293,6 +362,9 @@ public class BackupHandler extends Thread implements RecordingListener {
                 newRecording.getDirectory())) {
             System.err.println(
                     "Warning - unknown error moving backup recording");
+            Timer retryTimer = new Timer();
+            retryTimer.schedule(new BackupRetryTask(oldRecording,
+                    newRecording, MOVE), RETRY_INTERVAL);
         }
         finishOperation(oldRecording);
         finishOperation(newRecording);

@@ -37,12 +37,17 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.googlecode.vicovre.recordings.db.secure.SecureRecordingDatabase;
 import com.googlecode.vicovre.security.db.ACLListener;
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 
 public class BackupSecurityHandler implements ACLListener {
+
+    private static final long RETRY_TIMEOUT = 5 * 60 * 1000;
 
     private File securityDirectory = null;
 
@@ -51,6 +56,22 @@ public class BackupSecurityHandler implements ACLListener {
     private HashSet<String> performingOperation = new HashSet<String>();
 
     private byte[] buffer = new byte[8096];
+
+    private class RetryTask extends TimerTask {
+
+        private String folder = null;
+
+        private String id = null;
+
+        public RetryTask(String folder, String id) {
+            this.folder = folder;
+            this.id = id;
+        }
+
+        public void run() {
+            ACLCreated(folder, id);
+        }
+    }
 
     public BackupSecurityHandler(String securityDir, String backupDir,
             SecurityDatabase database, boolean enabled) {
@@ -131,6 +152,8 @@ public class BackupSecurityHandler implements ACLListener {
         } catch (IOException e) {
             System.err.println("Warning - error creating backup of new ACL "
                     + folder + "/" + id + ": " + e.getMessage());
+            Timer timer = new Timer();
+            timer.schedule(new RetryTask(folder, id), RETRY_TIMEOUT);
         }
         finishOperation(folder, id);
     }
@@ -155,6 +178,8 @@ public class BackupSecurityHandler implements ACLListener {
         } catch (IOException e) {
             System.err.println("Warning - error creating backup of updated ACL "
                     + folder + "/" + id + ": " + e.getMessage());
+            Timer timer = new Timer();
+            timer.schedule(new RetryTask(folder, id), RETRY_TIMEOUT);
         }
         finishOperation(folder, id);
     }
