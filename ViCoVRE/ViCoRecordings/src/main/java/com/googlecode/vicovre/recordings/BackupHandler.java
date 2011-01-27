@@ -147,7 +147,6 @@ public class BackupHandler extends Thread implements RecordingListener {
         synchronized (performingOperation) {
             while (performingOperation.contains(recording)) {
                 try {
-                    System.err.println("Waiting to start operation on recording " + recording.getId());
                     performingOperation.wait();
                 } catch (InterruptedException e) {
                     // Do Nothing
@@ -155,16 +154,13 @@ public class BackupHandler extends Thread implements RecordingListener {
             }
             performingOperation.add(recording);
         }
-        System.err.println("Finished starting operation on recording " + recording.getId());
     }
 
     private void finishOperation(Recording recording) {
-        System.err.println("Finishing operation on recording " + recording.getId());
         synchronized (performingOperation) {
             performingOperation.remove(recording);
             performingOperation.notifyAll();
         }
-        System.err.println("Finished finishing operation on recording " + recording.getId());
     }
 
     private Recording getNextRecording() {
@@ -235,9 +231,6 @@ public class BackupHandler extends Thread implements RecordingListener {
                         touchFile.createNewFile();
                         copyDirectory(recordingDirectory, backupDirectory);
                         touchFile.delete();
-                    } else {
-                        System.err.println("Backup directory " + backupDirectory
-                            + " already exists!");
                     }
                 } catch (IOException e) {
                     System.err.println("Warning - error backing up recording "
