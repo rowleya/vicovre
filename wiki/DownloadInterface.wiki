@@ -1,0 +1,8 @@
+#summary Description of the REST interface for downloading recordings
+
+= Introduction =
+
+This page describes how recordings can be downloaded in various file formats.
+
+= Details =
+
