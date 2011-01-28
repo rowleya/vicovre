@@ -8,5 +8,10 @@ This page describes how recordings made on the server can be downloaded in vario
 
 Recordings can be downloaded by anyone who can play the recording.  This means that you might have to log in to the server before you can perform this operation.  This can be done through the [AuthenticationInterface Authentication interface].
 
+The URL for downloading any recording is:
+{{{http://<server>/<folder>/<recordingid>/downloadRecording.do}}}
+
+Accessing this URL directly will give you access to an interface that will allow you to set up and preview your download.  If you want to download a recording directly without the interface, the details of the REST interface are below, depending on which format you would like to download using.
+
 == AGVCR Format ==
-This format is designed to be readable with the AGVCR software.  This will contain selected streams from the recording.  The format of the url for downloading in this format is:
+This format is designed to be readable with the AGVCR software.  This will contain selected streams from the recording.  The query parameters to add to the URL are:
