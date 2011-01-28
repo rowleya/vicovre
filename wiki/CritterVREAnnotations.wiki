@@ -11,7 +11,7 @@ CritterVRE annotations are linked through the metadata for the recording.  If a 
 To add the CritterVRE annotations:
  # Go to the Critter server (https://crew.rcs.manchester.ac.uk/critter)
  # Locate and select the event that you want to use to annotate the recording
- # Copy the url for the event from your browser (this will look like {{{https://crew.rcs.manchester.ac.uk/critter/event/<eventid>}}}
+ # Copy the url for the event from your browser (this will look like {{{https://crew.rcs.manchester.ac.uk/critter/event/<eventid>}}})
  # Go to the gwt.do page on the ViCo server containing the recording (http://memetic.ag.manchester.ac.uk/gwt.do)
  # Log in to the interface and locate the recording
  # Click on the "Edit Metadata" icon
