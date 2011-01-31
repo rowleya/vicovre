@@ -10,9 +10,9 @@ This page details the REST interface used to list, delete and set permissions on
 || GET || {{{http://<url>/recording/<folder>}}} || Lists the recordings || application/json, text/xml || The list of recordings.  See below for details. ||
 || GET || {{{http://<url>/recording/<folder>/<id>/streams}}} || Lists the streams in the recording. || application/json, text/xml || The list of streams.  See below for details. ||
 || GET || {{{http://<url>/recording/<folder>/<id>/layouts}}} || Lists the layouts of the recording. || application/json, text/xml || The list of layouts.  See below for details. ||
-|| GET || {{{http://<url>/recording/<folder>/<id>/acl}}} || Gets the Access Control List of the recording. || application/json, text/xml || The acl.  See [RecordingInterface here] for details. ||
+|| GET || {{{http://<url>/recording/<folder>/<id>/acl/<acl-type>}}} || Gets the Access Control List of the recording.  The <acl-type> can be one of play, read, or annotate.  || application/json, text/xml || The acl.  See [RecordingInterface here] for details. ||
 || PUT || {{{http://<url>/recording/<folder>/<id>?<metadata-details>}}} || Sets the recording metadata.  See below for details accepted. || None || None ||
-|| PUT || {{{http://<url>/recording/<folder>/<id>/acl?<acl-details>}}} || Sets the recording ACL.  See [RecordingInterface here] for details accepted. || None || None ||
+|| PUT || {{{http://<url>/recording/<folder>/<id>/acl/<acl-type>?<acl-details>}}} || Sets the recording ACL.  See [RecordingInterface here] for details accepted. || None || None ||
 || DELETE || {{{http://<url>/recording/<folder>/<id>}}} || Deletes the recording. || None || None ||
 
 == List of Recordings == 
