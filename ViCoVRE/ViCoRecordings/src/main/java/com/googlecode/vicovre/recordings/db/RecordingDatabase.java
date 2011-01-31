@@ -56,7 +56,8 @@ public interface RecordingDatabase {
 
     public List<String> getSubFolders(String folder);
 
-    public boolean addFolder(String parent, String folder) throws IOException;
+    public boolean addFolder(String parent, String folder,
+            HarvestSource creator) throws IOException;
 
     public void deleteFolder(String folder) throws IOException;
 

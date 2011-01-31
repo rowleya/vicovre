@@ -240,15 +240,18 @@ public class SecureRecordingDatabase implements RecordingDatabase,
         if (creator != null) {
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     READ_RECORDING_ID_PREFIX + creatorId, folder,
-                    READ_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingReadPermission, true,
+                    READ_RECORDING_ID_PREFIX + recording.getId(),
+                    defaultRecordingReadPermission, true,
                     Role.WRITER);
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     PLAY_RECORDING_ID_PREFIX + creatorId, folder,
-                    PLAY_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingPlayPermission, true,
+                    PLAY_RECORDING_ID_PREFIX + recording.getId(),
+                    defaultRecordingPlayPermission, true,
                     Role.WRITER);
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     ANNOTATE_RECORDING_ID_PREFIX + creatorId, folder,
-                    ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingAnnotationPermission,
+                    ANNOTATE_RECORDING_ID_PREFIX + recording.getId(),
+                    defaultRecordingAnnotationPermission,
                     true, Role.WRITER);
         } else {
             createRecordingAcl(creatorFolder, creatorId, folder,
@@ -345,8 +348,8 @@ public class SecureRecordingDatabase implements RecordingDatabase,
             String oldfolder, String oldId, String newfolder, String newId,
             boolean allowByDefault, boolean canProxy, Role requiredRole)
             throws IOException {
-        ReadOnlyACL acl = securityDatabase.getAcl(oldfolder, oldId,
-                allowByDefault);
+        ReadOnlyACL acl = securityDatabase.getAcl(creatorFolder, creatorId,
+                oldfolder, oldId, allowByDefault);
         WriteOnlyEntity[] exceptions = convert(acl);
         securityDatabase.createAcl(creatorFolder, creatorId, newfolder, newId,
                 acl.isAllow(), canProxy, requiredRole, exceptions);
@@ -650,14 +653,23 @@ public class SecureRecordingDatabase implements RecordingDatabase,
          database.setDefaultLayout(folder, layout);
     }
 
-    public boolean addFolder(String parent, String folder) throws IOException {
-        checkWrite(null, null, parent);
-        securityDatabase.createAcl(null, null, parent + "/" + folder,
+    public boolean addFolder(String parent, String folder,
+            HarvestSource creator) throws IOException {
+        String creatorFolder = null;
+        String creatorId = null;
+        if (creator != null) {
+            creatorFolder = creator.getFolder();
+            creatorId = HARVEST_ID_PREFIX + creator.getId();
+        }
+        checkWrite(creatorFolder, creatorId, parent);
+        securityDatabase.createAcl(creatorFolder, creatorId,
+                parent + "/" + folder,
                 READ_FOLDER_PREFIX, defaultFolderReadPermission, false,
                 Role.WRITER);
-        securityDatabase.createAcl(null, null, parent + "/" + folder,
+        securityDatabase.createAcl(creatorFolder, creatorId,
+                parent + "/" + folder,
                 WRITE_FOLDER_PREFIX, false, false, Role.WRITER);
-        return database.addFolder(parent, folder);
+        return database.addFolder(parent, folder, creator);
     }
 
     public void deleteFolder(String folder) throws IOException {

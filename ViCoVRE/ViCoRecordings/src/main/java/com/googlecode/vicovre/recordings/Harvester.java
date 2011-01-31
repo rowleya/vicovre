@@ -97,7 +97,10 @@ public class Harvester implements HarvestSourceListener {
                     String subFolder = event.getSubFolder();
                     eventFolder += "/" + subFolder;
                     File folderFile = database.getFile(eventFolder);
-                    folderFile.mkdirs();
+                    if (!folderFile.exists()) {
+                        database.addFolder(harvestSource.getFolder(),
+                                event.getSubFolder(), harvestSource);
+                    }
                 }
                 UnfinishedRecording recording = new UnfinishedRecording(
                         eventFolder, UUID.randomUUID().toString());
