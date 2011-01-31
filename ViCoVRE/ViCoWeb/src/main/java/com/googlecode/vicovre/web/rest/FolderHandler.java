@@ -97,7 +97,7 @@ public class FolderHandler extends AbstractHandler {
     @PUT
     public Response createFolder(@PathParam("parent") String parent,
             @PathParam("folder") String folder) throws IOException {
-        if (getDatabase().addFolder(parent, folder)) {
+        if (getDatabase().addFolder(parent, folder, null)) {
             return Response.ok().build();
         }
         return Response.notModified().build();
