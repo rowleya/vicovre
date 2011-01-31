@@ -577,7 +577,8 @@ public class InsecureRecordingDatabase implements RecordingDatabase {
         }
     }
 
-    public boolean addFolder(String parent, String folder) {
+    public boolean addFolder(String parent, String folder,
+            HarvestSource creator) {
         File file = getFile(parent + "/" + folder);
         return file.mkdirs();
     }
