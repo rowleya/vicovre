@@ -1150,6 +1150,24 @@ public class SecurityDatabase {
         }
     }
 
+    public ReadOnlyACL getAcl(String creatorFolder, String creatorId,
+            String folder, String id, boolean allowByDefault) {
+        File folderFile = getFile(folder);
+        synchronized (acls) {
+            ACL acl = obtainAcl(folderFile, folder, id, allowByDefault, false);
+            User currentUser = getCurrentUser(creatorFolder, creatorId);
+            if (!currentUser.getRole().is(Role.ADMINISTRATOR)
+                    && !currentUser.equals(acl.getOwner())) {
+                throw new UnauthorizedException(
+                    "You must be an administrator or"
+                    + " the owner of this object to perform this operation");
+            }
+            synchronized (acl) {
+                return new ReadOnlyACL(acl);
+            }
+        }
+    }
+
     public ReadOnlyACL getAcl(String folder, String id,
             boolean allowByDefault) {
         File folderFile = getFile(folder);
