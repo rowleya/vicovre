@@ -15,3 +15,34 @@ Accessing this URL directly will give you access to an interface that will allow
 
 == AGVCR Format ==
 This format is designed to be readable with the AGVCR software.  This will contain selected streams from the recording.  The query parameters to add to the URL are:
+|| Parameter || Description ||
+|| format=application/x-agvcr || *Required*.  Indicates that the format is AGVCR ||
+|| stream={{{<streamid>}}} || *Required*.  Specifies each of the streams to include in the resulting file.  This should be specified once for each stream to include. ||
+
+== Audio and Video Formats ==
+This can produce an audio file in mp3 or wma format (currently fixed at 128K) or a video file in mp4, wmv or flv format.  The query parameters are:
+|| Parameter || Description ||
+|| format=<format> || *Required*.  Specifies the format to download in.  One of audio/mpeg (mp3), audio/x-ms-wma (wma), video/x-flv (flv), video/x-ms-wmv (wmv) or video/mp4 (mp4). ||
+|| video={{{<streamid>}}} || Specifies each of the video streams that are to be used in the file.  This should be specified once for each video stream.  This is optional if a layout has been assigned to the recording and no audio streams have been specified.  ||
+|| width={{{<width>}}} || Specifies the width of each video stream.  This must be specified once for each video stream specified above. ||
+|| height={{{<height>}}} || Specifies the height of each video stream.  This must be specified once for each video stream specified above. ||
+|| x={{{<x>}}} || Specifies the position of the stream from the left of the video in the output.  This must be specified once for each video stream specified above. ||
+|| y={{{<y>}}} || Specifies the position of the stream from the top of the video in the output.  This must be specified once for each video stream specified above. ||
+|| opacity={{{<opacity>}}} || Specifies how transparent the video stream is, between 1.0 (for not transparent) to 0.0 (for completely transparent).  This must be specified once for each video stream specified above. || 
+|| audio={{{<streamid>}}} || Specifies each of the audio streams that are to be used in the file.  This should be specified once for each audio stream.  These will be mixed together in the output.  This is optional if a layout has been assigned to the recording and no video streams have been specified. ||
+|| sync={{{<streamid>}}} || Specifies any stream that this video should synchronize with.  This allows for a level of synchronization between two downloaded video files, such that if each specifies the video streams as sync streams of the other, they should play in synchronization when started at the same time.  This should be specified once foe each synchronization stream. ||
+|| offset={{{<offset>}}} || Specifies the time from the start of the recording in seconds that the video should start from.  This can be a floating point number, with up to millisecond precision.  If not specified, the video will start at the start of the first stream specified above (including video, audio and sync). ||
+|| start={{{<start>}}} || Specifies an offset in seconds (with millisecond precision) in addition to the offset.  This only works for flv files.  If specified, the total offset will be {{{offset}}} + {{{start}}}, but the first timestamp in the file will be start.  This allows navigation of progressive downloads in a flash player since the player will see this number as the current time in the file when it starts playing. ||
+|| duration={{{<duration>}}} || Specifies how much of the recording from {{{offset}}} should be included in the file.  This will be the final duration of the file.  Note that specifying {{{start}}} does not affect this parameter. If not specified, the duration will be the duration of the selected streams minus the offset. ||
+|| outwidth={{{<outwidth>}}} || Specifies the width of the output.  If this is specified, the x, y, width and height for each video is scaled so that it fits into the specified dimensions.  If this is not specified, the width will be the maximum X plus the minimum X (see below).  If {{{<outwidth>}}} is not divisible by 16, it will be rounded up. ||
+|| outheight={{{<outheight>}}} || Specifies the height of the output.  If this is specified, the x, y, width and height for each video is scaled so that it fits into the specified dimensions.  If this is not specified, the height will be the maximum Y plus the minimum Y (see below).  If {{{<outheight>}}} is not divisible by 16, it will be rounded up. ||
+|| genspeed={{{<genspeed>}}} || Specifies the speed at which the video is generated with respect to its timings e.g. a value of 1 would generate the video in real-time.  This value is a floating point number.  A value of 0 or less indicates that the video should be generated as fast as possible.  If the video cannot be generated at the speed specified, it will also be generated as fast as possible.  If not specified, the default value is 1.5. ||
+|| bgColour={{{<colour>}}} || Specifies the background colour of the video stream as a hex 24-bit RGB value with 8-bits per colour.  If not specified, the colour 0x000000 (black) will be used. ||
+|| agc={{{true | false}}} || Specifies whether to use automatic gain control on the audio streams.  If set to true, an automatic gain will be applied to the audio after mixing the streams.  If not specified, or false, the audio will be clipped after mixing. ||
+
+Note that only the format is required provided a layout has already been specified for the video.  If this is not the case, the other parameters must also be specified.
+
+It should be noted that unless outwidth and outheight are specified for a video file, the values of:
+    (minimum X) + (maximum X) and
+    (minimum Y) + (maximum Y)
+should be divisible by 16, where minimum X is the left most pixel of any video stream, maximum X is the rightmost pixel of any video stream (i.e. the maximum of x + width of all the streams), minimum Y is the top most pixel of any video stream and maximum Y is the bottom most pixel of any video stream.
