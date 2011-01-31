@@ -34,14 +34,29 @@ If text/xml is requested as the content type, the recording list will be produce
 
         <metadata>
             
-            <!-- The name of the recording -->
-            <name>...</name>
+            <!-- The name of the metadata primary key -->
+            <primaryKey>...</primaryKey>
 
-            <!-- The description of the recording (optional) -->
-            <description>...</description>
+            <!-- One for each item of metadata -->
+            <key>
+                
+                <!-- The name of the key -->
+                <name>...</name>
 
-            <!-- True if the description is editable, false otherwise (optional) -->
-            <descriptionEditable>...</descriptionEditable>
+                <!-- The value of the key -->
+                <value>...</value>
+                
+                <!-- True if the value is editable -->
+                <editable>...</editable>
+
+                <!-- True if the value is visible -->
+                <visible>...</visible>
+
+                <!-- True if the value is multiline -->
+                <multiline>...</multiline>
+
+            </key>
+
         </metadata>
 
         <!-- The date / time that the recording will start (see below for format) (optional) -->
@@ -155,8 +170,11 @@ The recording status is formatted as a key word, optionally followed by addition
 == Recording Details ==
 The recording details are specified as URL-Encoded parameters (e.g. key=value) passed after the url.  The following keys can be specified:
 || *Key* || *Description* || *Type* || *Count* || *Requirement* ||
-|| metadata_name || The name of the recording || String || 1 || Required ||
-|| metadata_description || The description of the recording || String || 0 or 1 || ||
+|| metadataPrimaryKey|| The name of primary key of the metadata || String || 1 || Required ||
+|| metadata{{{<name>}}} || The metadata value for the key {{{<name>}}} || String || 1 per item || Required ||
+|| metadata{{{<name>}}}Editable || True if the item {{{<name>}}} is editable || Boolean || 1 per item || Optional ||
+|| metadata{{{<name>}}}Visible || True if the item {{{<name>}}} is visible || String || 1 per item || Optional ||
+|| metadata{{{<name>}}}Multiline || True if the item {{{<name>}}} is multiline || String || 1 per item || Optional ||
 || startDate || The date and time at which to automatically start recording.  If not specified, the recording will have to be started manually. || Date / Time (see below) || 0 or 1 || ||
 || stopDate || The date and time at which to automatically stop recording.  If not specified, the recording will have to be stopped manually. || Date / Time (see below) || 0 or 1 || ||
 || ag3VenueServerUrl || The AG3 venue server that hosts the venue to record from. || URL of venue server. || 0 or 1 || Required if addresses not specified. ||
