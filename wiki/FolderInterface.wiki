@@ -13,7 +13,7 @@ This page details the REST interface used to control folders.
 || PUT || {{{http://<url>/folders/<folderpath>/layout?<layout-details>}}} || Sets the default layout for the folder.  See below for the parameters to be specified.  || None || None ||
 || GET || {{{http://<url>/folders/<folderpath>/metadata}}} || Gets the folder metadata.  || application/json, text/xml || The metadata.   See [PlayControlInterface here] for details. ||
 || PUT || {{{http://<url>/folders/<folderpath>/metadata?<metadata-details>}}} || Sets the folder metadata.  See [PlayControlInterface here] for details.  || None || None ||
-|| GET || {{{http://<url>/folders/<folderpath>/acl}}} || Gets the folder read acl. || application/json, text/xml || The ACL.  See [PlayControlInterface here] for details. ||
+|| GET || {{{http://<url>/folders/<folderpath>/acl}}} || Gets the folder read acl. || application/json, text/xml || The ACL.  See [RecordingInterface here] for details. ||
 || PUT || {{{http://<url>/folders/<folderpath>/acl?<acl-details>}}} || Sets the folder read acl. See [RecordingInterface here] for details.  || None || None ||
 || GET || {{{http://<url>/folders/<folderpath>/lifetime}}} || Gets the folder default lifetime. || text/plain || The folder lifetime in milliseconds ||
 || PUT || {{{http://<url>/folders/<folderpath>/lifetime?lifetime=<lifetime>}}} || Sets the folder default lifetime. || None || None ||
@@ -21,255 +21,25 @@ This page details the REST interface used to control folders.
 || PUT || {{{http://<url>/folders/<folderpath>/owner?owner=<owner>}}} || Sets the folder owner. || None || None ||
 
 
-== List of Recordings == 
+== List of Folders == 
 If the return type is text/xml, the list is formatted as follows:
 {{{
-<recordings>
+<folders>
 
-    <!-- One for each recording -->
-    <recording>
+    <!-- One for each folder - the name of the folder -->
+    <folder>...</folder>
 
-        <!-- The id of the recording -->
-        <id>...</id>
-
-        <metadata>
-            
-            <!-- The name of the recording -->
-            <name>...</name>
-
-            <!-- The description of the recording (optional) -->
-            <description>...</description>
-
-            <!-- True if the description is editable, false otherwise (optional) -->
-            <descriptionEditable>...</descriptionEditable>
-
-        </metadata>
-
-        <!-- The date/time at which the recording was made (see RecordingInterface for format) -->
-        <startTime>...</startTime>
-
-        <!-- The duration of the recording in milliseconds -->
-        <duration>...</duration>
-
-        <!-- The amount of time in milliseconds after then end of the recording after which it will be automatically deleted (0 = infinite) -->
-        <lifetime>...</lifetime>
-        
-        <!-- True if the recording can be edited by the current user, false otherwise -->
-        <isEditable>...</isEditable>
-
-    </recording>
-</recordings>
+    ...
+</folders>
 }}}
 
 If the return type is application/json, the list is formatted as follows:
 {{{
-{"recording":[
+{"folder":[
     
-    /* 0 or more recordings */
-    {
-
-    /* The id of the recording */
-    "id":"...",
-
-    "metadata":
-        {
-
-        /* The name of the recording */
-        "name":"...",
-
-        /* The description of the recording (optional) */
-        "description":"...",
-
-        /* true if the description is editable, false otherwise (optional) */
-        "descriptionEditable":...,
-        },
+    /* One for each folder - the name of the folder -->
+    "...",
     
-    /* The date / time that the recording was made (see RecordingInterface for format) */
-    "startTime":"...",
-
-    /* The duration of the recording in milliseconds */
-    "duration":"...",
-
-    /* The amount of time in milliseconds after then end of the recording after which it will be automatically deleted (0 = infinite) */
-    "lifetime":"...",
-        
-    /* True if the recording can be edited by the current user, false otherwise */
-    "isEditable":"..."
-    },
     ...
 ]}
 }}}
-
-== List of Streams ==
-If the return type is text/xml, the list will be formatted as follows:
-
-{{{
-<streams>
-     
-    <!-- One for each streams -->
-    <stream>
-        
-        <!-- The id of the stream -->
-        <ssrc>...</ssrc>
-
-        <!-- The start date/time of the stream -->
-        <startTime>...</startTime>
-
-        <!-- The end date/time of the stream -->
-        <endTime>...</endTime>
-
-        <!-- The c-name of the stream (optional) -->
-        <cname>...</cname>
-        
-        <!-- The name of the stream (optional) --> 
-        <name>...</name>
-
-        <!-- The email address of the stream sender (optional) -->
-        <email>...</email>
-
-        <!-- The phone number of the stream sender (optional) -->
-        <phone>...</phone>
-
-        <!-- The location of the stream sender (optional) -->
-        <location>...</location>
-
-        <!-- The tool that sent the stream (optional) -->
-        <tool>...</tool>
-
-        <!-- A note about the stream (optional) -->
-        <note>...</note>
-        
-    </stream>
-</streams>
-}}}
-
-If the return type is application/json, the list will be formatted as follows:
-{{{
-{"stream":[
-    
-    /* 0 or more streams */
-    {
-
-    /* The id of the stream */
-    "ssrc":"...",
-
-    /* The start date/time of the stream */
-    "startTime":"...",
-
-    /* The end date/time of the stream */
-    "endTime":"...",
-
-    /* The c-name of the stream (optional) */
-    "cname":"...",
-        
-    /* The name of the stream (optional) */
-    "name":"...",
-
-    /* The email address of the stream sender (optional) */
-    "email":"...",
-
-    /* The phone number of the stream sender (optional) */
-    "phone":"...",
-
-    /* The location of the stream sender (optional) */
-    "location":"...",
-
-    /* The tool that sent the stream (optional) */
-    "tool":"...",
-
-    /* A note about the stream (optional) */
-    "note":"..."
-    }
-    ...
-]}
-}}}
-
-== List of Layouts == 
-If the return type is text/xml, the list will be formatted as follows:
-
-{{{
-<replayLayouts>
-    
-    <!-- 0 or more layouts -->
-    <replayLayout>
-        
-        <!-- The name of the layout (will match a known layout name - see LayoutInterface for details) -->
-        <name>...</name>
-
-        <!-- The time in milliseconds from the start of the recording that the layout takes effect -->
-        <time>...</time>
-
-        <!-- The time in milliseconds from the start of the recording that the layout stops taking effect -->
-        <endTime>...</endTime>
-
-        <!-- One for each position in the layout -->
-        <position>
-             
-            <!-- The name of the position (will match the name of a position in the layout - see LayoutInterface for details) -->
-            <name>...</name>
-
-            <!-- The id of the stream in the named position -->
-            <stream>...</stream>
-
-        </position>
-        ...
-
-        <!-- The id of an audio stream in the layout - one for each audio stream -->
-        <audioStream>...</audioStream>
-        ...
-
-    </replayLayout>
-
-    ...
-</replayLayouts>
-}}}
-
-If the return type is text/xml, the list will be formatted as follows:
-{{{
-{"replayLayout":[
-
-    /* 0 or more layouts */
-    {
-
-    /* The name of the layout (will match a known layout name - see LayoutInterface for details) */
-    "name":"...",
-
-    /* The time in milliseconds from the start of the recording that the layout takes effect */
-    "time":"...",
-
-    /* The time in milliseconds from the start of the recording that the layout stops taking effect */
-    "endTime":"...",
-
-    "position":{[
-
-        /* One for each position in the layout */
-        {
-             
-        /* The name of the position (will match the name of a position in the layout - see LayoutInterface for details) */
-        "name":"...",
-
-        /* The id of the stream in the named position */
-        "stream":"..."
-        },
-        ...
-
-    ]},
-    
-
-    "audioStream":{[
-    
-        /* The id of an audio stream in the layout - one for each audio stream */
-        "...",
-        ...
-    ]}
-
-    },
-    ...
-]}
-}}}
-
-== Recording Metadata Parameters ==
-The parameters that can be set when setting the recording metadata are as follows:
-|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
-|| metadata_name || The name of the recording || String || 1 || Required ||
-|| metadata_description || The description of the recording || String || 0 or 1 || ||
