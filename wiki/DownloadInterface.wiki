@@ -22,7 +22,7 @@ This format is designed to be readable with the AGVCR software.  This will conta
 == Audio and Video Formats ==
 This can produce an audio file in mp3 or wma format (currently fixed at 128K) or a video file in mp4, wmv or flv format.  The query parameters are:
 || Parameter || Description ||
-|| format=<format> || *Required*.  Specifies the format to download in.  One of audio/mpeg (mp3), audio/x-ms-wma (wma), video/x-flv (flv), video/x-ms-wmv (wmv) or video/mp4 (mp4). ||
+|| format={{{<format>}}} || *Required*.  Specifies the format to download in.  One of audio/mpeg (mp3), audio/x-ms-wma (wma), video/x-flv (flv), video/x-ms-wmv (wmv) or video/mp4 (mp4). ||
 || video={{{<streamid>}}} || Specifies each of the video streams that are to be used in the file.  This should be specified once for each video stream.  This is optional if a layout has been assigned to the recording and no audio streams have been specified.  ||
 || width={{{<width>}}} || Specifies the width of each video stream.  This must be specified once for each video stream specified above. ||
 || height={{{<height>}}} || Specifies the height of each video stream.  This must be specified once for each video stream specified above. ||
