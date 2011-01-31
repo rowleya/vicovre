@@ -240,15 +240,15 @@ public class SecureRecordingDatabase implements RecordingDatabase,
         if (creator != null) {
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     READ_RECORDING_ID_PREFIX + creatorId, folder,
-                    recording.getId(), defaultRecordingReadPermission, true,
+                    READ_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingReadPermission, true,
                     Role.WRITER);
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     PLAY_RECORDING_ID_PREFIX + creatorId, folder,
-                    recording.getId(), defaultRecordingPlayPermission, true,
+                    PLAY_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingPlayPermission, true,
                     Role.WRITER);
             copyAcl(creatorFolder, HARVEST_ID_PREFIX + creatorId, creatorFolder,
                     ANNOTATE_RECORDING_ID_PREFIX + creatorId, folder,
-                    recording.getId(), defaultRecordingAnnotationPermission,
+                    ANNOTATE_RECORDING_ID_PREFIX + recording.getId(), defaultRecordingAnnotationPermission,
                     true, Role.WRITER);
         } else {
             createRecordingAcl(creatorFolder, creatorId, folder,
