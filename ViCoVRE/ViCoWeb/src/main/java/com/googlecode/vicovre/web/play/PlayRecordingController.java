@@ -386,7 +386,7 @@ public class PlayRecordingController implements Controller {
 
             if (slideThumbs.size() != 0) {
                 MetadataAnnotationType matype = new MetadataAnnotationType(
-                        SLIDE_TYPE, imageDir + SLIDE_TYPE + ".jpg",
+                        SLIDE_TYPE, imageDir + SLIDE_TYPE + ".png",
                         SLIDE_TYPE, SLIDE_INDEX);
                 if (!metadataAnnotationTypes.contains(matype)) {
                     metadataAnnotationTypes.add(matype);
@@ -455,7 +455,7 @@ public class PlayRecordingController implements Controller {
                         metadataAnnotations.add(metaAnn);
                     }
 
-                    String image = imageDir + type + ".jpg";
+                    String image = imageDir + type + ".png";
                     TextThumbnail textThumb = new TextThumbnail(start, end,
                             image, text, type);
                     if (!thumbs.contains(textThumb)) {
