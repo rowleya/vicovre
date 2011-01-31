@@ -111,15 +111,30 @@ If application/json is requested as the content type, the recording list will be
     "metadata":
         {
 
-        /* The name of the recording */
-        "name":"...",
+        /* The primary key of the metadata */
+        "primaryKey":"...",
 
-        /* The description of the recording (optional) */
-        "description":"...",
+        "key":[
 
-        /* true if the description is editable, false otherwise (optional) */
-        "descriptionEditable":...,
-        },
+              /* One for each key */
+              {
+                  
+                  /* The name of the item */
+                  "name":"...",
+                  
+                  /* The value of the item */
+                  "value":"...",
+                  
+                  /* True if the item is editable */
+                  "editable":"...",
+                  
+                  /* True if the item is visible */
+                  "visible":"...",
+
+                  /* True if the item is multiline */
+                  "multiline":"..."
+              },
+        ]},
     
     /* The date / time that the recording will start (see below for format) (optional) */
     "startDate":"..."
