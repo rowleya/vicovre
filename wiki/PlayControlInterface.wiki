@@ -28,14 +28,28 @@ If the return type is text/xml, the list is formatted as follows:
 
         <metadata>
             
-            <!-- The name of the recording -->
-            <name>...</name>
+            <!-- The name of the metadata primary key -->
+            <primaryKey>...</primaryKey>
 
-            <!-- The description of the recording (optional) -->
-            <description>...</description>
+            <!-- One for each item of metadata -->
+            <key>
+                
+                <!-- The name of the key -->
+                <name>...</name>
 
-            <!-- True if the description is editable, false otherwise (optional) -->
-            <descriptionEditable>...</descriptionEditable>
+                <!-- The value of the key -->
+                <value>...</value>
+                
+                <!-- True if the value is editable -->
+                <editable>...</editable>
+
+                <!-- True if the value is visible -->
+                <visible>...</visible>
+
+                <!-- True if the value is multiline -->
+                <multiline>...</multiline>
+
+            </key>
 
         </metadata>
 
@@ -68,15 +82,30 @@ If the return type is application/json, the list is formatted as follows:
     "metadata":
         {
 
-        /* The name of the recording */
-        "name":"...",
+        /* The primary key of the metadata */
+        "primaryKey":"...",
 
-        /* The description of the recording (optional) */
-        "description":"...",
+        "key":[
 
-        /* true if the description is editable, false otherwise (optional) */
-        "descriptionEditable":...,
-        },
+              /* One for each key */
+              {
+                  
+                  /* The name of the item */
+                  "name":"...",
+                  
+                  /* The value of the item */
+                  "value":"...",
+                  
+                  /* True if the item is editable */
+                  "editable":"...",
+                  
+                  /* True if the item is visible */
+                  "visible":"...",
+
+                  /* True if the item is multiline */
+                  "multiline":"..."
+              },
+        ]},
     
     /* The date / time that the recording was made (see RecordingInterface for format) */
     "startTime":"...",
@@ -264,6 +293,9 @@ If the return type is text/xml, the list will be formatted as follows:
 
 == Recording Metadata Parameters ==
 The parameters that can be set when setting the recording metadata are as follows:
-|| *Key* || *Description* || *Type* || *Count* || *Requirement* ||
-|| metadata_name || The name of the recording || String || 1 || Required ||
-|| metadata_description || The description of the recording || String || 0 or 1 || ||
+|| *Key* || *Description* || *Requirement* ||
+|| metadataPrimaryKey|| The name of primary key of the metadata || Required ||
+|| metadata{{{<name>}}} || The metadata value for the key {{{<name>}}} || Required ||
+|| metadata{{{<name>}}}Editable || True if the item {{{<name>}}} is editable || Optional ||
+|| metadata{{{<name>}}}Visible || True if the item {{{<name>}}} is visible || Optional ||
+|| metadata{{{<name>}}}Multiline || True if the item {{{<name>}}} is multiline || Optional ||
