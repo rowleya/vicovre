@@ -376,30 +376,6 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
     public void center() {
         if (item != null) {
             this.name.setText(metadataPopup.getPrimaryValue());
-            Date startDate = item.getStartDate();
-            if (startDate != null) {
-                this.startDate.setValue(startDate);
-                this.startTime.setHour(startDate.getHours());
-                this.startTime.setMinute(startDate.getMinutes());
-                autoStart.setValue(true, true);
-            } else {
-                manualStart.setValue(true, true);
-            }
-            Date stopDate = item.getStopDate();
-            if (stopDate != null) {
-                this.stopDate.setValue(stopDate);
-                this.stopTime.setHour(stopDate.getHours());
-                this.stopTime.setMinute(stopDate.getMinutes());
-                autoStop.setValue(true, true);
-            } else {
-                manualStop.setValue(true, true);
-            }
-            if (item.getVenueServerUrl() != null) {
-                venue.setVenueServer(item.getVenueServerUrl());
-                venue.setVenue(item.getVenueUrl());
-            } else {
-                venue.setAddresses(item.getAddresses());
-            }
 
             String frequency = item.getRepeatFrequency();
             GWT.log("Frequency = " + frequency);
@@ -456,6 +432,32 @@ public class RecordingItemPopup extends ModalPopup<FlexTable>
             }
         }
         setupRepetition();
+
+        Date startDate = item.getStartDate();
+        if (startDate != null) {
+            this.startDate.setValue(startDate);
+            this.startTime.setHour(startDate.getHours());
+            this.startTime.setMinute(startDate.getMinutes());
+            autoStart.setValue(true, true);
+        } else {
+            manualStart.setValue(true, true);
+        }
+        Date stopDate = item.getStopDate();
+        if (stopDate != null) {
+            this.stopDate.setValue(stopDate);
+            this.stopTime.setHour(stopDate.getHours());
+            this.stopTime.setMinute(stopDate.getMinutes());
+            autoStop.setValue(true, true);
+        } else {
+            manualStop.setValue(true, true);
+        }
+        if (item.getVenueServerUrl() != null) {
+            venue.setVenueServer(item.getVenueServerUrl());
+            venue.setVenue(item.getVenueUrl());
+        } else {
+            venue.setAddresses(item.getAddresses());
+        }
+
         super.center();
     }
 
