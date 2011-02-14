@@ -76,7 +76,8 @@ public class MAGICFormatReader implements HarvestFormatReader {
                     type = type.substring(0, 1).toUpperCase()
                         + type.substring(1);
 
-                    if (type.equalsIgnoreCase("regular lecture")) {
+                    if (type.equalsIgnoreCase("regular lecture")
+                            || type.equalsIgnoreCase("extra lecture")) {
                         String courseCode = XmlIo.readContent(node,
                                 "course_code");
                         metadata.setValue("courseCode",
@@ -111,7 +112,8 @@ public class MAGICFormatReader implements HarvestFormatReader {
                         metadata.setValue("description", description,
                                 true, false, true);
                     } else {
-                        throw new IOException("Unknown event type " + type);
+                        System.err.println("Warning - Unknown event type "
+                                + type);
                     }
 
                     event.setMetadata(metadata);
