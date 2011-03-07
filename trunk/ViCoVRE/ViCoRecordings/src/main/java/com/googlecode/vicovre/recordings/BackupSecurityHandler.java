@@ -116,8 +116,8 @@ public class BackupSecurityHandler implements ACLListener {
     private void copyAcl(String folder, String id) throws IOException {
         File backupAclFile = getACLBackupFile(folder, id);
         backupAclFile.getParentFile().mkdirs();
-        FileInputStream input = new FileInputStream(getACLFile(folder, id));
         FileOutputStream output = new FileOutputStream(backupAclFile);
+        FileInputStream input = new FileInputStream(getACLFile(folder, id));
         int bytesRead = input.read(buffer);
         while (bytesRead != -1) {
             output.write(buffer, 0, bytesRead);
