@@ -146,7 +146,7 @@ public class UnfinishedRecordingController
             NetworkLocation[] addrs = recording.getAddresses();
             String ag3VenueUrl = recording.getAg3VenueUrl();
             if (ag3VenueUrl != null) {
-                Venue venue = new Venue(ag3VenueUrl);
+                Venue venue = new Venue(ag3VenueUrl, false);
                 StreamDescription[] streams = venue.getStreams();
                 addrs = new NetworkLocation[streams.length];
                 for (int i = 0; i < streams.length; i++) {

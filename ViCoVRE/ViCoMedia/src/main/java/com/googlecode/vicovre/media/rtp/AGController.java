@@ -192,7 +192,7 @@ public class AGController {
             UnsupportedEncryptionException, SoapException {
         leaveCurrentVenue();
         currentVenue = new Venue(
-                venueDescription.getUri());
+                venueDescription.getUri(), false);
         currentConnectionId = currentVenue.enter(profile);
         currentVenueUpdater = new ClientUpdateThread(
                 currentVenue, currentConnectionId);

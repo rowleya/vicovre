@@ -289,7 +289,7 @@ public class PlaybackManager implements StreamStoppingListener,
     public void play(String ag3VenueUrl) {
         try {
             // Negotiate the streams
-            venue = new Venue(ag3VenueUrl);
+            venue = new Venue(ag3VenueUrl, false);
             String connectionId = venue.enter(clientProfile);
             StreamDescription[] streams =
                 venue.negotiateCapabilities(connectionId, capabilities);
