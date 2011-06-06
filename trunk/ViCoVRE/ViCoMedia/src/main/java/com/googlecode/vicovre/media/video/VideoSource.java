@@ -193,6 +193,11 @@ public class VideoSource {
                 || frameCopied)) {
             return !isFinished;
         }
+
+    	if (isFinished && (buffer == null)) {
+    		return false;
+    	}
+
         frameCopied = true;
 
         VideoFormat bufferFormat = (VideoFormat) bufferToFill.getFormat();

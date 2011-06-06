@@ -712,7 +712,7 @@ public class AccessGridPanel extends JPanel implements ActionListener,
                             VenueServer venueServer = new VenueServer(
                                     venueServerUrl);
                             ConnectionDescription[] venues =
-                                venueServer.getVenues();
+                                venueServer.getVenues(null);
                             progress.setVisible(false);
                             return venues;
                         } catch (Throwable e) {

@@ -123,7 +123,7 @@ public class VenueHandler {
                     ((System.currentTimeMillis() - lastCacheTime)
                             > VENUE_REFRESH_TIMEOUT)) {
                 VenueServer venueServer = new VenueServer(venueServerUrl);
-                venues = venueServer.getVenues();
+                venues = venueServer.getVenues(null);
                 Arrays.sort(venues);
                 KNOWN_VENUES.put(venueServerUrl, venues);
                 KNOWN_VENUES_CACHE_TIME.put(venueServerUrl,
