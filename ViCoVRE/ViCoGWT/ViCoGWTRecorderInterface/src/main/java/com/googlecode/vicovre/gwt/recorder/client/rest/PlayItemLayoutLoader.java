@@ -35,6 +35,7 @@ package com.googlecode.vicovre.gwt.recorder.client.rest;
 import java.util.List;
 import java.util.Vector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.json.client.JSONObject;
 import com.googlecode.vicovre.gwt.client.rest.AbstractJSONRestCall;
@@ -54,7 +55,9 @@ public class PlayItemLayoutLoader extends AbstractJSONRestCall {
 
     public static void loadLayouts(PlayItem playItem,
             ActionLoader loader, String url) {
-        if (playItem.getReplayLayouts() != null) {
+        if ((playItem.getReplayLayouts() != null)
+        		&& !playItem.getReplayLayouts().isEmpty()) {
+        	GWT.log("Not reloading layouts as already loaded");
             loader.itemLoaded();
             return;
         }
@@ -76,6 +79,7 @@ public class PlayItemLayoutLoader extends AbstractJSONRestCall {
     }
 
     public void go() {
+        GWT.log("Loading layouts from " + url);
         go(url);
     }
 
