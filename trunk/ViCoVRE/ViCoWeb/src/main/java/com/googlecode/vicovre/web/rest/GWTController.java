@@ -42,6 +42,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.Controller;
 import org.xml.sax.SAXException;
 
+import com.googlecode.onevre.utils.Utils;
 import com.googlecode.vicovre.media.Misc;
 import com.googlecode.vicovre.recordings.Recording;
 import com.googlecode.vicovre.repositories.layout.EditableLayoutRepository;
@@ -69,6 +70,7 @@ public class GWTController implements Controller {
         }
         this.securityDatabase = securityDatabase;
         this.layoutRepository = layoutRepository;
+        Utils.setDefaultSslConnection();
     }
 
     public ModelAndView handleRequest(HttpServletRequest request,
