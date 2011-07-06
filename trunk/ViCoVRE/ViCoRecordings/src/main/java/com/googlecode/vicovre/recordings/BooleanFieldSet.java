@@ -71,6 +71,7 @@ public class BooleanFieldSet {
     }
 
     private boolean testValue(Object object, String field, String value) {
+    	System.err.println("        Testing if " + field + " = " + value);
         String methodName = "get" + field.substring(0, 1).toUpperCase()
             + field.substring(1);
         try {

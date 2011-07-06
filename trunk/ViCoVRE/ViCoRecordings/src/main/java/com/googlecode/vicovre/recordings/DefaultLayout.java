@@ -167,10 +167,12 @@ public class DefaultLayout implements Comparable<DefaultLayout> {
         layout.setEndTime(endTime);
         for (String posName : replayPosition.keySet()) {
             DefaultLayoutPosition pos = replayPosition.get(posName);
+            System.err.println("Finding match for position " + posName);
             boolean matchFound = false;
             List<Stream> streams = recording.getStreams();
             for (int i = 0; (i < streams.size()) && !matchFound; i++) {
                 Stream stream = streams.get(i);
+            	System.err.println("    Testing stream " + stream);
                 if (pos.getFieldSet().test(stream)) {
                     layout.setStream(posName, stream);
                     matchFound = true;
