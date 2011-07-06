@@ -49,6 +49,7 @@ import com.googlecode.vicovre.media.protocol.memetic.RecordingConstants;
 import com.googlecode.vicovre.recordings.HarvestSource;
 import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.Recording;
+import com.googlecode.vicovre.recordings.ReplayLayout;
 import com.googlecode.vicovre.recordings.UnfinishedRecording;
 import com.googlecode.vicovre.repositories.harvestFormat.HarvestFormatRepository;
 import com.googlecode.vicovre.repositories.layout.LayoutRepository;
@@ -238,6 +239,23 @@ public class InsecureFolder {
                     e.printStackTrace();
                 }
             }
+        } else {
+        	Recording recording = recordings.get(id);
+        	List<ReplayLayout> layouts = recording.getReplayLayouts();
+        	if ((layouts == null) || layouts.isEmpty()) {
+        		File recordingFile = new File(file, id);
+        		File[] defaultLayoutFiles = recordingFile.listFiles(
+                        new ExtensionFilter(RecordingConstants.LAYOUT));
+        		if (defaultLayoutFiles.length > 0) {
+        			try {
+                        readRecording(recordingFile);
+                    } catch (Exception e) {
+                        System.err.println("Warning: error reading recording "
+                                + recordingFile);
+                        e.printStackTrace();
+                    }
+        		}
+        	}
         }
         return recordings.get(id);
     }
