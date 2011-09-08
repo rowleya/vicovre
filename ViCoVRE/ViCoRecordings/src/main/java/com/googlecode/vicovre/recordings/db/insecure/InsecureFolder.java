@@ -239,23 +239,6 @@ public class InsecureFolder {
                     e.printStackTrace();
                 }
             }
-        } else {
-        	Recording recording = recordings.get(id);
-        	List<ReplayLayout> layouts = recording.getReplayLayouts();
-        	if ((layouts == null) || layouts.isEmpty()) {
-        		File recordingFile = new File(file, id);
-        		File[] defaultLayoutFiles = recordingFile.listFiles(
-                        new ExtensionFilter(RecordingConstants.LAYOUT));
-        		if (defaultLayoutFiles.length > 0) {
-        			try {
-                        readRecording(recordingFile);
-                    } catch (Exception e) {
-                        System.err.println("Warning: error reading recording "
-                                + recordingFile);
-                        e.printStackTrace();
-                    }
-        		}
-        	}
         }
         return recordings.get(id);
     }
@@ -274,11 +257,16 @@ public class InsecureFolder {
     private void readRecording(File recordingFile)
             throws SAXException, IOException {
 
+    	boolean load = false;
         File index = new File(recordingFile,
                 RecordingConstants.RECORDING_INDEX);
         if (!recordingsLoaded.contains(recordingFile)
                 || recordingLastModified.get(recordingFile)
                     < index.lastModified()) {
+        	load = true;
+        }
+
+        if (load) {
             FileInputStream input = new FileInputStream(index);
             Recording recording = RecordingReader.readRecording(input,
                     folder, recordingFile, typeRepository,
