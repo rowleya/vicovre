@@ -217,6 +217,9 @@ public class StatusPanel extends DockPanel implements ClickHandler,
         logoutPanel.setVisible(false);
         retryPanel.setVisible(false);
         loginButton.setText(LOG_IN);
+        status.setText(LOGGED_OUT);
+        username.setText(null);
+        password.setText(null);
         this.role = null;
         DOM.setStyleAttribute(status.getElement(), "color", "black");
         folderPanel.setUserIsWriter(false);
