@@ -76,6 +76,8 @@ public class PlayPanel extends VerticalPanel implements ClickHandler {
 
         setWidth("100%");
         setHeight("100%");
+        setSpacing(2);
+
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
         setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 
