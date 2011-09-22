@@ -68,6 +68,8 @@ public class RecordPanel extends VerticalPanel implements ClickHandler {
         this.customLayouts = customLayouts;
         setWidth("100%");
         setHeight("100%");
+        setSpacing(2);
+
         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
         setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 

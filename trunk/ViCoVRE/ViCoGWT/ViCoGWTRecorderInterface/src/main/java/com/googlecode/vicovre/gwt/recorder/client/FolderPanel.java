@@ -162,6 +162,7 @@ public class FolderPanel extends AbsolutePanel
         topPanel.setCellWidth(folderTree, "20%");
         topPanel.setCellWidth(panel, "80%");
         topPanel.setCellHeight(panel, "100%");
+        topPanel.setSpacing(2);
 
         createTreeRoot();
 
