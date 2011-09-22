@@ -152,12 +152,7 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         name.setText(metadataPopup.getPrimaryValue());
 
         setWidth("100%");
-        DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
-        DOM.setStyleAttribute(getElement(), "borderStyle", "solid");
-
-        VerticalPanel panel = new VerticalPanel();
-        panel.setWidth("100%");
-
+        
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(playButton);
         buttons.add(playToVenueButton);
@@ -169,21 +164,22 @@ public class PlayItem extends SimplePanel implements ClickHandler,
         buttons.add(deleteButton);
         buttons.setWidth("120px");
 
-        DockPanel topLine = new DockPanel();
-        topLine.add(moveButton, DockPanel.WEST);
-        topLine.add(startDate, DockPanel.WEST);
-        topLine.add(this.name, DockPanel.CENTER);
-        topLine.add(buttons, DockPanel.EAST);
-        topLine.add(duration, DockPanel.EAST);
-        topLine.setWidth("100%");
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.add(moveButton);
+        panel.add(startDate);
+        panel.add(this.name);
+        panel.add(duration);
+        panel.add(buttons);
+        panel.setWidth("100%");
 
-        topLine.setCellWidth(moveButton, "20px");
-        topLine.setCellWidth(duration, "100px");
-        topLine.setCellWidth(buttons, "120px");
-        topLine.setCellWidth(startDate, "160px");
-        this.name.setWidth("100%");
+        panel.setCellWidth(moveButton, "20px");
+        panel.setCellWidth(duration, "100px");
+        panel.setCellWidth(buttons, "120px");
+        panel.setCellWidth(startDate, "160px");
 
-        panel.add(topLine);
+        DOM.setStyleAttribute(panel.getElement(), "borderWidth", "1px");
+        DOM.setStyleAttribute(panel.getElement(), "borderStyle", "solid");
+
         add(panel);
 
         editButton.addClickHandler(this);

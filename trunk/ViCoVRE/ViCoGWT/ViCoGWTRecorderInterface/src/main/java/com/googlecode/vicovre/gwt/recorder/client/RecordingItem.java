@@ -170,11 +170,6 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         metadataPopup.setHandler(this);
         name.setText(metadataPopup.getPrimaryValue());
         setWidth("100%");
-        DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
-        DOM.setStyleAttribute(getElement(), "borderStyle", "solid");
-
-        VerticalPanel panel = new VerticalPanel();
-        panel.setWidth("100%");
 
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(recordButton);
@@ -185,17 +180,17 @@ public class RecordingItem extends SimplePanel implements ClickHandler,
         buttons.add(deleteButton);
         buttons.setWidth("100px");
 
-        DockPanel topLine = new DockPanel();
-        topLine.add(name, DockPanel.WEST);
-        topLine.add(status, DockPanel.CENTER);
-        topLine.add(buttons, DockPanel.EAST);
-        topLine.setWidth("100%");
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.add(name);
+        panel.add(status);
+        panel.add(buttons);
+        panel.setWidth("100%");
 
-        topLine.setCellWidth(status, "100px");
-        topLine.setCellWidth(buttons, "100px");
-        name.setWidth("100%");
+        panel.setCellWidth(status, "100px");
+        panel.setCellWidth(buttons, "100px");
+        DOM.setStyleAttribute(panel.getElement(), "borderWidth", "1px");
+        DOM.setStyleAttribute(panel.getElement(), "borderStyle", "solid");
 
-        panel.add(topLine);
         add(panel);
 
         recordButton.addClickHandler(this);
