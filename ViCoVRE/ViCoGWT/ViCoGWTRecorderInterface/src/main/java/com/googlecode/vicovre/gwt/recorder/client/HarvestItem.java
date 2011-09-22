@@ -134,9 +134,7 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         this.customLayouts = customLayouts;
         name.setText(itemName);
         setWidth("100%");
-        DOM.setStyleAttribute(getElement(), "borderColor", "black");
-        DOM.setStyleAttribute(getElement(), "borderWidth", "1px");
-        DOM.setStyleAttribute(getElement(), "borderStyle", "solid");
+
 
         HorizontalPanel buttons = new HorizontalPanel();
         buttons.add(harvestButton);
@@ -144,13 +142,19 @@ public class HarvestItem extends HorizontalPanel implements ClickHandler,
         buttons.add(securityButton);
         buttons.add(deleteButton);
 
-        add(name);
-        add(status);
-        add(buttons);
-        setCellWidth(status, "100px");
-        setCellWidth(buttons, "100px");
+        HorizontalPanel panel = new HorizontalPanel();
+        panel.add(name);
+        panel.add(status);
+        panel.add(buttons);
+        panel.setCellWidth(status, "100px");
+        panel.setCellWidth(buttons, "100px");
         status.setWidth("100px");
         name.setWidth("100%");
+
+        DOM.setStyleAttribute(panel.getElement(), "borderWidth", "1px");
+        DOM.setStyleAttribute(panel.getElement(), "borderStyle", "solid");
+
+        add(panel);
 
         harvestButton.addClickHandler(this);
         editButton.addClickHandler(this);
