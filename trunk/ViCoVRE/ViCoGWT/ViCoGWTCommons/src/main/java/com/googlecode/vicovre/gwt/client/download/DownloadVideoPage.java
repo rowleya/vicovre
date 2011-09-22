@@ -93,11 +93,15 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
 
     private Button updatePreviewButton = new Button("Update Preview");
 
+    private Button resetButton = new Button("Reset Start/End Times");
+
     private long previewStartTime = 0;
 
     private long startTime = 0;
 
     private long endTime = 0;
+
+    private long duration = 0;
 
     private String folder = null;
 
@@ -133,7 +137,9 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
         controlPanel.setWidget(1, 1, endTimeLabel);
         controlPanel.setWidget(1, 2, setEndButton);
         controlPanel.setWidget(0, 3, updatePreviewButton);
+        controlPanel.setWidget(0, 4, resetButton);
         controlPanel.getFlexCellFormatter().setRowSpan(0, 3, 2);
+        controlPanel.getFlexCellFormatter().setRowSpan(0, 4, 2);
         controlPanel.setWidget(2, 0, new Label("Format:"));
         controlPanel.setWidget(2, 1, format);
         controlPanel.setWidget(3, 0, new Label("Size:"));
@@ -142,6 +148,7 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
         setStartButton.addClickHandler(this);
         setEndButton.addClickHandler(this);
         updatePreviewButton.addClickHandler(this);
+        resetButton.addClickHandler(this);
         downloadButton.addClickHandler(this);
         setStartButton.setWidth("250px");
         setEndButton.setWidth("250px");
@@ -247,7 +254,7 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
             }
         }
 
-        long duration = (maxEnd - minStart) / 1000;
+        duration = (maxEnd - minStart) / 1000;
         startTime = 0;
         endTime = duration;
         previewStartTime = 0;
@@ -304,6 +311,13 @@ public class DownloadVideoPage extends WizardPage implements ClickHandler {
                 setTimeLabel(endTime, endTimeLabel);
             }
         } else if (event.getSource().equals(updatePreviewButton)) {
+            player.setTimes(startTime, endTime - startTime);
+            previewStartTime = startTime;
+        } else if (event.getSource().equals(resetButton)) {
+        	startTime = 0; // 00:00:00
+        	setTimeLabel(startTime, startTimeLabel);
+            endTime = duration;
+            setTimeLabel(endTime, endTimeLabel);
             player.setTimes(startTime, endTime - startTime);
             previewStartTime = startTime;
         } else if (event.getSource().equals(downloadButton)) {
