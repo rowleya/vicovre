@@ -2,15 +2,18 @@
 
 = Introduction =
 
-The Folder panel display a mapping of the directories stored on the server. What can be seen depends in the user's SecurityModel.
+The Folder panel display sa mapping of the directories stored on the server. What can be seen depends in the user's SecurityModel.
 
 = Details =
 
 The folders and recordings are stored in below a directory called _recordings_. 
 
+|| *Folder* || *Directory* || *Security Level* ||
+|| Home || recordings/home/_username_ || Admin/Writer (current user only) ||
+|| Root || recordings || All ||
+|| Root/home || recordings/home || Admin ||
+|| Root/home/_username_ || recordings/home/_username_ || Admin (all but current user) ||
 
+NOTE: recordings/home/_username_ is only created when a user is given the appropriate security level
 
-|| *Folder* || *Directory* || *Security Model* ||
-|| Home || recordings/home/username/ || Admin/Writer ||
-|| Root || recordings/ || All ||
-|| Root/home || recordings/home/ || Admin ||
+NOTE: Folders shouldn't be manually created in Root/home see [http://code.google.com/p/vicovre/issues/detail?id=6 Issue 6]
