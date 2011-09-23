@@ -1,0 +1,16 @@
+#summary How folders map to directories on the server
+
+= Introduction =
+
+The Folder panel display a mapping of the directories stored on the server. What can be seen depends in the user's SecurityModel.
+
+= Details =
+
+The folders and recordings are stored in below a directory called _recordings_. 
+
+
+
+|| *Folder* || *Directory* || *Security Model* ||
+|| Home || recordings/home/username/ || Admin/Writer ||
+|| Root || recordings/ || All ||
+|| Root/home || recordings/home/ || Admin ||
