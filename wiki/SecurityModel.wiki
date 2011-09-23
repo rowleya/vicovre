@@ -13,6 +13,8 @@ By default, new folders can be read by anyone but can only be written by the use
 
 The owner of a folder can be changed by the current owner.  This changes the ownership of all items in the folder and all sub-folders (recursively).  Once the owner has been changed, only the new owner can control the folder.
 
+Administrators can see other user's home folders under Root->home->_username_. Writers have their own Home folder mapped to the top of the hierarchy.
+
 == Harvest Sources ==
 Harvest Sources can only be edited, controlled or deleted by the user who created the source.  A new harvest source can only be created by a Writer or Administrator user.
 
