@@ -38,6 +38,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.CacheControl;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.rest.responses.RolesResponse;
@@ -49,10 +50,17 @@ public class Roles {
     @Inject
     private SecurityDatabase database = null;
 
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
+
     @GET
     @Produces({"application/json", "text/xml"})
     public Response getRoles() {
         List<String> roles = database.getRoles();
-        return Response.ok(new RolesResponse(roles)).build();
+        return Response.ok(new RolesResponse(roles)).cacheControl(getNoCache()).build();
     }
 }

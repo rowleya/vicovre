@@ -43,6 +43,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.CacheControl;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.rest.responses.GroupsResponse;
@@ -55,18 +56,25 @@ public class Group {
     @Inject
     private SecurityDatabase database = null;
 
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
+
     @GET
     @Produces({"application/json", "text/xml"})
     public Response getGroups() {
         List<String> groups = database.getGroups();
-        return Response.ok(new GroupsResponse(groups)).build();
+        return Response.ok(new GroupsResponse(groups)).cacheControl(getNoCache()).build();
     }
 
     @Path("{group}/owner")
     @GET
     @Produces("text/plain")
     public Response getGroupOwner(@PathParam("group") String groupName) {
-        return Response.ok(database.getGroupOwner(groupName)).build();
+        return Response.ok(database.getGroupOwner(groupName)).cacheControl(getNoCache()).build();
     }
 
     @Path("{group}/users")
@@ -74,7 +82,7 @@ public class Group {
     @Produces({"application/json", "text/xml"})
     public Response getGroupUsers(@PathParam("group") String groupName) {
         List<String> users = database.getGroupUsers(groupName);
-        return Response.ok(new UsersResponse(users)).build();
+        return Response.ok(new UsersResponse(users)).cacheControl(getNoCache()).build();
     }
 
     @Path("{group}")

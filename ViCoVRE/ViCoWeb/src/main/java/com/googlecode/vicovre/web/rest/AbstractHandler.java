@@ -37,9 +37,8 @@ import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Response.Status;
 
 import com.googlecode.vicovre.recordings.Metadata;
 import com.googlecode.vicovre.recordings.db.RecordingDatabase;
@@ -48,11 +47,18 @@ import com.googlecode.vicovre.security.db.WriteOnlyEntity;
 public abstract class AbstractHandler {
 
     private RecordingDatabase database = null;
+    protected CacheControl noCache = new CacheControl();
 
     protected AbstractHandler(RecordingDatabase database) {
         this.database = database;
+        this.noCache.setNoCache(true);
+        this.noCache.setNoStore(true);
     }
 
+    protected CacheControl getNoCache() {
+        return noCache;
+    }
+    
     protected RecordingDatabase getDatabase() {
         return database;
     }

@@ -45,6 +45,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
 
@@ -65,6 +66,13 @@ public class LayoutHandler {
 
     private EditableLayoutRepository layoutRepository = null;
 
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
+
     /**
      * Creates a LayoutHandler.
      * @param database The database
@@ -83,7 +91,7 @@ public class LayoutHandler {
     @Produces({"text/xml", "application/json"})
     public Response getLayouts() {
         List<Layout> layouts = layoutRepository.findLayouts();
-        return Response.ok(new LayoutsResponse(layouts)).build();
+        return Response.ok(new LayoutsResponse(layouts)).cacheControl(getNoCache()).build();
     }
 
     @Path("fixed")
@@ -91,7 +99,7 @@ public class LayoutHandler {
     @Produces({"text/xml", "application/json"})
     public Response getFixedLayouts() {
         List<Layout> layouts = layoutRepository.findFixedLayouts();
-        return Response.ok(new LayoutsResponse(layouts)).build();
+        return Response.ok(new LayoutsResponse(layouts)).cacheControl(getNoCache()).build();
     }
 
     @Path("custom")
@@ -99,7 +107,7 @@ public class LayoutHandler {
     @Produces({"text/xml", "application/json"})
     public Response getCustomLayouts() {
         List<Layout> layouts = layoutRepository.findEditableLayouts();
-        return Response.ok(new LayoutsResponse(layouts)).build();
+        return Response.ok(new LayoutsResponse(layouts)).cacheControl(getNoCache()).build();
     }
 
     @Path("custom/{layoutName}")

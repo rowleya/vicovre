@@ -121,7 +121,7 @@ public class RecordingHandler extends AbstractHandler {
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
-        return Response.ok(new StreamsResponse(recording.getStreams())).build();
+        return Response.ok(new StreamsResponse(recording.getStreams())).cacheControl(getNoCache()).build();
     }
 
     @Path("{folder: .*}/layouts")
@@ -137,7 +137,7 @@ public class RecordingHandler extends AbstractHandler {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
         return Response.ok(new ReplayLayoutsResponse(
-                recording.getReplayLayouts())).build();
+                recording.getReplayLayouts())).cacheControl(getNoCache()).build();
     }
 
     @Path("{folder:.*}/layout/{time}")
@@ -288,7 +288,7 @@ public class RecordingHandler extends AbstractHandler {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
         return Response.ok(
-                String.valueOf(recording.getAnnotationProgress(time))).build();
+                String.valueOf(recording.getAnnotationProgress(time))).cacheControl(getNoCache()).build();
     }
 
     @Path("{folder: .*}")
@@ -296,7 +296,7 @@ public class RecordingHandler extends AbstractHandler {
     @Produces({"text/xml", "application/json"})
     public Response getRecordings(@PathParam("folder") String folder) {
         return Response.ok(new RecordingsResponse(
-                getDatabase().getRecordings(folder))).build();
+                getDatabase().getRecordings(folder))).cacheControl(getNoCache()).build();
     }
 
     @GET
@@ -403,16 +403,16 @@ public class RecordingHandler extends AbstractHandler {
                 (SecureRecordingDatabase) database;
             if (acltype.equals("play")) {
                 return Response.ok(
-                        secureDb.getRecordingPlayAcl(recording)).build();
+                        secureDb.getRecordingPlayAcl(recording)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("read")) {
                 return Response.ok(
-                        secureDb.getRecordingReadAcl(recording)).build();
+                        secureDb.getRecordingReadAcl(recording)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("annotate")) {
                 return Response.ok(
-                        secureDb.getRecordingAnnotateAcl(recording)).build();
+                        secureDb.getRecordingAnnotateAcl(recording)).cacheControl(getNoCache()).build();
             }
         }
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 
     @Path("{folder:.*}/requestAccess")
@@ -479,7 +479,7 @@ public class RecordingHandler extends AbstractHandler {
         if (recording == null) {
             throw new FileNotFoundException("Recording " + id + " not found");
         }
-        return Response.ok(String.valueOf(recording.getLifetime())).build();
+        return Response.ok(String.valueOf(recording.getLifetime())).cacheControl(getNoCache()).build();
     }
 
     @Path("/{folder: .*}/lifetime")

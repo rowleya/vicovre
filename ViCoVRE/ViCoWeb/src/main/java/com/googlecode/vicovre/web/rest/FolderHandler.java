@@ -80,7 +80,7 @@ public class FolderHandler extends AbstractHandler {
     public Response getFolders() {
         Vector<String> folders = new Vector<String>();
         getFolders("", folders);
-        return Response.ok(new FoldersResponse(folders)).build();
+        return Response.ok(new FoldersResponse(folders)).cacheControl(getNoCache()).build();
     }
 
     private void getFolders(String folder, Vector<String> folders) {
@@ -120,7 +120,7 @@ public class FolderHandler extends AbstractHandler {
             List<Stream> streams = recording.getStreams();
             response.addStreams(streams);
         }
-        return Response.ok(response).build();
+        return Response.ok(response).cacheControl(getNoCache()).build();
     }
 
     @Path("/streams")
@@ -215,7 +215,7 @@ public class FolderHandler extends AbstractHandler {
     @Produces({"text/xml", "application/json"})
     public Response getFolderMetadata(@PathParam("folder") String folder) {
         Metadata metadata = getDatabase().getFolderMetadata(folder);
-        return Response.ok(metadata).build();
+        return Response.ok(metadata).cacheControl(getNoCache()).build();
     }
 
     @Path("/metadata")
@@ -256,7 +256,7 @@ public class FolderHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            return Response.ok(secureDb.getFolderReadAcl(folder)).build();
+            return Response.ok(secureDb.getFolderReadAcl(folder)).cacheControl(getNoCache()).build();
         }
         return Response.ok().build();
     }
@@ -267,7 +267,7 @@ public class FolderHandler extends AbstractHandler {
     public Response getLifetime(@PathParam("folder") String folder) {
         RecordingDatabase database = getDatabase();
         long lifetime = database.getFolderLifetime(folder);
-        return Response.ok(String.valueOf(lifetime)).build();
+        return Response.ok(String.valueOf(lifetime)).cacheControl(getNoCache()).build();
     }
 
     @Path("/{folder: .*}/lifetime")
@@ -287,7 +287,7 @@ public class FolderHandler extends AbstractHandler {
         if (database instanceof SecureRecordingDatabase) {
             SecureRecordingDatabase secureDb =
                 (SecureRecordingDatabase) database;
-            return Response.ok(secureDb.getFolderOwner(folder)).build();
+            return Response.ok(secureDb.getFolderOwner(folder)).cacheControl(getNoCache()).build();
         }
         return Response.ok().build();
     }
