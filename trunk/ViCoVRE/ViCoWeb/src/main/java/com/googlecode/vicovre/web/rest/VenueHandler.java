@@ -43,6 +43,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.CacheControl;
 
 import com.googlecode.onevre.ag.types.ConnectionDescription;
 import com.googlecode.onevre.ag.types.server.VenueServer;
@@ -64,6 +65,13 @@ public class VenueHandler {
 
     @Inject("database")
     private RecordingDatabase database = null;
+
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
 
     private String fillInVenueServer(String server) throws MalformedURLException {
         URL url = null;
@@ -90,7 +98,7 @@ public class VenueHandler {
     @Produces("application/json")
     public Response getVenueServers() {
         return Response.ok(new VenueServersResponse(Arrays.asList(
-                database.getKnownVenueServers()))).build();
+                database.getKnownVenueServers()))).cacheControl(getNoCache()).build();
     }
 
     @Path("/server")
@@ -99,11 +107,11 @@ public class VenueHandler {
     public Response getVenueServer(@QueryParam("url") String server) {
         try {
             String venueServerUrl = fillInVenueServer(server);
-            return Response.ok(venueServerUrl).build();
+            return Response.ok(venueServerUrl).cacheControl(getNoCache()).build();
         } catch (MalformedURLException e1) {
             return Response.status(
                     Status.INTERNAL_SERVER_ERROR).entity(
-                            "Invalid URL").build();
+                            "Invalid URL").cacheControl(getNoCache()).build();
         }
     }
 
@@ -131,11 +139,11 @@ public class VenueHandler {
                 database.addVenueServer(venueServerUrl);
             }
             return Response.ok(new VenuesResponse(venueServerUrl,
-                    venues)).build();
+                    venues)).cacheControl(getNoCache()).build();
         } catch (Throwable e) {
             e.printStackTrace();
             return Response.serverError().entity(
-                    "Error: " + e.getMessage()).build();
+                    "Error: " + e.getMessage()).cacheControl(getNoCache()).build();
         }
     }
 }

@@ -246,7 +246,7 @@ public class HarvestHandler extends AbstractHandler {
             @PathParam("folder") String folder) {
         List<HarvestSource> harvestSources =
             getDatabase().getHarvestSources(folder);
-        return Response.ok(new HarvestSourcesResponse(harvestSources)).build();
+        return Response.ok(new HarvestSourcesResponse(harvestSources)).cacheControl(getNoCache()).build();
     }
 
     @GET
@@ -271,10 +271,10 @@ public class HarvestHandler extends AbstractHandler {
         List<UnfinishedRecording> recordings = harvester.harvest(harvestSource);
         if (recordings != null) {
             return Response.ok(new UnfinishedRecordingsResponse(
-                    recordings)).build();
+                    recordings)).cacheControl(getNoCache()).build();
         }
         return Response.status(Status.INTERNAL_SERVER_ERROR).entity(
-                harvestSource.getStatus()).build();
+                harvestSource.getStatus()).cacheControl(getNoCache()).build();
     }
 
     @Path("{folder:.*}/acl/{type}")
@@ -337,15 +337,15 @@ public class HarvestHandler extends AbstractHandler {
                 (SecureRecordingDatabase) database;
             if (acltype.equals("play")) {
                 return Response.ok(
-                        secureDb.getRecordingPlayAcl(source)).build();
+                        secureDb.getRecordingPlayAcl(source)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("read")) {
                 return Response.ok(
-                        secureDb.getRecordingReadAcl(source)).build();
+                        secureDb.getRecordingReadAcl(source)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("annotate")) {
                 return Response.ok(
-                        secureDb.getRecordingAnnotateAcl(source)).build();
+                        secureDb.getRecordingAnnotateAcl(source)).cacheControl(getNoCache()).build();
             }
         }
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 }

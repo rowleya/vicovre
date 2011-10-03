@@ -266,7 +266,7 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         List<UnfinishedRecording> recordings =
             getDatabase().getUnfinishedRecordings(folder);
         return Response.ok(new UnfinishedRecordingsResponse(
-                recordings)).build();
+                recordings)).cacheControl(getNoCache()).build();
     }
 
     @GET
@@ -310,9 +310,9 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
         Recording finishedRecording =
             recordingController.stopRecording(recording);
         if (finishedRecording != null) {
-            return Response.ok(finishedRecording).build();
+            return Response.ok(finishedRecording).cacheControl(getNoCache()).build();
         }
-        return Response.serverError().entity(recording.getStatus()).build();
+        return Response.serverError().entity(recording.getStatus()).cacheControl(getNoCache()).build();
     }
 
     @Path("{folder: .*}/pause")
@@ -416,15 +416,15 @@ public class UnfinishedRecordingHandler extends AbstractHandler {
                 (SecureRecordingDatabase) database;
             if (acltype.equals("play")) {
                 return Response.ok(
-                        secureDb.getRecordingPlayAcl(recording)).build();
+                        secureDb.getRecordingPlayAcl(recording)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("read")) {
                 return Response.ok(
-                        secureDb.getRecordingReadAcl(recording)).build();
+                        secureDb.getRecordingReadAcl(recording)).cacheControl(getNoCache()).build();
             } else if (acltype.equals("annotate")) {
                 return Response.ok(
-                        secureDb.getRecordingAnnotateAcl(recording)).build();
+                        secureDb.getRecordingAnnotateAcl(recording)).cacheControl(getNoCache()).build();
             }
         }
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 }

@@ -46,6 +46,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.mail.EmailException;
@@ -60,18 +61,25 @@ public class User {
     @Inject
     private SecurityDatabase database = null;
 
-    @GET
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
+
+   @GET
     @Produces({"application/json", "text/xml"})
     public Response getUsers() {
         List<String> users = database.getUsers();
-        return Response.ok(new UsersResponse(users)).build();
+        return Response.ok(new UsersResponse(users)).cacheControl(getNoCache()).build();
     }
 
     @Path("{username}/role")
     @GET
     @Produces("text/plain")
     public Response getUserRole(@PathParam("username") String username) {
-        return Response.ok(database.getRole(username)).build();
+        return Response.ok(database.getRole(username)).cacheControl(getNoCache()).build();
     }
 
     @Path("{username}")
@@ -99,7 +107,7 @@ public class User {
             @QueryParam("successUrl") String successUrl)
             throws URISyntaxException, IOException {
         database.verifyUser(hash);
-        return Response.status(302).location(new URI(successUrl)).build();
+        return Response.status(302).location(new URI(successUrl)).cacheControl(getNoCache()).build();
     }
 
     @Path("{username}/password")
@@ -144,7 +152,7 @@ public class User {
             @QueryParam("successUrl") String successUrl)
             throws EmailException, URISyntaxException {
         database.resetPassword(hash, successUrl);
-        return Response.status(302).location(new URI(successUrl)).build();
+        return Response.status(302).location(new URI(successUrl)).cacheControl(getNoCache()).build();
 
     }
 

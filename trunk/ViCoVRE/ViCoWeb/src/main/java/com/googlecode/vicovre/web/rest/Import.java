@@ -95,7 +95,7 @@ public class Import {
             @DefaultValue("0") @QueryParam("port") int port) throws Exception {
         ConvertSession session = convertSessionManager.getSession(id);
         if (session == null) {
-            return Response.status(Status.NOT_FOUND).build();
+            return Response.status(Status.NOT_FOUND).cacheControl(getNoCache()).build();
         }
         if (!venue.equals("")) {
             session.receiveStreams(venue);
@@ -103,9 +103,9 @@ public class Import {
                 && ((port % 2) == 0)) {
             session.receiveStreams(address, port);
         } else {
-            return Response.status(Status.BAD_REQUEST).build();
+            return Response.status(Status.BAD_REQUEST).cacheControl(getNoCache()).build();
         }
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 
     @POST

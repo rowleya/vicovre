@@ -48,6 +48,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.CacheControl;
 
 import com.googlecode.vicovre.security.db.SecurityDatabase;
 import com.googlecode.vicovre.security.rest.responses.UserResponse;
@@ -64,6 +65,13 @@ public class Auth {
 
     @Inject("securityDatabase")
     private SecurityDatabase securityDatabase = null;
+
+    private CacheControl getNoCache() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        return cacheControl;
+    }
 
     @Path("form")
     @POST
@@ -104,15 +112,15 @@ public class Auth {
         }
         if (role == null) {
             return Response.status(Status.UNAUTHORIZED).header(
-                HttpHeaders.WWW_AUTHENTICATE, "Basic realm=" + realm).build();
+                HttpHeaders.WWW_AUTHENTICATE, "Basic realm=" + realm).cacheControl(getNoCache()).build();
         }
 
         if (successUrl == null) {
-            return Response.ok(role).build();
+            return Response.ok(role).cacheControl(getNoCache()).build();
         }
 
         ResponseBuilder response = Response.status(302);
-        return response.location(new URI(successUrl)).build();
+        return response.location(new URI(successUrl)).cacheControl(getNoCache()).build();
     }
 
     @Path("cert")
@@ -139,16 +147,16 @@ public class Auth {
 
          if (role != null) {
              if (successUrl == null) {
-                 return Response.ok(role).build();
+                 return Response.ok(role).cacheControl(getNoCache()).build();
              }
 
              ResponseBuilder response = Response.status(302);
-             return response.location(new URI(successUrl)).build();
+             return response.location(new URI(successUrl)).cacheControl(getNoCache()).build();
          }
          if (failUrl == null) {
-             return Response.status(Status.FORBIDDEN).build();
+             return Response.status(Status.FORBIDDEN).cacheControl(getNoCache()).build();
          }
-         return Response.status(302).location(new URI(failUrl)).build();
+         return Response.status(302).location(new URI(failUrl)).cacheControl(getNoCache()).build();
     }
 
     @Path("user")
@@ -156,13 +164,13 @@ public class Auth {
     @Produces({"application/json", "text/xml"})
     public Response getUser() {
         return Response.ok(new UserResponse(securityDatabase.getUsername(),
-                securityDatabase.getRole())).build();
+                securityDatabase.getRole())).cacheControl(getNoCache()).build();
     }
 
     @Path("logout")
     @GET
     public Response logout(@Context HttpServletRequest request) {
         securityDatabase.logout(request);
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 }

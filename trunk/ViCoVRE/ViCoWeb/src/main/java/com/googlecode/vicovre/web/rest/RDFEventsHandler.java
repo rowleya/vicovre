@@ -50,6 +50,6 @@ public class RDFEventsHandler extends AbstractHandler {
     @GET
     @Produces("application/rdf+xml")
     public Response getEvents() {
-        return Response.ok(getDatabase()).build();
+        return Response.ok(getDatabase()).cacheControl(getNoCache()).build();
     }
 }

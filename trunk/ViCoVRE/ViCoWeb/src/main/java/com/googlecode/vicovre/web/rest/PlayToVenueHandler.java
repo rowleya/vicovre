@@ -110,6 +110,6 @@ public class PlayToVenueHandler extends AbstractHandler {
     @GET
     @Produces("text/plain")
     public Response getTime(@PathParam("id") int id) {
-        return Response.ok(String.valueOf(PlaybackManager.getTime(id))).build();
+        return Response.ok(String.valueOf(PlaybackManager.getTime(id))).cacheControl(getNoCache()).build();
     }
 }

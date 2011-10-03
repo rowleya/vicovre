@@ -120,7 +120,7 @@ public class Export {
             throws FileNotFoundException {
         ConvertSession session = convertSessionManager.getSession(id);
         if (session == null) {
-            return Response.status(Status.NOT_FOUND).build();
+            return Response.status(Status.NOT_FOUND).cacheControl(getNoCache()).build();
         }
         ChangeListener listener =
             session.getChangeListener(streamId, substream, changeId);
@@ -222,12 +222,10 @@ public class Export {
 
         ConvertSession session = convertSessionManager.getSession(id);
         if (session == null) {
-            return Response.status(Status.NOT_FOUND).build();
+            return Response.status(Status.NOT_FOUND).cacheControl(getNoCache()).build();
         }
 
-
-
-        return Response.ok().build();
+        return Response.ok().cacheControl(getNoCache()).build();
     }
 
 }
