@@ -124,7 +124,7 @@ public class VideoStreamSelectionPanel extends VerticalPanel {
                 VerticalPanel panel = new VerticalPanel();
                 panel.setHorizontalAlignment(ALIGN_CENTER);
                 VideoPreviewPanel previewPanel = new VideoPreviewPanel(
-                        folder, recordingId, stream.getSsrc(), 160, 120);
+                        folder, recordingId, stream.getSsrc(), 160, 130);
                 panel.add(previewPanel);
                 String name = stream.getSsrc();
                 if (stream.getName() != null) {
