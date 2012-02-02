@@ -27,7 +27,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <filter.location>src/main/filters/playback-only.properties</filter.location>
+                <filter.location>src/main/filters/nobackup.properties</filter.location>
             </properties>
         </profile>
         <profile>
