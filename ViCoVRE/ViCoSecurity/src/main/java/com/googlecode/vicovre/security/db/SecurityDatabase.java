@@ -266,7 +266,7 @@ public class SecurityDatabase {
         this.userHomeFolderPath = userHomeFolderPath;
         this.userHomeIds = userHomeIds;
         File home = getFile(userHomeFolderPath);
-        home.mkdirs();
+            home.mkdirs();
         for (String id : userHomeIds) {
             File aclFile = new File(home, id);
             if (!aclFile.exists()) {
@@ -406,12 +406,21 @@ public class SecurityDatabase {
                     home.mkdirs();
                 }
                 String homeFolder = userHomeFolderPath + "/" + path;
-                user.setHomeFolder(homeFolder);
-                for (String id : userHomeIds) {
-                    File aclFile = new File(home, id);
-                    if (!aclFile.exists()) {
-                        ACL acl = new ACL(homeFolder, id, user, false, false);
-                        writeAcl(home, acl);
+                synchronized(acls) {
+                    HashMap<String, ACL>aclList = acls.get(home);
+                    
+                    if(aclList == null) {
+                        aclList = new HashMap<String, ACL>();
+                        acls.put(home, aclList);
+                    }
+                    user.setHomeFolder(homeFolder);
+                    for (String id : userHomeIds) {
+                        File aclFile = new File(home, id + ".acl");
+                        if (!aclFile.exists()) {
+                            ACL acl = new ACL(homeFolder, id, user, false, false);
+                            aclList.put(id, acl);
+                            writeAcl(home, acl);
+                        }
                     }
                 }
             }
