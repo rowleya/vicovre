@@ -268,7 +268,7 @@ public class SecurityDatabase {
         File home = getFile(userHomeFolderPath);
             home.mkdirs();
         for (String id : userHomeIds) {
-            File aclFile = new File(home, id);
+            File aclFile = new File(home, id+".acl");
             if (!aclFile.exists()) {
                 ACL acl = new ACL(userHomeFolderPath, id, adminUser,
                         false, false);
