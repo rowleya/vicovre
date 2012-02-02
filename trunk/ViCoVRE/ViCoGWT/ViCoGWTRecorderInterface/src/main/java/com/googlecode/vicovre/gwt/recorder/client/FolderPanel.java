@@ -184,7 +184,7 @@ public class FolderPanel extends AbsolutePanel
 
     private void createTreeHome() {
         if ((username != null) && userIsWriter) {
-            TreeItem homeItem = new TreeItem(new HTML("Home"));
+            TreeItem homeItem = new TreeItem(new HTML("My Home"));
             String path = "/home/"
                 + username.replaceAll("[^a-zA-Z\\.0-9_]", "_");
             homeItem.setUserObject(path);
