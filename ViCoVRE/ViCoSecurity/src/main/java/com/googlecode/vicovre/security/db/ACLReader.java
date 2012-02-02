@@ -54,7 +54,7 @@ public class ACLReader {
         String ownerName = XmlIo.readContent(doc, "owner");
         User owner = users.get(ownerName);
         if (owner == null) {
-            throw new SAXException("Unknown owner " + owner);
+            throw new SAXException("Unknown owner " + ownerName);
         }
         String allowString = XmlIo.readContent(doc, "allow");
         boolean allow = Boolean.parseBoolean(allowString);
