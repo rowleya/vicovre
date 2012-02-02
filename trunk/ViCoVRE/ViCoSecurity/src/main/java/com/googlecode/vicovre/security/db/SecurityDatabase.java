@@ -161,6 +161,8 @@ public class SecurityDatabase {
             topLevelFolder.mkdirs();
         }
 
+        // NOTE: location of user home folder has not been set
+        // This and the default acl types are set by setUserHome
         File[] userFiles =
             topLevelFolder.listFiles(new ExtensionFilter(".user"));
         for (File userFile : userFiles) {
@@ -170,7 +172,6 @@ public class SecurityDatabase {
                 adminUser = user;
             }
             users.put(user.getUsername(), user);
-            createUserHome(user);
             input.close();
         }
         if (adminUser == null) {
@@ -178,7 +179,6 @@ public class SecurityDatabase {
             adminUser.setPasswordHash(
                     "7b902e6ff1db9f560443f2048974fd7d386975b0");
             users.put(adminUser.getUsername(), adminUser);
-            createUserHome(adminUser);
         }
 
         File[] unverifiedUserFiles =
