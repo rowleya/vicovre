@@ -73,6 +73,8 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
     private PushButton stopButton = new PushButton(STOP);
 
     private Label time = new Label("00:00:00");
+    
+    private Label exitLabel = new Label("Press Stop button to exit");
 
     private SliderBar bar = new SliderBar();
 
@@ -120,6 +122,7 @@ public class PlayToVenuePopup extends ModalPopup<VerticalPanel>
 
         panel.add(venue);
         panel.add(controls);
+        panel.add(exitLabel);
         bar.addSlideChangeHandler(this);
         playButton.addClickHandler(this);
         stopButton.addClickHandler(this);
