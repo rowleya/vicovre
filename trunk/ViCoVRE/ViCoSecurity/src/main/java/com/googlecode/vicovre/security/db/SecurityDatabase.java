@@ -1049,6 +1049,11 @@ public class SecurityDatabase {
 
     private ACL obtainAcl(File folderFile, String folder, String id,
             boolean allowByDefault, boolean check) {
+        return obtainAcl(folderFile, folder, id, allowByDefault, check, true);
+    }
+    
+    private ACL obtainAcl(File folderFile, String folder, String id,
+            boolean allowByDefault, boolean check, boolean create) {
         ACL acl = null;
         HashMap<String, ACL> aclList = acls.get(folderFile);
         try {
@@ -1061,15 +1066,19 @@ public class SecurityDatabase {
             }
         } catch (UnknownException e) {
 
-            if (aclList == null) {
-                aclList = new HashMap<String, ACL>();
-                acls.put(folderFile, aclList);
+            if(create == true) {
+                if (aclList == null) {
+                    aclList = new HashMap<String, ACL>();
+                    acls.put(folderFile, aclList);
+                }
+                acl = new ACL(folder, id, adminUser, allowByDefault, false);
+                aclList.put(id, acl);
+            } else {
+                return null;
             }
-            acl = new ACL(folder, id, adminUser, allowByDefault, false);
-            aclList.put(id, acl);
         }
 
-        if (check) {
+        if (check && acl != null) {
             User currentUser = getCurrentUser(folder, id);
             if (!currentUser.getRole().is(Role.ADMINISTRATOR)
                     && !currentUser.equals(acl.getOwner())) {
@@ -1183,6 +1192,18 @@ public class SecurityDatabase {
             }
         }
     }
+    
+     public boolean testForAcl(String folder, String id) {
+        File folderFile = getFile(folder);
+        synchronized (acls) {
+            HashMap<String, ACL> aclList = acls.get(folderFile);
+            if(aclList != null) {
+                if(aclList.get(id) != null)
+                    return true;
+            }
+        }
+        return false;
+    }
 
     public boolean isAllowed(String folder, String id, boolean def) {
         return isAllowed(null, null, folder, id, def);
@@ -1197,14 +1218,18 @@ public class SecurityDatabase {
         File folderFile = getFile(folder);
         synchronized (acls) {
             try {
-                ACL acl = obtainAcl(folderFile, folder, id, def, false);
+                // last parameter => don't create acl if none exists
+                ACL acl = obtainAcl(folderFile, folder, id, def, false, false);
+                
+                if(acl == null) {
+                   throw new UnknownException("Unset ACL " + id);
+                }
                 synchronized (acl) {
-                    return acl.isAllowed(getCurrentUser(creatorFolder,
+                   return acl.isAllowed(getCurrentUser(creatorFolder,
                             creatorId));
                 }
             } catch (UnknownException e) {
-
-                // If there is no ACL, return false
+                // If there is no ACL return the default
                 return def;
             }
         }
