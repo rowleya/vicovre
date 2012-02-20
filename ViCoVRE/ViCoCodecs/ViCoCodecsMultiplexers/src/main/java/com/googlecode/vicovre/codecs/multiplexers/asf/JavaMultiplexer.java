@@ -342,8 +342,8 @@ public class JavaMultiplexer extends BasicMultiplexer
 
                 // Error correction
                 streamProps.writeByte(1);
-                streamProps.writeShort(400);
-                streamProps.writeShort(400);
+                streamProps.writeShort(MP3_BLOCK_SIZE); // Virtual Packet Size
+                streamProps.writeShort(MP3_BLOCK_SIZE); // Virtual Chunk Size 
                 streamProps.writeShort(1);
                 streamProps.writeByte(0);
             } else {
@@ -380,14 +380,14 @@ public class JavaMultiplexer extends BasicMultiplexer
             }
             codecList.writeShort(format.getEncoding().length() + 1);
             codecList.writeChars(format.getEncoding());
-            codecList.writeShort(0);
-            codecList.writeShort(0);
+            codecList.writeShort(0); // Unicode Null termination
+            codecList.writeShort(0); // Codec Description Length
             if (format instanceof AudioFormat) {
-                codecList.writeShort(0x2);
-                codecList.writeShort(0x55);
+                codecList.writeShort(0x2); // Codec Information Length
+                codecList.writeShort(0x55); // Codec Information
             } else {
-                codecList.writeShort(0x4);
-                codecList.writeBytes("MP43");
+                codecList.writeShort(0x4); // Codec Information Length
+                codecList.writeBytes("MP43"); // Codec Information
             }
         }
         header.write(codecList);
