@@ -55,9 +55,9 @@ public class MSMPEG4Encoder extends FFMPEGVideoCodec {
 
     public VideoCodecContext getContext() {
         VideoCodecContext context = super.getContext();
-        double ratio = (context.getOutputWidth() * context.getOutputHeight())
-            / (320 * 240);
-        int bitRate = (int) (200 * 1000 * ratio);
+        double ratio = (double)(context.getOutputWidth() * context.getOutputHeight())
+            / (320.0 * 240.0);
+        int bitRate = (int) (200.0 * 1000.0 * ratio);
         context.setBitrate(bitRate);
         context.setBitrateTolerance(bitRate / context.getFrameRate());
         return context;
