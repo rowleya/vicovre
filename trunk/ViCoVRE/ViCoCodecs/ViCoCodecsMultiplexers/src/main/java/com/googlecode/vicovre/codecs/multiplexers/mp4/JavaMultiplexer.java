@@ -253,8 +253,8 @@ public class JavaMultiplexer extends BasicMultiplexer
         } else {
             mdhd.writeInt((int) dur);
         }
-        mdhd.writeInt(0); // Language (0 = english)
-        mdhd.writeInt(0); // Quality
+        mdhd.writeShort(0); // Language (0 = english)
+        mdhd.writeShort(0); // Quality
         return mdhd;
     }
 
@@ -306,7 +306,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         Atom dref = new Atom("dref");
         dref.write(0); // Version
         dref.writeInt24(0); // Flags
-        dref.writeInt(0); // Entry count
+        dref.writeInt(1); // Entry count
         dref.writeInt(0xc); // Entry size
         dref.writeBytes("url "); // Type
         dref.write(0); // Version
@@ -425,14 +425,13 @@ public class JavaMultiplexer extends BasicMultiplexer
         mp4a.writeShort(0); // Version
         mp4a.writeShort(0); // Revision
         mp4a.writeInt(0); // Vendor
-        mp4a.writeShort(2); // Channels
+        mp4a.writeShort(1); // Channels 1 - mono 2 - stereo
         mp4a.writeShort(16); // Sample size
         mp4a.writeShort(0); // Compression ID
         mp4a.writeShort(0); // Packet size
         AudioFormat af = (AudioFormat) format;
         int sampleRate = (int) af.getSampleRate();
-        mp4a.writeShort(sampleRate);
-        mp4a.writeShort(0);
+        mp4a.writeInt(sampleRate * 0x10000);
 
         mp4a.write(getEsds(track, format, extradata));
         return mp4a;
