@@ -320,6 +320,8 @@ public class JavaMultiplexer extends BasicMultiplexer
         return dinf;
     }
 
+    // calculate total size of a Descriptor
+    // adds 1 for tag, >=1 for size 
     private int getDescriptionLength(int length) {
         int i;
         for(i = 1; (length >> (7 * i)) != 0; i++);
@@ -379,7 +381,7 @@ public class JavaMultiplexer extends BasicMultiplexer
 
         // Decoder Specific info
         if (extradata != null) {
-            writeDescription(esds, 0x5, extraDataLength);
+            writeDescription(esds, 0x5, extradata.length);
             esds.write(extradata);
         }
 
