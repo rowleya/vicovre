@@ -372,7 +372,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         }
         esds.writeInt(maxrate);
         if (maxrate == bitrate) {
-            esds.write(bitrate);
+            esds.writeInt(bitrate);
         } else {
             esds.writeInt(0);
         }
