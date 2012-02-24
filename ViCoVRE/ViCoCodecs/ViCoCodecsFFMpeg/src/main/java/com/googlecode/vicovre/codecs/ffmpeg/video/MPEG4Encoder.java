@@ -58,7 +58,8 @@ public class MPEG4Encoder extends FFMPEGVideoCodec {
         context.setFlags(context.getFlags() | Utils.CODEC_FLAG_GLOBAL_HEADER);
         double ratio = (double)(context.getOutputWidth() * context.getOutputHeight())
             / (320.0 * 240.0);
-        int bitRate = (int) (200.0 * 1000.0 * ratio);
+        // make sure bitrate is a multiple of 1000
+        int bitRate = ((int) (200.0 * ratio)) * 1000;
         context.setBitrate(bitRate);
         context.setBitrateTolerance(bitRate / context.getFrameRate());
         return context;
