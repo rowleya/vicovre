@@ -289,7 +289,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         fileProps.writeLong(duration + (PREROLL * 10000));
         fileProps.writeLong(0); // Send Duration
         fileProps.writeLong(PREROLL); // PreRoll (buffer time)
-        fileProps.writeInt(0);  // Flags
+        fileProps.writeInt(2);  // Flags
         fileProps.writeInt(PACKET_SIZE);
         fileProps.writeInt(PACKET_SIZE);
         fileProps.writeInt(bitrate);  // Bit Rate
