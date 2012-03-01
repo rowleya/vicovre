@@ -190,7 +190,7 @@ public class JavaMultiplexer extends BasicMultiplexer
 
     private Integer tracksSync = new Integer(0);
 
-    private int sequence = 0;
+    private int[] sequence = null;
 
     private Integer packetSync = new Integer(0);
 
@@ -249,6 +249,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         int tracks = super.setNumTracks(numtracks);
         trackSeen = new boolean[tracks];
         tracksToSee = tracks;
+        sequence = new int[tracks];
         return tracks;
     }
 
@@ -416,12 +417,12 @@ public class JavaMultiplexer extends BasicMultiplexer
         }
         out.writeByte((track + 1) | keyFrame);
 
-        out.writeByte(sequence);
-        out.writeInt(objectOffset);
-        out.writeByte(8);
-        out.writeInt(objectSize);
-        out.writeInt((int) (timestamp + PREROLL));
-        if (multiPayloadPacket) {
+        out.writeByte(sequence[track]);                    // Modia Object No
+        out.writeInt(objectOffset);                 // Offset into Media Object
+        out.writeByte(8);                           // Replicated Data Length
+        out.writeInt(objectSize);                   // Replicated Data - size of Media Object
+        out.writeInt((int) (timestamp + PREROLL));  // Replicated Data - presentation time of Media Object
+        if (multiPayloadPacket) {                   // Payload Length
             out.writeShort(length);
         }
         packetStream.write(out.getBytes());
@@ -551,7 +552,7 @@ public class JavaMultiplexer extends BasicMultiplexer
 
             }
 
-            sequence++;
+            sequence[trk]++;
             processing = false;
             packetSync.notifyAll();
             return BUFFER_PROCESSED_OK;
