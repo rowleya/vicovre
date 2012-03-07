@@ -253,7 +253,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         } else {
             mdhd.writeInt((int) dur);
         }
-        mdhd.writeShort(0); // Language (0 = english)
+        mdhd.writeShort(0x15C7); // Language 0x15C7 = english, ISO 16bit packed)
         mdhd.writeShort(0); // Quality
         return mdhd;
     }
