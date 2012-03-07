@@ -285,7 +285,7 @@ public class JavaMultiplexer extends BasicMultiplexer
     private Atom getVmhd() throws IOException {
         Atom vmhd = new Atom("vmhd");
         vmhd.write(0); // Version
-        vmhd.writeInt24(0); // Flags
+        vmhd.writeInt24(1); // Flags, should be always set to 1
         vmhd.writeShort(0); // Graphics Mode = copy
         vmhd.writeShort(0); // OpColour red
         vmhd.writeShort(0); // OpColour green
