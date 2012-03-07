@@ -424,7 +424,7 @@ public class JavaMultiplexer extends BasicMultiplexer
         mp4a.writeInt(0); // Reserved
         mp4a.writeShort(0); // Reserved
         mp4a.writeShort(1); // Data Reference
-        mp4a.writeShort(0); // Version
+        mp4a.writeShort(0); // Version - FIXME should really be version 1 with extra fields
         mp4a.writeShort(0); // Revision
         mp4a.writeInt(0); // Vendor
         mp4a.writeShort(1); // Channels 1 - mono 2 - stereo
