@@ -194,7 +194,7 @@ public class JavaMultiplexer extends BasicMultiplexer
             tkhd.writeInt((int) time);
             tkhd.writeInt((int) time);
         }
-        tkhd.writeInt(track); // Track number
+        tkhd.writeInt(track+1); // Track number, index from 1
         tkhd.writeInt(0); // Reserved
         if (version == 1) {
             tkhd.writeLong(duration);
