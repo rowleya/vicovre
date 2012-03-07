@@ -243,10 +243,10 @@ public class JavaMultiplexer extends BasicMultiplexer
             AudioFormat af = (AudioFormat) format;
             mdhd.writeInt((int) af.getSampleRate());
         }
-        long dur = duration;
+        long dur = duration; // in millisecs
         if (format instanceof AudioFormat) {
             AudioFormat af = (AudioFormat) format;
-            dur = (long) ((duration * 1000) / af.getSampleRate());
+            dur = (long) ((duration / 1000) * af.getSampleRate());
         }
         if (version == 1) {
             mdhd.writeLong(dur);
