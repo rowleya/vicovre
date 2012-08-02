@@ -140,7 +140,7 @@ public class StreamsSelectionPage extends WizardPage implements ClickHandler {
                 lastCname = cname;
                 videoCount++;
                 VideoPreviewPanel preview = new VideoPreviewPanel(
-                        folder, recordingId, stream.getSsrc(), 160, 130);
+                        folder, recordingId, stream.getSsrc(), 160, 120);
                 VerticalPanel panel = new VerticalPanel();
                 panel.setHorizontalAlignment(ALIGN_CENTER);
                 panel.add(preview);
